@@ -31,6 +31,75 @@ export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): L
   let currentTorsoConfig: import('./FactionContext').TorsoOption = 'chest_rig';
   let currentLowerConfig: import('./FactionContext').LowerOption = 'pouches';
 
+  // High-contrast clean black/white skull graphic texture for Ballistic Skull Mask
+  function createSkullTexture(): THREE.CanvasTexture {
+    const size = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d')!;
+
+    // Matte tactical black background base
+    ctx.fillStyle = '#0e1116';
+    ctx.fillRect(0, 0, size, size);
+
+    // High-contrast clean white skull graphic
+    ctx.fillStyle = '#f0f3f6';
+
+    // Cranium dome & temples
+    ctx.beginPath();
+    ctx.ellipse(256, 180, 165, 115, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cheekbones & maxilla
+    ctx.beginPath();
+    ctx.moveTo(125, 230);
+    ctx.lineTo(195, 305);
+    ctx.lineTo(256, 290);
+    ctx.lineTo(317, 305);
+    ctx.lineTo(387, 230);
+    ctx.lineTo(355, 185);
+    ctx.lineTo(157, 185);
+    ctx.closePath();
+    ctx.fill();
+
+    // Deep eye socket hollows
+    ctx.fillStyle = '#0e1116';
+    ctx.beginPath();
+    ctx.ellipse(195, 205, 42, 34, -0.15, 0, Math.PI * 2);
+    ctx.ellipse(317, 205, 42, 34, 0.15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Piriform nasal aperture
+    ctx.beginPath();
+    ctx.moveTo(256, 232);
+    ctx.lineTo(238, 276);
+    ctx.lineTo(256, 268);
+    ctx.lineTo(274, 276);
+    ctx.closePath();
+    ctx.fill();
+
+    // Ballistic mandible plate with teeth row
+    ctx.fillStyle = '#f0f3f6';
+    ctx.beginPath();
+    ctx.roundRect(172, 316, 168, 76, 8);
+    ctx.fill();
+
+    // Black tooth separation channels
+    ctx.fillStyle = '#0e1116';
+    for (let x = 192; x <= 320; x += 18) {
+      ctx.fillRect(x, 318, 4, 72);
+    }
+    ctx.fillRect(172, 352, 168, 4);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+    return texture;
+  }
+
+  const skullTexture = createSkullTexture();
+
   // Staging Tactical Pedestal (Rugged Matte Military Deck)
   const pedestalGroup = new THREE.Group();
   root.add(pedestalGroup);
@@ -46,42 +115,79 @@ export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): L
     metalness: 0.7
   });
 
+  // Pedestal: Subtle flush tactical staging disc with soft dark rim
   const pedestalBase = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.5, 1.6, 0.12, 32),
+    new THREE.CylinderGeometry(1.2, 1.25, 0.02, 32),
     basePlateMat
   );
-  pedestalBase.position.y = 0.06;
+  pedestalBase.position.y = 0.01;
   pedestalBase.receiveShadow = true;
   pedestalGroup.add(pedestalBase);
 
   const pedestalRing = new THREE.Mesh(
-    new THREE.TorusGeometry(1.52, 0.02, 16, 48),
+    new THREE.TorusGeometry(1.22, 0.015, 12, 48),
     edgeTrimMat
   );
   pedestalRing.rotation.x = Math.PI / 2;
-  pedestalRing.position.y = 0.12;
+  pedestalRing.position.y = 0.02;
   pedestalGroup.add(pedestalRing);
 
-  // Tactical Turntable Key & Fill Lighting
-  const spotLight = new THREE.SpotLight(0xf5f7fa, 3.2);
-  spotLight.position.set(0, 4.8, 3.2);
+  // Soft contact ambient occlusion shadow on the floor
+  const contactCanvas = document.createElement('canvas');
+  contactCanvas.width = 128;
+  contactCanvas.height = 128;
+  const ctx = contactCanvas.getContext('2d');
+  if (ctx) {
+    const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 60);
+    grad.addColorStop(0, 'rgba(0, 0, 0, 0.85)');
+    grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.45)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 128, 128);
+  }
+  const contactTex = new THREE.CanvasTexture(contactCanvas);
+  const contactShadow = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.8, 1.8),
+    new THREE.MeshBasicMaterial({ map: contactTex, transparent: true, opacity: 0.9, depthWrite: false })
+  );
+  contactShadow.rotation.x = -Math.PI / 2;
+  contactShadow.position.y = 0.005;
+  pedestalGroup.add(contactShadow);
+
+  // =========================================================================
+  // CINEMATIC DOWNWARD SPOTLIGHTS & DRAMATIC LIGHTING
+  // =========================================================================
+  // 1. Primary Overhead Key Spotlight: casts downward from above-front creating deep tactical shadows
+  const spotLight = new THREE.SpotLight(0xe8f4ff, 7.5, 18, Math.PI / 5, 0.45, 1.2);
+  spotLight.position.set(0, 5.2, 1.4);
   spotLight.target = root;
-  spotLight.angle = 0.65;
-  spotLight.penumbra = 0.45;
   spotLight.castShadow = true;
+  spotLight.shadow.bias = -0.0005;
+  spotLight.shadow.mapSize.set(2048, 2048);
   root.add(spotLight);
 
-  const rimLight = new THREE.DirectionalLight(0xdde4ed, 1.2);
-  rimLight.position.set(-2.5, 3.2, -3.0);
-  root.add(rimLight);
+  // 2. Direct Top Spot: tight beam straight down onto helmet crown and NVG quad-tubes
+  const topSpot = new THREE.SpotLight(0xffffff, 4.5, 12, Math.PI / 6, 0.5, 1.2);
+  topSpot.position.set(0, 5.6, -0.1);
+  topSpot.target = root;
+  root.add(topSpot);
 
-  const fillLight = new THREE.DirectionalLight(0x8a929e, 0.6);
-  fillLight.position.set(2.5, 2.0, 2.5);
-  root.add(fillLight);
+  // 3. Crisp Rear Rim Lights: cool steel-blue edge highlights on shoulders and arms
+  const rimLightL = new THREE.DirectionalLight(0x688ba6, 2.2);
+  rimLightL.position.set(-2.8, 3.6, -3.8);
+  root.add(rimLightL);
+
+  const rimLightR = new THREE.DirectionalLight(0x688ba6, 2.2);
+  rimLightR.position.set(2.8, 3.6, -3.8);
+  root.add(rimLightR);
+
+  // 4. Low tactical fill to prevent pitch black while maintaining deep moody contrast
+  const tacticalFill = new THREE.AmbientLight(0x101620, 0.4);
+  root.add(tacticalFill);
 
   // Character hierarchy
   const characterGroup = new THREE.Group();
-  characterGroup.position.y = 0.12;
+  characterGroup.position.y = 0.02;
   root.add(characterGroup);
 
   // Dynamic mesh references
@@ -177,65 +283,103 @@ export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): L
     torsoGroup = new THREE.Group();
     characterGroup.add(torsoGroup);
 
-    // Lower abdomen / waist
-    const lowerTorso = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.24, 0.22), matPants);
+    // Lower abdomen / waist (proportioned to prevent texture bleeding)
+    const lowerTorso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.22, 0.24), matPants);
     lowerTorso.position.y = 0.98;
     lowerTorso.castShadow = true;
     torsoGroup.add(lowerTorso);
 
-    // Tactical Webbing Duty Belt
-    const dutyBelt = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.08, 0.24), matPouches);
+    // Tactical Webbing Duty Belt (clean boundary, zero z-fighting)
+    const dutyBelt = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.08, 0.26), matPouches);
     dutyBelt.position.y = 0.94;
     torsoGroup.add(dutyBelt);
 
-    // Chest / Upper Torso
-    chestMesh = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.36, 0.26), matShirt);
+    // Chest / Upper Torso: Broader masculine soldier frame (widened by 20%)
+    chestMesh = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.36, 0.28), matShirt);
     chestMesh.position.y = 1.28;
     chestMesh.castShadow = true;
     torsoGroup.add(chestMesh);
 
+    // Widened shoulder-girdle mesh blocks (+20% broader shoulder span)
+    const shoulderGirdleL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.14, 0.25), matShirt);
+    shoulderGirdleL.position.set(-0.31, 1.40, 0);
+    shoulderGirdleL.castShadow = true;
+    const shoulderGirdleR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.14, 0.25), matShirt);
+    shoulderGirdleR.position.set(0.31, 1.40, 0);
+    shoulderGirdleR.castShadow = true;
+    torsoGroup.add(shoulderGirdleL, shoulderGirdleR);
+
     if (currentTorsoConfig === 'molle_vest') {
-      // Heavy battle-worn olive drab modular plate carrier (IOTV style)
-      const iotvCarrier = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.38, 0.32), matVest);
-      iotvCarrier.position.set(0, 1.29, 0.01);
+      // Heavy battle-worn modular plate carrier (IOTV style - expanded thickness bounding cube)
+      const iotvCarrier = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.38, 0.38), matVest);
+      iotvCarrier.position.set(0, 1.29, 0.02);
       iotvCarrier.castShadow = true;
       torsoGroup.add(iotvCarrier);
 
-      // Attached Neck Ballistic Guard Collar
-      const neckGuard = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.12, 0.30), matPlateArmor);
-      neckGuard.position.set(0, 1.50, 0.01);
+      // Attached Neck Ballistic Guard Collar (sits tightly against collar)
+      const neckGuard = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.10, 0.32), matPlateArmor);
+      neckGuard.position.set(0, 1.45, 0.01);
       neckGuard.castShadow = true;
       torsoGroup.add(neckGuard);
 
       // Heavy Quad Ammo Pouches + Side Ballistic Plates
-      [-0.14, -0.05, 0.05, 0.14].forEach((px) => {
+      [-0.15, -0.05, 0.05, 0.15].forEach((px) => {
         const pouch = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.15, 0.08), matPouches);
-        pouch.position.set(px, 1.20, 0.19);
+        pouch.position.set(px, 1.20, 0.22);
         pouch.castShadow = true;
         torsoGroup.add(pouch);
       });
     } else {
-      // Low-profile modular chest rig / plate carrier
-      const standardPlate = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.34, 0.28), matVest);
+      // Low-profile modular chest rig / plate carrier (expanded thickness bounding cube)
+      const standardPlate = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.36, 0.34), matVest);
       standardPlate.position.set(0, 1.28, 0.02);
       standardPlate.castShadow = true;
       torsoGroup.add(standardPlate);
 
       // Modular cross-harness straps
-      const harnessL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.36, 0.28), matPouches);
-      harnessL.position.set(-0.16, 1.28, 0.01);
-      const harnessR = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.36, 0.28), matPouches);
-      harnessR.position.set(0.16, 1.28, 0.01);
+      const harnessL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.36, 0.32), matPouches);
+      harnessL.position.set(-0.19, 1.28, 0.01);
+      const harnessR = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.36, 0.32), matPouches);
+      harnessR.position.set(0.19, 1.28, 0.01);
       torsoGroup.add(harnessL, harnessR);
 
       // Triple Mag Pouch on front
-      [-0.12, 0, 0.12].forEach((px) => {
+      [-0.13, 0, 0.13].forEach((px) => {
         const pouch = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.14, 0.06), matPouches);
-        pouch.position.set(px, 1.18, 0.17);
+        pouch.position.set(px, 1.18, 0.20);
         pouch.castShadow = true;
         torsoGroup.add(pouch);
       });
     }
+
+    // Tactical IR American Flag Patch on Chest Rig (visible in reference image)
+    const matFlagPatch = new THREE.MeshStandardMaterial({
+      color: 0x1a1d22,
+      roughness: 0.6,
+      metalness: 0.2
+    });
+    const flagPatchBase = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.07, 0.015), matFlagPatch);
+    flagPatchBase.position.set(0, 1.35, 0.195);
+    torsoGroup.add(flagPatchBase);
+    
+    // Tactical subdued IR Flag Details
+    const flagStripes = new THREE.Mesh(
+      new THREE.BoxGeometry(0.11, 0.06, 0.016),
+      new THREE.MeshStandardMaterial({ color: isUSMC ? 0x968065 : 0x4a5568, roughness: 0.8 })
+    );
+    flagStripes.position.set(0, 1.35, 0.196);
+    torsoGroup.add(flagStripes);
+
+    // Front Dangler Admin Fanny Pack (below vest at waist level)
+    const dangler = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.11, 0.08), matPouches);
+    dangler.position.set(0, 0.95, 0.18);
+    dangler.castShadow = true;
+    const danglerPatch = new THREE.Mesh(
+      new THREE.BoxGeometry(0.08, 0.04, 0.01),
+      new THREE.MeshStandardMaterial({ color: isUSMC ? 0xb58e72 : 0x5a6a80, roughness: 0.7 })
+    );
+    danglerPatch.position.set(0, 0.95, 0.225);
+    torsoGroup.add(dangler, danglerPatch);
 
     if (currentLowerConfig === 'pouches') {
       // Groin Ballistic Protector Flap
@@ -261,15 +405,15 @@ export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): L
       legRGroup.add(sidearm);
     }
 
-    // Neck
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.18, 12), matSkin);
-    neck.position.set(0, 1.48, 0);
+    // Neck: Compressed length by 30% (0.126 vs 0.18) so it sits tightly against the collar
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.105, 0.126, 12), matSkin);
+    neck.position.set(0, 1.43, 0);
     neck.castShadow = true;
     torsoGroup.add(neck);
 
-    // 3. HEAD & HELMET / HEADSET ASSEMBLY
+    // 3. HEAD & HELMET / HEADSET ASSEMBLY (seated low and tightly against collar)
     headGroup = new THREE.Group();
-    headGroup.position.set(0, 1.62, 0);
+    headGroup.position.set(0, 1.53, 0);
     torsoGroup.add(headGroup);
 
     const headBase = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.24, 0.24), matSkin);
@@ -291,7 +435,7 @@ export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): L
     headGroup.add(boomMic);
 
     if (currentHeadgear === 'fast') {
-      // Ballistic FAST Helmet
+      // Ballistic FAST Helmet (high-cut tactical helmet with NVG quad-tubes removed)
       const helmetMesh = new THREE.Mesh(
         new THREE.BoxGeometry(0.29, 0.19, 0.30), 
         matHelmet
@@ -300,10 +444,22 @@ export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): L
       helmetMesh.castShadow = true;
       headGroup.add(helmetMesh);
 
-      // NVG Shroud Bracket
-      const nvgBracket = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.08, 0.04), matPlateArmor);
-      nvgBracket.position.set(0, 0.16, 0.15);
+      // Clean Wilcox G24 NVG Mounting Shroud on front
+      const nvgBracket = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.03), matPlateArmor);
+      nvgBracket.position.set(0, 0.17, 0.15);
       headGroup.add(nvgBracket);
+
+      // Tactical ARC accessory rails along helmet sides
+      const arcRailL = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.04, 0.18), matPlateArmor);
+      arcRailL.position.set(-0.15, 0.16, 0);
+      const arcRailR = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.04, 0.18), matPlateArmor);
+      arcRailR.position.set(0.15, 0.16, 0);
+      headGroup.add(arcRailL, arcRailR);
+
+      // Velcro Loop Morale Patches on top
+      const velcroTop = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.01, 0.14), matPouches);
+      velcroTop.position.set(0, 0.27, 0);
+      headGroup.add(velcroTop);
     } else if (currentHeadgear === 'boonie') {
       // Boonie Hat (Soft fabric rim)
       const hatBase = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.1, 0.26), matVest);
@@ -312,16 +468,24 @@ export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): L
       hatRim.position.set(0, 0.14, 0);
       headGroup.add(hatBase, hatRim);
     } else if (currentHeadgear === 'skull') {
-      // Skull Mask Mandible Guard over lower jaw
-      const skullMask = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.12, 0.13), new THREE.MeshStandardMaterial({color: 0xcccccc}));
-      skullMask.position.set(0, 0.02, 0.10);
+      // Ballistic Skull Mask with clean high-contrast black/white skull graphic texture
+      const matSkullMask = new THREE.MeshStandardMaterial({
+        map: skullTexture,
+        roughness: 0.45,
+        metalness: 0.15
+      });
+      const skullMask = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.18, 0.16), matSkullMask);
+      skullMask.position.set(0, 0.06, 0.09);
       skullMask.castShadow = true;
       headGroup.add(skullMask);
       
-      // Add a beanie or soft cap
-      const cap = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.10, 0.25), matShirt);
-      cap.position.set(0, 0.22, 0);
-      headGroup.add(cap);
+      // Tactical Balaclava Cap
+      const balaclavaCap = new THREE.Mesh(
+        new THREE.BoxGeometry(0.25, 0.14, 0.25), 
+        new THREE.MeshStandardMaterial({ color: 0x111317, roughness: 0.85 })
+      );
+      balaclavaCap.position.set(0, 0.20, 0);
+      headGroup.add(balaclavaCap);
     } else {
       // Base config (no headgear), just add a headband for the headset
       const headband = new THREE.Mesh(new THREE.BoxGeometry(0.31, 0.03, 0.06), matHeadset);
@@ -340,71 +504,83 @@ export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): L
       headGroup.add(visorPlate);
     }
 
-    // 4. ARMS & WEAPON READY STANCE
-    // Rolled Combat Sleeves Logic for Apex Specialized:
-    // If Apex specialized: rolled combat sleeves -> upper arm has shirt, lower arm has bare skin with tactical gloves!
+    // 4. ARMS & DYNAMIC WEAPON MOUNTING STANCE (Tactical Low-Ready Operator Grip)
     const isRolledSleeves = !isUSMC && isSpecialized;
     const lowerArmMat = isRolledSleeves ? matSkin : matShirt;
 
-    // Left Arm
+    // Left Arm (Support Hand reaching across to cradle forend/handguard)
     armL = new THREE.Group();
-    armL.position.set(-0.28, 1.42, 0);
+    armL.position.set(-0.32, 1.40, 0);
     torsoGroup.add(armL);
 
-    const upperArmL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.28, 0.13), matShirt);
-    upperArmL.position.y = -0.14;
+    const upperArmL = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.28, 0.15), matShirt);
+    upperArmL.position.set(0.04, -0.12, 0.06);
+    upperArmL.rotation.set(-0.68, 0.38, -0.15);
     upperArmL.castShadow = true;
+    armL.add(upperArmL);
 
-    // Rolled sleeve cuff if rolled
     if (isRolledSleeves) {
-      const cuffL = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.04, 0.14), matShirt);
-      cuffL.position.set(0.02, -0.27, 0.06);
+      const cuffL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.04, 0.16), matShirt);
+      cuffL.position.set(0.06, -0.25, 0.14);
+      cuffL.rotation.set(-0.68, 0.38, -0.15);
       armL.add(cuffL);
     }
 
     const lowerArmL = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.26, 0.12), lowerArmMat);
-    lowerArmL.position.set(0.05, -0.36, 0.12);
-    lowerArmL.rotation.x = 0.55;
-    lowerArmL.rotation.z = -0.25;
+    lowerArmL.position.set(0.16, -0.28, 0.26);
+    lowerArmL.rotation.set(-0.82, 0.55, 0.25);
     lowerArmL.castShadow = true;
 
-    const gloveL = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.08, 0.12), matGloves);
-    gloveL.position.set(0.07, -0.47, 0.17);
-    gloveL.rotation.x = 0.55;
-    gloveL.rotation.z = -0.25;
-    armL.add(upperArmL, lowerArmL, gloveL);
+    // Tactical wrist watch on left arm
+    const watch = new THREE.Mesh(
+      new THREE.BoxGeometry(0.055, 0.04, 0.035), 
+      new THREE.MeshStandardMaterial({ color: 0x111317, roughness: 0.3, metalness: 0.8 })
+    );
+    watch.position.set(0.02, 0.04, 0.05);
+    lowerArmL.add(watch);
 
-    // Right Arm
+    // Left Glove (cradles the forward handguard / pump)
+    const gloveL = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.10, 0.12), matGloves);
+    gloveL.position.set(0, -0.15, 0.02);
+    gloveL.castShadow = true;
+    lowerArmL.add(gloveL);
+    armL.add(lowerArmL);
+
+    // Right Arm (Trigger Hand grasping the pistol grip)
     armR = new THREE.Group();
-    armR.position.set(0.28, 1.42, 0);
+    armR.position.set(0.32, 1.40, 0);
     torsoGroup.add(armR);
 
-    const upperArmR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.28, 0.13), matShirt);
-    upperArmR.position.y = -0.14;
+    const upperArmR = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.28, 0.15), matShirt);
+    upperArmR.position.set(-0.04, -0.12, 0.04);
+    upperArmR.rotation.set(-0.58, -0.25, 0.12);
     upperArmR.castShadow = true;
+    armR.add(upperArmR);
 
     if (isRolledSleeves) {
-      const cuffR = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.04, 0.14), matShirt);
-      cuffR.position.set(-0.02, -0.27, 0.06);
+      const cuffR = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.04, 0.16), matShirt);
+      cuffR.position.set(-0.06, -0.25, 0.12);
+      cuffR.rotation.set(-0.58, -0.25, 0.12);
       armR.add(cuffR);
     }
 
     const lowerArmR = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.26, 0.12), lowerArmMat);
-    lowerArmR.position.set(-0.06, -0.34, 0.15);
-    lowerArmR.rotation.x = 0.65;
-    lowerArmR.rotation.z = 0.25;
+    lowerArmR.position.set(-0.12, -0.28, 0.22);
+    lowerArmR.rotation.set(-0.72, -0.22, -0.18);
     lowerArmR.castShadow = true;
 
-    const gloveR = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.08, 0.12), matGloves);
-    gloveR.position.set(-0.08, -0.45, 0.21);
-    gloveR.rotation.x = 0.65;
-    gloveR.rotation.z = 0.25;
-    armR.add(upperArmR, lowerArmR, gloveR);
+    // Right Glove (wraps tightly around the pistol grip)
+    const gloveR = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.10, 0.12), matGloves);
+    gloveR.position.set(0, -0.15, 0.02);
+    gloveR.castShadow = true;
+    lowerArmR.add(gloveR);
+    armR.add(lowerArmR);
 
-    // 5. WEAPON IN HANDS
+    // 5. WEAPON: Anchored dynamically into operator hand coordinates
+    // Socket sits directly at the right hand trigger point, with barrel pointing forward across chest in low-ready
     weaponGroup = new THREE.Group();
-    weaponGroup.position.set(0.10, 1.08, 0.35);
-    weaponGroup.rotation.set(-0.15, -0.18, 0.05);
+    weaponGroup.position.set(0.14, 1.05, 0.26);
+    weaponGroup.rotation.set(0.24, -0.22, -0.28);
     torsoGroup.add(weaponGroup);
 
     buildWeaponMesh(weaponGroup, currentWeapon);
@@ -415,56 +591,212 @@ export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): L
       targetGroup.remove(targetGroup.children[0]);
     }
 
-    const matGunMetal = new THREE.MeshStandardMaterial({ color: 0x25282d, roughness: 0.45, metalness: 0.8 });
-    const matGunDark = new THREE.MeshStandardMaterial({ color: 0x121315, roughness: 0.7, metalness: 0.3 });
-    const matAccent = new THREE.MeshStandardMaterial({ color: 0x4a5568, roughness: 0.4, metalness: 0.5 });
+    const matGunMetal = new THREE.MeshStandardMaterial({ color: 0x22252a, roughness: 0.42, metalness: 0.82 });
+    const matGunDark = new THREE.MeshStandardMaterial({ color: 0x101214, roughness: 0.68, metalness: 0.4 });
+    const matGunGrey = new THREE.MeshStandardMaterial({ color: 0x3e434a, roughness: 0.45, metalness: 0.65 });
+    const matAccent = new THREE.MeshStandardMaterial({ color: 0x5a6270, roughness: 0.35, metalness: 0.6 });
+    const matLaserGlow = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00bcd4, emissiveIntensity: 2.0 });
+    const matOpticCyan = new THREE.MeshStandardMaterial({ color: 0x2de2e6, roughness: 0.1, transparent: true, opacity: 0.85, emissive: 0x00838f, emissiveIntensity: 0.9 });
 
     if (weaponId === 'shotgun') {
-      const body = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.55), matGunDark);
-      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.65, 8), matGunMetal);
+      // Expedite 12 Tactical Shotgun
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.10, 0.42), matGunDark);
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.52, 10), matGunMetal);
       barrel.rotation.x = Math.PI / 2;
-      barrel.position.set(0, 0.04, 0.18);
-      const pump = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.16), matGunMetal);
-      pump.position.set(0, -0.01, 0.15);
-      targetGroup.add(body, barrel, pump);
-    } else if (weaponId === 'sniper') {
-      const body = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.12, 0.70), matGunDark);
-      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.85, 8), matGunMetal);
-      barrel.rotation.x = Math.PI / 2;
-      barrel.position.set(0, 0.04, 0.32);
-      const scope = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.28, 8), matGunMetal);
-      scope.rotation.x = Math.PI / 2;
-      scope.position.set(0, 0.11, 0.02);
-      targetGroup.add(body, barrel, scope);
-    } else if (weaponId === 'pistol') {
-      const slide = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.07, 0.24), matGunMetal);
-      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.13, 0.08), matGunDark);
+      barrel.position.set(0, 0.03, 0.24);
+      const magTube = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.46, 10), matGunDark);
+      magTube.rotation.x = Math.PI / 2;
+      magTube.position.set(0, -0.01, 0.22);
+      const pump = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.075, 0.16), matGunMetal);
+      pump.position.set(0, -0.01, 0.18);
+      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.12, 0.07), matGunDark);
       grip.position.set(0, -0.08, -0.06);
-      grip.rotation.x = 0.22;
-      targetGroup.add(slide, grip);
-    } else if (weaponId === 'lmg' || weaponId === 'minigun') {
-      const body = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.16, 0.65), matGunDark);
-      const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.16, 12), matGunMetal);
-      drum.rotation.z = Math.PI / 2;
-      drum.position.set(0, -0.12, 0.05);
-      const barrels = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.55, 8), matGunMetal);
-      barrels.rotation.x = Math.PI / 2;
-      barrels.position.set(0, 0.02, 0.35);
-      targetGroup.add(body, drum, barrels);
-    } else {
-      // Default M4A1 Assault Rifle / Battle Rifle
-      const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.12, 0.45), matGunMetal);
-      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.50, 8), matGunDark);
+      grip.rotation.x = 0.25;
+      const stock = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.09, 0.22), matGunDark);
+      stock.position.set(0, -0.01, -0.20);
+      targetGroup.add(body, barrel, magTube, pump, grip, stock);
+
+    } else if (weaponId === 'sniper') {
+      // Signal 50 Heavy Anti-Materiel Sniper Rifle
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.11, 0.55), matGunDark);
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.78, 10), matGunMetal);
       barrel.rotation.x = Math.PI / 2;
-      barrel.position.set(0, 0.03, 0.28);
-      const mag = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.16, 0.09), matGunDark);
-      mag.position.set(0, -0.11, 0.05);
+      barrel.position.set(0, 0.03, 0.38);
+      const muzzleBrake = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.045, 0.09), matGunMetal);
+      muzzleBrake.position.set(0, 0.03, 0.78);
+      const scopeTube = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.32, 10), matGunDark);
+      scopeTube.rotation.x = Math.PI / 2;
+      scopeTube.position.set(0, 0.11, 0.05);
+      const scopeLens = new THREE.Mesh(new THREE.CircleGeometry(0.020, 12), matOpticCyan);
+      scopeLens.position.set(0, 0.11, -0.11);
+      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.13, 0.07), matGunDark);
+      grip.position.set(0, -0.09, -0.05);
+      grip.rotation.x = 0.25;
+      const stock = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.10, 0.26), matGunDark);
+      stock.position.set(0, -0.01, -0.22);
+      const mag = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.16, 0.10), matGunMetal);
+      mag.position.set(0, -0.10, 0.08);
+      mag.rotation.x = 0.2;
+      targetGroup.add(body, barrel, muzzleBrake, scopeTube, scopeLens, grip, stock, mag);
+
+    } else if (weaponId === 'pistol') {
+      // Combat 9mm Tactical Sidearm
+      const slide = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.065, 0.22), matGunMetal);
+      slide.position.set(0, 0.04, 0.04);
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.05, 0.20), matGunDark);
+      frame.position.set(0, 0.0, 0.04);
+      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.13, 0.075), matGunDark);
+      grip.position.set(0, -0.08, -0.04);
+      grip.rotation.x = 0.24;
+      const triggerGuard = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.04, 0.06), matGunMetal);
+      triggerGuard.position.set(0, -0.04, 0.02);
+      targetGroup.add(slide, frame, grip, triggerGuard);
+
+    } else if (weaponId === 'smg') {
+      // VEL-46 Submachine Gun
+      const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.09, 0.32), matGunDark);
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.24, 10), matGunMetal);
+      barrel.rotation.x = Math.PI / 2;
+      barrel.position.set(0, 0.02, 0.20);
+      const mag = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.22, 0.05), matGunMetal);
+      mag.position.set(0, -0.12, 0.06);
+      mag.rotation.x = 0.18;
+      const foregrip = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.10, 0.04), matGunDark);
+      foregrip.position.set(0, -0.08, 0.18);
+      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.12, 0.065), matGunDark);
+      grip.position.set(0, -0.08, -0.04);
+      grip.rotation.x = 0.25;
+      const optic = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.04, 0.08), matAccent);
+      optic.position.set(0, 0.07, 0.02);
+      targetGroup.add(receiver, barrel, mag, foregrip, grip, optic);
+
+    } else if (weaponId === 'lmg') {
+      // Sakin Heavy LMG with underslung drum
+      const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.13, 0.48), matGunDark);
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.58, 10), matGunMetal);
+      barrel.rotation.x = Math.PI / 2;
+      barrel.position.set(0, 0.02, 0.28);
+      const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.13, 16), matGunMetal);
+      drum.rotation.z = Math.PI / 2;
+      drum.position.set(0, -0.12, 0.06);
+      const carryHandle = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.06, 0.16), matAccent);
+      carryHandle.position.set(0, 0.10, 0.12);
+      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.12, 0.07), matGunDark);
+      grip.position.set(0, -0.09, -0.08);
+      grip.rotation.x = 0.24;
+      const stock = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.11, 0.22), matGunDark);
+      stock.position.set(0, -0.01, -0.24);
+      targetGroup.add(receiver, barrel, drum, carryHandle, grip, stock);
+
+    } else if (weaponId === 'br') {
+      // F2000 Bullpup Battle Rifle (Monolithic chassis, integrated optic, bullpup rear magazine)
+      const chassis = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.12, 0.44), matGunDark);
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.35, 10), matGunMetal);
+      barrel.rotation.x = Math.PI / 2;
+      barrel.position.set(0, 0.02, 0.26);
+      const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.035, 0.06), matGunMetal);
+      muzzle.position.set(0, 0.02, 0.42);
+      // Integrated carry handle & optic box
+      const opticShroud = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.065, 0.24), matGunGrey);
+      opticShroud.position.set(0, 0.09, 0.02);
+      const opticLens = new THREE.Mesh(new THREE.CircleGeometry(0.016, 12), matOpticCyan);
+      opticLens.position.set(0, 0.09, -0.10);
+      // Ergonomic front handguard
+      const handguard = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.09, 0.18), matGunMetal);
+      handguard.position.set(0, -0.03, 0.16);
+      // Pistol Grip
+      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.12, 0.065), matGunDark);
+      grip.position.set(0, -0.09, 0.02);
+      grip.rotation.x = 0.24;
+      // Rear bullpup magazine (strictly situated BEHIND pistol grip in stock)
+      const bullpupMag = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.15, 0.075), matGunMetal);
+      bullpupMag.position.set(0, -0.08, -0.14);
+      bullpupMag.rotation.x = -0.15;
+      // Thumbhole rear stock
+      const stock = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.12, 0.22), matGunDark);
+      stock.position.set(0, -0.01, -0.22);
+      targetGroup.add(chassis, barrel, muzzle, opticShroud, opticLens, handguard, grip, bullpupMag, stock);
+
+    } else if (weaponId === 'laser') {
+      // Covenant Plasma Beam Rifle (Curved chassis, heat louvers, glowing power core)
+      const matAlienChassis = new THREE.MeshStandardMaterial({ color: 0x3d205c, roughness: 0.35, metalness: 0.85 });
+      const mainFrame = new THREE.Mesh(new THREE.BoxGeometry(0.068, 0.11, 0.45), matAlienChassis);
+      const emitterSnout = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.15, 12), matGunMetal);
+      emitterSnout.rotation.x = -Math.PI / 2;
+      emitterSnout.position.set(0, 0.01, 0.28);
+      const glowingCore = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.18), matLaserGlow);
+      glowingCore.position.set(0, 0.04, 0.02);
+      const heatFins = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.14), matAlienChassis);
+      heatFins.position.set(0, 0.02, -0.10);
+      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.12, 0.065), matGunDark);
+      grip.position.set(0, -0.08, 0.0);
+      grip.rotation.x = 0.25;
+      targetGroup.add(mainFrame, emitterSnout, glowingCore, heatFins, grip);
+
+    } else if (weaponId === 'minigun') {
+      // Vulcan Rotary Cannon (Rotating 6-barrel cluster, motor housing, chainsaw carry handle)
+      const motorHousing = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, 0.32), matGunDark);
+      const barrelCluster = new THREE.Group();
+      barrelCluster.position.set(0, 0, 0.28);
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.44, 8), matGunMetal);
+        b.rotation.x = Math.PI / 2;
+        b.position.set(Math.cos(angle) * 0.038, Math.sin(angle) * 0.038, 0);
+        barrelCluster.add(b);
+      }
+      const ring1 = new THREE.Mesh(new THREE.TorusGeometry(0.042, 0.008, 8, 16), matGunMetal);
+      ring1.position.z = 0.12;
+      const ring2 = new THREE.Mesh(new THREE.TorusGeometry(0.042, 0.008, 8, 16), matGunMetal);
+      ring2.position.z = -0.12;
+      barrelCluster.add(ring1, ring2);
+
+      const topHandle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.08, 0.22), matAccent);
+      topHandle.position.set(0, 0.11, 0.04);
+      const rearGrip = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.14, 0.08), matGunDark);
+      rearGrip.position.set(0, -0.06, -0.14);
+      targetGroup.add(motorHousing, barrelCluster, topHandle, rearGrip);
+
+    } else if (weaponId === 'railgun') {
+      // Kinetic AP Railgun (Dual parallel electromagnetic accelerator rails)
+      const chassis = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.11, 0.48), matGunDark);
+      const topRail = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.58), matGunMetal);
+      topRail.position.set(0, 0.045, 0.26);
+      const bottomRail = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.58), matGunMetal);
+      bottomRail.position.set(0, -0.015, 0.26);
+      const acceleratorGlow = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.04, 0.50), matLaserGlow);
+      acceleratorGlow.position.set(0, 0.015, 0.24);
+      const capacitorStock = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.24), matGunDark);
+      capacitorStock.position.set(0, 0, -0.22);
+      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.12, 0.065), matGunDark);
+      grip.position.set(0, -0.08, -0.04);
+      grip.rotation.x = 0.25;
+      targetGroup.add(chassis, topRail, bottomRail, acceleratorGlow, capacitorStock, grip);
+
+    } else {
+      // Default M4A1 Tactical Assault Rifle (quad-rail, STANAG mag, holographic optic)
+      const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.10, 0.38), matGunMetal);
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.42, 10), matGunDark);
+      barrel.rotation.x = Math.PI / 2;
+      barrel.position.set(0, 0.025, 0.26);
+      const flashHider = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.05, 8), matGunMetal);
+      flashHider.rotation.x = Math.PI / 2;
+      flashHider.position.set(0, 0.025, 0.48);
+      const handguard = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.065, 0.22), matGunDark);
+      handguard.position.set(0, 0.025, 0.18);
+      const mag = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.16, 0.08), matGunDark);
+      mag.position.set(0, -0.10, 0.05);
       mag.rotation.x = 0.22;
-      const stock = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.10, 0.22), matGunDark);
-      stock.position.set(0, -0.02, -0.24);
-      const optic = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.05, 0.12), matAccent);
-      optic.position.set(0, 0.09, -0.02);
-      targetGroup.add(receiver, barrel, mag, stock, optic);
+      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.046, 0.12, 0.065), matGunDark);
+      grip.position.set(0, -0.08, -0.06);
+      grip.rotation.x = 0.26;
+      const stock = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.09, 0.20), matGunDark);
+      stock.position.set(0, -0.01, -0.22);
+      const optic = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.045, 0.11), matAccent);
+      optic.position.set(0, 0.075, 0.0);
+      const opticReticle = new THREE.Mesh(new THREE.CircleGeometry(0.014, 10), matOpticCyan);
+      opticReticle.position.set(0, 0.075, -0.056);
+      targetGroup.add(receiver, barrel, flashHider, handguard, mag, grip, stock, optic, opticReticle);
     }
   }
 
@@ -480,14 +812,14 @@ export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): L
         chestMesh.scale.set(breathScale, breathScale, breathScale);
       }
       if (headGroup) {
-        headGroup.position.y = 1.62 + Math.sin(breathPhase) * 0.007;
+        headGroup.position.y = 1.53 + Math.sin(breathPhase) * 0.007;
         headGroup.rotation.y = Math.sin(timeSec * 0.4) * 0.06;
       }
       if (torsoGroup) {
         torsoGroup.position.y = Math.sin(breathPhase) * 0.004;
       }
       if (weaponGroup) {
-        weaponGroup.position.y = 1.08 + Math.sin(breathPhase + 0.3) * 0.006;
+        weaponGroup.position.y = 1.05 + Math.sin(breathPhase) * 0.003;
       }
 
       // Smooth turntable base rotation

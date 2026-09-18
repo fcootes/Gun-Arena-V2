@@ -1,0 +1,1907 @@
+import * as THREE from 'three';
+import { WorldCollider, Door, GroundPickup } from './types';
+import { WEAPONS } from './weapons';
+
+export const MAP_HALF = 72;
+
+
+export let currentWorldMapId: 'training' | 'hangar' = 'training';
+
+export function terrainHeight(x: number, z: number): number {
+  if (currentWorldMapId === 'hangar') return 0;
+
+  return (
+    Math.sin(x * 0.024) * 3.8 +
+    Math.cos(z * 0.026) * 3.4 +
+    Math.sin((x + z) * 0.016) * 2.2 +
+    Math.cos(x * 0.045 - z * 0.035) * 1.1
+  );
+}
+
+export function randomMapPoint(minDistFromCenter = 0): { x: number; z: number } {
+  if (currentWorldMapId === 'hangar') {
+    // Bio-Lab designated open sector rooms & corridor lanes
+    const labSpawnZones = [
+      { minX: -11, maxX: 11, minZ: -11, maxZ: 11 },     // Sector 3 (Central Platform & Hub)
+      { minX: -52, maxX: -32, minZ: -12, maxZ: 12 },   // Sector 2 (Cryo Storage Chamber)
+      { minX: 32, maxX: 52, minZ: -12, maxZ: 12 },     // Sector 4 (Virology Synthesis Lab)
+      { minX: -12, maxX: 12, minZ: 38, maxZ: 56 },     // Sector 1 (South Decon Airlock)
+      { minX: -12, maxX: 12, minZ: -56, maxZ: -38 },   // Sector 5 (North Quarantine Vault)
+      { minX: -1.0, maxX: 1.0, minZ: -30, maxZ: -20 }, // North Corridor
+      { minX: -1.0, maxX: 1.0, minZ: 20, maxZ: 30 },   // South Corridor
+      { minX: -24, maxX: -20, minZ: -1.0, maxZ: 1.0 }, // West Corridor
+      { minX: 20, maxX: 24, minZ: -1.0, maxZ: 1.0 },   // East Corridor
+    ];
+    let attempts = 0;
+    while (attempts < 25) {
+      attempts++;
+      const zone = labSpawnZones[Math.floor(Math.random() * labSpawnZones.length)];
+      const x = zone.minX + Math.random() * (zone.maxX - zone.minX);
+      const z = zone.minZ + Math.random() * (zone.maxZ - zone.minZ);
+      const d = Math.hypot(x, z);
+      if (minDistFromCenter > 0 && d < minDistFromCenter) continue;
+      return { x, z };
+    }
+  }
+
+  let x: number, z: number, d: number;
+  do {
+    x = (Math.random() * 2 - 1) * MAP_HALF * 0.88;
+    z = (Math.random() * 2 - 1) * MAP_HALF * 0.88;
+    d = Math.hypot(x, z);
+  } while (minDistFromCenter > 0 && d < minDistFromCenter);
+  return { x, z };
+}
+
+export interface ObjectivePropInstance {
+  group: THREE.Group;
+  interactNode: THREE.Vector3;
+  type: 'mainframe' | 'cryo_pod';
+  boundingMesh?: THREE.Mesh;
+  canisterGroup?: THREE.Group;
+  update?: (dt: number, time: number) => void;
+  dispose: () => void;
+}
+
+export interface WorldManager {
+  terrainMesh: THREE.Mesh;
+  worldColliders: WorldCollider[];
+  doors: Door[];
+  hittableObjects: THREE.Object3D[];
+  groundPickups: GroundPickup[];
+  structures: { center: THREE.Vector3 }[];
+  registerHittable: (mesh: THREE.Object3D) => void;
+  unregisterHittable: (mesh: THREE.Object3D) => void;
+  damageEnvironmentalBlock: (object: THREE.Object3D, degradationAmount: number, hitPoint?: THREE.Vector3) => boolean;
+  updateDebris: (dt: number) => void;
+  createGroundPickup: (x: number, z: number, weaponTypeIndex: number, ammoAmount: number) => GroundPickup;
+  collectPickup: (item: GroundPickup, onAcquire: (msg: string) => void, weaponStates: { count?: number; reserve?: number }[]) => void;
+  updateDoors: (dt: number) => void;
+  moveEntityWithCollision: (pos: THREE.Vector3, vel: THREE.Vector3, radius: number, footY: number, headY: number, dt: number) => void;
+  getHighestSurface: (x: number, z: number, footY: number) => number;
+  spawnObjectiveProp: (faction: 'usmc' | 'apex', customPos?: THREE.Vector3) => ObjectivePropInstance;
+  spawnDeployableCover: (pos: THREE.Vector3, rotY: number) => THREE.Group;
+  hangarCorridorNodes: { mainframe: THREE.Vector3; cryo: THREE.Vector3; evac: THREE.Vector3; center: THREE.Vector3 };
+  dispose: () => void;
+}
+
+
+export function createWorld(scene: THREE.Scene, mapId: 'training' | 'hangar' = 'training'): WorldManager {
+  currentWorldMapId = mapId;
+
+  const worldGroup = new THREE.Group();
+  scene.add(worldGroup);
+
+  const worldColliders: WorldCollider[] = [];
+  const doors: Door[] = [];
+  const hittableObjects: THREE.Object3D[] = [];
+  const groundPickups: GroundPickup[] = [];
+  const structures: { center: THREE.Vector3 }[] = [];
+
+  const activeDebris: Array<{
+    mesh: THREE.Mesh;
+    vel: THREE.Vector3;
+    rotVel: THREE.Vector3;
+    life: number;
+  }> = [];
+
+  function makeDestructible(mesh: THREE.Mesh, collider: WorldCollider, colorHex: number): void {
+    mesh.userData = {
+      type: 'building',
+      destructible: true,
+      degradation: 0,
+      collider,
+      blockColor: colorHex
+    };
+  }
+
+  function damageEnvironmentalBlock(object: THREE.Object3D, degradationAmount: number, hitPoint?: THREE.Vector3): boolean {
+    if (!object || !object.userData || !object.userData.destructible || object.userData.destroyed) {
+      return false;
+    }
+    object.userData.degradation = (object.userData.degradation || 0) + degradationAmount;
+
+    if (object instanceof THREE.Mesh && object.material) {
+      const mat = object.material as THREE.MeshStandardMaterial;
+      if (mat && mat.color) {
+        mat.color.multiplyScalar(0.94);
+      }
+    }
+
+    if (object.userData.degradation >= 100) {
+      object.userData.destroyed = true;
+      if (object.userData.collider) {
+        object.userData.collider.active = false;
+      }
+      unregisterHittable(object);
+      object.visible = false;
+      if (object.parent) {
+        object.parent.remove(object);
+      }
+
+      // Spawning bursting spray of 8-12 tiny, matching debris particle blocks that tumble to ground via gravity
+      const debrisColor = object.userData.blockColor ?? 0x767066;
+      const count = Math.floor(Math.random() * 5) + 8; // 8-12 debris blocks
+      const origin = hitPoint ? hitPoint.clone() : new THREE.Vector3();
+      if (!hitPoint) object.getWorldPosition(origin);
+
+      for (let k = 0; k < count; k++) {
+        const size = 0.14 + Math.random() * 0.14;
+        const debrisMesh = new THREE.Mesh(
+          new THREE.BoxGeometry(size, size, size),
+          new THREE.MeshStandardMaterial({ color: debrisColor, roughness: 0.9 })
+        );
+        debrisMesh.position.copy(origin).add(new THREE.Vector3(
+          (Math.random() - 0.5) * 0.35,
+          (Math.random() - 0.5) * 0.35,
+          (Math.random() - 0.5) * 0.35
+        ));
+        debrisMesh.castShadow = true;
+        worldGroup.add(debrisMesh);
+        activeDebris.push({
+          mesh: debrisMesh,
+          vel: new THREE.Vector3(
+            (Math.random() - 0.5) * 5.5,
+            2.4 + Math.random() * 3.8,
+            (Math.random() - 0.5) * 5.5
+          ),
+          rotVel: new THREE.Vector3(
+            (Math.random() - 0.5) * 12,
+            (Math.random() - 0.5) * 12,
+            (Math.random() - 0.5) * 12
+          ),
+          life: 2.8
+        });
+      }
+      return true;
+    }
+    return false;
+  }
+
+  function updateDebris(dt: number): void {
+    for (let i = activeDebris.length - 1; i >= 0; i--) {
+      const d = activeDebris[i];
+      d.life -= dt;
+      if (d.life <= 0) {
+        worldGroup.remove(d.mesh);
+        d.mesh.geometry.dispose();
+        (d.mesh.material as THREE.Material).dispose();
+        activeDebris.splice(i, 1);
+        continue;
+      }
+      d.vel.y -= 18 * dt; // gravity
+      d.mesh.position.addScaledVector(d.vel, dt);
+      d.mesh.rotation.x += d.rotVel.x * dt;
+      d.mesh.rotation.y += d.rotVel.y * dt;
+      d.mesh.rotation.z += d.rotVel.z * dt;
+      const ground = terrainHeight(d.mesh.position.x, d.mesh.position.z);
+      if (d.mesh.position.y <= ground + 0.08) {
+        d.mesh.position.y = ground + 0.08;
+        d.vel.y = -d.vel.y * 0.35;
+        d.vel.x *= 0.65;
+        d.vel.z *= 0.65;
+      }
+    }
+  }
+
+  function registerHittable(mesh: THREE.Object3D): void {
+    hittableObjects.push(mesh);
+  }
+  function unregisterHittable(mesh: THREE.Object3D): void {
+    const i = hittableObjects.indexOf(mesh);
+    if (i >= 0) hittableObjects.splice(i, 1);
+  }
+
+  
+  function addTacticalObstacleCluster(x: number, z: number): void {
+    const y = terrainHeight(x, z);
+    const g = new THREE.Group();
+    const crateMat = new THREE.MeshStandardMaterial({ color: 0x3e5265, metalness: 0.3, roughness: 0.7 });
+    const barrierMat = new THREE.MeshStandardMaterial({ color: 0x6b6e70, roughness: 0.9 });
+
+    const b1 = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.6, 2.4), crateMat);
+    b1.position.set(0, 0.8, 0);
+    b1.castShadow = true;
+    b1.receiveShadow = true;
+
+    const b2 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.5, 2.2), crateMat);
+    b2.position.set(0.4, 2.3, 0.2);
+    b2.castShadow = true;
+    b2.receiveShadow = true;
+
+    const barrier = new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.2, 0.4), barrierMat);
+    barrier.position.set(-1.6, 0.6, 1.8);
+    barrier.castShadow = true;
+    barrier.receiveShadow = true;
+
+    g.add(b1, b2, barrier);
+    g.position.set(x, y, z);
+    worldGroup.add(g);
+
+    registerHittable(b1);
+    registerHittable(b2);
+    registerHittable(barrier);
+
+    const b1Col: WorldCollider = { minX: x - 1.2, maxX: x + 1.2, minY: y, maxY: y + 1.6, minZ: z - 1.2, maxZ: z + 1.2, active: true };
+    const b2Col: WorldCollider = { minX: x + 0.4 - 1.1, maxX: x + 0.4 + 1.1, minY: y + 1.5, maxY: y + 3.05, minZ: z + 0.2 - 1.1, maxZ: z + 0.2 + 1.1, active: true };
+    const barrierCol: WorldCollider = { minX: x - 1.6 - 1.8, maxX: x - 1.6 + 1.8, minY: y, maxY: y + 1.2, minZ: z + 1.8 - 0.2, maxZ: z + 1.8 + 0.2, active: true };
+
+    worldColliders.push(b1Col, b2Col, barrierCol);
+    makeDestructible(b1, b1Col, 0x3e5265);
+    makeDestructible(b2, b2Col, 0x3e5265);
+    makeDestructible(barrier, barrierCol, 0x6b6e70);
+  }
+
+  // Terrain & Map Generation
+  let terrainMesh: THREE.Mesh;
+
+  if (mapId === 'training') {
+    const terrainGeo = new THREE.PlaneGeometry(MAP_HALF * 2, MAP_HALF * 2, 110, 110);
+    {
+      const pos = terrainGeo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const lx = pos.getX(i);
+        const ly = pos.getY(i);
+        pos.setZ(i, terrainHeight(lx, -ly));
+      }
+      terrainGeo.computeVertexNormals();
+      terrainGeo.rotateX(-Math.PI / 2);
+    }
+    const terrainMat = new THREE.MeshStandardMaterial({ color: 0x537740, roughness: 0.95, metalness: 0 });
+    terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+    terrainMesh.receiveShadow = true;
+    terrainMesh.userData = { type: 'terrain' };
+    worldGroup.add(terrainMesh);
+    registerHittable(terrainMesh);
+
+
+  // Flora and Rocks
+  function makeTree(x: number, z: number): void {
+    const g = new THREE.Group();
+    const trunkH = 2.4 + Math.random() * 1.2;
+    const trunk = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.22, 0.3, trunkH, 7),
+      new THREE.MeshStandardMaterial({ color: 0x5b3d24, roughness: 1 })
+    );
+    trunk.position.y = trunkH / 2;
+    trunk.castShadow = true;
+    const canopy = new THREE.Mesh(
+      new THREE.ConeGeometry(1.5 + Math.random() * 0.6, 3.2, 8),
+      new THREE.MeshStandardMaterial({ color: 0x2e5c30, roughness: 1 })
+    );
+    canopy.position.y = trunkH + 1.4;
+    canopy.castShadow = true;
+    g.add(trunk, canopy);
+    g.position.set(x, terrainHeight(x, z), z);
+    worldGroup.add(g);
+    trunk.userData = { type: 'tree' };
+    registerHittable(trunk);
+
+    worldColliders.push({
+      minX: x - 0.32,
+      maxX: x + 0.32,
+      minY: terrainHeight(x, z),
+      maxY: terrainHeight(x, z) + trunkH,
+      minZ: z - 0.32,
+      maxZ: z + 0.32,
+      active: true
+    });
+  }
+
+  function makeRock(x: number, z: number): void {
+    const s = 1.0 + Math.random() * 1.3;
+    const rock = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(s, 0),
+      new THREE.MeshStandardMaterial({ color: 0x777c80, roughness: 1, flatShading: true })
+    );
+    rock.position.set(x, terrainHeight(x, z) + s * 0.4, z);
+    rock.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+    rock.castShadow = true;
+    rock.receiveShadow = true;
+    worldGroup.add(rock);
+    rock.userData = { type: 'rock' };
+    registerHittable(rock);
+
+    worldColliders.push({
+      minX: x - s * 0.7,
+      maxX: x + s * 0.7,
+      minY: terrainHeight(x, z),
+      maxY: terrainHeight(x, z) + s * 1.3,
+      minZ: z - s * 0.7,
+      maxZ: z + s * 0.7,
+      active: true
+    });
+  }
+
+  
+    for (let i = 0; i < 28; i++) {
+      const p = randomMapPoint(0);
+      makeTree(p.x, p.z);
+    }
+    for (let i = 0; i < 16; i++) {
+      const p = randomMapPoint(0);
+      makeRock(p.x, p.z);
+    }
+
+
+  // Doors
+  function createDoor(x: number, y: number, z: number, dw: number, dh: number, dt: number, buildingGroup: THREE.Group): Door {
+    const hingeGroup = new THREE.Group();
+    hingeGroup.position.set(x - dw / 2, y, z);
+
+    const doorMat = new THREE.MeshStandardMaterial({ color: 0x6e452a, roughness: 0.82, metalness: 0.1 });
+    const doorGeo = new THREE.BoxGeometry(dw, dh, dt);
+    const doorMesh = new THREE.Mesh(doorGeo, doorMat);
+    doorMesh.position.set(dw / 2, dh / 2, 0);
+    doorMesh.castShadow = true;
+    doorMesh.receiveShadow = true;
+    hingeGroup.add(doorMesh);
+
+    const handleMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.85, roughness: 0.25 });
+    const handleMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.18, 8), handleMat);
+    handleMesh.rotation.x = Math.PI / 2;
+    handleMesh.position.set(dw - 0.16, dh / 2, 0);
+    hingeGroup.add(handleMesh);
+
+    doorMesh.userData = { type: 'building' };
+    registerHittable(doorMesh);
+    buildingGroup.add(hingeGroup);
+
+    const doorCollider: WorldCollider = {
+      minX: x - dw / 2,
+      maxX: x + dw / 2,
+      minY: y,
+      maxY: y + dh,
+      minZ: z - 0.25,
+      maxZ: z + 0.25,
+      active: true,
+      isDoor: true
+    };
+    worldColliders.push(doorCollider);
+
+    const doorObj: Door = {
+      hingeGroup,
+      mesh: doorMesh,
+      pos: new THREE.Vector3(x, y + dh / 2, z),
+      isOpen: false,
+      currentAngle: 0,
+      targetAngle: 0,
+      collider: doorCollider
+    };
+    doors.push(doorObj);
+    return doorObj;
+  }
+
+  // Buildings
+  function addWorldBuilding(x: number, z: number, w: number, d: number, h: number, hasRoofSteps = false): void {
+    const y = terrainHeight(x, z);
+    const g = new THREE.Group();
+
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x8d8272, roughness: 0.9 });
+    const roofMat = new THREE.MeshStandardMaterial({ color: 0x5e4537, roughness: 0.9 });
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x44484d, roughness: 0.85 });
+
+    const wt = 0.4;
+    const dw = 1.6;
+    const dh = 2.4;
+
+    const backWall = new THREE.Mesh(new THREE.BoxGeometry(w, h, wt), bodyMat);
+    backWall.position.set(0, h / 2, -d / 2 + wt / 2);
+    backWall.castShadow = true;
+    backWall.receiveShadow = true;
+    g.add(backWall);
+    registerHittable(backWall);
+    const backWallCol: WorldCollider = { minX: x - w / 2, maxX: x + w / 2, minY: y, maxY: y + h, minZ: z - d / 2, maxZ: z - d / 2 + wt, active: true };
+    worldColliders.push(backWallCol);
+    makeDestructible(backWall, backWallCol, 0x8d8272);
+
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(wt, h, d), bodyMat);
+    leftWall.position.set(-w / 2 + wt / 2, h / 2, 0);
+    leftWall.castShadow = true;
+    leftWall.receiveShadow = true;
+    g.add(leftWall);
+    registerHittable(leftWall);
+    const leftWallCol: WorldCollider = { minX: x - w / 2, maxX: x - w / 2 + wt, minY: y, maxY: y + h, minZ: z - d / 2, maxZ: z + d / 2, active: true };
+    worldColliders.push(leftWallCol);
+    makeDestructible(leftWall, leftWallCol, 0x8d8272);
+
+    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(wt, h, d), bodyMat);
+    rightWall.position.set(w / 2 - wt / 2, h / 2, 0);
+    rightWall.castShadow = true;
+    rightWall.receiveShadow = true;
+    g.add(rightWall);
+    registerHittable(rightWall);
+    const rightWallCol: WorldCollider = { minX: x + w / 2 - wt, maxX: x + w / 2, minY: y, maxY: y + h, minZ: z - d / 2, maxZ: z + d / 2, active: true };
+    worldColliders.push(rightWallCol);
+    makeDestructible(rightWall, rightWallCol, 0x8d8272);
+
+    const frontLeftW = (w - dw) / 2;
+    const frontLeft = new THREE.Mesh(new THREE.BoxGeometry(frontLeftW, h, wt), bodyMat);
+    frontLeft.position.set(-w / 2 + frontLeftW / 2, h / 2, d / 2 - wt / 2);
+    frontLeft.castShadow = true;
+    frontLeft.receiveShadow = true;
+    g.add(frontLeft);
+    registerHittable(frontLeft);
+    const frontLeftCol: WorldCollider = { minX: x - w / 2, maxX: x - dw / 2, minY: y, maxY: y + h, minZ: z + d / 2 - wt, maxZ: z + d / 2, active: true };
+    worldColliders.push(frontLeftCol);
+    makeDestructible(frontLeft, frontLeftCol, 0x8d8272);
+
+    const frontRightW = (w - dw) / 2;
+    const frontRight = new THREE.Mesh(new THREE.BoxGeometry(frontRightW, h, wt), bodyMat);
+    frontRight.position.set(dw / 2 + frontRightW / 2, h / 2, d / 2 - wt / 2);
+    frontRight.castShadow = true;
+    frontRight.receiveShadow = true;
+    g.add(frontRight);
+    registerHittable(frontRight);
+    const frontRightCol: WorldCollider = { minX: x + dw / 2, maxX: x + w / 2, minY: y, maxY: y + h, minZ: z + d / 2 - wt, maxZ: z + d / 2, active: true };
+    worldColliders.push(frontRightCol);
+    makeDestructible(frontRight, frontRightCol, 0x8d8272);
+
+    const lintelH = h - dh;
+    if (lintelH > 0.1) {
+      const lintel = new THREE.Mesh(new THREE.BoxGeometry(dw, lintelH, wt), bodyMat);
+      lintel.position.set(0, dh + lintelH / 2, d / 2 - wt / 2);
+      lintel.castShadow = true;
+      lintel.receiveShadow = true;
+      g.add(lintel);
+      registerHittable(lintel);
+      const lintelCol: WorldCollider = { minX: x - dw / 2, maxX: x + dw / 2, minY: y + dh, maxY: y + h, minZ: z + d / 2 - wt, maxZ: z + d / 2, active: true };
+      worldColliders.push(lintelCol);
+      makeDestructible(lintel, lintelCol, 0x8d8272);
+    }
+
+    const floorMesh = new THREE.Mesh(new THREE.BoxGeometry(w - wt, 0.2, d - wt), floorMat);
+    floorMesh.position.set(0, 0.1, 0);
+    floorMesh.receiveShadow = true;
+    g.add(floorMesh);
+    registerHittable(floorMesh);
+    worldColliders.push({ minX: x - w / 2 + wt / 2, maxX: x + w / 2 - wt / 2, minY: y, maxY: y + 0.2, minZ: z - d / 2 + wt / 2, maxZ: z + d / 2 - wt / 2, active: true });
+
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.6, 0.4, d + 0.6), roofMat);
+    roof.position.set(0, h + 0.2, 0);
+    roof.castShadow = true;
+    roof.receiveShadow = true;
+    g.add(roof);
+    registerHittable(roof);
+    const roofCol: WorldCollider = { minX: x - (w + 0.6) / 2, maxX: x + (w + 0.6) / 2, minY: y + h, maxY: y + h + 0.4, minZ: z - (d + 0.6) / 2, maxZ: z + (d + 0.6) / 2, active: true };
+    worldColliders.push(roofCol);
+    makeDestructible(roof, roofCol, 0x5e4537);
+
+    if (hasRoofSteps) {
+      const stepCount = 3;
+      for (let s = 1; s <= stepCount; s++) {
+        const stepH = (h * s) / stepCount;
+        const stepBox = new THREE.Mesh(new THREE.BoxGeometry(1.6, stepH, 1.4), new THREE.MeshStandardMaterial({ color: 0x4a443a, roughness: 0.85 }));
+        stepBox.position.set(w / 2 + 0.9, stepH / 2, -d / 2 + s * 1.4);
+        stepBox.castShadow = true;
+        stepBox.receiveShadow = true;
+        g.add(stepBox);
+        registerHittable(stepBox);
+        const stepCol: WorldCollider = {
+          minX: x + w / 2 + 0.1,
+          maxX: x + w / 2 + 1.7,
+          minY: y,
+          maxY: y + stepH,
+          minZ: z - d / 2 + s * 1.4 - 0.7,
+          maxZ: z - d / 2 + s * 1.4 + 0.7,
+          active: true
+        };
+        worldColliders.push(stepCol);
+        makeDestructible(stepBox, stepCol, 0x4a443a);
+      }
+    }
+
+    createDoor(x, y, z + d / 2 - wt / 2, dw, dh, 0.12, g);
+
+    g.position.set(x, y, z);
+    worldGroup.add(g);
+    structures.push({ center: new THREE.Vector3(x, y + 0.5, z) });
+  }
+
+  
+    const buildingConfigs = [
+      { x: 0, z: -14, w: 10, d: 8, h: 4.5, steps: true },
+      { x: -18, z: 8, w: 8, d: 12, h: 5.0, steps: true },
+      { x: 22, z: 12, w: 12, d: 8, h: 4.0, steps: false },
+      { x: -32, z: -24, w: 9, d: 9, h: 6.2, steps: true },
+      { x: 30, z: -28, w: 11, d: 7, h: 4.8, steps: false },
+      { x: 8, z: 32, w: 10, d: 10, h: 5.5, steps: true }
+    ];
+    buildingConfigs.forEach(cfg => addWorldBuilding(cfg.x, cfg.z, cfg.w, cfg.d, cfg.h, cfg.steps));
+
+    const obstacleSpawns = [
+      { x: -8, z: 4 },
+      { x: 10, z: -4 },
+      { x: -16, z: -18 },
+      { x: 14, z: 20 },
+      { x: -24, z: 18 }
+    ];
+    obstacleSpawns.forEach(o => addTacticalObstacleCluster(o.x, o.z));
+  } else {
+    // Subterranean Bio-Research Lab Map - Linear Multi-Room Facility
+    const h = 10.0; // Gritty subterranean bunker ceiling height
+    const floorGeo = new THREE.PlaneGeometry(MAP_HALF * 2, MAP_HALF * 2, 1, 1);
+    floorGeo.rotateX(-Math.PI / 2);
+    const floorMat = new THREE.MeshStandardMaterial({ 
+      color: 0x22262d, 
+      roughness: 0.65, 
+      metalness: 0.35 
+    });
+    terrainMesh = new THREE.Mesh(floorGeo, floorMat);
+    terrainMesh.receiveShadow = true;
+    terrainMesh.userData = { type: 'terrain' };
+    worldGroup.add(terrainMesh);
+    registerHittable(terrainMesh);
+
+    // Outer Perimeter Containment Boundary Walls
+    const wallMat = new THREE.MeshStandardMaterial({ 
+      color: 0x1b2028, 
+      roughness: 0.85, 
+      metalness: 0.25 
+    });
+    const w = MAP_HALF * 2;
+    const t = 2.4;
+    const outerWalls = [
+      { x: 0, z: -MAP_HALF - t/2, w: w, d: t },
+      { x: 0, z: MAP_HALF + t/2, w: w, d: t },
+      { x: -MAP_HALF - t/2, z: 0, w: t, d: w },
+      { x: MAP_HALF + t/2, z: 0, w: t, d: w },
+    ];
+    // Heavy Subterranean Ceiling with Concrete Ribs
+    const roofGeo = new THREE.PlaneGeometry(MAP_HALF * 2, MAP_HALF * 2, 1, 1);
+    roofGeo.rotateX(Math.PI / 2);
+    const roofMat = new THREE.MeshStandardMaterial({ color: 0x14181f, roughness: 0.95 });
+    const roofMesh = new THREE.Mesh(roofGeo, roofMat);
+    roofMesh.position.y = h;
+    roofMesh.castShadow = false;
+    roofMesh.receiveShadow = false;
+    worldGroup.add(roofMesh);
+
+    // Dedicated Subterranean Bio-Lab Ambient & Tactical Directional Lighting
+    const labAmbient = new THREE.AmbientLight(0x283442, 1.3);
+    worldGroup.add(labAmbient);
+
+    const labKey = new THREE.DirectionalLight(0xb0d4ec, 1.1);
+    labKey.position.set(12, h - 1.5, 12);
+    labKey.target.position.set(0, 0, 0);
+    worldGroup.add(labKey);
+    worldGroup.add(labKey.target);
+
+    // Overhead Sector Illumination Lights
+    const sectorLights = [
+      { x: 0, z: 0, color: 0x44ee99, intensity: 5.5 },       // Center Bio-Reactor: Toxic Green/Teal
+      { x: 0, z: 44, color: 0xffb355, intensity: 4.8 },      // South Decon Airlock: Industrial Amber
+      { x: 0, z: -44, color: 0x55ccff, intensity: 4.8 },     // North High-Containment: Cold Blue
+      { x: -42, z: 0, color: 0x33ff88, intensity: 5.2 },     // West Cryo-Chamber: Deep Toxic Green
+      { x: 42, z: 0, color: 0x44ddff, intensity: 5.0 },      // East Virology Lab: Bright Sterile Cyan
+      { x: -26, z: -36, color: 0xffaa44, intensity: 3.5 },   // NW Utility Corridor
+      { x: 26, z: -36, color: 0xffaa44, intensity: 3.5 },    // NE Utility Corridor
+      { x: -26, z: 36, color: 0xffaa44, intensity: 3.5 },    // SW Utility Corridor
+      { x: 26, z: 36, color: 0xffaa44, intensity: 3.5 },     // SE Utility Corridor
+    ];
+    sectorLights.forEach(sl => {
+      const pl = new THREE.PointLight(sl.color, sl.intensity, 36, 1.2);
+      pl.position.set(sl.x, h - 2.0, sl.z);
+      pl.castShadow = false;
+      worldGroup.add(pl);
+
+      const fix = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.7, 0.9, 0.3, 10),
+        new THREE.MeshStandardMaterial({ color: 0x161a20, emissive: sl.color, emissiveIntensity: 0.7 })
+      );
+      fix.position.copy(pl.position);
+      fix.position.y += 0.2;
+      worldGroup.add(fix);
+    });
+
+    outerWalls.forEach(cfg => {
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(cfg.w, h, cfg.d), wallMat);
+      wall.position.set(cfg.x, h/2, cfg.z);
+      wall.receiveShadow = true;
+      worldGroup.add(wall);
+      worldColliders.push({ minX: cfg.x - cfg.w/2, maxX: cfg.x + cfg.w/2, minY: 0, maxY: h, minZ: cfg.z - cfg.d/2, maxZ: cfg.z + cfg.d/2, active: true });
+    });
+
+    // =========================================================================
+    // MODULAR BIO-LAB REINFORCED CONCRETE & STEEL WALL BUILDER
+    // =========================================================================
+    const slabMat = new THREE.MeshStandardMaterial({ color: 0x272c35, roughness: 0.85, metalness: 0.2 });
+    const capMat = new THREE.MeshStandardMaterial({ color: 0x14171d, roughness: 0.5, metalness: 0.7 });
+    const hazardMat = new THREE.MeshStandardMaterial({ color: 0xf5a623, emissive: 0x3d2000, roughness: 0.45 });
+
+    const addLabWall = (x: number, z: number, w: number, d: number, wallHeight = 4.2, hasHazardStripe = false) => {
+      const group = new THREE.Group();
+      const wallMesh = new THREE.Mesh(new THREE.BoxGeometry(w, wallHeight, d), slabMat);
+      wallMesh.position.y = wallHeight / 2;
+      wallMesh.receiveShadow = true;
+      wallMesh.castShadow = true;
+      group.add(wallMesh);
+
+      // Top steel runner cap
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(w + 0.06, 0.2, d + 0.06), capMat);
+      cap.position.y = wallHeight + 0.1;
+      group.add(cap);
+
+      if (hasHazardStripe) {
+        const stripeW = w >= d ? Math.min(w * 0.7, 5.0) : 0.65;
+        const stripeD = w >= d ? 0.65 : Math.min(d * 0.7, 5.0);
+        const stripe = new THREE.Mesh(new THREE.BoxGeometry(stripeW, 0.45, stripeD), hazardMat);
+        stripe.position.y = 1.15;
+        group.add(stripe);
+      }
+
+      group.position.set(x, 0, z);
+      worldGroup.add(group);
+      registerHittable(wallMesh);
+
+      worldColliders.push({
+        minX: x - w / 2,
+        maxX: x + w / 2,
+        minY: 0,
+        maxY: wallHeight,
+        minZ: z - d / 2,
+        maxZ: z + d / 2,
+        active: true
+      });
+    };
+
+    // =========================================================================
+    // AIRLOCK BULKHEAD PORTAL BUILDER (Tight 3.2m Airlocks Between Sectors)
+    // =========================================================================
+    const airlockFrameMat = new THREE.MeshStandardMaterial({ color: 0x1c212a, metalness: 0.75, roughness: 0.35 });
+    const airlockStrobeMat = new THREE.MeshStandardMaterial({ color: 0xff8800, emissive: 0xff7700, emissiveIntensity: 1.2 });
+    
+    const addAirlockPortal = (x: number, z: number, isVertical: boolean, labelText: string) => {
+      const airlock = new THREE.Group();
+      const pw = isVertical ? 1.4 : 3.8;
+      const pd = isVertical ? 3.8 : 1.4;
+      const ph = 3.6;
+
+      // Heavy pneumatic frame jambs
+      const jambGeo = isVertical ? new THREE.BoxGeometry(0.7, ph, 0.45) : new THREE.BoxGeometry(0.45, ph, 0.7);
+      const leftJamb = new THREE.Mesh(jambGeo, airlockFrameMat);
+      const rightJamb = new THREE.Mesh(jambGeo, airlockFrameMat);
+      if (isVertical) {
+        leftJamb.position.set(0, ph / 2, -1.7);
+        rightJamb.position.set(0, ph / 2, 1.7);
+      } else {
+        leftJamb.position.set(-1.7, ph / 2, 0);
+        rightJamb.position.set(1.7, ph / 2, 0);
+      }
+      airlock.add(leftJamb);
+      airlock.add(rightJamb);
+
+      // Top lintel / header beam
+      const headerGeo = isVertical ? new THREE.BoxGeometry(0.8, 0.65, 3.8) : new THREE.BoxGeometry(3.8, 0.65, 0.8);
+      const header = new THREE.Mesh(headerGeo, airlockFrameMat);
+      header.position.set(0, ph - 0.325, 0);
+      airlock.add(header);
+
+      // Hazard stripe threshold on floor
+      const sillGeo = isVertical ? new THREE.BoxGeometry(0.9, 0.08, 3.4) : new THREE.BoxGeometry(3.4, 0.08, 0.9);
+      const sill = new THREE.Mesh(sillGeo, hazardMat);
+      sill.position.set(0, 0.04, 0);
+      airlock.add(sill);
+
+      // Warning Strobe on Header
+      const strobe = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.22, 8), airlockStrobeMat);
+      strobe.position.set(0, ph + 0.12, 0);
+      airlock.add(strobe);
+
+      const strobeLight = new THREE.PointLight(0xff8800, 2.0, 8, 1.5);
+      strobeLight.position.set(0, ph + 0.15, 0);
+      airlock.add(strobeLight);
+
+      airlock.position.set(x, 0, z);
+      worldGroup.add(airlock);
+    };
+
+    // =========================================================================
+    // 1. SECTOR 3: CENTRAL BIO-HAZARD REACTOR & DECON HUB (Center: -18 to 18)
+    // =========================================================================
+    // Center walls enclosing the hub with 3.2m corridor apertures on 4 cardinal sides
+    // North wall of center: z = -18, gap at x in [-1.7, 1.7]
+    addLabWall(-10.5, -18, 15.6, 1.2, 4.2, true);
+    addLabWall(10.5, -18, 15.6, 1.2, 4.2, true);
+    addAirlockPortal(0, -18, false, "AIRLOCK 01 // SECTOR NORTH");
+
+    // South wall of center: z = 18, gap at x in [-1.7, 1.7]
+    addLabWall(-10.5, 18, 15.6, 1.2, 4.2, true);
+    addLabWall(10.5, 18, 15.6, 1.2, 4.2, true);
+    addAirlockPortal(0, 18, false, "AIRLOCK 02 // SECTOR SOUTH");
+
+    // West wall of center: x = -18, gap at z in [-1.7, 1.7]
+    addLabWall(-18, -10.5, 1.2, 15.6, 4.2, true);
+    addLabWall(-18, 10.5, 1.2, 15.6, 4.2, true);
+    addAirlockPortal(-18, 0, true, "AIRLOCK 03 // CRYO WING");
+
+    // East wall of center: x = 18, gap at z in [-1.7, 1.7]
+    addLabWall(18, -10.5, 1.2, 15.6, 4.2, true);
+    addLabWall(18, 10.5, 1.2, 15.6, 4.2, true);
+    addAirlockPortal(18, 0, true, "AIRLOCK 04 // VIROLOGY LAB");
+
+    // Central Bio-Reactor Elevated Research Platform (14 x 14m, height 1.4m)
+    const platW = 14.0;
+    const platD = 14.0;
+    const platH = 1.4;
+    const platform = new THREE.Mesh(
+      new THREE.BoxGeometry(platW, platH, platD),
+      new THREE.MeshStandardMaterial({ color: 0x222730, roughness: 0.7, metalness: 0.4 })
+    );
+    platform.position.set(0, platH / 2, 0);
+    platform.receiveShadow = true;
+    worldGroup.add(platform);
+    registerHittable(platform);
+    worldColliders.push({
+      minX: -platW / 2,
+      maxX: platW / 2,
+      minY: 0,
+      maxY: platH,
+      minZ: -platD / 2,
+      maxZ: platD / 2,
+      active: true
+    });
+
+    // SMOOTH LOW-SLOPE STAIRS (8 Gradual Steps, 0.175m Rise per Step, Low Incline)
+    const stairMat = new THREE.MeshStandardMaterial({ color: 0x2a313b, roughness: 0.8, metalness: 0.3 });
+    const createLowSlopeStaircase = (isNorth: boolean) => {
+      const stepCount = 8;
+      const stepRise = platH / stepCount; // 0.175m per step (easily walkable without jumping)
+      const stepRun = 0.85; // 0.85m deep tread (smooth, comfortable ~11 degree slope)
+      const stairWidth = 5.2;
+
+      for (let s = 0; s < stepCount; s++) {
+        const stepY = (s + 1) * stepRise;
+        const offsetZ = (stepCount - 1 - s) * stepRun + stepRun / 2;
+        const stepZ = isNorth ? -platD / 2 - offsetZ : platD / 2 + offsetZ;
+        const stepMesh = new THREE.Mesh(new THREE.BoxGeometry(stairWidth, stepY, stepRun), stairMat);
+        stepMesh.position.set(0, stepY / 2, stepZ);
+        stepMesh.receiveShadow = true;
+        worldGroup.add(stepMesh);
+        registerHittable(stepMesh);
+
+        worldColliders.push({
+          minX: -stairWidth / 2,
+          maxX: stairWidth / 2,
+          minY: 0,
+          maxY: stepY,
+          minZ: stepZ - stepRun / 2,
+          maxZ: stepZ + stepRun / 2,
+          active: true,
+          isStair: true,
+          isRamp: true
+        });
+      }
+    };
+    createLowSlopeStaircase(true);
+    createLowSlopeStaircase(false);
+
+    // Platform Guardrail Parapets with Stair Access Openings
+    const addPlatformRail = (px: number, pz: number, pw: number, pd: number) => {
+      const rh = 1.1;
+      const rail = new THREE.Mesh(
+        new THREE.BoxGeometry(pw, rh, pd),
+        new THREE.MeshStandardMaterial({ color: 0x373e4b, roughness: 0.75, metalness: 0.3 })
+      );
+      rail.position.set(px, platH + rh / 2, pz);
+      rail.receiveShadow = true;
+      rail.castShadow = true;
+      worldGroup.add(rail);
+      registerHittable(rail);
+      worldColliders.push({
+        minX: px - pw / 2,
+        maxX: px + pw / 2,
+        minY: platH,
+        maxY: platH + rh,
+        minZ: pz - pd / 2,
+        maxZ: pz + pd / 2,
+        active: true
+      });
+    };
+    // East and West platform edges
+    addPlatformRail(-platW / 2 + 0.25, 0, 0.5, platD);
+    addPlatformRail(platW / 2 - 0.25, 0, 0.5, platD);
+    // North and South flanking parapets leaving 5.4m central stair opening
+    addPlatformRail(-4.4, -platD / 2 + 0.25, 4.4, 0.5);
+    addPlatformRail(4.4, -platD / 2 + 0.25, 4.4, 0.5);
+    addPlatformRail(-4.4, platD / 2 - 0.25, 4.4, 0.5);
+    addPlatformRail(4.4, platD / 2 - 0.25, 4.4, 0.5);
+
+    // Central Bio-Hazard Reactor Core (Pulsing Bioluminescent Core)
+    const reactorGroup = new THREE.Group();
+    const reactorBase = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.0, 2.3, 0.7, 16),
+      new THREE.MeshStandardMaterial({ color: 0x181c23, metalness: 0.85, roughness: 0.3 })
+    );
+    reactorBase.position.y = platH + 0.35;
+    reactorGroup.add(reactorBase);
+
+    // Glowing containment chamber
+    const coreFluid = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.4, 1.4, 1.8, 16),
+      new THREE.MeshStandardMaterial({
+        color: 0x00ff66,
+        emissive: 0x00e655,
+        emissiveIntensity: 1.6,
+        transparent: true,
+        opacity: 0.85,
+        roughness: 0.1
+      })
+    );
+    coreFluid.position.y = platH + 1.5;
+    reactorGroup.add(coreFluid);
+
+    // Outer glass shield & reinforcing rings
+    const coreGlass = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.65, 1.65, 2.0, 16),
+      new THREE.MeshStandardMaterial({
+        color: 0x33ff99,
+        transparent: true,
+        opacity: 0.3,
+        roughness: 0.05,
+        metalness: 0.9,
+        depthWrite: false
+      })
+    );
+    coreGlass.position.y = platH + 1.5;
+    reactorGroup.add(coreGlass);
+
+    const reactorCap = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.1, 1.8, 0.6, 16),
+      new THREE.MeshStandardMaterial({ color: 0x181c23, metalness: 0.85, roughness: 0.3 })
+    );
+    reactorCap.position.y = platH + 2.7;
+    reactorGroup.add(reactorCap);
+
+    worldGroup.add(reactorGroup);
+    registerHittable(reactorBase);
+    worldColliders.push({
+      minX: -1.7,
+      maxX: 1.7,
+      minY: platH,
+      maxY: platH + 3.0,
+      minZ: -1.7,
+      maxZ: 1.7,
+      active: true
+    });
+
+    // Holographic research table console on the platform
+    const holoTable = new THREE.Mesh(
+      new THREE.BoxGeometry(1.8, 0.85, 1.0),
+      new THREE.MeshStandardMaterial({ color: 0x1b2028, metalness: 0.7, roughness: 0.3 })
+    );
+    holoTable.position.set(0, platH + 0.425, 4.2);
+    worldGroup.add(holoTable);
+    registerHittable(holoTable);
+    worldColliders.push({
+      minX: -1.0,
+      maxX: 1.0,
+      minY: platH,
+      maxY: platH + 0.9,
+      minZ: 3.6,
+      maxZ: 4.8,
+      active: true
+    });
+
+    // =========================================================================
+    // 2. NARROW 3-METER CORRIDORS (Linear Hallways Connecting Sectors)
+    // =========================================================================
+    // North Corridor: from z = -18 to -34 (Corridor width = 3.2m, x from -1.6 to 1.6)
+    addLabWall(-2.2, -26, 1.2, 16, 4.2);
+    addLabWall(2.2, -26, 1.2, 16, 4.2);
+
+    // South Corridor: from z = 18 to 34 (Corridor width = 3.2m, x from -1.6 to 1.6)
+    addLabWall(-2.2, 26, 1.2, 16, 4.2);
+    addLabWall(2.2, 26, 1.2, 16, 4.2);
+
+    // West Corridor: from x = -18 to -26 (Corridor width = 3.2m, z from -1.6 to 1.6)
+    addLabWall(-22, -2.2, 8, 1.2, 4.2);
+    addLabWall(-22, 2.2, 8, 1.2, 4.2);
+
+    // East Corridor: from x = 18 to 26 (Corridor width = 3.2m, z from -1.6 to 1.6)
+    addLabWall(22, -2.2, 8, 1.2, 4.2);
+    addLabWall(22, 2.2, 8, 1.2, 4.2);
+
+    // =========================================================================
+    // 3. SECTOR 1 (SOUTH): DECONTAMINATION & SECURITY AIRLOCK (z: 34 to 62)
+    // =========================================================================
+    // North partition of Sector 1: z = 34
+    addLabWall(-10.5, 34, 15.6, 1.2, 4.2);
+    addLabWall(10.5, 34, 15.6, 1.2, 4.2);
+    addAirlockPortal(0, 34, false, "DECON AIRLOCK // SEC-01");
+
+    // Internal partition walls forming security checkpoint rooms
+    addLabWall(-18, 48, 1.2, 26, 4.2);
+    addLabWall(18, 48, 1.2, 26, 4.2);
+    addLabWall(-7, 48, 10, 1.2, 4.2); // Triage divider
+    addLabWall(7, 48, 10, 1.2, 4.2);
+
+    // Security Scanner Arch at South Sector
+    const scannerGroup = new THREE.Group();
+    const scanJambL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 2.6, 0.4), airlockFrameMat);
+    scanJambL.position.set(-1.2, 1.3, 0);
+    const scanJambR = new THREE.Mesh(new THREE.BoxGeometry(0.35, 2.6, 0.4), airlockFrameMat);
+    scanJambR.position.set(1.2, 1.3, 0);
+    const scanTop = new THREE.Mesh(new THREE.BoxGeometry(2.75, 0.35, 0.4), airlockFrameMat);
+    scanTop.position.set(0, 2.7, 0);
+    const scanLight = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.08), new THREE.MeshBasicMaterial({ color: 0x00ffff }));
+    scanLight.position.set(0, 2.5, 0.21);
+    scannerGroup.add(scanJambL);
+    scannerGroup.add(scanJambR);
+    scannerGroup.add(scanTop);
+    scannerGroup.add(scanLight);
+    scannerGroup.position.set(0, 0, 42);
+    worldGroup.add(scannerGroup);
+
+    // =========================================================================
+    // 4. SECTOR 2 (WEST): CRYO-STORAGE & SPECIMEN INCUBATION (x: -26 to -62)
+    // =========================================================================
+    // East wall of Sector 2: x = -26, doorway at z in [-1.7, 1.7]
+    addLabWall(-26, -11, 1.2, 18, 4.2);
+    addLabWall(-26, 11, 1.2, 18, 4.2);
+    addAirlockPortal(-26, 0, true, "CRYO WING // BIO-CONTAINMENT");
+
+    // Interior dividing partition walls in Cryo Chamber
+    addLabWall(-44, -18, 34, 1.2, 4.2);
+    addLabWall(-44, 18, 34, 1.2, 4.2);
+    addLabWall(-42, 0, 1.2, 16, 4.2, true); // Central Cryo Pod Divider
+    addLabWall(-54, -8, 12, 1.2, 4.2);
+    addLabWall(-54, 8, 12, 1.2, 4.2);
+
+    // Observation Mezzanine in Cryo Wing with Smooth Low-Slope Ramp
+    const mezW = 12.0;
+    const mezD = 8.0;
+    const mezH = 1.2;
+    const mezzanine = new THREE.Mesh(
+      new THREE.BoxGeometry(mezW, mezH, mezD),
+      new THREE.MeshStandardMaterial({ color: 0x22272f, roughness: 0.75, metalness: 0.3 })
+    );
+    mezzanine.position.set(-54, mezH / 2, 0);
+    mezzanine.receiveShadow = true;
+    worldGroup.add(mezzanine);
+    registerHittable(mezzanine);
+    worldColliders.push({
+      minX: -54 - mezW / 2,
+      maxX: -54 + mezW / 2,
+      minY: 0,
+      maxY: mezH,
+      minZ: -mezD / 2,
+      maxZ: mezD / 2,
+      active: true
+    });
+
+    // Smooth Walkway Ramp to Cryo Mezzanine (Zero jumping needed)
+    const rampSteps = 6;
+    const rStepRise = mezH / rampSteps; // 0.20m per step
+    const rStepRun = 0.8;
+    for (let rs = 0; rs < rampSteps; rs++) {
+      const ry = (rs + 1) * rStepRise;
+      const rx = -54 + mezW / 2 + (rampSteps - 1 - rs) * rStepRun + rStepRun / 2;
+      const rMesh = new THREE.Mesh(new THREE.BoxGeometry(rStepRun, ry, 3.4), stairMat);
+      rMesh.position.set(rx, ry / 2, 0);
+      rMesh.receiveShadow = true;
+      worldGroup.add(rMesh);
+      registerHittable(rMesh);
+      worldColliders.push({
+        minX: rx - rStepRun / 2,
+        maxX: rx + rStepRun / 2,
+        minY: 0,
+        maxY: ry,
+        minZ: -1.7,
+        maxZ: 1.7,
+        active: true,
+        isStair: true,
+        isRamp: true
+      });
+    }
+
+    // =========================================================================
+    // 5. SECTOR 4 (EAST): VIROLOGY & GENETIC SYNTHESIS LAB (x: 26 to 62)
+    // =========================================================================
+    // West wall of Sector 4: x = 26, doorway at z in [-1.7, 1.7]
+    addLabWall(26, -11, 1.2, 18, 4.2);
+    addLabWall(26, 11, 1.2, 18, 4.2);
+    addAirlockPortal(26, 0, true, "GENETIC SYNTHESIS LAB");
+
+    // Internal lab partition rooms
+    addLabWall(44, -18, 34, 1.2, 4.2);
+    addLabWall(44, 18, 34, 1.2, 4.2);
+    addLabWall(42, 0, 1.2, 16, 4.2, true); // Centrifuge room divider
+    addLabWall(54, -8, 12, 1.2, 4.2);
+    addLabWall(54, 8, 12, 1.2, 4.2);
+
+    // =========================================================================
+    // 6. SECTOR 5 (NORTH): HIGH-CONTAINMENT QUARANTINE VAULT & EVAC (z: -34 to -62)
+    // =========================================================================
+    // South partition of Sector 5: z = -34, doorway at x in [-1.7, 1.7]
+    addLabWall(-10.5, -34, 15.6, 1.2, 4.2);
+    addLabWall(10.5, -34, 15.6, 1.2, 4.2);
+    addAirlockPortal(0, -34, false, "QUARANTINE VAULT // EXTRACTION");
+
+    // Vault chamber side walls & isolation cells
+    addLabWall(-18, -48, 1.2, 26, 4.2);
+    addLabWall(18, -48, 1.2, 26, 4.2);
+    addLabWall(-7, -48, 10, 1.2, 4.2);
+    addLabWall(7, -48, 10, 1.2, 4.2);
+
+    // Evacuation Heli-Pad / Extraction Beacon Ring on Floor
+    const evacRing = new THREE.Mesh(
+      new THREE.RingGeometry(3.2, 3.5, 32),
+      new THREE.MeshBasicMaterial({ color: 0x2de2e6, side: THREE.DoubleSide })
+    );
+    evacRing.rotation.x = -Math.PI / 2;
+    evacRing.position.set(0, 0.03, -50);
+    worldGroup.add(evacRing);
+
+    // =========================================================================
+    // PROCEDURAL ENVIRONMENTAL DRESSING INJECTOR
+    // (Overturned Gurneys, Glowing Bio-Tubes, Hazardous Barrels, Signs, Cables)
+    // =========================================================================
+    const barrelYellowMat = new THREE.MeshStandardMaterial({ color: 0xdfa012, roughness: 0.6, metalness: 0.4 });
+    const barrelGreenMat = new THREE.MeshStandardMaterial({ color: 0x31462a, roughness: 0.7, metalness: 0.3 });
+    const bioPuddleMat = new THREE.MeshStandardMaterial({
+      color: 0x11ff44,
+      emissive: 0x00cc33,
+      emissiveIntensity: 1.4,
+      roughness: 0.2,
+      metalness: 0.1
+    });
+
+    // Decorative Gurneys (Overturned or Standing)
+    const addGurney = (gx: number, gz: number, rotY: number, isOverturned: boolean) => {
+      const gGroup = new THREE.Group();
+      const frameMat = new THREE.MeshStandardMaterial({ color: 0x8892a0, metalness: 0.8, roughness: 0.3 });
+      const padMat = new THREE.MeshStandardMaterial({ color: 0x2b3846, roughness: 0.9 });
+
+      // Stretcher pad
+      const pad = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.15, 0.8), padMat);
+      pad.position.y = 0.85;
+      gGroup.add(pad);
+
+      // Steel frame legs
+      for (let lx of [-0.85, 0.85]) {
+        for (let lz of [-0.32, 0.32]) {
+          const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.8, 8), frameMat);
+          leg.position.set(lx, 0.4, lz);
+          gGroup.add(leg);
+        }
+      }
+
+      // Wheels
+      for (let lx of [-0.85, 0.85]) {
+        for (let lz of [-0.32, 0.32]) {
+          const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.04, 8), frameMat);
+          wheel.rotation.z = Math.PI / 2;
+          wheel.position.set(lx, 0.08, lz);
+          gGroup.add(wheel);
+        }
+      }
+
+      // Dangling IV Stand
+      const ivPole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.4, 8), frameMat);
+      ivPole.position.set(-0.95, 1.4, 0.35);
+      gGroup.add(ivPole);
+
+      if (isOverturned) {
+        gGroup.rotation.z = Math.PI / 3.2; // Tilted on its side
+        gGroup.position.set(gx, -0.15, gz);
+      } else {
+        gGroup.position.set(gx, 0, gz);
+      }
+      gGroup.rotation.y = rotY;
+
+      worldGroup.add(gGroup);
+      registerHittable(pad);
+      worldColliders.push({
+        minX: gx - 0.9,
+        maxX: gx + 0.9,
+        minY: 0,
+        maxY: 1.1,
+        minZ: gz - 0.6,
+        maxZ: gz + 0.6,
+        active: true
+      });
+    };
+
+    // Glowing Bio-Containment Specimen Tanks
+    const addBioSpecimenTank = (tx: number, tz: number) => {
+      const tankGroup = new THREE.Group();
+      const rimMat = new THREE.MeshStandardMaterial({ color: 0x161a22, metalness: 0.85, roughness: 0.25 });
+      
+      // Base Collar
+      const baseCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.78, 0.45, 16), rimMat);
+      baseCollar.position.y = 0.225;
+      tankGroup.add(baseCollar);
+
+      // Glowing Bio-Liquid Column
+      const fluidMat = new THREE.MeshStandardMaterial({
+        color: 0x00ff77,
+        emissive: 0x00e666,
+        emissiveIntensity: 1.7,
+        transparent: true,
+        opacity: 0.85,
+        roughness: 0.1
+      });
+      const fluid = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 2.1, 16), fluidMat);
+      fluid.position.y = 1.45;
+      tankGroup.add(fluid);
+
+      // Specimen Shadow Inside (Alien / Infected Host Silhouette)
+      const specMat = new THREE.MeshBasicMaterial({ color: 0x0a1a0f });
+      const specMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 1.4, 8), specMat);
+      specMesh.position.y = 1.4;
+      tankGroup.add(specMesh);
+
+      // Outer Reinforced Glass
+      const glassMat = new THREE.MeshStandardMaterial({
+        color: 0x44ffaa,
+        transparent: true,
+        opacity: 0.35,
+        metalness: 0.9,
+        roughness: 0.05,
+        depthWrite: false
+      });
+      const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.64, 0.64, 2.2, 16), glassMat);
+      glass.position.y = 1.45;
+      tankGroup.add(glass);
+
+      // Top Cap
+      const topCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.72, 0.68, 0.4, 16), rimMat);
+      topCollar.position.y = 2.65;
+      tankGroup.add(topCollar);
+
+      tankGroup.position.set(tx, 0, tz);
+      worldGroup.add(tankGroup);
+      registerHittable(baseCollar);
+      worldColliders.push({
+        minX: tx - 0.7,
+        maxX: tx + 0.7,
+        minY: 0,
+        maxY: 2.8,
+        minZ: tz - 0.7,
+        maxZ: tz + 0.7,
+        active: true
+      });
+    };
+
+    // Hazardous Biohazard Barrels with Leaking Floor Puddle
+    const addHazardBarrelCluster = (bx: number, bz: number, hasPuddle = true) => {
+      const bGroup = new THREE.Group();
+      // Upright Yellow Barrel
+      const b1 = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.15, 12), barrelYellowMat);
+      b1.position.set(-0.35, 0.575, -0.2);
+      bGroup.add(b1);
+
+      // Upright Green Barrel
+      const b2 = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.15, 12), barrelGreenMat);
+      b2.position.set(0.4, 0.575, 0.25);
+      bGroup.add(b2);
+
+      // Tipped-over leaking drum
+      const b3 = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.15, 12), barrelYellowMat);
+      b3.rotation.x = Math.PI / 2;
+      b3.rotation.z = Math.PI / 4;
+      b3.position.set(0.1, 0.42, -0.65);
+      bGroup.add(b3);
+
+      if (hasPuddle) {
+        const puddle = new THREE.Mesh(new THREE.CircleGeometry(1.2, 16), bioPuddleMat);
+        puddle.rotation.x = -Math.PI / 2;
+        puddle.position.set(0.3, 0.02, -0.7);
+        bGroup.add(puddle);
+      }
+
+      bGroup.position.set(bx, 0, bz);
+      worldGroup.add(bGroup);
+      registerHittable(b1);
+      worldColliders.push({
+        minX: bx - 0.9,
+        maxX: bx + 0.9,
+        minY: 0,
+        maxY: 1.25,
+        minZ: bz - 0.9,
+        maxZ: bz + 0.9,
+        active: true
+      });
+    };
+
+    // Wall-Mounted Diagnostic Control Terminals
+    const addWallTerminal = (wx: number, wy: number, wz: number, rotY: number) => {
+      const termGroup = new THREE.Group();
+      const box = new THREE.Mesh(
+        new THREE.BoxGeometry(0.85, 1.1, 0.3),
+        new THREE.MeshStandardMaterial({ color: 0x1b2029, metalness: 0.7, roughness: 0.4 })
+      );
+      const screen = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.65, 0.45),
+        new THREE.MeshStandardMaterial({ color: 0x0a1c22, emissive: 0x2de2e6, emissiveIntensity: 0.85 })
+      );
+      screen.position.set(0, 0.18, 0.16);
+      termGroup.add(box);
+      termGroup.add(screen);
+      termGroup.position.set(wx, wy, wz);
+      termGroup.rotation.y = rotY;
+      worldGroup.add(termGroup);
+    };
+
+    // Emergency Illuminated Exit / Bio-Hazard Signs
+    const addExitSign = (sx: number, sy: number, sz: number, rotY: number) => {
+      const signGroup = new THREE.Group();
+      const housing = new THREE.Mesh(
+        new THREE.BoxGeometry(0.9, 0.35, 0.15),
+        new THREE.MeshStandardMaterial({ color: 0x22262d })
+      );
+      const face = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.8, 0.25),
+        new THREE.MeshStandardMaterial({ color: 0x00ff44, emissive: 0x00dd33, emissiveIntensity: 1.3 })
+      );
+      face.position.z = 0.08;
+      signGroup.add(housing);
+      signGroup.add(face);
+      signGroup.position.set(sx, sy, sz);
+      signGroup.rotation.y = rotY;
+      worldGroup.add(signGroup);
+    };
+
+    // Overhead Cable Trays & Conduit Bundles along ceilings
+    const addCableTray = (x1: number, z1: number, x2: number, z2: number, cy = 4.0) => {
+      const len = Math.hypot(x2 - x1, z2 - z1);
+      const angle = Math.atan2(x2 - x1, z2 - z1);
+      const tray = new THREE.Mesh(
+        new THREE.BoxGeometry(0.7, 0.12, len),
+        new THREE.MeshStandardMaterial({ color: 0x181c24, metalness: 0.75, roughness: 0.4 })
+      );
+      tray.position.set((x1 + x2) / 2, cy, (z1 + z2) / 2);
+      tray.rotation.y = angle;
+      worldGroup.add(tray);
+    };
+
+    // Flickering Industrial Fluorescent Light Troffer Fixtures
+    const addFluorescentBar = (fx: number, fz: number, fy = 4.1, rotY = 0) => {
+      const fixtureGroup = new THREE.Group();
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(2.2, 0.15, 0.45),
+        new THREE.MeshStandardMaterial({ color: 0x1f242d, metalness: 0.6 })
+      );
+      const tube1 = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.035, 0.035, 2.0, 8),
+        new THREE.MeshStandardMaterial({ color: 0xdff5ff, emissive: 0xcbeeff, emissiveIntensity: 1.2 })
+      );
+      tube1.rotation.z = Math.PI / 2;
+      tube1.position.set(0, -0.07, -0.1);
+      const tube2 = tube1.clone();
+      tube2.position.z = 0.1;
+      fixtureGroup.add(body);
+      fixtureGroup.add(tube1);
+      fixtureGroup.add(tube2);
+      fixtureGroup.position.set(fx, fy, fz);
+      fixtureGroup.rotation.y = rotY;
+      worldGroup.add(fixtureGroup);
+    };
+
+    // Scatter Overturned Gurneys in Corridors and Rooms
+    addGurney(-1.4, 25, 0.3, true);    // South corridor overturned gurney
+    addGurney(1.4, -25, -0.4, false);  // North corridor standing gurney
+    addGurney(-38, 12, 1.2, true);     // Cryo wing examination gurney
+    addGurney(-46, -12, 0.8, false);
+    addGurney(36, 12, -0.5, true);     // Virology wing triage gurney
+    addGurney(46, -12, 0.2, false);
+    addGurney(0, -42, 1.5, true);      // Quarantine vault evac gurney
+
+    // Scatter Glowing Bio-Containment Specimen Tanks in Cryo & Virology Wings
+    addBioSpecimenTank(-34, -14);
+    addBioSpecimenTank(-38, -14);
+    addBioSpecimenTank(-42, -14);
+    addBioSpecimenTank(-34, 14);
+    addBioSpecimenTank(-38, 14);
+    addBioSpecimenTank(-42, 14);
+    addBioSpecimenTank(36, -14);
+    addBioSpecimenTank(40, -14);
+    addBioSpecimenTank(36, 14);
+    addBioSpecimenTank(40, 14);
+
+    // Scatter Hazardous Barrels in Utility & Corridor Nooks
+    addHazardBarrelCluster(-14, 28, true);
+    addHazardBarrelCluster(14, 28, false);
+    addHazardBarrelCluster(-14, -28, true);
+    addHazardBarrelCluster(14, -28, false);
+    addHazardBarrelCluster(-52, -16, true);
+    addHazardBarrelCluster(52, -16, true);
+    addHazardBarrelCluster(0, 52, true);
+
+    // Mount Emergency Exit Signs above Sector Portals
+    addExitSign(0, 3.8, 17.3, 0);
+    addExitSign(0, 3.8, -17.3, Math.PI);
+    addExitSign(-17.3, 3.8, 0, Math.PI / 2);
+    addExitSign(17.3, 3.8, 0, -Math.PI / 2);
+
+    // Mount Wall Control Diagnostics Terminals
+    addWallTerminal(-2.9, 1.6, 22, Math.PI / 2);
+    addWallTerminal(2.9, 1.6, -22, -Math.PI / 2);
+    addWallTerminal(-28, 1.6, 2.9, 0);
+    addWallTerminal(28, 1.6, -2.9, Math.PI);
+
+    // Overhead Cable Trays along the 4 main corridors
+    addCableTray(0, 18, 0, 34, 3.9);
+    addCableTray(0, -18, 0, -34, 3.9);
+    addCableTray(-18, 0, -26, 0, 3.9);
+    addCableTray(18, 0, 26, 0, 3.9);
+
+    // Fluorescent Light Troffers along corridors and rooms
+    addFluorescentBar(0, 26, 4.0, 0);
+    addFluorescentBar(0, -26, 4.0, 0);
+    addFluorescentBar(-22, 0, 4.0, Math.PI / 2);
+    addFluorescentBar(22, 0, 4.0, Math.PI / 2);
+    addFluorescentBar(-38, 0, 4.0, 0);
+    addFluorescentBar(38, 0, 4.0, 0);
+    addFluorescentBar(0, 46, 4.0, 0);
+    addFluorescentBar(0, -46, 4.0, 0);
+  }
+
+
+  // Ground Pickups - Updated to support Pistol (Type Index 3)
+  function createGroundPickup(x: number, z: number, weaponTypeIndex: number, ammoAmount: number): GroundPickup {
+    const g = new THREE.Group();
+    const y = terrainHeight(x, z) + 0.55;
+
+    let geo: THREE.BufferGeometry;
+    let mat: THREE.MeshStandardMaterial;
+
+    if (weaponTypeIndex === 0) {
+      // AR
+      geo = new THREE.BoxGeometry(0.12, 0.15, 0.7);
+      mat = new THREE.MeshStandardMaterial({ color: 0x334455, metalness: 0.6, roughness: 0.4 });
+    } else if (weaponTypeIndex === 1) {
+      // Shotgun
+      geo = new THREE.BoxGeometry(0.12, 0.18, 0.85);
+      mat = new THREE.MeshStandardMaterial({ color: 0x553322, metalness: 0.4, roughness: 0.6 });
+    } else if (weaponTypeIndex === 2) {
+      // Sniper
+      geo = new THREE.BoxGeometry(0.1, 0.14, 1.1);
+      mat = new THREE.MeshStandardMaterial({ color: 0x223322, metalness: 0.7, roughness: 0.3 });
+    } else if (weaponTypeIndex === 3) {
+      // Combat Pistol
+      geo = new THREE.BoxGeometry(0.09, 0.22, 0.36);
+      mat = new THREE.MeshStandardMaterial({ color: 0x2e3238, metalness: 0.75, roughness: 0.4 });
+    } else if (weaponTypeIndex === 4) {
+      // SMG (Compact box with vertical mag)
+      geo = new THREE.BoxGeometry(0.09, 0.24, 0.45);
+      mat = new THREE.MeshStandardMaterial({ color: 0xd66820, metalness: 0.5, roughness: 0.4 });
+    } else if (weaponTypeIndex === 5) {
+      // LMG (Heavy chassis with drum)
+      geo = new THREE.BoxGeometry(0.14, 0.25, 0.95);
+      mat = new THREE.MeshStandardMaterial({ color: 0x1f2226, metalness: 0.8, roughness: 0.4 });
+    } else if (weaponTypeIndex === 6) {
+      // Battle Rifle (Bullpup with optic)
+      geo = new THREE.BoxGeometry(0.11, 0.22, 0.78);
+      mat = new THREE.MeshStandardMaterial({ color: 0x2a3644, metalness: 0.7, roughness: 0.35 });
+    } else if (weaponTypeIndex === 7) {
+      // Laser Gun (Covenant plasma purple)
+      geo = new THREE.BoxGeometry(0.12, 0.20, 0.68);
+      mat = new THREE.MeshStandardMaterial({ color: 0x7b2cbf, emissive: 0x240046, metalness: 0.85, roughness: 0.25 });
+    } else if (weaponTypeIndex === 8) {
+      // Grenade
+      geo = new THREE.SphereGeometry(0.14, 10, 8);
+      mat = new THREE.MeshStandardMaterial({ color: 0x2f3d2a, roughness: 0.6 });
+    } else {
+      // Mini Shield
+      geo = new THREE.CylinderGeometry(0.12, 0.14, 0.35, 8);
+      mat = new THREE.MeshStandardMaterial({ color: 0x3f8fe0, emissive: 0x1b4b7a, roughness: 0.2 });
+    }
+
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.castShadow = true;
+    g.add(mesh);
+
+    let ringColor = 0xf5a623;
+    if (weaponTypeIndex === 9) ringColor = 0x3f8fe0; // Mini shield cyan
+    else if (weaponTypeIndex === 8) ringColor = 0x55cc44; // Grenade green
+    else if (weaponTypeIndex === 7) ringColor = 0xb5179e; // Laser magenta
+    else if (weaponTypeIndex === 6) ringColor = 0x4cc9f0; // BR electric cyan
+    else if (weaponTypeIndex === 5) ringColor = 0xf72585; // LMG hot pink
+    else if (weaponTypeIndex === 4) ringColor = 0xf77f00; // SMG neon orange
+    else if (weaponTypeIndex === 3) ringColor = 0x57d1c9; // Pistol crisp cyan
+
+    const glow = new THREE.Mesh(
+      new THREE.RingGeometry(0.2, 0.45, 16),
+      new THREE.MeshBasicMaterial({
+        color: ringColor,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.6
+      })
+    );
+    glow.rotation.x = -Math.PI / 2;
+    glow.position.y = -0.4;
+    g.add(glow);
+
+    g.position.set(x, y, z);
+    worldGroup.add(g);
+
+    let labelText = '';
+    const targetW = WEAPONS[weaponTypeIndex];
+    if (targetW?.type === 'consumable') {
+      labelText = 'MINI SHIELD (+1)';
+    } else if (targetW?.type === 'grenade') {
+      labelText = 'GRENADES (+2)';
+    } else if (targetW) {
+      labelText = `${targetW.name} (+${ammoAmount} AMMO)`;
+    } else {
+      labelText = `AMMO (+${ammoAmount})`;
+    }
+
+    const pickup: GroundPickup = {
+      group: g,
+      typeIndex: weaponTypeIndex,
+      ammo: ammoAmount,
+      label: labelText
+    };
+    groundPickups.push(pickup);
+    return pickup;
+  }
+
+  function collectPickup(
+    item: GroundPickup,
+    onAcquire: (msg: string) => void,
+    weaponStates: { count?: number; reserve?: number }[]
+  ): void {
+    const idx = item.typeIndex;
+    const w = WEAPONS[idx];
+    if (!w || !weaponStates[idx]) return;
+
+    if (w.type === 'consumable') {
+      weaponStates[idx].count = Math.min(6, (weaponStates[idx].count ?? 0) + 1);
+      onAcquire('+1 MINI SHIELD ACQUIRED');
+    } else if (w.type === 'grenade') {
+      weaponStates[idx].count = Math.min(6, (weaponStates[idx].count ?? 0) + item.ammo);
+      onAcquire(`+${item.ammo} TACTICAL GRENADES`);
+    } else {
+      weaponStates[idx].reserve = (weaponStates[idx].reserve ?? 0) + item.ammo;
+      onAcquire(`+${item.ammo} ${w.name} AMMO`);
+    }
+    worldGroup.remove(item.group);
+    const indexInArr = groundPickups.indexOf(item);
+    if (indexInArr >= 0) groundPickups.splice(indexInArr, 1);
+  }
+
+  // Seed default ground pickups
+  structures.forEach((st, idx) => {
+    if (st.center && idx % 2 === 0) {
+      const wType = idx % WEAPONS.length;
+      const targetW = WEAPONS[wType];
+      const ammo = targetW.mag ? targetW.mag * 2 : 2;
+      createGroundPickup(st.center.x + (Math.random() * 2 - 1), st.center.z + (Math.random() * 2 - 1), wType, ammo);
+    }
+  });
+
+  for (let i = 0; i < 8; i++) {
+    const p = randomMapPoint(12);
+    const wType = Math.floor(Math.random() * WEAPONS.length);
+    const targetW = WEAPONS[wType];
+    const ammo = targetW.mag ? Math.round(targetW.mag * 1.5) : 2;
+    createGroundPickup(p.x, p.z, wType, ammo);
+  }
+
+  function updateDoors(dt: number): void {
+    for (const d of doors) {
+      d.currentAngle += (d.targetAngle - d.currentAngle) * Math.min(1, dt * 8.5);
+      d.hingeGroup.rotation.y = d.currentAngle;
+    }
+  }
+
+  function moveEntityWithCollision(
+    pos: THREE.Vector3,
+    vel: THREE.Vector3,
+    radius: number,
+    footY: number,
+    headY: number,
+    dt: number
+  ): void {
+    pos.x += vel.x * dt;
+    for (let i = 0; i < worldColliders.length; i++) {
+      const c = worldColliders[i];
+      if (c.active === false) continue;
+      // Low-slope stair and ramp traversal: bypass horizontal collision block if stepping onto stair/ramp
+      if (c.isStair || c.isRamp || c.maxY <= footY + 0.45) continue;
+      if (footY >= c.maxY - 0.15 || headY <= c.minY + 0.1) continue;
+
+      if (pos.z + radius > c.minZ && pos.z - radius < c.maxZ) {
+        if (pos.x + radius > c.minX && pos.x - radius < c.maxX) {
+          if (vel.x > 0) pos.x = c.minX - radius;
+          else if (vel.x < 0) pos.x = c.maxX + radius;
+          vel.x = 0;
+        }
+      }
+    }
+
+    pos.z += vel.z * dt;
+    for (let i = 0; i < worldColliders.length; i++) {
+      const c = worldColliders[i];
+      if (c.active === false) continue;
+      // Low-slope stair and ramp traversal: bypass horizontal collision block if stepping onto stair/ramp
+      if (c.isStair || c.isRamp || c.maxY <= footY + 0.45) continue;
+      if (footY >= c.maxY - 0.15 || headY <= c.minY + 0.1) continue;
+
+      if (pos.x + radius > c.minX && pos.x - radius < c.maxX) {
+        if (pos.z + radius > c.minZ && pos.z - radius < c.maxZ) {
+          if (vel.z > 0) pos.z = c.minZ - radius;
+          else if (vel.z < 0) pos.z = c.maxZ + radius;
+          vel.z = 0;
+        }
+      }
+    }
+
+    const bound = MAP_HALF - 2.5;
+    if (pos.x < -bound + radius) {
+      pos.x = -bound + radius;
+      vel.x = 0;
+    } else if (pos.x > bound - radius) {
+      pos.x = bound - radius;
+      vel.x = 0;
+    }
+    if (pos.z < -bound + radius) {
+      pos.z = -bound + radius;
+      vel.z = 0;
+    } else if (pos.z > bound - radius) {
+      pos.z = bound - radius;
+      vel.z = 0;
+    }
+  }
+
+  function getHighestSurface(x: number, z: number, footY: number): number {
+    let topY = terrainHeight(x, z);
+    for (const c of worldColliders) {
+      if (c.active === false) continue;
+      if (x >= c.minX - 0.05 && x <= c.maxX + 0.05 && z >= c.minZ - 0.05 && z <= c.maxZ + 0.05) {
+        const stepThreshold = (c.isStair || c.isRamp) ? 0.95 : 0.65;
+        if (c.maxY <= footY + stepThreshold && c.maxY > topY) {
+          topY = c.maxY;
+        }
+      }
+    }
+    return topY;
+  }
+
+  const hangarCorridorNodes = {
+    mainframe: new THREE.Vector3(42, 0, 0),   // Virology & Genetic Synthesis Lab
+    cryo: new THREE.Vector3(-42, 0, 0),        // Cryo-Storage & Specimen Incubation Chamber
+    evac: new THREE.Vector3(0, 0, -50),        // North High-Containment Evacuation Pad
+    center: new THREE.Vector3(0, 1.4, 0)       // Central Bio-Hazard Reactor Hub
+  };
+
+  function spawnObjectiveProp(faction: 'usmc' | 'apex', customPos?: THREE.Vector3): ObjectivePropInstance {
+    const defaultPos = faction === 'apex' ? hangarCorridorNodes.mainframe : hangarCorridorNodes.cryo;
+    const spawnPos = customPos ? customPos.clone() : defaultPos.clone();
+    const propGroup = new THREE.Group();
+    propGroup.position.copy(spawnPos);
+
+    let boundingMesh: THREE.Mesh | undefined;
+    let canisterGroup: THREE.Group | undefined;
+    let beaconRing: THREE.Mesh | undefined;
+    let cureMat: THREE.MeshStandardMaterial | undefined;
+
+    if (faction === 'apex') {
+      // APEX PMC: MAINFRAME SERVER TERMINAL
+      // Server Rack Cabinet
+      const rackGeo = new THREE.BoxGeometry(1.6, 2.7, 1.1);
+      const rackMat = new THREE.MeshStandardMaterial({ color: 0x161b22, roughness: 0.65, metalness: 0.6 });
+      const rackMesh = new THREE.Mesh(rackGeo, rackMat);
+      rackMesh.position.y = 1.35;
+      rackMesh.receiveShadow = true;
+      rackMesh.castShadow = true;
+      propGroup.add(rackMesh);
+      registerHittable(rackMesh);
+
+      // Blinking Blade Server LEDs
+      const ledColors = [0x2de2e6, 0x00ff66, 0xf5a623];
+      for (let row = 0; row < 6; row++) {
+        for (let col = 0; col < 4; col++) {
+          const c = ledColors[(row + col) % ledColors.length];
+          const led = new THREE.Mesh(
+            new THREE.BoxGeometry(0.08, 0.08, 0.04),
+            new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.85 })
+          );
+          led.position.set(-0.5 + col * 0.33, 0.6 + row * 0.32, 0.56);
+          propGroup.add(led);
+        }
+      }
+
+      // Digital Screen & Console Deck
+      const screenMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(0.8, 0.5, 0.05),
+        new THREE.MeshStandardMaterial({ color: 0x0a141e, emissive: 0x2de2e6, emissiveIntensity: 0.75 })
+      );
+      screenMesh.position.set(0, 1.9, 0.57);
+      propGroup.add(screenMesh);
+
+      const deskMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(1.4, 0.12, 0.5),
+        new THREE.MeshStandardMaterial({ color: 0x242d38, roughness: 0.7, metalness: 0.4 })
+      );
+      deskMesh.position.set(0, 1.1, 0.7);
+      propGroup.add(deskMesh);
+
+      // Hovering, Semi-Transparent Teal Interaction Bounding Box
+      const boundGeo = new THREE.BoxGeometry(2.4, 3.2, 2.2);
+      const boundMat = new THREE.MeshStandardMaterial({
+        color: 0x2de2e6,
+        emissive: 0x00b8c2,
+        emissiveIntensity: 0.35,
+        transparent: true,
+        opacity: 0.3,
+        roughness: 0.1,
+        depthWrite: false
+      });
+      boundingMesh = new THREE.Mesh(boundGeo, boundMat);
+      boundingMesh.position.set(0, 1.6, 0);
+      propGroup.add(boundingMesh);
+
+      // Floating Teal Hologram Ring
+      beaconRing = new THREE.Mesh(
+        new THREE.TorusGeometry(1.2, 0.035, 8, 28),
+        new THREE.MeshBasicMaterial({ color: 0x2de2e6, transparent: true, opacity: 0.85 })
+      );
+      beaconRing.position.set(0, 3.4, 0);
+      beaconRing.rotation.x = Math.PI / 2;
+      propGroup.add(beaconRing);
+
+      worldColliders.push({
+        minX: spawnPos.x - 1.0,
+        maxX: spawnPos.x + 1.0,
+        minY: spawnPos.y,
+        maxY: spawnPos.y + 2.8,
+        minZ: spawnPos.z - 0.8,
+        maxZ: spawnPos.z + 0.8,
+        active: true
+      });
+    } else {
+      // USMC 1ST RECON: GLOWING CRYO-STORAGE POD WITH 3D BIO-HAZARD CANISTER
+      // Pod Outer Capsule Frame
+      const podFrameGeo = new THREE.CylinderGeometry(0.85, 0.95, 2.7, 16);
+      const podFrameMat = new THREE.MeshStandardMaterial({ color: 0x1a2128, roughness: 0.6, metalness: 0.8 });
+      const podFrame = new THREE.Mesh(podFrameGeo, podFrameMat);
+      podFrame.position.y = 1.35;
+      podFrame.receiveShadow = true;
+      podFrame.castShadow = true;
+      propGroup.add(podFrame);
+      registerHittable(podFrame);
+
+      // Glass Viewport Chamber (Translucent Cyan)
+      const glassGeo = new THREE.CylinderGeometry(0.8, 0.8, 1.6, 16, 1, true);
+      const glassMat = new THREE.MeshStandardMaterial({
+        color: 0x00e5ff,
+        emissive: 0x006688,
+        emissiveIntensity: 0.4,
+        transparent: true,
+        opacity: 0.45,
+        roughness: 0.1
+      });
+      const glassChamber = new THREE.Mesh(glassGeo, glassMat);
+      glassChamber.position.y = 1.4;
+      propGroup.add(glassChamber);
+
+      // Top & Bottom Heavy Reinforced Collars
+      const collarTop = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.92, 0.92, 0.3, 16),
+        new THREE.MeshStandardMaterial({ color: 0x2e3846, metalness: 0.9, roughness: 0.3 })
+      );
+      collarTop.position.y = 2.55;
+      propGroup.add(collarTop);
+
+      // Internal 3D Bio-Hazard Cure Canister Model
+      canisterGroup = new THREE.Group();
+      canisterGroup.position.set(0, 1.35, 0);
+
+      // Canister Core: Glowing Bioluminescent Green Liquid Vial
+      cureMat = new THREE.MeshStandardMaterial({
+        color: 0x00ff66,
+        emissive: 0x00ff66,
+        emissiveIntensity: 0.95,
+        roughness: 0.2
+      });
+      const vialMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.55, 12), cureMat);
+      canisterGroup.add(vialMesh);
+
+      // Outer Metallic Pressure Sleeves & Hazard Bands
+      const sleeveMat = new THREE.MeshStandardMaterial({ color: 0x3d4550, metalness: 0.9, roughness: 0.3 });
+      const capTop = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.14, 12), sleeveMat);
+      capTop.position.y = 0.32;
+      canisterGroup.add(capTop);
+
+      const capBottom = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.14, 12), sleeveMat);
+      capBottom.position.y = -0.32;
+      canisterGroup.add(capBottom);
+
+      // Yellow/Black Bio-Hazard Warning Ring
+      const hazardRing = new THREE.Mesh(
+        new THREE.TorusGeometry(0.16, 0.025, 6, 16),
+        new THREE.MeshStandardMaterial({ color: 0xf5a623, emissive: 0x553300 })
+      );
+      hazardRing.rotation.x = Math.PI / 2;
+      canisterGroup.add(hazardRing);
+
+      // Carry Handle on Canister
+      const handleMesh = new THREE.Mesh(
+        new THREE.TorusGeometry(0.08, 0.02, 6, 12, Math.PI),
+        new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8 })
+      );
+      handleMesh.position.y = 0.42;
+      handleMesh.rotation.x = Math.PI;
+      canisterGroup.add(handleMesh);
+
+      propGroup.add(canisterGroup);
+
+      // Cryo Frost Vent Indicator Ring
+      beaconRing = new THREE.Mesh(
+        new THREE.TorusGeometry(1.2, 0.035, 8, 28),
+        new THREE.MeshBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.85 })
+      );
+      beaconRing.position.set(0, 3.2, 0);
+      beaconRing.rotation.x = Math.PI / 2;
+      propGroup.add(beaconRing);
+
+      worldColliders.push({
+        minX: spawnPos.x - 0.95,
+        maxX: spawnPos.x + 0.95,
+        minY: spawnPos.y,
+        maxY: spawnPos.y + 2.7,
+        minZ: spawnPos.z - 0.95,
+        maxZ: spawnPos.z + 0.95,
+        active: true
+      });
+    }
+
+    worldGroup.add(propGroup);
+
+    return {
+      group: propGroup,
+      interactNode: spawnPos,
+      type: faction === 'apex' ? 'mainframe' : 'cryo_pod',
+      boundingMesh,
+      canisterGroup,
+      update: (dt: number, time: number) => {
+        if (boundingMesh) {
+          boundingMesh.position.y = 1.6 + Math.sin(time * 3.0) * 0.12;
+        }
+        if (canisterGroup) {
+          canisterGroup.rotation.y += dt * 1.8;
+          if (cureMat) {
+            cureMat.emissiveIntensity = 0.75 + Math.sin(time * 4.2) * 0.25;
+          }
+        }
+        if (beaconRing) {
+          beaconRing.rotation.z += dt * 1.4;
+        }
+      },
+      dispose: () => {
+        worldGroup.remove(propGroup);
+        propGroup.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            const m = child as THREE.Mesh;
+            if (m.geometry) m.geometry.dispose();
+            if (Array.isArray(m.material)) m.material.forEach(mat => mat.dispose());
+            else if (m.material) m.material.dispose();
+          }
+        });
+      }
+    };
+  }
+
+  function spawnDeployableCover(pos: THREE.Vector3, rotY: number): THREE.Group {
+    const coverGroup = new THREE.Group();
+    coverGroup.position.copy(pos);
+    coverGroup.rotation.y = rotY;
+
+    // Ballistic Composite Wall Plate
+    const wallGeo = new THREE.BoxGeometry(2.8, 1.25, 0.4);
+    const wallMat = new THREE.MeshStandardMaterial({
+      color: 0x3d4552,
+      roughness: 0.7,
+      metalness: 0.5
+    });
+    const wallMesh = new THREE.Mesh(wallGeo, wallMat);
+    wallMesh.position.y = 0.625;
+    wallMesh.receiveShadow = true;
+    wallMesh.castShadow = true;
+    coverGroup.add(wallMesh);
+    registerHittable(wallMesh);
+
+    // Reinforcing Struts & Sandbags Base
+    const sandbagGeo = new THREE.BoxGeometry(2.9, 0.35, 0.8);
+    const sandbagMat = new THREE.MeshStandardMaterial({ color: 0x5a5042, roughness: 0.95 });
+    const sandbags = new THREE.Mesh(sandbagGeo, sandbagMat);
+    sandbags.position.y = 0.175;
+    coverGroup.add(sandbags);
+
+    worldGroup.add(coverGroup);
+
+    const cosR = Math.abs(Math.cos(rotY));
+    const sinR = Math.abs(Math.sin(rotY));
+    const effW = 2.8 * cosR + 0.6 * sinR;
+    const effD = 2.8 * sinR + 0.6 * cosR;
+
+    worldColliders.push({
+      minX: pos.x - effW / 2,
+      maxX: pos.x + effW / 2,
+      minY: pos.y,
+      maxY: pos.y + 1.25,
+      minZ: pos.z - effD / 2,
+      maxZ: pos.z + effD / 2,
+      active: true
+    });
+
+    return coverGroup;
+  }
+
+  function dispose(): void {
+    groundPickups.forEach(p => worldGroup.remove(p.group));
+    groundPickups.length = 0;
+    activeDebris.forEach(d => {
+      worldGroup.remove(d.mesh);
+      d.mesh.geometry.dispose();
+      (d.mesh.material as THREE.Material).dispose();
+    });
+    activeDebris.length = 0;
+
+    worldGroup.traverse((obj) => {
+      if ((obj as THREE.Mesh).isMesh) {
+        const m = obj as THREE.Mesh;
+        if (m.geometry) m.geometry.dispose();
+        if (Array.isArray(m.material)) {
+          m.material.forEach(mat => mat.dispose());
+        } else if (m.material) {
+          m.material.dispose();
+        }
+      }
+      if ((obj as THREE.Light).isLight) {
+        const l = obj as THREE.Light;
+        if (l.dispose) l.dispose();
+      }
+    });
+
+    scene.remove(worldGroup);
+    worldGroup.clear();
+  }
+
+  return {
+    terrainMesh,
+    worldColliders,
+    doors,
+    hittableObjects,
+    groundPickups,
+    structures,
+    registerHittable,
+    unregisterHittable,
+    damageEnvironmentalBlock,
+    updateDebris,
+    createGroundPickup,
+    collectPickup,
+    updateDoors,
+    moveEntityWithCollision,
+    getHighestSurface,
+    spawnObjectiveProp,
+    spawnDeployableCover,
+    hangarCorridorNodes,
+    dispose
+  };
+}

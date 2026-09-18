@@ -26,7 +26,7 @@ export interface BotBuildOptions {
   botId: number;
   team: string;
   isZombie: boolean;
-  zType: 'walker' | 'runner' | 'tank';
+  zType: 'walker' | 'runner' | 'tank' | 'brute' | 'banshee' | 'bloater' | 'megaboss';
   isVIP: boolean;
   weaponTypeIndex: number;
   weaponType: string;
@@ -61,6 +61,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
 
   let speedMultiplier = 1.0;
   let healthMultiplier = 1.0;
+  let headGeo, torsoGeo, armGeo, legGeo, baseColor, eyeColor;
 
   // Determine if this bot equips specialized faction gear
   const isSpecializedBot = !isZombie && !isVIP && (gearTier === 'specialized' || (botId % 3 === 0));
@@ -70,9 +71,6 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
   if (isZombie) {
     faction = 'zombie';
   } else if (isVIP) {
-    faction = 'usmc';
-  } else if (mode === 'zombie' && team === 'blue') {
-    // Constraint: In Zombie Mode, companion survivor bots are hard-locked to USMC military skins
     faction = 'usmc';
   } else if (team === 'blue') {
     // Companion allies inherit player's chosen faction alignment
@@ -127,12 +125,30 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       pantsColor = 0x1f1a18;
       vestColor = 0x3a2a26;
       helmetColor = 0x47342e;
+    } else if (zType === 'brute') {
+      skinColor = 0x2e2c2a;
+      shirtColor = 0x1c1a18;
+      pantsColor = 0x141414;
+      vestColor = 0x242220;
+      helmetColor = 0x1f1e1c;
+    } else if (zType === 'bloater') {
+      skinColor = 0x384a28;
+      shirtColor = 0x2d3a20;
+      pantsColor = 0x202816;
+      vestColor = 0x324024;
+      helmetColor = 0x2a361e;
+    } else if (zType === 'banshee') {
+      skinColor = 0xb8e2f2;
+      shirtColor = 0x3a4855;
+      pantsColor = 0x242e38;
+      vestColor = 0x405260;
+      helmetColor = 0x4c6274;
     } else {
-      skinColor = 0x3a3c3f;
-      shirtColor = 0x252525;
-      pantsColor = 0x1c1c1c;
-      vestColor = 0x2a2a2a;
-      helmetColor = 0x222222;
+      skinColor = 0x1a1a1c;
+      shirtColor = 0x101012;
+      pantsColor = 0x0c0c0e;
+      vestColor = 0x161618;
+      helmetColor = 0x141416;
     }
   } else if (faction === 'usmc') {
     // USMC Coalition: Olive-drab, forest green, woodland camouflage
@@ -179,18 +195,31 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
   const matInnerCavity = new THREE.MeshStandardMaterial({ color: 0x070303, roughness: 0.95 });
   const matBoneRibs = new THREE.MeshStandardMaterial({ color: 0xd8d3bc, roughness: 0.55 });
   const matZombieEyes = new THREE.MeshStandardMaterial({ color: 0xff0022, emissive: 0xff0022, emissiveIntensity: 2.8, roughness: 0.1 });
+  const matWalkerEyes = new THREE.MeshStandardMaterial({ color: 0x44ff55, emissive: 0x22bb33, emissiveIntensity: 1.1, roughness: 0.25 });
+  const matBioPustule = new THREE.MeshStandardMaterial({ color: 0x39ff14, emissive: 0x39ff14, emissiveIntensity: 2.4, roughness: 0.15 });
+  const matBoneCarapace = new THREE.MeshStandardMaterial({ color: 0x9e9780, roughness: 0.5, metalness: 0.2 });
   const matZombieSocket = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 1.0 });
   const matZombieClaw = new THREE.MeshStandardMaterial({ color: 0x140808, roughness: 0.4 });
+  const matBloaterBelly = new THREE.MeshStandardMaterial({ color: 0x22c55e, emissive: 0x16a34a, emissiveIntensity: 2.0, roughness: 0.35, transparent: true, opacity: 0.88 });
+  const matCalcifiedArmor = new THREE.MeshStandardMaterial({ color: 0x232428, roughness: 0.88, metalness: 0.35 });
+  const matBansheeSkin = new THREE.MeshStandardMaterial({ color: 0xb8e2f2, emissive: 0x0088b3, emissiveIntensity: 0.8, roughness: 0.5, transparent: true, opacity: 0.92 });
+  const matBansheeShroud = new THREE.MeshStandardMaterial({ color: 0x14202c, transparent: true, opacity: 0.72, roughness: 0.9 });
+  const matMegaBossCore = new THREE.MeshStandardMaterial({ color: 0xff3300, emissive: 0xff2200, emissiveIntensity: 3.0, roughness: 0.2 });
 
   flashMats.push(
     matShirt, matPants, matVest, matPouches, matHelmet, matSkin, matBoots, matGloves,
-    matBeard, matSkullMask, matHoodFabric, matFoliage, matSteelArmor
+    matBeard, matSkullMask, matHoodFabric, matFoliage, matSteelArmor, matBoneCarapace,
+    matBloaterBelly, matCalcifiedArmor, matBansheeSkin, matMegaBossCore
   );
 
   // 1. TORSO HIERARCHY: Upper & Lower Torso Separation
   const torsoGroup = new THREE.Group();
   rootGroup.add(torsoGroup);
-  if (isZombie && zType === 'runner') torsoGroup.rotation.x = 0.61; // 35 degree runner lean
+  if (isZombie) {
+    if (zType === 'runner') torsoGroup.rotation.x = 0.61; // 35 degree aggressive athletic forward lean
+    else if (zType === 'walker') torsoGroup.rotation.x = 0.14; // Upright slouched geometry
+    else if (zType === 'tank') torsoGroup.rotation.x = 0.22; // Low heavy hunch
+  }
 
   // Lower Torso (Waist / Abdomen): narrower block (0.38 x 0.24 x 0.22)
   const lowerTorso = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.24, 0.22), matPants);
@@ -368,6 +397,113 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       torsoGroup.add(rib);
       hitParts.push(rib);
     });
+
+    // Zombie Subtype Specific Mutations:
+    if (zType === 'runner') {
+      // High-contrast vibrant green emissive shoulder and spine pustules
+      const pustulePositions = [
+        [-0.22, 1.45, 0.06], [0.22, 1.45, 0.06],
+        [-0.18, 1.48, -0.05], [0.18, 1.48, -0.05],
+        [0.0, 1.42, -0.14], [0.03, 1.28, -0.15],
+        [-0.03, 1.16, -0.14], [-0.14, 1.36, 0.12],
+        [0.14, 1.36, 0.12]
+      ];
+      pustulePositions.forEach(([px, py, pz]) => {
+        const pus = new THREE.Mesh(new THREE.DodecahedronGeometry(0.045, 0), matBioPustule);
+        pus.position.set(px, py, pz);
+        torsoGroup.add(pus);
+        hitParts.push(pus);
+      });
+    } else if (zType === 'brute') {
+      // Nugget Brute: Wide AABB collider proportions, armored chest carapace, broad shoulder pads & bone spikes
+      const chestArmor = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.44, 0.28), matCalcifiedArmor);
+      chestArmor.position.set(0, 1.28, 0.12);
+      chestArmor.castShadow = true;
+      const carapaceL = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 0.32), matBoneCarapace);
+      carapaceL.position.set(-0.38, 1.48, 0);
+      carapaceL.castShadow = true;
+      const carapaceR = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 0.32), matBoneCarapace);
+      carapaceR.position.set(0.38, 1.48, 0);
+      carapaceR.castShadow = true;
+      const spinePlate = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.48, 0.14), matCalcifiedArmor);
+      spinePlate.position.set(0, 1.28, -0.16);
+      spinePlate.castShadow = true;
+      // Shoulder spikes
+      const spikeL = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.32, 6), matBoneCarapace);
+      spikeL.position.set(-0.44, 1.56, 0);
+      spikeL.rotation.z = 0.55;
+      const spikeR = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.32, 6), matBoneCarapace);
+      spikeR.position.set(0.44, 1.56, 0);
+      spikeR.rotation.z = -0.55;
+      torsoGroup.add(chestArmor, carapaceL, carapaceR, spinePlate, spikeL, spikeR);
+      hitParts.push(chestArmor, carapaceL, carapaceR, spinePlate, spikeL, spikeR);
+    } else if (zType === 'bloater') {
+      // Bloater: Distended glowing green belly geometry (acidic hazard sac)
+      const bellyGeo = new THREE.SphereGeometry(0.38, 16, 16);
+      const bellyMesh = new THREE.Mesh(bellyGeo, matBloaterBelly);
+      bellyMesh.scale.set(1.18, 0.96, 1.26);
+      bellyMesh.position.set(0, 1.05, 0.20);
+      bellyMesh.castShadow = true;
+      torsoGroup.add(bellyMesh);
+      hitParts.push(bellyMesh);
+
+      // Acid pustule clusters around bloated torso
+      const pustulePositions = [
+        [-0.18, 1.34, 0.14], [0.18, 1.34, 0.14],
+        [0.0, 1.28, 0.24], [-0.22, 1.10, 0.18], [0.22, 1.10, 0.18]
+      ];
+      pustulePositions.forEach(([px, py, pz]) => {
+        const pus = new THREE.Mesh(new THREE.DodecahedronGeometry(0.055, 0), matBioPustule);
+        pus.position.set(px, py, pz);
+        torsoGroup.add(pus);
+        hitParts.push(pus);
+      });
+    } else if (zType === 'banshee') {
+      // Banshee: Slender ethereal torso with weeping tendril shrouds
+      for (let i = 0; i < 4; i++) {
+        const ribbon = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.82, 0.02), matBansheeShroud);
+        ribbon.position.set((i - 1.5) * 0.14, 0.88, -0.12);
+        ribbon.rotation.x = 0.18;
+        ribbon.rotation.z = (i - 1.5) * 0.08;
+        torsoGroup.add(ribbon);
+      }
+      const crest = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.35, 4), matBansheeSkin);
+      crest.position.set(0, 1.48, 0.08);
+      crest.rotation.x = 0.4;
+      torsoGroup.add(crest);
+      hitParts.push(crest);
+    } else if (zType === 'megaboss') {
+      // Mega-Boss Apex: Heavy calcified bone carapaces, glowing thermal core & spine ridge
+      const coreMesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.18, 0), matMegaBossCore);
+      coreMesh.position.set(0, 1.28, 0.16);
+      coreMesh.castShadow = true;
+      const carapaceL = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.24, 0.36), matBoneCarapace);
+      carapaceL.position.set(-0.42, 1.50, 0);
+      carapaceL.castShadow = true;
+      const carapaceR = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.24, 0.36), matBoneCarapace);
+      carapaceR.position.set(0.42, 1.50, 0);
+      carapaceR.castShadow = true;
+      const chestPlate = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.32, 0.16), matBoneCarapace);
+      chestPlate.position.set(0, 1.38, 0.18);
+      chestPlate.castShadow = true;
+      const spinePlate1 = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.24, 0.16), matBoneCarapace);
+      spinePlate1.position.set(0, 1.42, -0.20);
+      spinePlate1.castShadow = true;
+      const spinePlate2 = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.22, 0.14), matBoneCarapace);
+      spinePlate2.position.set(0, 1.20, -0.18);
+      spinePlate2.castShadow = true;
+      torsoGroup.add(coreMesh, carapaceL, carapaceR, chestPlate, spinePlate1, spinePlate2);
+      hitParts.push(coreMesh, carapaceL, carapaceR, chestPlate, spinePlate1, spinePlate2);
+    } else if (zType === 'tank') {
+      const carapaceL = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.18, 0.28), matBoneCarapace);
+      carapaceL.position.set(-0.35, 1.46, 0);
+      carapaceL.castShadow = true;
+      const carapaceR = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.18, 0.28), matBoneCarapace);
+      carapaceR.position.set(0.35, 1.46, 0);
+      carapaceR.castShadow = true;
+      torsoGroup.add(carapaceL, carapaceR);
+      hitParts.push(carapaceL, carapaceR);
+    }
   }
 
   // 2. CONNECTOR FIX: Lengthened Inner Neck Cylinder
@@ -600,14 +736,15 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     lowerTeeth.position.set(0, -0.025, 0.115);
     headGroup.add(upperTeeth, lowerTeeth);
 
-    // Glowing Crimson Eyes
+    // Glowing Bio-Zombie Eyes (Walker: dim toxic green, Runner: vibrant green, Tank: crimson)
+    const activeEyeMat = zType === 'walker' ? matWalkerEyes : zType === 'runner' ? matBioPustule : matZombieEyes;
     const socketL = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.048, 0.035), matZombieSocket);
     socketL.position.set(-0.055, 0.11, 0.125);
     const socketR = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.048, 0.035), matZombieSocket);
     socketR.position.set(0.055, 0.11, 0.125);
-    const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.022, 0.025), matZombieEyes);
+    const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.022, 0.025), activeEyeMat);
     eyeL.position.set(-0.055, 0.11, 0.136);
-    const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.022, 0.025), matZombieEyes);
+    const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.022, 0.025), activeEyeMat);
     eyeR.position.set(0.055, 0.11, 0.136);
     headGroup.add(socketL, socketR, eyeL, eyeR);
   }
@@ -887,9 +1024,23 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     hitParts.push(legRMesh);
   }
 
-  // Zombie Tank Scale
-  if (isZombie && zType === 'tank') {
-    rootGroup.scale.set(1.8, 1.8, 1.8);
+  // Differentiated Bio-Mutant Visual Mesh Scales & Postures
+  if (isZombie) {
+    if (zType === 'walker') {
+      rootGroup.scale.set(1.0, 1.0, 1.0); // Standard humanoid height (1.8m)
+    } else if (zType === 'runner') {
+      rootGroup.scale.set(0.85, 0.722, 0.85); // Cower / hunched posture (1.3m)
+    } else if (zType === 'brute') {
+      rootGroup.scale.set(1.222, 1.222, 1.222); // Wide, bulky calcified tank (2.2m)
+    } else if (zType === 'bloater') {
+      rootGroup.scale.set(1.15, 0.944, 1.15); // Glowing green belly geometry (1.7m)
+    } else if (zType === 'banshee') {
+      rootGroup.scale.set(0.85, 1.111, 0.85); // Slender, floating/ethereal posture (2.0m)
+    } else if (zType === 'megaboss') {
+      rootGroup.scale.set(1.555, 1.555, 1.555); // Apex mutated behemoth (2.8m)
+    } else if (zType === 'tank') {
+      rootGroup.scale.set(1.5, 1.5, 1.5);
+    }
   }
 
   return {

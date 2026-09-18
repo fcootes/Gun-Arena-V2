@@ -131,7 +131,7 @@ export const WEAPONS: WeaponDef[] = [
     burstRate: 0.075,
     mag: 36,
     reserve: 180,
-    reloadTime: 2.4,
+    reloadTime: 1.2,
     range: 220,
     auto: false,
     adsFov: 38, // Slight zoom-in scope optic view
@@ -239,6 +239,17 @@ export const WEAPONS: WeaponDef[] = [
     adsFov: 70,
     scoped: false,
     kick: 0
+  },
+  {
+    id: 'radio',
+    name: 'TACTICAL RADIO',
+    type: 'gadget',
+    count: 1,
+    maxCount: 1,
+    auto: false,
+    adsFov: 65,
+    scoped: false,
+    kick: 0
   }
 ];
 
@@ -265,6 +276,7 @@ export interface ViewmodelManager {
   setMinigunSpin: (deltaAngle: number, isVenting: boolean) => void;
   addRecoil: (kick: number, rotX: number) => void;
   triggerKnifeSlash: () => void;
+  triggerRadioTransmit?: (isHold: boolean) => void;
 }
 
 export function createViewmodelManager(): ViewmodelManager {
@@ -584,16 +596,17 @@ export function createViewmodelManager(): ViewmodelManager {
 
   // Independent curved MAGAZINE BOX at the very back of the stock (behind pistol grip)
   const brMagGroup = new THREE.Group();
-  brMagGroup.position.set(0, -0.075, 0.15);
+  brMagGroup.position.set(0, 0.0, 0.15);
   brMagGroup.rotation.x = -0.18;
 
   const brMagBox = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.13, 0.058), vmMatBrFrame);
+  brMagBox.position.set(0, -0.075, 0);
   const brMagBase = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.018, 0.066), vmMatMetalDark);
-  brMagBase.position.set(0, -0.066, 0.004);
+  brMagBase.position.set(0, -0.141, 0.004);
   const brMagRib = new THREE.Mesh(new THREE.BoxGeometry(0.030, 0.018, 0.060), vmMatMetalAccent);
-  brMagRib.position.set(0, -0.02, 0.002);
+  brMagRib.position.set(0, -0.095, 0.002);
   const brMagFeed = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.024, 0.048), vmMatMetalGrey);
-  brMagFeed.position.set(0, 0.062, -0.004);
+  brMagFeed.position.set(0, -0.013, -0.004);
   brMagGroup.add(brMagBox, brMagBase, brMagRib, brMagFeed);
 
   brBodyGroup.add(brChassis, brBarrel, brMuzzle, brForwardGrip, brOpticRiser, brOpticBox, brOpticLens, brChargingHandle, brMagGroup);
@@ -961,6 +974,81 @@ export function createViewmodelManager(): ViewmodelManager {
     knifeVmGroup.visible = false;
   }
 
+  // 14. Tactical Handheld Radio Viewmodel
+  const radioVmGroup = new THREE.Group();
+  let radioPttMesh: THREE.Mesh;
+  let radioLedMesh: THREE.Mesh;
+  let radioScreenMesh: THREE.Mesh;
+  let radioTransmitTimer = 0;
+  let radioTransmitIsHold = false;
+  {
+    const matRadioBody = new THREE.MeshStandardMaterial({ color: 0x24282e, roughness: 0.7, metalness: 0.25 });
+    const matRadioGrip = new THREE.MeshStandardMaterial({ color: 0x121417, roughness: 0.9 });
+    const matRadioAntenna = new THREE.MeshStandardMaterial({ color: 0x161719, roughness: 0.6, metalness: 0.4 });
+    const matRadioKnob = new THREE.MeshStandardMaterial({ color: 0x32373e, metalness: 0.8, roughness: 0.3 });
+    const matRadioScreen = new THREE.MeshStandardMaterial({ color: 0x071e12, emissive: 0x18e065, emissiveIntensity: 0.85, roughness: 0.2 });
+    const matRadioLed = new THREE.MeshStandardMaterial({ color: 0x223322, emissive: 0x00ff44, emissiveIntensity: 0.4 });
+    const matRadioPtt = new THREE.MeshStandardMaterial({ color: 0x485059, metalness: 0.6, roughness: 0.4 });
+    const matRadioGrill = new THREE.MeshStandardMaterial({ color: 0x101215, roughness: 0.95 });
+
+    // Rugged transceiver chassis
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.076, 0.14, 0.042), matRadioBody);
+    body.position.set(0, 0, 0);
+
+    // Rubberized side grips
+    const gripL = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.12, 0.044), matRadioGrip);
+    gripL.position.set(-0.038, 0, 0);
+    const gripR = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.12, 0.044), matRadioGrip);
+    gripR.position.set(0.038, 0, 0);
+
+    // Long flexible rubber whip antenna on top-left
+    const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.0035, 0.0065, 0.22, 8), matRadioAntenna);
+    antenna.position.set(-0.024, 0.17, 0);
+    const antennaBase = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.010, 0.025, 8), matRadioKnob);
+    antennaBase.position.set(-0.024, 0.075, 0);
+
+    // Channel Selector knob on top-right
+    const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.010, 0.010, 0.022, 12), matRadioKnob);
+    knob.position.set(0.022, 0.075, 0);
+
+    // Backlit LCD screen
+    radioScreenMesh = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.038, 0.005), matRadioScreen);
+    radioScreenMesh.position.set(0, 0.032, 0.021);
+
+    // Transmit LED status indicator
+    radioLedMesh = new THREE.Mesh(new THREE.SphereGeometry(0.0045, 8, 8), matRadioLed);
+    radioLedMesh.position.set(0.024, 0.056, 0.021);
+
+    // Push-to-Talk side switch
+    radioPttMesh = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.038, 0.020), matRadioPtt);
+    radioPttMesh.position.set(-0.042, 0.018, 0);
+
+    // Speaker grill slits
+    const grill = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.042, 0.004), matRadioGrill);
+    grill.position.set(0, -0.025, 0.021);
+
+    // Gloved tactical hand holding radio
+    const matVmGlove = new THREE.MeshStandardMaterial({ color: 0x1f2126, roughness: 0.75, metalness: 0.25 });
+    const glovedHand = new THREE.Mesh(new THREE.BoxGeometry(0.082, 0.075, 0.082), matVmGlove);
+    glovedHand.position.set(0.005, -0.055, 0.01);
+    const thumb = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.032, 0.055), matVmGlove);
+    thumb.position.set(-0.044, 0.01, 0.02);
+    thumb.rotation.y = 0.35;
+
+    const armSleeve = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.10, 0.24), new THREE.MeshStandardMaterial({ color: 0x2e3628, roughness: 0.85 }));
+    armSleeve.position.set(0.04, -0.12, 0.16);
+    armSleeve.rotation.x = 0.35;
+
+    radioVmGroup.add(
+      body, gripL, gripR, antenna, antennaBase, knob,
+      radioScreenMesh, radioLedMesh, radioPttMesh, grill,
+      glovedHand, thumb, armSleeve
+    );
+
+    radioVmGroup.position.set(0.18, -0.16, -0.36);
+    radioVmGroup.rotation.set(0.15, -0.22, 0.08);
+  }
+
   const vmModels = [
     arVmGroup,        // 0: AR (Slot 1)
     shotgunVmGroup,   // 1: Shotgun (Slot 2)
@@ -973,7 +1061,9 @@ export function createViewmodelManager(): ViewmodelManager {
     minigunVmGroup,   // 8: Heavy Minigun (Slot 9)
     railgunVmGroup,   // 9: Tactical Railgun (Slot 0)
     grenadeVmGroup,   // 10: Grenade (Slot 11)
-    miniVmGroup       // 11: Mini Shield (Slot 12)
+    miniVmGroup,      // 11: Mini Shield (Slot 12)
+    miniVmGroup,      // 12: Tactical Heal Medkit
+    radioVmGroup      // 13: Tactical Radio (Slot 3 / Gadget)
   ];
   vmModels.forEach(g => root.add(g));
 
@@ -1466,67 +1556,67 @@ export function createViewmodelManager(): ViewmodelManager {
     //   bottom of bullpup stock and disappearing.
     // - STAGE 2: After a mechanical audio delay, a fresh curved magazine box slides back up
     //   into stock cavity until it sits flush.
-    // - STAGE 3: Small top CHARGING LEVER block physically slides backward along rail
-    //   toward player, then snaps instantly forward to starting position.
+    // =========================================================================
+    // 6. F2000 BATTLE RIFLE (Slot 6) - RELOAD STATE MACHINE OVERHAUL
+    // Absolute time-based position translation (lerp) sequence for magazine sub-mesh:
+    // - Milestone 1 (0.0s - 0.6s): Separate magazine mesh block and translate
+    //   its Y-axis downward away from main receiver to a distance of -0.8 units.
+    // - Milestone 2 (0.6s - 1.2s): Instantly instantiate filled magazine mesh position
+    //   back at -0.8 units and smoothly translate it up into mag-well, locking it at 0.0 units.
+    // - Milestone 3 (1.2s - 1.8s / Only if empty magazine reload): Trigger a 45-degree
+    //   rotation tweak on bolt-handle charging mechanism mesh.
+    // - Tactical reload (mag count > 0) strictly skips Milestone 3 (total duration 1.2s).
     // =========================================================================
     if (activeModelIdx === 6) {
       if (currentWs?.reloading && (currentWs.totalReloadT ?? 0) > 0) {
-        const p = Math.max(0, Math.min(1, 1 - (currentWs.reloadT! / currentWs.totalReloadT!)));
+        const nominalTotal = currentWs.isTacticalReload ? 1.2 : 1.8;
+        const progress = Math.max(0, Math.min(1, 1 - (currentWs.reloadT! / currentWs.totalReloadT!)));
+        const elapsedSec = progress * nominalTotal;
 
-        let tiltDown = 0;
-        if (p < 0.12) tiltDown = THREE.MathUtils.smoothstep(p / 0.12, 0, 1);
-        else if (p < 0.88) tiltDown = 1.0;
-        else tiltDown = THREE.MathUtils.smoothstep((1 - p) / 0.12, 0, 1);
+        // Receiver chassis remains stable (no rotational tilts that loop or fail)
+        brBodyGroup.rotation.set(0, 0, 0);
+        brBodyGroup.position.set(0, 0, 0);
 
-        // Tilt rifle barrel slightly down to frame the sequence clearly (no upward tilt!)
-        brBodyGroup.rotation.x = -tiltDown * 0.20;
-        brBodyGroup.rotation.z = tiltDown * 0.04;
-        brBodyGroup.position.set(tiltDown * 0.015, -tiltDown * 0.02, -tiltDown * 0.03);
-
-        // STAGE 1: The rear MAGAZINE BOX physically detaches, sliding downward out of the bottom of the bullpup stock and disappearing
-        if (p < 0.10) {
+        if (elapsedSec < 0.6) {
+          // Milestone 1 (0.0s - 0.6s): Separate magazine mesh block and translate Y-axis downward to -0.8 units
+          const t1 = Math.max(0, Math.min(1, elapsedSec / 0.6));
+          const magY = THREE.MathUtils.lerp(0.0, -0.8, t1);
           brMagGroup.visible = true;
-          brMagGroup.position.set(0, -0.075, 0.15);
-        } else if (p < 0.34) {
-          const dropP = (p - 0.10) / 0.24;
-          const smoothDrop = THREE.MathUtils.smoothstep(dropP, 0, 1);
-          brMagGroup.visible = true;
-          brMagGroup.position.set(0, -0.075 - smoothDrop * 0.38, 0.15 + smoothDrop * 0.08);
-        } else if (p < 0.48) {
-          // STAGE 2 (Delay): Mechanical audio delay - cavity is empty
-          brMagGroup.visible = false;
-        } else if (p < 0.72) {
-          // STAGE 2 (Insertion): Fresh curved magazine box slides back up into stock cavity until flush
-          const inP = (p - 0.48) / 0.24;
-          const smoothIn = THREE.MathUtils.smoothstep(inP, 0, 1);
-          brMagGroup.visible = true;
-          brMagGroup.position.set(0, -0.455 + smoothIn * 0.38, 0.23 - smoothIn * 0.08);
-        } else {
-          // Sits flush in stock cavity
-          brMagGroup.visible = true;
-          brMagGroup.position.set(0, -0.075, 0.15);
-        }
-
-        // STAGE 3: The small top CHARGING LEVER block physically slides backward along its rail toward player,
-        // then snaps instantly forward to its starting position
-        if (currentWs.isTacticalReload || p < 0.74) {
+          brMagGroup.position.set(0, magY, 0.15);
           brChargingHandle.position.set(0.025, 0.064, -0.11);
-        } else if (p < 0.84) {
-          const rackP = (p - 0.74) / 0.10;
-          const smoothRack = THREE.MathUtils.smoothstep(rackP, 0, 1);
-          brChargingHandle.position.set(0.025, 0.064, -0.11 + smoothRack * 0.08);
-        } else if (p < 0.89) {
-          const snapFwdP = (p - 0.84) / 0.05;
-          brChargingHandle.position.set(0.025, 0.064, -0.03 - snapFwdP * 0.08);
-        } else {
+          brChargingHandle.rotation.set(0, 0, 0);
+        } else if (elapsedSec < 1.2) {
+          // Milestone 2 (0.6s - 1.2s): Instantly instantiate filled magazine mesh position back at -0.8 units and smoothly translate up into mag-well, locking at 0.0 units
+          const t2 = Math.max(0, Math.min(1, (elapsedSec - 0.6) / 0.6));
+          const magY = THREE.MathUtils.lerp(-0.8, 0.0, t2);
+          brMagGroup.visible = true;
+          brMagGroup.position.set(0, magY, 0.15);
           brChargingHandle.position.set(0.025, 0.064, -0.11);
+          brChargingHandle.rotation.set(0, 0, 0);
+        } else if (!currentWs.isTacticalReload && elapsedSec <= 1.8) {
+          // Milestone 3 (1.2s - 1.8s / Only if empty magazine reload): Trigger 45-degree rotation tweak on bolt-handle charging mechanism mesh
+          brMagGroup.visible = true;
+          brMagGroup.position.set(0, 0.0, 0.15);
+          const t3 = Math.max(0, Math.min(1, (elapsedSec - 1.2) / 0.6));
+          // 45 degrees = Math.PI / 4 radians
+          const angle45 = Math.PI / 4;
+          const tweakRot = Math.sin(t3 * Math.PI) * angle45;
+          brChargingHandle.position.set(0.025, 0.064, -0.11);
+          brChargingHandle.rotation.set(0, 0, tweakRot);
+        } else {
+          // Locked in mag-well at 0.0 units
+          brMagGroup.visible = true;
+          brMagGroup.position.set(0, 0.0, 0.15);
+          brChargingHandle.position.set(0.025, 0.064, -0.11);
+          brChargingHandle.rotation.set(0, 0, 0);
         }
       } else {
         brBodyGroup.rotation.set(0, 0, 0);
         brBodyGroup.position.set(0, 0, 0);
         brMagGroup.visible = true;
-        brMagGroup.position.set(0, -0.075, 0.15);
+        brMagGroup.position.set(0, 0.0, 0.15);
         brChargingHandle.position.set(0.025, 0.064, -0.11);
+        brChargingHandle.rotation.set(0, 0, 0);
       }
     }
 
@@ -1754,6 +1844,28 @@ export function createViewmodelManager(): ViewmodelManager {
     } else if (activeModelIdx === 11) {
       miniVmGroup.rotation.x = 0.18;
     }
+
+    // Tactical Handheld Radio animation (Slot 13)
+    if (activeModelIdx === 13) {
+      if (radioTransmitTimer > 0) {
+        radioTransmitTimer -= dt;
+        radioPttMesh.position.x = -0.038; // PTT button depressed
+        const ledMat = radioLedMesh.material as THREE.MeshStandardMaterial;
+        ledMat.emissive.setHex(radioTransmitIsHold ? 0xf5a623 : 0x00f0ff);
+        ledMat.emissiveIntensity = 3.5;
+        const screenMat = radioScreenMesh.material as THREE.MeshStandardMaterial;
+        screenMat.emissiveIntensity = 1.8;
+        radioVmGroup.rotation.x = 0.22;
+      } else {
+        radioPttMesh.position.x = -0.042;
+        const ledMat = radioLedMesh.material as THREE.MeshStandardMaterial;
+        ledMat.emissive.setHex(0x00ff44);
+        ledMat.emissiveIntensity = 0.4;
+        const screenMat = radioScreenMesh.material as THREE.MeshStandardMaterial;
+        screenMat.emissiveIntensity = 0.85;
+        radioVmGroup.rotation.x = 0.15;
+      }
+    }
   }
 
   let minigunSpinAngle = 0;
@@ -1786,6 +1898,12 @@ export function createViewmodelManager(): ViewmodelManager {
     vmRecoilRotX = rotX;
   }
 
+  function triggerRadioTransmit(isHold: boolean): void {
+    radioTransmitTimer = 0.38;
+    radioTransmitIsHold = isHold;
+    addRecoil(0.015, 0.02);
+  }
+
   return {
     root,
     update,
@@ -1797,6 +1915,7 @@ export function createViewmodelManager(): ViewmodelManager {
     addRecoil,
     triggerKnifeSlash: () => {
       knifeMeleePhase = 0;
-    }
+    },
+    triggerRadioTransmit
   };
 }

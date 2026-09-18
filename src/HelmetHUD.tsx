@@ -24,7 +24,7 @@ export interface HelmetHUDProps {
   slotIndex: number;
   playerLoadout: WeaponDef[];
   playerLoadoutStates: WeaponSlotState[];
-  matchMode: 'ffa' | 'team' | 'zombie' | 'escort';
+  matchMode: 'ffa' | 'team' | 'zombie' | 'escort' | 'extraction';
   factionAlignment: 'usmc' | 'apex';
   blueScore: number;
   redScore: number;
@@ -39,7 +39,54 @@ export interface HelmetHUDProps {
   radarPingsRef: React.MutableRefObject<RadarPing[]>;
 }
 
+export const VISOR_THEMES: Record<VisorType, {
+  accent: string;
+  accentRgba: string;
+  radarBg: string;
+  radarRingRgba: string;
+  radarCrosshairRgba: string;
+  sweepRgba: string;
+  sweepLineRgba: string;
+  accentBorder: string;
+  glowShadow: string;
+}> = {
+  standard: {
+    accent: '#2de2e6',
+    accentRgba: 'rgba(45, 226, 230, 0.85)',
+    radarBg: 'rgba(8, 14, 20, 0.82)',
+    radarRingRgba: 'rgba(45, 226, 230, 0.22)',
+    radarCrosshairRgba: 'rgba(45, 226, 230, 0.15)',
+    sweepRgba: 'rgba(45, 226, 230, 0.12)',
+    sweepLineRgba: 'rgba(45, 226, 230, 0.75)',
+    accentBorder: 'rgba(45, 226, 230, 0.4)',
+    glowShadow: '0 0 14px rgba(45, 226, 230, 0.35)'
+  },
+  recon: {
+    accent: '#00ff66',
+    accentRgba: 'rgba(0, 255, 102, 0.85)',
+    radarBg: 'rgba(6, 18, 10, 0.82)',
+    radarRingRgba: 'rgba(0, 255, 102, 0.22)',
+    radarCrosshairRgba: 'rgba(0, 255, 102, 0.15)',
+    sweepRgba: 'rgba(0, 255, 102, 0.14)',
+    sweepLineRgba: 'rgba(0, 255, 102, 0.75)',
+    accentBorder: 'rgba(0, 255, 102, 0.4)',
+    glowShadow: '0 0 14px rgba(0, 255, 102, 0.35)'
+  },
+  apex: {
+    accent: '#ff2a2a',
+    accentRgba: 'rgba(255, 42, 42, 0.85)',
+    radarBg: 'rgba(20, 6, 8, 0.82)',
+    radarRingRgba: 'rgba(255, 42, 42, 0.22)',
+    radarCrosshairRgba: 'rgba(255, 42, 42, 0.15)',
+    sweepRgba: 'rgba(255, 42, 42, 0.14)',
+    sweepLineRgba: 'rgba(255, 42, 42, 0.75)',
+    accentBorder: 'rgba(255, 42, 42, 0.4)',
+    glowShadow: '0 0 14px rgba(255, 42, 42, 0.35)'
+  }
+};
+
 export const HelmetHUD: React.FC<HelmetHUDProps> = ({
+  visorType = 'standard',
   gearTier = 'standard',
   health,
   maxHealth,
@@ -64,6 +111,7 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
   radarPingsRef
 }) => {
   const radarCanvasRef = useRef<HTMLCanvasElement>(null);
+  const vTheme = VISOR_THEMES[visorType] || VISOR_THEMES.standard;
 
   // Health critical state (<30% health)
   const hpRatio = Math.max(0, health) / (maxHealth || 100);
@@ -89,14 +137,14 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
 
       ctx.clearRect(0, 0, w, h);
 
-      // Raw, transparent dark disc without neon glow
-      ctx.fillStyle = 'rgba(12, 14, 18, 0.72)';
+      // Raw, transparent dark disc with visor-tinted background
+      ctx.fillStyle = vTheme.radarBg;
       ctx.beginPath();
       ctx.arc(cx, cy, radius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Clean, muted distance range rings (15m, 30m, 50m)
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      // Clean, muted distance range rings (15m, 30m, 50m) styled with visor tint
+      ctx.strokeStyle = vTheme.radarRingRgba;
       ctx.lineWidth = 1;
       [0.32, 0.65, 0.96].forEach((ratio) => {
         ctx.beginPath();
@@ -105,7 +153,7 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
       });
 
       // Axis crosshairs
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.strokeStyle = vTheme.radarCrosshairRgba;
       ctx.beginPath();
       ctx.moveTo(cx, cy - radius);
       ctx.lineTo(cx, cy + radius);
@@ -121,7 +169,7 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
       ctx.moveTo(cx, cy);
       ctx.arc(cx, cy, radius, sweepAngle - 0.28, sweepAngle);
       ctx.closePath();
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+      ctx.fillStyle = vTheme.sweepRgba;
       ctx.fill();
       ctx.restore();
 
@@ -129,12 +177,12 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.lineTo(cx + Math.cos(sweepAngle) * radius, cy + Math.sin(sweepAngle) * radius);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = vTheme.sweepLineRgba;
+      ctx.lineWidth = 1.2;
       ctx.stroke();
 
-      // Center Player Indicator (Minimal white caret pointing forward)
-      ctx.fillStyle = '#ffffff';
+      // Center Player Indicator (Caret with visor accent)
+      ctx.fillStyle = vTheme.accent;
       ctx.beginPath();
       ctx.moveTo(cx, cy - 4);
       ctx.lineTo(cx - 3, cy + 3);
@@ -142,6 +190,23 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
       ctx.lineTo(cx + 3, cy + 3);
       ctx.closePath();
       ctx.fill();
+
+      // Radar Scramble Glitch Effect (triggered by Banshee distortion pulse)
+      const isRadarScrambled = ((window as any).radarScrambleTimer || 0) > 0;
+      if (isRadarScrambled) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(103, 232, 249, 0.22)';
+        for (let y = 0; y < h; y += 4) {
+          if (Math.random() < 0.65) {
+            ctx.fillRect(0, y, w, 2);
+          }
+        }
+        ctx.fillStyle = '#67e8f9';
+        ctx.font = 'bold 8px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('! TELEMETRY DISRUPTED !', cx, cy + 24);
+        ctx.restore();
+      }
 
       // Radar Pings
       const pings = radarPingsRef.current;
@@ -155,8 +220,13 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
           continue;
         }
 
-        const dx = ping.x - playerPos.x;
-        const dz = ping.z - playerPos.z;
+        let dx = ping.x - playerPos.x;
+        let dz = ping.z - playerPos.z;
+        if (isRadarScrambled) {
+          // Add chaotic jitter to ping coordinates during Banshee pulse
+          dx += (Math.random() - 0.5) * 8.0;
+          dz += (Math.random() - 0.5) * 8.0;
+        }
         const dist = Math.hypot(dx, dz);
 
         if (dist > MAX_RADAR_DIST) continue;
@@ -344,39 +414,41 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. TOP-CENTER MATCH SCOREBOARD                                            */}
+      {/* 3. TOP-CENTER MATCH SCOREBOARD (SUPPRESSED IN EXTRACTION MODE)            */}
       {/* ========================================================================= */}
-      <div className={`absolute left-1/2 -translate-x-1/2 flex flex-col items-center ${(!isUSMC && isSpecialized) ? 'top-12' : 'top-5'}`}>
-        <div className="px-4 py-1.5 bg-black/85 border border-white/15 backdrop-blur-sm rounded-sm flex items-center gap-3 text-xs tracking-wider">
-          {matchMode === 'zombie' ? (
-            <>
-              <span className="text-emerald-400 font-bold">WAVE {currentWave}</span>
-              <span className="text-white/25">|</span>
-              <span className="text-[#ff4444] font-bold">HOSTILES: {Math.max(0, zombiesRemaining)}</span>
-            </>
-          ) : matchMode === 'team' ? (
-            <>
-              <span className="text-[#60a5fa] font-bold">
-                {factionAlignment === 'usmc' ? 'USMC' : 'APEX'} {blueScore}
-              </span>
-              <span className="text-white/30 text-[10px]">VS</span>
-              <span className="text-[#ff5555] font-bold">
-                {redScore} {factionAlignment === 'usmc' ? 'APEX' : 'USMC'}
-              </span>
-              <span className="text-white/25">|</span>
-              <span className="text-[#f5a623] text-[10px]">GOAL: {targetScore}</span>
-            </>
-          ) : (
-            <>
-              <span className="text-white font-bold">KILLS: {kills}</span>
-              <span className="text-white/25">|</span>
-              <span className="text-[#f5a623] text-[10px]">TARGET: {targetScore}</span>
-            </>
-          )}
-          <span className="text-white/25">|</span>
-          <span className="text-white text-[11px]">{timeStr}</span>
+      {matchMode !== 'extraction' && (
+        <div className={`absolute left-1/2 -translate-x-1/2 flex flex-col items-center ${(!isUSMC && isSpecialized) ? 'top-12' : 'top-5'}`}>
+          <div className="px-4 py-1.5 bg-black/85 border border-white/15 backdrop-blur-sm rounded-sm flex items-center gap-3 text-xs tracking-wider">
+            {matchMode === 'zombie' ? (
+              <>
+                <span className="text-emerald-400 font-bold">WAVE {currentWave}</span>
+                <span className="text-white/25">|</span>
+                <span className="text-[#ff4444] font-bold">HOSTILES: {Math.max(0, zombiesRemaining)}</span>
+              </>
+            ) : matchMode === 'team' ? (
+              <>
+                <span className="text-[#60a5fa] font-bold">
+                  {factionAlignment === 'usmc' ? 'USMC' : 'APEX'} {blueScore}
+                </span>
+                <span className="text-white/30 text-[10px]">VS</span>
+                <span className="text-[#ff5555] font-bold">
+                  {redScore} {factionAlignment === 'usmc' ? 'APEX' : 'USMC'}
+                </span>
+                <span className="text-white/25">|</span>
+                <span className="text-[#f5a623] text-[10px]">GOAL: {targetScore}</span>
+              </>
+            ) : (
+              <>
+                <span className="text-white font-bold">KILLS: {kills}</span>
+                <span className="text-white/25">|</span>
+                <span className="text-[#f5a623] text-[10px]">TARGET: {targetScore}</span>
+              </>
+            )}
+            <span className="text-white/25">|</span>
+            <span className="text-white text-[11px]">{timeStr}</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ========================================================================= */}
       {/* 4. TOP-RIGHT TACTICAL MUNITIONS MATRIX (Ammo Readout + SVG Silhouette)    */}
@@ -410,7 +482,7 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
         {/* Reloading / Overheating Status Tag */}
         {weaponSlotState.reloading && (
           <div className="mt-1 px-2 py-0.5 bg-yellow-500/20 border border-yellow-400 text-yellow-300 text-[9px] font-bold animate-pulse rounded-xs">
-            TACTICAL RELOAD...
+            {weaponSlotState.isTacticalReload ? 'TACTICAL RELOAD...' : 'EMPTY CHAMBER RELOAD...'}
           </div>
         )}
         {weaponSlotState.overheated && (
@@ -424,8 +496,13 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
       {/* 5. BOTTOM-LEFT CIRCULAR TACTICAL RADAR                                    */}
       {/* ========================================================================= */}
       <div
-        className="absolute bottom-6 left-8 p-1.5 rounded-full bg-black/85 border border-white/15 backdrop-blur-sm flex flex-col items-center justify-center"
-        style={{ width: '144px', height: '144px' }}
+        className="absolute bottom-6 left-8 p-1.5 rounded-full bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center transition-all duration-300"
+        style={{
+          width: '144px',
+          height: '144px',
+          border: `1.5px solid ${vTheme.accentBorder}`,
+          boxShadow: vTheme.glowShadow
+        }}
       >
         <canvas
           ref={radarCanvasRef}
@@ -433,7 +510,13 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
           height={132}
           className="block rounded-full"
         />
-        <div className="absolute -bottom-2 px-2 py-0.5 rounded-xs bg-black/95 border border-white/15 text-[8px] font-bold tracking-wider text-[#8b98a1]">
+        <div
+          className="absolute -bottom-2 px-2 py-0.5 rounded-xs bg-black/95 text-[8px] font-bold tracking-wider"
+          style={{
+            border: `1px solid ${vTheme.accentBorder}`,
+            color: vTheme.accent
+          }}
+        >
           PROXIMITY 50M
         </div>
       </div>
@@ -448,19 +531,32 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
           return (
             <div
               key={`hotbar-${weapon.id}-${idx}`}
-              className={`px-3 py-1.5 rounded-xs bg-black/85 border backdrop-blur-sm flex items-center gap-2.5 transition-all ${
-                isSelected ? 'border-white bg-white/10 scale-105 shadow-md' : 'border-white/10 opacity-70'
+              className={`px-3 py-1.5 rounded-xs bg-black/85 backdrop-blur-sm flex items-center gap-2.5 transition-all ${
+                isSelected ? 'scale-105 shadow-lg' : 'border border-white/10 opacity-70'
               }`}
+              style={isSelected ? {
+                border: `1.5px solid ${vTheme.accent}`,
+                boxShadow: vTheme.glowShadow,
+                backgroundColor: 'rgba(255, 255, 255, 0.08)'
+              } : undefined}
             >
               <div
-                className={`w-4 h-4 rounded-xs flex items-center justify-center text-[9px] font-bold font-mono ${
-                  isSelected ? 'bg-white text-black' : 'bg-white/10 text-white'
-                }`}
+                className="w-4 h-4 rounded-xs flex items-center justify-center text-[9px] font-bold font-mono"
+                style={isSelected ? {
+                  backgroundColor: vTheme.accent,
+                  color: '#000'
+                } : {
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  color: '#fff'
+                }}
               >
                 {idx === 2 ? '3/G' : idx + 1}
               </div>
               <div className="text-left">
-                <div className="text-[9px] font-bold text-white tracking-wider uppercase">
+                <div
+                  className="text-[9px] font-bold tracking-wider uppercase"
+                  style={{ color: isSelected ? vTheme.accent : '#fff' }}
+                >
                   {weapon.name}
                 </div>
                 <div className="text-[8px] text-[#8b98a1]">

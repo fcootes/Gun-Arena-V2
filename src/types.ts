@@ -3,7 +3,7 @@ import * as THREE from 'three';
 export interface WeaponDef {
   id: string;
   name: string;
-  type: 'weapon' | 'grenade' | 'consumable' | 'empty';
+  type: 'weapon' | 'grenade' | 'consumable' | 'empty' | 'gadget';
   damage?: number;
   headshotMult?: number;
   pellets?: number;
@@ -53,12 +53,48 @@ export interface WeaponSlotState {
   charging?: boolean;
 }
 
+export type MutantType = 'WALKER' | 'RUNNER' | 'BRUTE' | 'BANSHEE' | 'BLOATER' | 'MEGABOSS';
+
+export interface ToxicPuddle {
+  mesh: THREE.Mesh;
+  pos: THREE.Vector3;
+  radius: number;
+  duration: number;
+  maxDuration: number;
+  dps: number;
+}
+
 export interface Bot {
   id: number;
   team: string;
   isZombie: boolean;
-  zType: 'walker' | 'runner' | 'tank';
+  zType: 'walker' | 'runner' | 'tank' | 'brute' | 'banshee' | 'bloater' | 'megaboss';
+  mutantType?: MutantType;
+  attackRange?: number;
+  attackCooldown?: number;
+  specialAbilityTimer?: number;
+  isStaggered?: boolean;
+  staggerTimer?: number;
+  hoverHeight?: number;
+  isExploding?: boolean;
+  explosionTimer?: number;
+  stunTimer?: number;
+  weavePhase?: number;
+  flankAngle?: number;
+  roarCooldown?: number;
+  isCharging?: boolean;
+  chargeCooldown?: number;
   isVIP?: boolean;
+  isTankBoss?: boolean;
+  isElite?: boolean;
+  eliteRole?: 'heavy' | 'medic' | 'recon' | 'engineer';
+  eliteSlot?: number;
+  callsign?: string;
+  focusTargetId?: number | null;
+  meleeAnimTimer?: number;
+  deployedCoverCooldown?: number;
+  regenAuraTimer?: number;
+  reconPingTimer?: number;
   classId?: ClassId;
   healSlot?: {
     medkitCount: number;
@@ -69,6 +105,14 @@ export interface Bot {
   kills: number;
   meleeDmg: number;
   meleeCooldown: number;
+  isSprinting?: boolean;
+  sprintSpeed?: number;
+  patrolSpeed?: number;
+  userData?: Record<string, any>;
+  runnerTorsoLean?: number;
+  lungeTimer?: number;
+  lungeDir?: THREE.Vector3;
+  attackRecoveryTimer?: number;
   group: THREE.Group;
   torsoGroup: THREE.Group;
   armLPivot: THREE.Group;
@@ -108,6 +152,13 @@ export interface Bot {
   deathT: number;
   fallAxis: 'x' | 'z';
   fallDir: number;
+  anchoredPos?: THREE.Vector3 | null;
+  idleBehaviorState?: 'crouch_snipe' | 'low_ready_patrol' | 'medic_heal' | 'engineer_fortify' | 'idle';
+  idleTimer?: number;
+  idlePatrolDir?: number;
+  patrolAnchor?: THREE.Vector3;
+  deployedTurretCooldown?: number;
+  medicHealParticleTimer?: number;
 }
 
 export interface WorldCollider {
@@ -119,6 +170,8 @@ export interface WorldCollider {
   maxZ: number;
   active: boolean;
   isDoor?: boolean;
+  isStair?: boolean;
+  isRamp?: boolean;
 }
 
 export interface Door {
@@ -129,7 +182,10 @@ export interface Door {
   currentAngle: number;
   targetAngle: number;
   collider: WorldCollider;
+  isArmory?: boolean;
 }
+
+export type Sector4ObjectiveType = 'HOLD_THE_LINE' | 'VOLATILE_CONTAINER' | 'REACTOR_OVERRIDE';
 
 export interface GroundPickup {
   group: THREE.Group;
@@ -158,13 +214,80 @@ export interface ExplosionEffect {
   life: number;
 }
 
+export type DeploymentProtocol = 'elite' | 'battalion';
+
+export type SquadDirective = 'follow_lead' | 'hold_position' | 'push_objective' | 'focus_target';
+
+export interface EliteCompanionConfig {
+  slotId: number; // 2, 3, 4, 5
+  roleTitle: string;
+  callsign: string;
+  archetype: 'heavy' | 'medic' | 'recon' | 'engineer';
+  icon: string;
+  primaryWeapon: string;
+  secondaryWeapon: string;
+  gearPlate: 'standard' | 'heavy' | 'spec_ops';
+  perkDescription: string;
+}
+
+export const DEFAULT_ELITE_SQUAD: EliteCompanionConfig[] = [
+  {
+    slotId: 2,
+    roleTitle: 'Second-in-Command',
+    callsign: 'TITAN-2',
+    archetype: 'heavy',
+    icon: '🛡️',
+    primaryWeapon: 'lmg',
+    secondaryWeapon: 'pistol',
+    gearPlate: 'heavy',
+    perkDescription: 'LMG suppression fire & heavy ballistic plate plating.'
+  },
+  {
+    slotId: 3,
+    roleTitle: 'Combat Medic',
+    callsign: 'DOC-3',
+    archetype: 'medic',
+    icon: '🩺',
+    primaryWeapon: 'ar',
+    secondaryWeapon: 'shotgun',
+    gearPlate: 'standard',
+    perkDescription: 'Deploys localized health regen field restoring +15 HP/s.'
+  },
+  {
+    slotId: 4,
+    roleTitle: 'Recon Scout',
+    callsign: 'SPECTRE-4',
+    archetype: 'recon',
+    icon: '👁️',
+    primaryWeapon: 'sniper',
+    secondaryWeapon: 'pistol',
+    gearPlate: 'spec_ops',
+    perkDescription: 'Active telemetry pings revealing hostiles on motion radar.'
+  },
+  {
+    slotId: 5,
+    roleTitle: 'Combat Engineer',
+    callsign: 'WRENCH-5',
+    archetype: 'engineer',
+    icon: '🛠️',
+    primaryWeapon: 'smg',
+    secondaryWeapon: 'shotgun',
+    gearPlate: 'heavy',
+    perkDescription: 'Constructs deployable fortified barricades under pressure.'
+  }
+];
+
+export type GameMode = 'ffa' | 'team' | 'zombie' | 'extraction';
+
 export interface MatchConfig {
-  mode: 'ffa' | 'team' | 'zombie' | 'escort';
+  mode: GameMode;
   faction?: 'usmc' | 'apex';
   friendlyCount: number;
   enemyCount: number;
   targetScore: number;
   startingWave: number;
+  deploymentProtocol?: DeploymentProtocol;
+  eliteSquad?: EliteCompanionConfig[];
 }
 
 export interface DifficultyConfig {
@@ -175,7 +298,7 @@ export interface DifficultyConfig {
   botAccuracy: number;
 }
 
-export type ClassId = 'assault' | 'recon' | 'breacher' | 'juggernaut' | 'vanguard';
+export type ClassId = 'assault' | 'heavy' | 'recon' | 'medic' | 'engineer' | 'breacher' | 'juggernaut' | 'vanguard';
 
 export interface ClassConfig {
   id: ClassId;
@@ -198,4 +321,19 @@ export interface ArmoryOption {
   id: string;
   label: string;
   slotNum: string;
+}
+
+export interface ToxicPuddle {
+  mesh: THREE.Mesh;
+  pos: THREE.Vector3;
+  radius: number;
+  duration: number;
+  maxDuration: number;
+  dps: number;
+}
+
+declare global {
+  interface Window {
+    aiDirectorState: any;
+  }
 }

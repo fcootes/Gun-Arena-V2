@@ -7,10 +7,16 @@ import {
   ActiveGrenade,
   ExplosionEffect,
   MatchConfig,
+  GameMode,
   DifficultyConfig,
   ClassId,
   ClassConfig,
-  ArmoryOption
+  ArmoryOption,
+  WorldCollider,
+  DeploymentProtocol,
+  SquadDirective,
+  EliteCompanionConfig,
+  DEFAULT_ELITE_SQUAD
 } from './types';
 import { WEAPONS, createViewmodelManager } from './weapons';
 import {
@@ -34,12 +40,30 @@ import { createLobbyAvatar, VisorType, FactionType, LobbyAvatarController } from
 import { HelmetHUD, RadarPing } from './HelmetHUD';
 import { LobbyTerminal, LobbyTab } from './LobbyTerminal';
 import { useFaction } from './FactionContext';
+import {
+  ExtractionGameLoop,
+  ExtractionState,
+  updateBioMutantAI,
+  BioMutantAIContext,
+  updateToxicPuddles,
+  detonateBloater
+} from './gameLoop';
+import { MutantType } from './types';
+import { ExtractionObjectiveHUD, ExtractionEndScreen } from './UI';
+import {
+  getCareerLedger,
+  calculateMatchRewards,
+  MatchRewardBreakdown,
+  FactionCareerLedger,
+  getRankTitle,
+  getXpForRank
+} from './careerLedger';
 
 export const CLASSES: Record<ClassId, ClassConfig> = {
   assault: {
     id: 'assault',
     name: 'ASSAULT',
-    tagline: 'RAPID RELOAD EXPERT',
+    tagline: 'FRONTLINE RIFLE SPECIALIST',
     perkName: 'TACTICAL SLEIGHT OF HAND',
     perkDesc: '+25% Faster Weapon Reload Animation Speed across all guns',
     color: '#57d1c9',
@@ -52,10 +76,26 @@ export const CLASSES: Record<ClassId, ClassConfig> = {
     maxShield: 100,
     initialShield: 100
   },
+  heavy: {
+    id: 'heavy',
+    name: 'HEAVY',
+    tagline: 'HEAVY SUPPRESSION TANK',
+    perkName: 'TITAN ARMORED PLATING',
+    perkDesc: 'Boosts max White Health pool to 200 points (-15% Movement Velocity penalty)',
+    color: '#e0473f',
+    defaultPrimary: 'minigun',
+    defaultSecondary: 'lmg',
+    reloadMultiplier: 1.0,
+    speedMultiplier: 0.85, // -15% movement velocity
+    maxHealth: 200,
+    initialHealth: 200,
+    maxShield: 100,
+    initialShield: 100
+  },
   recon: {
     id: 'recon',
     name: 'RECON',
-    tagline: 'HIGH-VELOCITY FLANKER',
+    tagline: 'HIGH-VELOCITY SCOUT & MARKSMAN',
     perkName: 'LIGHTWEIGHT AGILITY',
     perkDesc: '+20% Base Walking & Sprinting Velocity',
     color: '#00e5ff',
@@ -67,6 +107,38 @@ export const CLASSES: Record<ClassId, ClassConfig> = {
     initialHealth: 100,
     maxShield: 100,
     initialShield: 100
+  },
+  medic: {
+    id: 'medic',
+    name: 'MEDIC',
+    tagline: 'COMBAT TRIAGE & SHIELD BIO-GEN',
+    perkName: 'FIELD TRIAGE NANITES',
+    perkDesc: 'Reinforced 125 HP & 125 Shield with rapid biological regeneration',
+    color: '#22c55e',
+    defaultPrimary: 'br',
+    defaultSecondary: 'pistol',
+    reloadMultiplier: 0.9,
+    speedMultiplier: 1.05,
+    maxHealth: 125,
+    initialHealth: 125,
+    maxShield: 125,
+    initialShield: 125
+  },
+  engineer: {
+    id: 'engineer',
+    name: 'ENGINEER',
+    tagline: 'FORTIFIED DEMOLITIONS & DEFENSE',
+    perkName: 'OVERCHARGED ENERGY GRID',
+    perkDesc: '150 Overcharged Blue Shield points and reinforced blast protection',
+    color: '#3f8fe0',
+    defaultPrimary: 'shotgun',
+    defaultSecondary: 'railgun',
+    reloadMultiplier: 1.0,
+    speedMultiplier: 1.0,
+    maxHealth: 100,
+    initialHealth: 100,
+    maxShield: 150,
+    initialShield: 150
   },
   breacher: {
     id: 'breacher',
@@ -94,7 +166,7 @@ export const CLASSES: Record<ClassId, ClassConfig> = {
     defaultPrimary: 'minigun',
     defaultSecondary: 'lmg',
     reloadMultiplier: 1.0,
-    speedMultiplier: 0.85, // -15% movement velocity
+    speedMultiplier: 0.85,
     maxHealth: 200,
     initialHealth: 200,
     maxShield: 100,
@@ -153,16 +225,123 @@ const DIFFICULTIES: Record<string, DifficultyConfig> = {
   hard:   { label: 'HARD',   botHealthMult: 1.3,  botDamageMult: 1.5,  botFireRateMult: 0.75, botAccuracy: 0.58 }
 };
 
+// Fast 2D line segment vs AABB intersection test for zombie LOS
+function lineIntersectsAABB(
+  x1: number, z1: number,
+  x2: number, z2: number,
+  minX: number, maxX: number,
+  minZ: number, maxZ: number
+): boolean {
+  let tmin = 0;
+  let tmax = 1;
+  const dx = x2 - x1;
+  const dz = z2 - z1;
+
+  if (Math.abs(dx) < 1e-6) {
+    if (x1 < minX || x1 > maxX) return false;
+  } else {
+    const invDx = 1 / dx;
+    let t1 = (minX - x1) * invDx;
+    let t2 = (maxX - x1) * invDx;
+    if (t1 > t2) { const tmp = t1; t1 = t2; t2 = tmp; }
+    tmin = Math.max(tmin, t1);
+    tmax = Math.min(tmax, t2);
+    if (tmin > tmax) return false;
+  }
+
+  if (Math.abs(dz) < 1e-6) {
+    if (z1 < minZ || z1 > maxZ) return false;
+  } else {
+    const invDz = 1 / dz;
+    let t1 = (minZ - z1) * invDz;
+    let t2 = (maxZ - z1) * invDz;
+    if (t1 > t2) { const tmp = t1; t1 = t2; t2 = tmp; }
+    tmin = Math.max(tmin, t1);
+    tmax = Math.min(tmax, t2);
+    if (tmin > tmax) return false;
+  }
+
+  return true;
+}
+
+// Line of sight check between zombie and target against active world colliders
+function checkZombieLOS(
+  botPos: THREE.Vector3,
+  targetPos: THREE.Vector3,
+  colliders: WorldCollider[]
+): boolean {
+  const minY = Math.min(botPos.y, targetPos.y) + 0.2;
+  const maxY = Math.max(botPos.y, targetPos.y) + 1.8;
+  for (let i = 0; i < colliders.length; i++) {
+    const c = colliders[i];
+    if (c.active === false || c.isDoor || c.isStair || c.isRamp) continue;
+    if (maxY < c.minY || minY > c.maxY) continue;
+    if (lineIntersectsAABB(botPos.x, botPos.z, targetPos.x, targetPos.z, c.minX, c.maxX, c.minZ, c.maxZ)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// Raycast obstacle avoidance for zombies navigating around walls, corridors, and platforms
+function findClearPathAngle(
+  originX: number, originZ: number,
+  desiredDx: number, desiredDz: number,
+  colliders: WorldCollider[],
+  radius = 0.42,
+  castDist = 2.4
+): { dx: number; dz: number } {
+  const baseAngle = Math.atan2(desiredDx, desiredDz);
+  const testOffsets = [
+    0,
+    Math.PI / 6,
+    -Math.PI / 6,
+    Math.PI / 3,
+    -Math.PI / 3,
+    Math.PI / 2,
+    -Math.PI / 2,
+    (Math.PI * 2) / 3,
+    -(Math.PI * 2) / 3,
+    (Math.PI * 5) / 6,
+    -(Math.PI * 5) / 6
+  ];
+
+  for (let i = 0; i < testOffsets.length; i++) {
+    const angle = baseAngle + testOffsets[i];
+    const testDx = Math.sin(angle);
+    const testDz = Math.cos(angle);
+    const endX = originX + testDx * castDist;
+    const endZ = originZ + testDz * castDist;
+
+    let blocked = false;
+    for (let j = 0; j < colliders.length; j++) {
+      const c = colliders[j];
+      if (c.active === false || c.isDoor || c.isStair || c.isRamp) continue;
+      if (lineIntersectsAABB(originX, originZ, endX, endZ, c.minX - radius, c.maxX + radius, c.minZ - radius, c.maxZ + radius)) {
+        blocked = true;
+        break;
+      }
+    }
+    if (!blocked) {
+      return { dx: testDx, dz: testDz };
+    }
+  }
+
+  return { dx: desiredDx, dz: desiredDz };
+}
+
 export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // React UI state for overlays and audio guidance
-  const [gameState, setGameState] = useState<'start' | 'playing' | 'paused' | 'ended'>('start');
+  const [gameState, setGameState] = useState<'start' | 'playing' | 'paused' | 'DEATH_SCREEN'>('start');
   const [endResult, setEndResult] = useState<{ victory: boolean; title: string; sub: string }>({ victory: true, title: 'VICTORY', sub: '' });
+  const [matchRewards, setMatchRewards] = useState<MatchRewardBreakdown | null>(null);
   const [showAudioHelper, setShowAudioHelper] = useState(false);
+  const [extractionState, setExtractionState] = useState<ExtractionState | null>(null);
 
   // Match Config & Difficulty UI
-  const [matchMode, setMatchMode] = useState<'ffa' | 'team' | 'zombie' | 'escort'>('ffa');
+  const [matchMode, setMatchMode] = useState<GameMode>('extraction');
   const { faction: factionAlignment, setFaction: setFactionAlignment, gearTier } = useFaction();
   const [friendlyCount, setFriendlyCount] = useState(3);
   const [enemyCount, setEnemyCount] = useState(5);
@@ -174,6 +353,14 @@ export default function App() {
   const [selectedClassId, setSelectedClassId] = useState<ClassId>('assault');
   const [selectedPrimary, setSelectedPrimary] = useState<string>('ar');
   const [selectedSecondary, setSelectedSecondary] = useState<string>('pistol');
+  
+  const [selectedMapState, setSelectedMapState] = useState<'training' | 'hangar'>('training');
+  const [isDevMode, setIsDevMode] = useState(false);
+  
+  // Update window global for non-React contexts
+  useEffect(() => {
+    (window as any).IS_DEV_MODE = isDevMode;
+  }, [isDevMode]);
 
   // Game stats for UI readout
   const [stats, setStats] = useState({
@@ -193,6 +380,16 @@ export default function App() {
     damageDealt: 0,
     accuracyPct: 0
   });
+
+  const selectedMapStateRef = useRef(selectedMapState);
+  selectedMapStateRef.current = selectedMapState;
+
+  // Strict Map Rules State Guardrail: Horde Mode strictly enforces Subterranean Hangar map
+  useEffect(() => {
+    if (matchMode === 'zombie' && selectedMapState !== 'hangar') {
+      setSelectedMapState('hangar');
+    }
+  }, [matchMode, selectedMapState]);
 
   const gameStateRef = useRef(gameState);
   gameStateRef.current = gameState;
@@ -220,6 +417,40 @@ export default function App() {
   selectedPrimaryRef.current = selectedPrimary;
   const selectedSecondaryRef = useRef(selectedSecondary);
   selectedSecondaryRef.current = selectedSecondary;
+
+  // Elite Task Force vs Standard Battalion deployment doctrine
+  const [deploymentProtocol, setDeploymentProtocol] = useState<DeploymentProtocol>('elite');
+  const deploymentProtocolRef = useRef<DeploymentProtocol>(deploymentProtocol);
+  deploymentProtocolRef.current = deploymentProtocol;
+
+  const [eliteSquad, setEliteSquad] = useState<EliteCompanionConfig[]>(DEFAULT_ELITE_SQUAD);
+  const eliteSquadRef = useRef<EliteCompanionConfig[]>(eliteSquad);
+  eliteSquadRef.current = eliteSquad;
+
+  const [squadDirective, setSquadDirective] = useState<SquadDirective>('follow_lead');
+  const squadDirectiveRef = useRef<SquadDirective>(squadDirective);
+  squadDirectiveRef.current = squadDirective;
+
+  const [squadDirectiveBanner, setSquadDirectiveBanner] = useState<{
+    directive: SquadDirective;
+    text: string;
+    sub: string;
+    timer: number;
+  } | null>(null);
+
+  const [targetingPhase, setTargetingPhase] = useState(false);
+  const targetingPhaseRef = useRef(false);
+  const focusTargetIDRef = useRef<number | null>(null);
+  targetingPhaseRef.current = targetingPhase;
+
+
+  useEffect(() => {
+    if (!squadDirectiveBanner) return;
+    const t = setTimeout(() => {
+      setSquadDirectiveBanner(null);
+    }, 2800);
+    return () => clearTimeout(t);
+  }, [squadDirectiveBanner]);
 
   const [activeTab, setActiveTab] = useState<LobbyTab>('play');
   const [visorType, setVisorType] = useState<VisorType>('standard');
@@ -279,9 +510,13 @@ export default function App() {
     const combatLightGroup = new THREE.Group();
     scene.add(combatLightGroup);
 
-    const hemiLight = new THREE.HemisphereLight(0xbfd9ff, 0x3a3226, 0.65);
+    const isHangar = selectedMapStateRef.current === 'hangar';
+    const hemiLightIntensity = isHangar ? 0.05 : 0.65;
+    const sunLightIntensity = isHangar ? 0.0 : 1.05;
+
+    const hemiLight = new THREE.HemisphereLight(0xbfd9ff, 0x3a3226, hemiLightIntensity);
     combatLightGroup.add(hemiLight);
-    const sunLight = new THREE.DirectionalLight(0xfff2d9, 1.05);
+    const sunLight = new THREE.DirectionalLight(0xfff2d9, sunLightIntensity);
     sunLight.position.set(120, 180, 60);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.set(2048, 2048);
@@ -292,7 +527,6 @@ export default function App() {
     sunLight.shadow.camera.far = 450;
     combatLightGroup.add(sunLight);
     const combatFog = new THREE.Fog(0xbfd6e6, 80, 360);
-    const lobbyFog = new THREE.Fog(0x000000, 5, 20);
     scene.fog = combatFog;
 
     // Sky dome
@@ -311,45 +545,224 @@ export default function App() {
     const skyMesh = new THREE.Mesh(skyGeo, skyMat);
     combatLightGroup.add(skyMesh);
 
-    // Hangar Room for Lobby
-    const hangarGroup = new THREE.Group();
-    hangarGroup.position.set(0, 1000, 0);
-    scene.add(hangarGroup);
-    
-    // Hangar Floor
-    const floorGeo = new THREE.PlaneGeometry(30, 30);
-    const floorMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9, metalness: 0.1 });
-    const floorMesh = new THREE.Mesh(floorGeo, floorMat);
-    floorMesh.rotation.x = -Math.PI / 2;
-    floorMesh.receiveShadow = true;
-    hangarGroup.add(floorMesh);
+    // Subterranean Concrete Hangar Bunker Environment & Armory (Lobby Scene)
+    const lobbyFog = new THREE.Fog(0x0a0d12, 10, 32);
+    let hangarGroup: THREE.Group | null = null;
+    let lobbyAvatar: LobbyAvatarController | null = null;
 
-    // Dark grey background wall
-    const wallGeo = new THREE.PlaneGeometry(30, 15);
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 1.0 });
-    const wallMesh = new THREE.Mesh(wallGeo, wallMat);
-    wallMesh.position.set(0, 7.5, -8);
-    hangarGroup.add(wallMesh);
-    
-    // Minimal Spotlight
-    const hangarSpot = new THREE.SpotLight(0xffffff, 5.0, 25, Math.PI / 5, 0.8, 1);
-    hangarSpot.position.set(0, 8, 3);
-    hangarSpot.target.position.set(0, 0, 0);
-    hangarSpot.castShadow = true;
-    hangarSpot.shadow.bias = -0.001;
-    hangarSpot.shadow.mapSize.set(1024, 1024);
-    hangarGroup.add(hangarSpot);
-    hangarGroup.add(hangarSpot.target);
+    function setupLobbyScene() {
+      if (hangarGroup || lobbyAvatar) {
+        teardownLobbyScene();
+      }
 
-    // Subtle Ambient
-    const hangarAmbient = new THREE.AmbientLight(0x22252a, 0.5);
-    hangarGroup.add(hangarAmbient);
+      hangarGroup = new THREE.Group();
+      hangarGroup.position.set(0, 1000, 0);
+      scene.add(hangarGroup);
+      
+      // 1. Concrete Floor with Polished Surface & Tactical Markings
+      const floorGeo = new THREE.PlaneGeometry(36, 50);
+      const floorMat = new THREE.MeshStandardMaterial({ 
+        color: 0x14181d, 
+        roughness: 0.52, 
+        metalness: 0.25 
+      });
+      const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+      floorMesh.rotation.x = -Math.PI / 2;
+      floorMesh.receiveShadow = true;
+      hangarGroup.add(floorMesh);
+
+      // Hazard Border Lines along hangar edges (X = -4.2 and +4.2)
+      const hazardMat = new THREE.MeshBasicMaterial({ color: 0xd49b28 });
+      const hazardL = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 45), hazardMat);
+      hazardL.rotation.x = -Math.PI / 2;
+      hazardL.position.set(-4.2, 0.005, -5);
+      const hazardR = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 45), hazardMat);
+      hazardR.rotation.x = -Math.PI / 2;
+      hazardR.position.set(4.2, 0.005, -5);
+      hangarGroup.add(hazardL, hazardR);
+
+      // 2. Vaulted Arch Concrete Ceiling / Bunker Tunnel
+      const archMat = new THREE.MeshStandardMaterial({
+        color: 0x181c22,
+        roughness: 0.88,
+        metalness: 0.12,
+        side: THREE.BackSide
+      });
+      const archGeo = new THREE.CylinderGeometry(8.5, 8.5, 46, 36, 1, true, -Math.PI / 2, Math.PI);
+      const archMesh = new THREE.Mesh(archGeo, archMat);
+      archMesh.rotation.z = Math.PI / 2;
+      archMesh.position.set(0, 0, -5);
+      hangarGroup.add(archMesh);
+
+      // Reinforced Concrete Support Rib Arches along Z
+      const ribMat = new THREE.MeshStandardMaterial({ color: 0x111418, roughness: 0.8 });
+      [-20, -14, -8, -2, 4, 10].forEach((rz) => {
+        const rib = new THREE.Mesh(new THREE.TorusGeometry(8.46, 0.28, 12, 36, Math.PI), ribMat);
+        rib.position.set(0, 0, rz);
+        hangarGroup!.add(rib);
+      });
+
+      // 3. Overhead Recessed Industrial Bunker Ceiling Lamps & Spotlights
+      const lampHousingMat = new THREE.MeshStandardMaterial({ color: 0x121519, roughness: 0.4 });
+      const lampLensMat = new THREE.MeshBasicMaterial({ color: 0xd8efff });
+      [-18, -12, -6, 0, 6].forEach((lz) => {
+        const lampHousing = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.15, 16), lampHousingMat);
+        lampHousing.position.set(0, 8.35, lz);
+        const lampLens = new THREE.Mesh(new THREE.CircleGeometry(0.32, 16), lampLensMat);
+        lampLens.rotation.x = Math.PI / 2;
+        lampLens.position.set(0, 8.27, lz);
+        hangarGroup!.add(lampHousing, lampLens);
+
+        // Downward pool of light on the tunnel floor
+        const tunnelSpot = new THREE.SpotLight(0xd8efff, 2.5, 16, Math.PI / 4.5, 0.6, 1.2);
+        tunnelSpot.position.set(0, 8.2, lz);
+        tunnelSpot.target.position.set(0, 0, lz);
+        hangarGroup!.add(tunnelSpot);
+        hangarGroup!.add(tunnelSpot.target);
+      });
+
+      // 4. Subterranean Bunker Blast Door / Bulkhead at far end (Z = -22)
+      const bulkheadMat = new THREE.MeshStandardMaterial({ color: 0x15191e, roughness: 0.7, metalness: 0.3 });
+      const bulkheadWall = new THREE.Mesh(new THREE.PlaneGeometry(24, 14), bulkheadMat);
+      bulkheadWall.position.set(0, 7, -22.5);
+      hangarGroup.add(bulkheadWall);
+
+      const doorFrame = new THREE.Mesh(
+        new THREE.BoxGeometry(4.2, 5.8, 0.3),
+        new THREE.MeshStandardMaterial({ color: 0x0e1115, roughness: 0.5, metalness: 0.6 })
+      );
+      doorFrame.position.set(0, 2.9, -22.3);
+      const doorPanel = new THREE.Mesh(
+        new THREE.BoxGeometry(3.8, 5.4, 0.2),
+        new THREE.MeshStandardMaterial({ color: 0x1b2027, roughness: 0.4, metalness: 0.5 })
+      );
+      doorPanel.position.set(0, 2.9, -22.25);
+      hangarGroup.add(doorFrame, doorPanel);
+
+      // 5. Server Racks and Tactical Storage Equipment along walls
+      const rackMat = new THREE.MeshStandardMaterial({ color: 0x121417, roughness: 0.6, metalness: 0.4 });
+      const crateMat = new THREE.MeshStandardMaterial({ color: 0x2d3527, roughness: 0.8 });
+      const hardCaseMat = new THREE.MeshStandardMaterial({ color: 0x262b32, roughness: 0.5 });
+
+      [-14, -10, -6, -2].forEach((sz) => {
+        const rack = new THREE.Mesh(new THREE.BoxGeometry(1.2, 3.8, 0.9), rackMat);
+        rack.position.set(-5.6, 1.9, sz);
+        hangarGroup!.add(rack);
+
+        const ledMat = new THREE.MeshBasicMaterial({ 
+          color: sz % 4 === 0 ? 0x2de2e6 : (sz % 3 === 0 ? 0x22c55e : 0xf5a623) 
+        });
+        const ledStrip = new THREE.Mesh(new THREE.PlaneGeometry(0.04, 2.8), ledMat);
+        ledStrip.rotation.y = Math.PI / 2;
+        ledStrip.position.set(-4.99, 1.9, sz);
+        hangarGroup!.add(ledStrip);
+      });
+
+      [-12, -7, -3].forEach((cz) => {
+        const crate1 = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.8, 1.0), crateMat);
+        crate1.position.set(5.5, 0.4, cz);
+        const crate2 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.7, 0.8), hardCaseMat);
+        crate2.position.set(5.5, 1.15, cz + 0.1);
+        hangarGroup!.add(crate1, crate2);
+      });
+
+      // 6. Background Tactical Guard Silhouettes (matching reference image)
+      const guardMat = new THREE.MeshStandardMaterial({ color: 0x0c0e12, roughness: 0.9 });
+      const createGuardFigure = (x: number, z: number) => {
+        const gGroup = new THREE.Group();
+        gGroup.position.set(x, 0, z);
+        const gLegs = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.9, 0.25), guardMat);
+        gLegs.position.y = 0.45;
+        const gTorso = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.65, 0.3), guardMat);
+        gTorso.position.y = 1.2;
+        const gHead = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 8), guardMat);
+        gHead.position.y = 1.68;
+        gGroup.add(gLegs, gTorso, gHead);
+        return gGroup;
+      };
+      hangarGroup.add(createGuardFigure(-4.2, -16));
+      hangarGroup.add(createGuardFigure(4.4, -14));
+
+      // 7. Cinematic Downward Directional Spotlights directly casting onto Operator (Requirement 1)
+      const operatorKeySpot = new THREE.SpotLight(0xeef6ff, 7.5, 18, Math.PI / 5.2, 0.45, 1.2);
+      operatorKeySpot.position.set(0, 5.4, 1.4);
+      operatorKeySpot.target.position.set(0, 1.1, 0);
+      operatorKeySpot.castShadow = true;
+      operatorKeySpot.shadow.bias = -0.0005;
+      operatorKeySpot.shadow.mapSize.set(2048, 2048);
+      hangarGroup.add(operatorKeySpot);
+      hangarGroup.add(operatorKeySpot.target);
+
+      const operatorTopSpot = new THREE.SpotLight(0xffffff, 4.2, 14, Math.PI / 6, 0.5, 1.2);
+      operatorTopSpot.position.set(0, 5.8, -0.1);
+      operatorTopSpot.target.position.set(0, 1.2, 0);
+      hangarGroup.add(operatorTopSpot);
+      hangarGroup.add(operatorTopSpot.target);
+
+      const hangarAmbient = new THREE.AmbientLight(0x0e131a, 0.45);
+      hangarGroup.add(hangarAmbient);
+
+      // 3D Humanoid Lobby Avatar Showcase
+      lobbyAvatar = createLobbyAvatar(scene, new THREE.Vector3(0, 1000, 0));
+      (window as any).__lobbyAvatar = lobbyAvatar;
+    }
+
+    function teardownLobbyScene() {
+      // 1. Purge, dispose, and remove Lobby Avatar meshes
+      if (lobbyAvatar) {
+        try {
+          lobbyAvatar.destroy();
+          lobbyAvatar.group.traverse((obj) => {
+            if ((obj as THREE.Mesh).isMesh) {
+              const m = obj as THREE.Mesh;
+              if (m.geometry) m.geometry.dispose();
+              if (Array.isArray(m.material)) {
+                m.material.forEach(mat => mat.dispose());
+              } else if (m.material) {
+                m.material.dispose();
+              }
+            }
+          });
+          scene.remove(lobbyAvatar.group);
+        } catch (e) {
+          console.warn('Lobby avatar teardown exception:', e);
+        }
+        lobbyAvatar = null;
+        (window as any).__lobbyAvatar = null;
+      }
+
+      // 2. Completely tear down, purge, and dispose of Lobby Operator's turntable meshes and light variables
+      if (hangarGroup) {
+        try {
+          hangarGroup.traverse((obj) => {
+            if ((obj as THREE.Light).isLight) {
+              const l = obj as THREE.Light;
+              if (l.dispose) l.dispose();
+            }
+            if ((obj as THREE.Mesh).isMesh) {
+              const m = obj as THREE.Mesh;
+              if (m.geometry) m.geometry.dispose();
+              if (Array.isArray(m.material)) {
+                m.material.forEach(mat => mat.dispose());
+              } else if (m.material) {
+                m.material.dispose();
+              }
+            }
+          });
+          scene.remove(hangarGroup);
+          hangarGroup.clear();
+        } catch (e) {
+          console.warn('Hangar group teardown exception:', e);
+        }
+        hangarGroup = null;
+      }
+    }
+
+    // Initialize lobby turntable scene
+    setupLobbyScene();
 
     // World & Colliders
-    const world = createWorld(scene);
-
-    // 3D Humanoid Lobby Avatar Showcase
-    const lobbyAvatar = createLobbyAvatar(scene, new THREE.Vector3(0, 1000, 0));
+    let world = createWorld(scene, 'training');
 
     // Muzzle flash particle sprite
     function buildFlashTexture(): THREE.CanvasTexture {
@@ -522,8 +935,18 @@ export default function App() {
     let playerPoints = 0;
     let currentWave = 1;
     let zombiesRemaining = 0;
+    
     let waveIntermission = false;
     let intermissionTimer = 0;
+    
+    // EXTRACTION MECHANICS
+    let extractionDirector: ExtractionGameLoop | null = null;
+    let extractionPhase = false;
+    let extractionState = 'none'; // 'mainframe_search' | 'hacking' | 'evac' | 'cryo_search' | 'carrying' | 'defend'
+    let extractionTimer = 0;
+    let extractionTargetObj = null; // THREE.Object3D or Vector3
+    let extractionTankBossSpawned = false;
+
     let zombieTypeIndex = 0;
     let recoilPitch = 0;
     let recoilKick = 0;
@@ -702,17 +1125,17 @@ export default function App() {
       playerPoints += pts;
     }
 
-    function pushKillFeed(msg: string) {
+    function pushKillFeed(msg: string, isPriority = false) {
       const feed = containerRef.current?.querySelector('#killfeed');
       if (!feed) return;
       const el = document.createElement('div');
-      el.className = 'kill-msg';
+      el.className = isPriority ? 'kill-msg font-bold text-amber-400' : 'kill-msg';
       el.textContent = msg;
       feed.appendChild(el);
       setTimeout(() => {
         el.style.opacity = '0';
         setTimeout(() => el.remove(), 300);
-      }, 2400);
+      }, isPriority ? 3600 : 2400);
     }
 
     function showHitmarker(isHeadshot: boolean) {
@@ -863,8 +1286,7 @@ export default function App() {
 
       for (const bot of bots) {
         if (!bot.alive) continue;
-        if (matchConfig.mode === 'team' && bot.team === ownerTeam) continue;
-        if (matchConfig.mode === 'zombie' && bot.team === 'blue' && ownerTeam === 'blue') continue;
+        if (bot.team === ownerTeam) continue;
 
         const bDist = bot.pos.distanceTo(pos);
         if (bDist < BLAST_RADIUS) {
@@ -876,7 +1298,7 @@ export default function App() {
         }
       }
 
-      if (player.alive && (matchConfig.mode === 'ffa' || ownerTeam !== player.team)) {
+      if (player.alive && (false || ownerTeam !== player.team)) {
         const pDist = player.pos.distanceTo(pos);
         if (pDist < BLAST_RADIUS) {
           const pFactor = 1 - (pDist / BLAST_RADIUS);
@@ -950,15 +1372,11 @@ export default function App() {
         player.alive = false;
         AUDIO.arSpray.stop();
 
-        if (matchConfig.mode === 'team') {
-          teamScoreRed++;
-          pushKillFeed('YOU WERE ELIMINATED! RED TEAM SCORES');
-          checkMatchOutcome();
+        if (matchConfig.mode === 'extraction') {
+          pushKillFeed('MISSION FAILED: OPERATOR KILLED');
+          triggerGameOver(false);
         } else if (matchConfig.mode === 'zombie') {
           pushKillFeed('YOU HAVE BEEN OVERWHELMED BY THE HORDE!');
-          triggerGameOver(false);
-        } else if (matchConfig.mode === 'escort') {
-          pushKillFeed('YOU WERE ELIMINATED!');
           triggerGameOver(false);
         } else {
           if (attackerBot) {
@@ -975,8 +1393,51 @@ export default function App() {
       }
     }
 
+    function getMutantAIContext(): BioMutantAIContext {
+      return {
+        player: {
+          pos: player.pos,
+          yaw: player.yaw,
+          health: player.health,
+          maxHealth: player.maxHealth,
+          alive: player.alive,
+          applyDamage: (dmg, isHead, isExp, attacker) => applyDamageToPlayer(dmg, false, false, attacker),
+        },
+        bots,
+        world,
+        scene,
+        camera,
+        pushKillFeed,
+        makeBot,
+        damageBot,
+        focusTargetId: focusTargetIDRef.current,
+        scrambleRadar: (duration: number) => {
+          (window as any).radarScrambleTimer = Math.max((window as any).radarScrambleTimer || 0, duration);
+        },
+        selectedMap: selectedMapStateRef.current as any
+      };
+    }
+
     function damageBot(bot: Bot, amount: number, isHeadshot: boolean, attacker: 'player' | Bot, impactDir?: THREE.Vector3) {
       if (!bot.alive) return;
+
+      const mType = bot.mutantType || (bot.zType ? bot.zType.toUpperCase() : 'WALKER');
+      if (bot.isZombie && (mType === 'BRUTE' || bot.zType === 'tank')) {
+        const isStaggered = (bot.staggerTimer ?? 0) > 0;
+        if (!isStaggered && !isHeadshot) {
+          const facing = bot.group.rotation.y;
+          const forward = new THREE.Vector3(Math.sin(facing), 0, Math.cos(facing));
+          const incoming = impactDir ? impactDir.clone().negate().setY(0).normalize() : (attacker === 'player' ? player.pos.clone().sub(bot.pos).setY(0).normalize() : null);
+          if (incoming && forward.dot(incoming) > 0.1) {
+            amount *= 0.5; // 50% damage reduction from front-facing torso shots
+          }
+        }
+        if (focusTargetIDRef.current === bot.id) {
+          bot.staggerTimer = 2.0;
+          bot.isStaggered = true;
+        }
+      }
+
       bot.health -= amount;
       if (attacker === 'player') {
         player.damageDealt += Math.round(amount);
@@ -985,6 +1446,12 @@ export default function App() {
         bot.health = 0;
         bot.alive = false;
         bot.deathT = 2.8;
+
+        if (bot.isZombie && mType === 'BLOATER' && !bot.userData?.detonated) {
+          bot.userData = bot.userData || {};
+          bot.userData.detonated = true;
+          detonateBloater(bot, getMutantAIContext());
+        }
 
         if (bot.isZombie) {
           // Restrict zombie dismemberment to heavy calibers or lethal headshots
@@ -1028,10 +1495,14 @@ export default function App() {
             addPoints(100);
             zombiesRemaining--;
             pushKillFeed(isHeadshot ? 'HEADSHOT ELIMINATION! (+ $100)' : 'ZOMBIE KILLED! (+ $100)');
-          } else if (matchConfig.mode === 'team') {
-            teamScoreBlue++;
-            const allyLabel = matchConfig.faction === 'usmc' ? 'USMC' : 'MERCENARIES';
-            pushKillFeed(isHeadshot ? `HEADSHOT ELIMINATION! (+1 ${allyLabel})` : `ELIMINATED ENEMY! (+1 ${allyLabel})`);
+          } else if (matchConfig.mode === 'extraction') {
+            if (extractionDirector && bot.isZombie) {
+              extractionDirector.recordMutantKill(bot);
+              if (bot.zType === 'megaboss') {
+                extractionDirector.recordBossDefeated();
+              }
+            }
+            pushKillFeed(isHeadshot ? 'HEADSHOT ELIMINATION! MUTANT KILLED!' : 'MUTANT KILLED!');
           } else {
             pushKillFeed(isHeadshot ? `HEADSHOT ELIMINATION! (${player.kills}/${matchConfig.targetScore})` : `ELIMINATED BOT #${bot.id}! (${player.kills}/${matchConfig.targetScore})`);
           }
@@ -1044,15 +1515,17 @@ export default function App() {
             } else {
               pushKillFeed('A SURVIVOR ALLY HAS FALLEN TO THE HORDE!');
             }
-          } else if (matchConfig.mode === 'team') {
-            const allyName = matchConfig.faction === 'usmc' ? 'USMC ALLY' : 'MERCENARY ALLY';
-            const opName = matchConfig.faction === 'usmc' ? 'MERCENARY' : 'USMC';
-            if (attacker.team === 'blue') {
-              teamScoreBlue++;
-              pushKillFeed(`${allyName} ELIMINATED ${opName} COMBATANT`);
-            } else if (attacker.team === 'red') {
-              teamScoreRed++;
-              pushKillFeed(`${opName} ENEMY ELIMINATED ${allyName} COMBATANT`);
+          } else if (matchConfig.mode === 'extraction') {
+            if (attacker.team === 'blue' && bot.isZombie) {
+              if (extractionDirector) {
+                extractionDirector.recordMutantKill(bot);
+                if (bot.zType === 'megaboss') {
+                  extractionDirector.recordBossDefeated();
+                }
+              }
+              pushKillFeed('SQUAD ELIMINATED A MUTANT!');
+            } else if (bot.team === 'blue' && attacker.isZombie) {
+              pushKillFeed('A SQUAD MEMBER WAS KILLED BY A MUTANT!');
             }
           }
         }
@@ -1070,16 +1543,44 @@ export default function App() {
     }
 
     function checkMatchOutcome() {
+      
       if (matchConfig.mode === 'zombie') {
-        if (zombiesRemaining <= 0 && !waveIntermission) {
-          waveIntermission = true;
-          intermissionTimer = 5.0;
-          addPoints(250);
+        if (zombiesRemaining <= 0 && !waveIntermission && !extractionPhase) {
+          if (currentWave >= 3) {
+            // Trigger Extraction
+            extractionPhase = true;
+            if (factionAlignmentRef.current === 'apex') {
+              extractionState = 'mainframe_search';
+              pushKillFeed('HQ: MAINFRAME LOCATED. INITIATE DATA HEIST.', true);
+            } else {
+              extractionState = 'cryo_search';
+              pushKillFeed('COMMAND: CRYO-POD DETECTED. SECURE THE ASSET.', true);
+            }
+            
+            // Spawn target at a random spot
+            const geo = new THREE.BoxGeometry(1.5, 2.5, 1.5);
+            const mat = new THREE.MeshStandardMaterial({ color: factionAlignmentRef.current === 'apex' ? 0xff0000 : 0x00aaff, emissive: factionAlignmentRef.current === 'apex' ? 0x440000 : 0x004488 });
+            extractionTargetObj = new THREE.Mesh(geo, mat);
+            extractionTargetObj.position.set((Math.random() - 0.5) * 40, 1.25, (Math.random() - 0.5) * 40);
+            scene.add(extractionTargetObj);
+            
+            // Add a point light to make it visible
+            const light = new THREE.PointLight(factionAlignmentRef.current === 'apex' ? 0xff0000 : 0x00aaff, 2, 10);
+            light.position.set(0, 2, 0);
+            extractionTargetObj.add(light);
+            
+            addPoints(500);
+          } else {
+            waveIntermission = true;
+            intermissionTimer = 5.0;
+            addPoints(250);
+          }
         }
-      } else if (matchConfig.mode === 'team') {
-        if (teamScoreBlue >= matchConfig.targetScore) triggerGameOver(true);
-        else if (teamScoreRed >= matchConfig.targetScore) triggerGameOver(false);
-      } else if (matchConfig.mode === 'escort') {
+      }
+      else if (matchConfig.mode === 'extraction') {
+        // Handled strictly by Evac Elevator trigger (Victory) or Player Death (Defeat).
+        // Score targets do NOT trigger victory or defeat in Subterranean Extraction.
+      } else if (false) {
         const vip = bots.find(b => b.isVIP);
         if (!vip || !vip.alive) {
            triggerGameOver(false); // VIP killed
@@ -1113,6 +1614,23 @@ export default function App() {
       const hsPct = player.shotsHit > 0 ? Math.round((player.headshots / player.shotsHit) * 100) : (player.kills > 0 ? Math.round((player.headshots / player.kills) * 100) : 0);
       const combatScore = matchConfig.mode === 'zombie' ? playerPoints : (player.kills * 150 + player.headshots * 75 + Math.round(player.damageDealt * 0.5));
       const wavesCleared = Math.max(0, currentWave - 1);
+      
+      // Extraction reward
+      if (victory && matchConfig.mode === 'zombie' && extractionPhase) {
+         try {
+           const ledgerRaw = localStorage.getItem('__career_ledger');
+           if (ledgerRaw) {
+             const ledger = JSON.parse(ledgerRaw);
+             ledger.xp = (ledger.xp || 0) + 1000;
+             ledger.funds = (ledger.funds || 0) + 500;
+             localStorage.setItem('__career_ledger', JSON.stringify(ledger));
+             
+             // Update player points to reflect in the UI immediately
+             playerPoints += 500;
+           }
+         } catch(e) {}
+      }
+
 
       setStats({
         health: Math.ceil(Math.max(0, player.health)),
@@ -1139,6 +1657,8 @@ export default function App() {
         const allyLabel = matchConfig.faction === 'usmc' ? 'USMC COALITION' : 'APEX MERCENARIES';
         const opLabel = matchConfig.faction === 'usmc' ? 'APEX MERCENARIES' : 'USMC COALITION';
         subText = victory ? `${allyLabel} HIT TARGET SCORE FIRST` : `${opLabel} OUTPERFORMED YOUR SQUAD`;
+      } else if (matchConfig.mode === 'extraction') {
+        subText = victory ? 'SUCCESSFUL EXTRACTION' : 'MISSION FAILED';
       } else {
         if (victory) subText = 'YOU REACHED THE TARGET SCORE FIRST';
         else if (winningBot) subText = `BOT #${winningBot.id} REACHED ${matchConfig.targetScore} KILLS FIRST`;
@@ -1150,35 +1670,56 @@ export default function App() {
         title: matchConfig.mode === 'zombie' ? 'SURVIVAL TERMINATED' : (victory ? 'VICTORY' : 'DEFEAT'),
         sub: subText
       });
-      setGameState('ended');
 
+      // Calculate and persist Faction Career Progression rewards:
+      // 100 XP & $50 per regular bot elimination
+      // 250 XP & $150 per completed Zombie wave milestone
+      // 500 XP flat bonus for victory
       try {
-        const raw = localStorage.getItem('gun_arena_persistent_intel');
-        const pData = raw ? JSON.parse(raw) : { totalKills: 0, totalHeadshots: 0, totalShots: 0, totalHits: 0, totalFunds: 0, highestWave: 1, matchesPlayed: 0, matchesWon: 0 };
-        pData.matchesPlayed = (pData.matchesPlayed || 0) + 1;
-        if (victory) pData.matchesWon = (pData.matchesWon || 0) + 1;
-        if (currentWave > (pData.highestWave || 1)) pData.highestWave = currentWave;
-        localStorage.setItem('gun_arena_persistent_intel', JSON.stringify(pData));
-      } catch (e) {}
+        const currentLedger = getCareerLedger();
+        // Update total shots and hits from this match
+        currentLedger.totalShots += player.shotsFired;
+        currentLedger.totalHits += player.shotsHit;
+        currentLedger.totalHeadshots += player.headshots;
+
+        const { breakdown, updatedLedger } = calculateMatchRewards({
+          kills: player.kills,
+          wavesCleared,
+          victory,
+          currentLedger
+        });
+
+        setMatchRewards(breakdown);
+      } catch (e) {
+        console.error('Error calculating career ledger rewards:', e);
+      }
+
+      setGameState('DEATH_SCREEN');
     }
 
     // Bot factory
-    function makeBot(assignedTeam: string | null = null, zombieTypeOverride: 'walker' | 'runner' | 'tank' | null = null, isVIP = false): Bot {
+    function makeBot(
+      assignedTeam: string | null = null,
+      zombieTypeOverride: 'walker' | 'runner' | 'tank' | 'brute' | 'banshee' | 'bloater' | 'megaboss' | null = null,
+      isVIP = false,
+      eliteConfig?: EliteCompanionConfig
+    ): Bot {
       const p = randomMapPoint(14);
       const y = terrainHeight(p.x, p.z);
       const botId = botIdCounter++;
-      const isZombie = (matchConfig.mode === "zombie" && assignedTeam !== "blue");
+      const isZombie = ((matchConfig.mode === "zombie" || assignedTeam === "zombie") && assignedTeam !== "blue");
       let team = assignedTeam;
-      if (isVIP) team = "blue";
+      if (eliteConfig) team = "blue";
+      else if (isVIP) team = "blue";
       else if (isZombie) team = "zombie";
       else if (matchConfig.mode === "ffa") team = "ffa_" + botId;
       else if (!team) team = Math.random() < 0.5 ? "blue" : "red";
 
-      let zType: "walker" | "runner" | "tank" = "walker";
+      let zType: "walker" | "runner" | "tank" | "brute" | "banshee" | "bloater" | "megaboss" = "walker";
       if (isZombie) {
         if (zombieTypeOverride) zType = zombieTypeOverride;
         else {
-          const types: ("walker" | "runner" | "tank")[] = ["walker", "walker", "runner", "walker", "tank"];
+          const types: ("walker" | "runner" | "tank" | "brute" | "banshee" | "bloater" | "megaboss")[] = ["walker", "walker", "runner", "brute", "banshee", "bloater"];
           zType = types[(zombieTypeIndex++) % types.length];
         }
       }
@@ -1186,8 +1727,12 @@ export default function App() {
       // Weapon types: AR (0), Shotgun (1), Sniper (2), Combat Pistol (3), SMG (4), LMG (5), BR (6)
       const roll = Math.random();
       let weaponTypeIndex = 0;
-      if (isVIP) weaponTypeIndex = 3;
-      else if (roll < 0.22) weaponTypeIndex = 0; // AR
+      if (eliteConfig) {
+        const wIdx = WEAPONS.findIndex(w => w.id === eliteConfig.primaryWeapon);
+        weaponTypeIndex = wIdx >= 0 ? wIdx : 0;
+      } else if (isVIP) {
+        weaponTypeIndex = 3;
+      } else if (roll < 0.22) weaponTypeIndex = 0; // AR
       else if (roll < 0.38) weaponTypeIndex = 1; // Shotgun
       else if (roll < 0.50) weaponTypeIndex = 3; // Combat Pistol
       else if (roll < 0.65) weaponTypeIndex = 4; // SMG
@@ -1226,31 +1771,89 @@ export default function App() {
       healthEl.style.cssText = 'position:absolute; width:54px; height:6px; padding:0; transform:translate(-50%,-100%); overflow:hidden; display:none;';
       const fillEl = document.createElement('div');
       let barGradient = 'linear-gradient(90deg, #5a2320, #e0473f)';
-      if (team === 'blue') barGradient = visuals.faction === 'usmc' ? 'linear-gradient(90deg, #2b3d1e, #628243)' : 'linear-gradient(90deg, #18283a, #3f7de0)';
-      else if (isZombie) barGradient = zType === 'tank' ? 'linear-gradient(90deg, #2b1616, #b71c1c)' : 'linear-gradient(90deg, #1b5e20, #4caf50)';
+      if (eliteConfig) barGradient = 'linear-gradient(90deg, #2de2e6, #00ffff)';
+      else if (team === 'blue') barGradient = visuals.faction === 'usmc' ? 'linear-gradient(90deg, #2b3d1e, #628243)' : 'linear-gradient(90deg, #18283a, #3f7de0)';
+      else if (isZombie) {
+        if (zType === 'megaboss') barGradient = 'linear-gradient(90deg, #581c87, #c084fc)';
+        else if (zType === 'bloater') barGradient = 'linear-gradient(90deg, #14532d, #22c55e)';
+        else if (zType === 'banshee') barGradient = 'linear-gradient(90deg, #155e75, #67e8f9)';
+        else if (zType === 'brute' || zType === 'tank') barGradient = 'linear-gradient(90deg, #78350f, #d97706)';
+        else if (zType === 'runner') barGradient = 'linear-gradient(90deg, #831843, #f43f5e)';
+        else barGradient = 'linear-gradient(90deg, #1b5e20, #4caf50)';
+      }
       fillEl.style.cssText = `height:100%; width:100%; background:${barGradient}; transition:width 0.1s ease-out;`;
       healthEl.appendChild(fillEl);
       botHealthLayer.appendChild(healthEl);
 
       let baseHealth = BOT_BASE_HEALTH * currentDifficulty.botHealthMult * visuals.healthMultiplier;
+      if (eliteConfig) {
+        // 2.5x stat multipliers for elite squad
+        baseHealth *= 2.5;
+      }
       let moveSpeed = (3.6 + Math.random() * 1.2) * visuals.speedMultiplier;
-      let meleeDmg = 16 * currentDifficulty.botDamageMult;
+      let meleeDmg = (eliteConfig ? 85 : 16) * currentDifficulty.botDamageMult;
+
+      let sprintSpeed: number | undefined;
+      let patrolSpeed: number | undefined;
+      let mutantType: MutantType | undefined;
+      let attackRange: number | undefined;
+      let attackCooldown: number | undefined;
+      let specialAbilityTimer: number | undefined;
+      let hoverHeight: number | undefined;
 
       if (isZombie) {
-        const waveScale = Math.pow(1.18, Math.max(0, currentWave - 1));
-        const speedScale = 1 + Math.min(0.75, (currentWave - 1) * 0.05);
-        if (zType === 'walker') {
-          baseHealth = 85 * waveScale;
-          moveSpeed = (3.8 + Math.random() * 0.6) * speedScale;
-          meleeDmg = 16;
-        } else if (zType === 'runner') {
-          baseHealth = 48 * waveScale;
-          moveSpeed = (6.8 + Math.random() * 1.1) * speedScale;
-          meleeDmg = 12;
+        const isExtraction = matchConfig.mode === 'extraction';
+        const waveScale = isExtraction ? 1.0 : Math.pow(1.18, Math.max(0, currentWave - 1));
+        const speedScale = isExtraction ? 1.0 : 1 + Math.min(0.75, (currentWave - 1) * 0.05);
+
+        if (zType === 'runner') {
+          mutantType = 'RUNNER';
+          baseHealth = 55 * waveScale;
+          moveSpeed = 5.2 * speedScale;
+          sprintSpeed = 5.2 * speedScale;
+          patrolSpeed = 3.0 * speedScale;
+          meleeDmg = 14;
+          attackRange = 1.6;
+          attackCooldown = 0.5;
+        } else if (zType === 'brute' || zType === 'tank') {
+          mutantType = 'BRUTE';
+          baseHealth = 340 * waveScale;
+          moveSpeed = 2.2 * speedScale;
+          meleeDmg = 32;
+          attackRange = 2.0;
+          attackCooldown = 1.2;
+        } else if (zType === 'banshee') {
+          mutantType = 'BANSHEE';
+          baseHealth = 110 * waveScale;
+          moveSpeed = 4.0 * speedScale;
+          meleeDmg = 18;
+          attackRange = 2.2;
+          attackCooldown = 1.0;
+          specialAbilityTimer = 6.0;
+          hoverHeight = 1.2;
+        } else if (zType === 'bloater') {
+          mutantType = 'BLOATER';
+          baseHealth = 160 * waveScale;
+          moveSpeed = 1.5 * speedScale;
+          meleeDmg = 20;
+          attackRange = 2.0;
+          attackCooldown = 1.0;
+        } else if (zType === 'megaboss') {
+          mutantType = 'MEGABOSS';
+          baseHealth = 1200;
+          moveSpeed = 2.5;
+          meleeDmg = 45;
+          attackRange = 2.8;
+          attackCooldown = 1.4;
+          specialAbilityTimer = 12.0;
         } else {
-          baseHealth = 290 * waveScale;
-          moveSpeed = (2.4 + Math.random() * 0.3) * speedScale;
-          meleeDmg = 34;
+          // Walker (Standard)
+          mutantType = 'WALKER';
+          baseHealth = 85 * waveScale;
+          moveSpeed = 1.8 * speedScale;
+          meleeDmg = 16;
+          attackRange = 1.4;
+          attackCooldown = 0.9;
         }
       }
 
@@ -1259,11 +1862,35 @@ export default function App() {
         team,
         isZombie,
         zType,
+        mutantType,
+        attackRange,
+        attackCooldown,
+        specialAbilityTimer,
+        hoverHeight,
+        isStaggered: false,
+        staggerTimer: 0,
+        isCharging: false,
+        isExploding: false,
+        weavePhase: Math.random() * Math.PI * 2,
         faction: visuals.faction,
         subClass: visuals.subClass,
+        isElite: !!eliteConfig,
+        eliteRole: eliteConfig?.archetype,
+        eliteSlot: eliteConfig?.slotId,
+        callsign: eliteConfig?.callsign,
+        regenAuraTimer: 0,
+        reconPingTimer: 0,
+        deployedCoverCooldown: 0,
         kills: 0,
         meleeDmg,
         meleeCooldown: 0,
+        isSprinting: false,
+        sprintSpeed,
+        patrolSpeed,
+        runnerTorsoLean: 0,
+        lungeTimer: 0,
+        lungeDir: new THREE.Vector3(),
+        attackRecoveryTimer: 0,
         healSlot: isZombie ? undefined : {
           medkitCount: 1,
           shieldPotCount: 1,
@@ -1288,7 +1915,7 @@ export default function App() {
         hitParts: visuals.hitParts,
         healthEl,
         fillEl,
-        pos: new THREE.Vector3(p.x, y, p.z),
+        pos: new THREE.Vector3(p.x, (isZombie && zType === 'banshee') ? y + 1.2 : y, p.z),
         vel: new THREE.Vector3(0, 0, 0),
         facing: 0,
         health: baseHealth,
@@ -1326,6 +1953,15 @@ export default function App() {
     }
 
     function clearMatchEntities() {
+      extractionPhase = false;
+      extractionState = 'none';
+      extractionTimer = 0;
+      if (extractionTargetObj && extractionTargetObj instanceof THREE.Object3D) {
+         scene.remove(extractionTargetObj);
+      }
+      extractionTargetObj = null;
+      extractionTankBossSpawned = false;
+
       for (const b of [...bots]) removeBot(b);
       for (const g of activeGrenades) scene.remove(g.group);
       activeGrenades.length = 0;
@@ -1358,7 +1994,46 @@ export default function App() {
     }
 
     function initMatch() {
+      // 1. Completely tear down, purge, and dispose of the Lobby Operator's Three.js turntable meshes and light variables before instantiating the match arena.
+      teardownLobbyScene();
+
       clearMatchEntities();
+      
+      // Reset AI Director
+      window.aiDirectorState = {
+        currentSector: 1,
+        spawnTimer: 0,
+        waveCount: 0
+      };
+      
+      // Guardrail: If matchMode is zombie or extraction, strictly enforce Subterranean Hangar map
+      const isFacilityMode = (
+        matchConfig.mode === 'zombie' ||
+        matchConfig.mode === 'extraction' ||
+        matchModeRef.current === 'zombie' ||
+        matchModeRef.current === 'extraction'
+      );
+      const activeMap = isFacilityMode ? 'hangar' : selectedMapStateRef.current;
+      selectedMapStateRef.current = activeMap;
+
+      world.dispose();
+      world = createWorld(scene, activeMap);
+      
+      const isHangar = activeMap === 'hangar';
+      combatLightGroup.visible = true;
+      hemiLight.intensity = isHangar ? 0.55 : 0.65;
+      sunLight.intensity = isHangar ? 0.75 : 1.05;
+      
+      if (isHangar) {
+         scene.background = new THREE.Color(0x14181f);
+         scene.fog = new THREE.Fog(0x14181f, 25, 140);
+         skyMesh.visible = false;
+      } else {
+         scene.background = null;
+         scene.fog = combatFog;
+         skyMesh.visible = true;
+      }
+
       teamScoreBlue = 0;
       teamScoreRed = 0;
       player.kills = 0;
@@ -1385,14 +2060,44 @@ export default function App() {
         }
       }
 
-      player.pos.set(0, terrainHeight(0, 0) + PLAYER_EYE, 0);
-      player.vel.set(0, 0, 0);
-      player.yaw = 0;
+      if (matchConfig.mode === 'extraction') {
+        player.pos.set(0, 1.2, 5); // Sector 1: Ingress Airlock
+        player.vel.set(0, 0, 0);
+        player.yaw = 0; // Look forward down negative Z towards Sector 2, 3, 4, 5
+      } else {
+        player.pos.set(0, 1.2, -45);
+        player.vel.set(0, 0, 0);
+        player.yaw = Math.PI; // Face directly down the corridor (North)
+      }
       player.pitch = 0;
       player.alive = true;
       player.aiming = false;
       player.isDrinking = false;
-      player.team = (matchConfig.mode === 'team' || matchConfig.mode === 'zombie') ? 'blue' : 'player';
+      player.team = matchConfig.mode === 'ffa' ? 'player' : 'blue';
+
+      if (matchConfig.mode === 'extraction') {
+        extractionDirector = new ExtractionGameLoop({
+          faction: factionAlignmentRef.current,
+          player,
+          world,
+          scene,
+          makeBot,
+          bots,
+          pushKillFeed,
+          onVictory: () => {
+            pushKillFeed('MISSION ACCOMPLISHED: EXTRACTION SUCCESSFUL!', true);
+            triggerGameOver(true);
+          },
+          onDefeat: () => {
+            pushKillFeed('M.I.A.: OPERATIVE ELIMINATED!', true);
+            triggerGameOver(false);
+          }
+        });
+        setExtractionState({ ...extractionDirector.state });
+      } else {
+        extractionDirector = null;
+        setExtractionState(null);
+      }
 
       // Initialize strictly isolated 3-slot loadout (Primary, Secondary, Grenades)
       setupPlayerLoadout();
@@ -1403,17 +2108,72 @@ export default function App() {
       storm.finished = false;
 
       if (matchConfig.mode === 'zombie') {
-        for (let i = 0; i < matchConfig.friendlyCount; i++) makeBot('blue');
+        const isElite = deploymentProtocolRef.current === 'elite';
+        if (isElite) {
+          const squad = eliteSquadRef.current || DEFAULT_ELITE_SQUAD;
+          const formationOffsets = [
+            { x: 3.2, z: 2.2 },   // Slot 2 Heavy: Front-Right
+            { x: 0.0, z: -3.8 },  // Slot 3 Medic: Rear-Center
+            { x: -3.8, z: -2.0 }, // Slot 4 Recon: Rear-Left
+            { x: -3.2, z: 2.2 }   // Slot 5 Engineer: Front-Left
+          ];
+          squad.forEach((companion, idx) => {
+            const off = formationOffsets[idx] || { x: 3, z: 3 };
+            const bot = makeBot('blue', null, false, companion);
+            bot.pos.set(player.pos.x + off.x, terrainHeight(player.pos.x + off.x, player.pos.z + off.z), player.pos.z + off.z);
+            bot.group.position.copy(bot.pos);
+          });
+          pushKillFeed('COMMAND: ELITE TASK FORCE DEPLOYED');
+        } else {
+          for (let i = 0; i < matchConfig.friendlyCount; i++) {
+            const bot = makeBot('blue');
+            bot.pos.set(player.pos.x + (Math.random() - 0.5) * 4, 1.2, player.pos.z + (Math.random() - 0.5) * 4);
+            bot.group.position.copy(bot.pos);
+          }
+        }
         waveIntermission = false;
         currentWave = matchConfig.startingWave || 1;
         startNextZombieWave(currentWave);
+      } else if (matchConfig.mode === 'extraction') {
+        const isElite = deploymentProtocolRef.current === 'elite';
+        if (isElite) {
+          const squad = eliteSquadRef.current || DEFAULT_ELITE_SQUAD;
+          const formationOffsets = [
+            { x: 3.2, z: 2.2 },
+            { x: 0.0, z: -3.8 },
+            { x: -3.8, z: -2.0 },
+            { x: -3.2, z: 2.2 }
+          ];
+          squad.forEach((companion, idx) => {
+            const off = formationOffsets[idx] || { x: 3, z: 3 };
+            const bot = makeBot('blue', null, false, companion);
+            bot.pos.set(player.pos.x + off.x, terrainHeight(player.pos.x + off.x, player.pos.z + off.z), player.pos.z + off.z);
+            bot.group.position.copy(bot.pos);
+          });
+          pushKillFeed('COMMAND: ELITE TASK FORCE DEPLOYED');
+        } else {
+          for (let i = 0; i < matchConfig.friendlyCount; i++) {
+            const bot = makeBot('blue');
+            bot.pos.set(player.pos.x + (Math.random() - 0.5) * 4, 1.2, player.pos.z + (Math.random() - 0.5) * 4);
+            bot.group.position.copy(bot.pos);
+          }
+        }
+        // AI Director will handle hostile spawns in EXTRACTION.
       } else if (matchConfig.mode === 'team') {
-        for (let i = 0; i < matchConfig.friendlyCount; i++) makeBot('blue');
+        const isElite = deploymentProtocolRef.current === 'elite';
+        if (isElite) {
+          const squad = eliteSquadRef.current || DEFAULT_ELITE_SQUAD;
+          squad.forEach((companion) => makeBot('blue', null, false, companion));
+          pushKillFeed('COMMAND: ELITE TASK FORCE DEPLOYED');
+        } else {
+          for (let i = 0; i < matchConfig.friendlyCount; i++) {
+            const bot = makeBot('blue');
+            bot.pos.set(player.pos.x + (Math.random() - 0.5) * 4, 1.2, player.pos.z + (Math.random() - 0.5) * 4);
+            bot.group.position.copy(bot.pos);
+          }
+        }
         for (let i = 0; i < matchConfig.enemyCount; i++) makeBot('red');
-      } else if (matchConfig.mode === 'escort') {
-        makeBot('blue', null, true); // Create VIP
-        for (let i = 0; i < matchConfig.enemyCount; i++) makeBot('red');
-      } else {
+      } else if (matchConfig.mode === 'ffa') {
         for (let i = 0; i < matchConfig.enemyCount; i++) makeBot();
       }
     }
@@ -1564,8 +2324,7 @@ export default function App() {
 
           if (ud.type === 'botpart' && ud.ref) {
             const bot = ud.ref as Bot;
-            if (matchConfig.mode === 'team' && bot.team === player.team) continue;
-            if (matchConfig.mode === 'zombie' && bot.team === 'blue') continue;
+            if (bot.team === player.team) continue;
 
             player.shotsHit++;
             const dist = camera.position.distanceTo(hit.point);
@@ -1587,8 +2346,7 @@ export default function App() {
             const secHit = hits.find(h => h.object.userData.type === 'botpart' && h.distance - hit.distance <= 4.0);
             if (secHit && secHit.object.userData.ref) {
               const bot = secHit.object.userData.ref as Bot;
-              if (matchConfig.mode === 'team' && bot.team === player.team) continue;
-              if (matchConfig.mode === 'zombie' && bot.team === 'blue') continue;
+              if (bot.team === player.team) continue;
 
               player.shotsHit++;
               const dist = camera.position.distanceTo(secHit.point);
@@ -1650,8 +2408,7 @@ export default function App() {
 
         if (ud.type === 'botpart' && ud.ref) {
           const bot = ud.ref as Bot;
-          if (matchConfig.mode === 'team' && bot.team === player.team) return;
-          if (matchConfig.mode === 'zombie' && bot.team === 'blue') return;
+          if (bot.team === player.team) return;
 
           player.shotsHit++;
           const dist = camera.position.distanceTo(hit.point);
@@ -1725,8 +2482,7 @@ export default function App() {
           if (hitBotIds.has(bot.id)) continue;
           hitBotIds.add(bot.id);
 
-          if (matchConfig.mode === 'team' && bot.team === player.team) continue;
-          if (matchConfig.mode === 'zombie' && bot.team === 'blue') continue;
+          if (bot.team === player.team) continue;
 
           player.shotsHit++;
           // Railgun has ZERO falloff: 100% full lethal damage across any distance
@@ -1812,7 +2568,11 @@ export default function App() {
       player.continuousShots = 0;
 
       let reloadDur = (w.reloadTime ?? 2.4) * player.classReloadMultiplier;
-      if (!isTactical && ['pistol', 'smg', 'ar', 'lmg', 'br'].includes(w.id)) {
+      if (w.id === 'br') {
+        ws.burstRemaining = 0;
+        ws.burstTimer = 0;
+        reloadDur = (isTactical ? 1.2 : 1.8) * player.classReloadMultiplier;
+      } else if (!isTactical && ['pistol', 'smg', 'ar', 'lmg'].includes(w.id)) {
         reloadDur *= 1.4; // 40% slower empty reload
       }
       ws.reloadT = reloadDur;
@@ -1840,7 +2600,25 @@ export default function App() {
       }
     }
 
+    function activateMedkit() {
+      if (player.isDrinking) return; // Already healing
+      if (player.health < player.maxHealth) {
+        player.isDrinking = true;
+        player.drinkTimer = 2.0;
+        // Medkit activation will finish in the update loop
+        pushKillFeed('APPLYING MEDKIT...');
+        AUDIO.sniperReload.play(0.65); // Radio sound effect proxy
+      } else {
+        pushKillFeed('HP FULL // MEDKIT CONSERVED', true);
+      }
+    }
+    
     function switchSlot(index: number) {
+      if (extractionState === 'carrying' && index === 0) {
+         pushKillFeed('COMMAND: CANNOT EQUIP PRIMARY WHILE CARRYING CRYO-POD.', true);
+         return;
+      }
+
       if (index < 0 || index > 3) return; // Strictly truncated: only index 0, 1, 2
       if (player.slotIndex !== index) {
         AUDIO.arSpray.stop();
@@ -1914,44 +2692,80 @@ export default function App() {
       if (e.code === 'Space' && player.onGround) player.vel.y = JUMP_SPEED;
       if (e.code === 'KeyR') reloadWeapon();
       if (e.code === 'KeyG') throwGrenade();
-      if (e.code === 'KeyF') {
-        // Tactile knife-slash melee overhaul
-        if (player.isMeleeing || !player.alive) return;
-        player.isMeleeing = true;
-        player.meleeTimer = 0.38;
-        playKnifeSlashWhoosh();
-        vmManager.triggerKnifeSlash();
+      
+      // Squad Controls
+      if (e.code === 'KeyZ') {
+        const nextDirective = squadDirectiveRef.current === 'follow_lead' ? 'hold_position' : 'follow_lead';
+        squadDirectiveRef.current = nextDirective;
+        setSquadDirective(nextDirective);
+        setSquadDirectiveBanner({
+          directive: nextDirective,
+          text: nextDirective === 'follow_lead' ? 'FOLLOW LEAD' : 'HOLD POSITION',
+          sub: nextDirective === 'follow_lead' ? 'TETHER ACTIVE' : 'DEFENDING LOCAL NODE',
+          timer: 2.8
+        });
+        AUDIO.sniperReload.play(0.65);
+      }
+      
+      if (e.code === 'KeyX') {
+        // Toggle targeting phase
+        if (targetingPhaseRef.current) {
+           targetingPhaseRef.current = false;
+           setTargetingPhase(false);
+        } else {
+           targetingPhaseRef.current = true;
+           setTargetingPhase(true);
+        }
+      }
+      
+      if (e.code === 'KeyC') {
+        const nextDirective = 'push_objective';
+        squadDirectiveRef.current = nextDirective;
+        setSquadDirective(nextDirective);
+        setSquadDirectiveBanner({
+          directive: nextDirective,
+          text: 'PUSH OBJECTIVE',
+          sub: 'ADVANCING TO NEXT SECTOR',
+          timer: 2.8
+        });
+        AUDIO.sniperReload.play(0.65);
+      }
 
-        const raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-        raycaster.far = 3.2;
-        const hits = raycaster.intersectObjects(world.hittableObjects, false);
-        if (hits.length > 0) {
-          const hit = hits[0];
-          const ud = hit.object.userData;
-          spawnImpactSpark(hit.point, ud.type === 'botpart');
-          if (ud.type === 'botpart' && ud.ref) {
-            const bot = ud.ref as Bot;
-            if (matchConfig.mode === 'team' && bot.team === player.team) return;
-            if (matchConfig.mode === 'zombie' && bot.team === 'blue') return;
-
-            damageBot(bot, 65, false, 'player', raycaster.ray.direction);
-            flashHit(bot);
-            showHitmarker(false);
-            showBloodSplatter();
-            recoilKick += 0.04;
-            recoilPitch += 0.02;
-            AUDIO.bulletHit.play(1.0);
-            if (bot.isZombie) addPoints(25);
+      // Melee: Key 'F' (and fallback 'V') - 'E' is preserved strictly for Interact!
+      if (e.code === 'KeyF' || e.code === 'KeyV') {
+        if (!player.isMeleeing && player.alive) {
+          player.isMeleeing = true;
+          player.meleeTimer = 0.38;
+          playKnifeSlashWhoosh();
+          vmManager.triggerKnifeSlash();
+          const raycaster = new THREE.Raycaster();
+          raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+          raycaster.far = 3.2;
+          const hits = raycaster.intersectObjects(world.hittableObjects, false);
+          if (hits.length > 0) {
+            const hit = hits[0];
+            const ud = hit.object.userData;
+            spawnImpactSpark(hit.point, ud.type === 'botpart');
+            if (ud.type === 'botpart' && ud.ref) {
+              const bot = ud.ref;
+              if (bot.team === player.team) return;
+              damageBot(bot, 65, false, 'player', raycaster.ray.direction);
+              flashHit(bot);
+              showHitmarker(false);
+              showBloodSplatter();
+              recoilKick += 0.04;
+              recoilPitch += 0.02;
+              AUDIO.bulletHit.play(1.0);
+              if (bot.isZombie) addPoints(25);
+            }
           }
         }
       }
-
-      // Hard-locked slot selection: ONLY keys 1, 2, and 3 (Primary, Secondary, Grenades)
-      if (e.code === 'Digit1') switchSlot(0); // Primary
-      if (e.code === 'Digit2') switchSlot(1); // Secondary
-      if (e.code === 'Digit3') switchSlot(2); // Grenades
-      if (e.code === 'KeyX') switchSlot(3); // Heal
+      if (e.code === 'Digit1') switchSlot(0);
+      if (e.code === 'Digit2') switchSlot(1);
+      if (e.code === 'Digit3') switchSlot(2);
+      if (e.code === 'Digit4') activateMedkit();
+      
       // Digits 4 through 0 are completely eradicated to eliminate ghost inventories
     };
 
@@ -1966,14 +2780,46 @@ export default function App() {
       isMouseDown = true;
       if (gameStateRef.current !== 'playing') return;
 
-      // In browser preview, attempt pointer lock on click if not already locked
       if (document.pointerLockElement !== renderer.domElement) {
         requestGamePointerLock();
       }
 
       if (e.button === 0) {
+        if (targetingPhaseRef.current) {
+          // X Key: Focus Target Lock Phase
+          const raycaster = new THREE.Raycaster();
+          raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+          const hits = raycaster.intersectObjects(world.hittableObjects, false);
+          let targetHit = null;
+          for (const hit of hits) {
+            const bot = hit.object.userData?.ref;
+            if (bot && bot.alive && bot.team !== player.team) {
+              targetHit = bot;
+              break;
+            }
+          }
+          if (targetHit) {
+            focusTargetIDRef.current = targetHit.id;
+                        setSquadDirectiveBanner({
+              directive: 'focus_target',
+              text: 'TARGET ACQUIRED',
+              sub: `LOCKING ALL FIRE ON BOT #${targetHit.id}`,
+              timer: 3.5
+            });
+            pushKillFeed(`SQUAD CMD: ALL FIRE ON BOT #${targetHit.id}`);
+            AUDIO.sniperReload.play(0.85);
+          } else {
+            pushKillFeed('TARGETING PHASE FAILED - NO HOSTILE ACQUIRED');
+          }
+          targetingPhaseRef.current = false;
+          setTargetingPhase(false);
+          return; // Do not fire weapon during targeting phase click
+        }
+        
         player.fireHeld = true;
-        fireWeapon();
+        if (!currentSlotState()?.reloading) {
+          fireWeapon();
+        }
       }
     };
 
@@ -2039,11 +2885,20 @@ export default function App() {
     document.addEventListener('pointerlockchange', onPointerLockChange);
 
     const onResize = () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', onResize);
+    onResize();
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        onResize();
+      });
+      resizeObserver.observe(containerRef.current);
+    }
 
     const onBottomCenterClick = (e: MouseEvent) => {
       const target = (e.target as HTMLElement)?.closest('.hotbar-slot') as HTMLElement | null;
@@ -2070,31 +2925,88 @@ export default function App() {
       matchConfig.targetScore = targetScoreRef.current;
       currentDifficulty = DIFFICULTIES[difficultyKeyRef.current] || DIFFICULTIES.medium;
       mouseSensitivity = (sensitivityValRef.current || 11) / 5000;
+
+      // Map Rules State Guardrail: Horde and Extraction Modes strictly enforce Subterranean Hangar map
+      if (matchConfig.mode === 'zombie' || matchConfig.mode === 'extraction') {
+        selectedMapStateRef.current = 'hangar';
+        setSelectedMapState('hangar');
+      }
+
       initMatch();
       switchSlot(player.slotIndex);
+      gameStateRef.current = 'playing';
       setGameState('playing');
+
+      // Ensure active gameplay camera recalculates initial target projection parameters
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.fov = HIP_FOV;
+      camera.updateProjectionMatrix();
+
+      // Immediately orient camera at player spawn location and eye level
+      camera.position.set(player.pos.x, player.pos.y, player.pos.z);
+      camera.rotation.order = 'YXZ';
+      camera.rotation.set(player.pitch, player.yaw, 0);
+
+      // Force fresh renderer.render() execution cycle immediately upon mounting
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.render(scene, camera);
+
       requestGamePointerLock();
     };
 
     const resumeHandler = () => {
+      gameStateRef.current = 'playing';
       setGameState('playing');
       requestGamePointerLock();
     };
 
     const restartHandler = () => {
+      if (
+        matchConfig.mode === 'zombie' ||
+        matchConfig.mode === 'extraction' ||
+        matchModeRef.current === 'zombie' ||
+        matchModeRef.current === 'extraction'
+      ) {
+        selectedMapStateRef.current = 'hangar';
+        setSelectedMapState('hangar');
+      }
       initMatch();
       switchSlot(player.slotIndex);
+      gameStateRef.current = 'playing';
       setGameState('playing');
+
+      // Ensure active gameplay camera recalculates initial target projection parameters
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.fov = HIP_FOV;
+      camera.updateProjectionMatrix();
+      camera.position.set(player.pos.x, player.pos.y, player.pos.z);
+      camera.rotation.order = 'YXZ';
+      camera.rotation.set(player.pitch, player.yaw, 0);
+
+      // Force fresh renderer.render() execution cycle
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.render(scene, camera);
+
       requestGamePointerLock();
     };
 
     const lobbyHandler = () => {
-      setGameState('start');
       AUDIO.arSpray.stop();
       if (document.pointerLockElement) {
         try { document.exitPointerLock?.(); } catch {}
       }
       clearMatchEntities();
+      setupLobbyScene();
+      gameStateRef.current = 'start';
+      setGameState('start');
+
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.fov = HIP_FOV;
+      camera.updateProjectionMatrix();
+      camera.position.set(0, 1000 + 1.25, 2.65);
+      camera.lookAt(0, 1000 + 1.10, 0);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.render(scene, camera);
     };
 
     deployHandlerRef.current = deployHandler;
@@ -2123,10 +3035,17 @@ export default function App() {
       const dt = Math.min(0.05, clock.getDelta());
 
       if (gameStateRef.current === 'playing') {
+        if (hangarGroup) hangarGroup.visible = false;
+        if (lobbyAvatar) lobbyAvatar.group.visible = false;
         combatLightGroup.visible = true;
-        hangarGroup.visible = false;
-        scene.fog = combatFog;
-
+        
+        if (selectedMapStateRef.current === 'hangar') {
+           scene.background = new THREE.Color(0x14181f);
+           scene.fog = new THREE.Fog(0x14181f, 25, 140);
+        } else {
+           scene.background = null;
+           scene.fog = combatFog;
+        }
         // 1. Player movement & physics
         if (player.alive) {
           const eyeHeight = player.crouching ? PLAYER_EYE_CROUCH : PLAYER_EYE;
@@ -2267,7 +3186,7 @@ export default function App() {
 
         const curW = currentSlot();
         const curWs = currentSlotState();
-        if (player.fireHeld && curW.auto && curW.type === 'weapon') {
+        if (player.fireHeld && curW.auto && curW.type === 'weapon' && !curWs.reloading) {
           fireWeapon();
         }
 
@@ -2369,7 +3288,7 @@ export default function App() {
         }
 
         // Battle Rifle 3-round burst continuation
-        if (curW.id === 'br' && (curWs.burstRemaining ?? 0) > 0) {
+        if (curW.id === 'br' && (curWs.burstRemaining ?? 0) > 0 && !curWs.reloading) {
           curWs.burstTimer = (curWs.burstTimer ?? 0) - dt;
           if ((curWs.burstTimer ?? 0) <= 0) {
             curWs.burstRemaining = (curWs.burstRemaining ?? 1) - 1;
@@ -2393,8 +3312,7 @@ export default function App() {
                 spawnImpactSpark(hit.point, ud.type === 'botpart');
                 if (ud.type === 'botpart' && ud.ref) {
                   const bot = ud.ref as Bot;
-                  if (!(matchConfig.mode === 'team' && bot.team === player.team) &&
-                      !(matchConfig.mode === 'zombie' && bot.team === 'blue')) {
+                  if (bot.team !== player.team) {
                     const isHead = ud.part === 'head';
                     const dist = camera.position.distanceTo(hit.point);
                     const falloff = getDamageRangeFalloff(curW.id, dist);
@@ -2410,8 +3328,7 @@ export default function App() {
                   const secHit = hits.find(h => h.object.userData.type === 'botpart' && h.distance - hit.distance <= 4.0);
                   if (secHit && secHit.object.userData.ref) {
                     const bot = secHit.object.userData.ref as Bot;
-                    if (!(matchConfig.mode === 'team' && bot.team === player.team) &&
-                        !(matchConfig.mode === 'zombie' && bot.team === 'blue')) {
+                    if (bot.team !== player.team) {
                       const dist = camera.position.distanceTo(secHit.point);
                       const falloff = getDamageRangeFalloff(curW.id, dist);
                       if (falloff > 0) {
@@ -2532,6 +3449,19 @@ export default function App() {
           true
         );
 
+        
+        // === SUBTERRANEAN EXTRACTION GAME LOOP & AI DIRECTOR ===
+        let extPromptResult: { interactionPrompt: string | null; isPromptObjective: boolean } = {
+          interactionPrompt: null,
+          isPromptObjective: false
+        };
+        if (matchConfig.mode === 'extraction' && extractionDirector) {
+          extPromptResult = extractionDirector.update(dt, keys);
+          if (animId % 6 === 0) {
+            setExtractionState({ ...extractionDirector.state });
+          }
+        }
+        
         // 6. World doors & interactions
         world.updateDoors(dt);
 
@@ -2539,7 +3469,7 @@ export default function App() {
         let nearestDoorDist = 999;
         for (const d of world.doors) {
           const dist = player.pos.distanceTo(d.pos);
-          if (dist < 2.9 && dist < nearestDoorDist) {
+          if (dist < 3.2 && dist < nearestDoorDist) {
             nearestDoor = d;
             nearestDoorDist = dist;
           }
@@ -2560,14 +3490,32 @@ export default function App() {
 
         const promptEl = containerRef.current?.querySelector('#pickup-prompt') as HTMLElement | null;
         if (promptEl) {
-          if (nearestDoor) {
+          if (extPromptResult.interactionPrompt) {
             promptEl.style.display = 'block';
-            promptEl.textContent = nearestDoor.isOpen ? 'Press E to Close Door' : 'Press E to Open Door';
-            if (keys['KeyE']) {
-              keys['KeyE'] = false;
-              nearestDoor.isOpen = !nearestDoor.isOpen;
-              nearestDoor.targetAngle = nearestDoor.isOpen ? -Math.PI / 2 : 0;
-              nearestDoor.collider.active = !nearestDoor.isOpen;
+            promptEl.textContent = extPromptResult.interactionPrompt;
+            promptEl.style.color = extPromptResult.isPromptObjective ? '#2de2e6' : 'white';
+          } else if (nearestDoor) {
+            let canOpen = true;
+            let doorReason = '';
+            if (matchConfig.mode === 'extraction' && extractionDirector) {
+              const check = extractionDirector.canOpenDoor(nearestDoor.pos);
+              canOpen = check.allowed;
+              doorReason = check.reason || 'DOOR LOCKED';
+            }
+            
+            promptEl.style.display = 'block';
+            if (!canOpen && !nearestDoor.isOpen) {
+              promptEl.textContent = doorReason;
+              promptEl.style.color = '#ff3333';
+            } else {
+              promptEl.textContent = nearestDoor.isOpen ? 'Press E to Close Door' : 'Press E to Open Door';
+              promptEl.style.color = 'white';
+              if (keys['KeyE']) {
+                keys['KeyE'] = false;
+                nearestDoor.isOpen = !nearestDoor.isOpen;
+                nearestDoor.targetAngle = nearestDoor.isOpen ? -Math.PI / 2 : 0;
+                nearestDoor.collider.active = !nearestDoor.isOpen;
+              }
             }
           } else if (nearestPickup) {
             promptEl.style.display = 'block';
@@ -2724,6 +3672,18 @@ export default function App() {
           }
         }
 
+        // Update persistent toxic puddles from Bloater explosions
+        updateToxicPuddles(dt, scene, {
+          pos: player.pos,
+          alive: player.alive,
+          applyDamage: (dmg, isHead, isExp, attacker) => applyDamageToPlayer(dmg, false, false, attacker)
+        }, bots, damageBot);
+
+        // Update radar scramble countdown
+        if ((window as any).radarScrambleTimer && (window as any).radarScrambleTimer > 0) {
+          (window as any).radarScrambleTimer -= dt;
+        }
+
         // 10. Bots & AI logic
         for (const bot of bots) {
           bot.flashMats.forEach(m => {
@@ -2755,6 +3715,26 @@ export default function App() {
             continue;
           }
 
+          if (bot.isZombie) {
+            updateBioMutantAI(bot, dt, getMutantAIContext());
+
+            const zDist = bot.pos.distanceTo(camera.position);
+            if (zDist <= 32 && (bot.mutantType === 'RUNNER' || bot.mutantType === 'BANSHEE' || zDist <= 14 || bot.meleeCooldown > 0)) {
+              const now = performance.now();
+              const alreadyPinged = radarPingsRef.current.some(p => p.type === 'zombie' && Math.hypot(p.x - bot.pos.x, p.z - bot.pos.z) < 2.5 && (now - p.timestamp) < 400);
+              if (!alreadyPinged) {
+                radarPingsRef.current.push({
+                  x: bot.pos.x,
+                  z: bot.pos.z,
+                  timestamp: now,
+                  duration: 1.2,
+                  type: 'zombie'
+                });
+              }
+            }
+            continue;
+          }
+
           const curSpeed = Math.hypot(bot.vel.x, bot.vel.z);
           if (curSpeed > 0.2) {
             bot.walkPhase += dt * curSpeed * (bot.isZombie && bot.zType === 'runner' ? 3.8 : 2.8);
@@ -2774,14 +3754,25 @@ export default function App() {
               if (bot.armLLowerPivot) bot.armLLowerPivot.rotation.x = -0.25 - stride * 0.12;
               if (bot.armRLowerPivot) bot.armRLowerPivot.rotation.x = -0.32 + stride * 0.08;
             } else if (bot.zType === 'runner') {
-              // RUNNER SPRINT MATRICES: Aggressive 35-degree forward torso lean and arms flung wildly backward
-              bot.torsoGroup.rotation.x = 0.61 + Math.sin(bot.walkPhase * 2) * 0.08;
-              bot.armLPivot.rotation.x = 1.15 + stride * 0.35;
-              bot.armRPivot.rotation.x = 1.15 - stride * 0.35;
-              bot.armLPivot.rotation.z = -0.28;
-              bot.armRPivot.rotation.z = 0.28;
-              if (bot.armLLowerPivot) bot.armLLowerPivot.rotation.x = 0.35;
-              if (bot.armRLowerPivot) bot.armRLowerPivot.rotation.x = 0.35;
+              if (bot.isSprinting) {
+                // RUNNER SPRINT MATRICES: Aggressive 35-degree forward torso lean and arms flung wildly backward
+                bot.torsoGroup.rotation.x = 0.61 + Math.sin(bot.walkPhase * 2) * 0.08;
+                bot.armLPivot.rotation.x = 1.15 + stride * 0.35;
+                bot.armRPivot.rotation.x = 1.15 - stride * 0.35;
+                bot.armLPivot.rotation.z = -0.28;
+                bot.armRPivot.rotation.z = 0.28;
+                if (bot.armLLowerPivot) bot.armLLowerPivot.rotation.x = 0.35;
+                if (bot.armRLowerPivot) bot.armRLowerPivot.rotation.x = 0.35;
+              } else {
+                // RUNNER IDLE/PATROL: Upright standing/walking gait (NOT sprinting)
+                bot.torsoGroup.rotation.x = 0.08;
+                bot.armLPivot.rotation.x = -0.3 + stride * 0.3;
+                bot.armRPivot.rotation.x = -0.3 - stride * 0.3;
+                bot.armLPivot.rotation.z = -0.05;
+                bot.armRPivot.rotation.z = 0.05;
+                if (bot.armLLowerPivot) bot.armLLowerPivot.rotation.x = -0.15;
+                if (bot.armRLowerPivot) bot.armRLowerPivot.rotation.x = -0.15;
+              }
             } else {
               bot.armLPivot.rotation.x = -1.35 + Math.sin(bot.walkPhase * 0.8) * 0.15;
               bot.armRPivot.rotation.x = -1.35 - Math.sin(bot.walkPhase * 0.8) * 0.15;
@@ -2795,11 +3786,22 @@ export default function App() {
               if (bot.armLLowerPivot) bot.armLLowerPivot.rotation.x = -0.25;
               if (bot.armRLowerPivot) bot.armRLowerPivot.rotation.x = -0.32;
             } else if (bot.zType === 'runner') {
-              bot.torsoGroup.rotation.x = 0.61;
-              bot.armLPivot.rotation.x = 1.0;
-              bot.armRPivot.rotation.x = 1.0;
-              bot.armLPivot.rotation.z = -0.25;
-              bot.armRPivot.rotation.z = 0.25;
+              if (bot.isSprinting) {
+                bot.torsoGroup.rotation.x = 0.61;
+                bot.armLPivot.rotation.x = 1.0;
+                bot.armRPivot.rotation.x = 1.0;
+                bot.armLPivot.rotation.z = -0.25;
+                bot.armRPivot.rotation.z = 0.25;
+              } else {
+                // Idle standing state
+                bot.torsoGroup.rotation.x = 0.04;
+                bot.armLPivot.rotation.x = -0.15;
+                bot.armRPivot.rotation.x = -0.15;
+                bot.armLPivot.rotation.z = -0.05;
+                bot.armRPivot.rotation.z = 0.05;
+                if (bot.armLLowerPivot) bot.armLLowerPivot.rotation.x = -0.15;
+                if (bot.armRLowerPivot) bot.armRLowerPivot.rotation.x = -0.15;
+              }
             }
           }
 
@@ -2815,7 +3817,7 @@ export default function App() {
 
           if (matchConfig.mode === 'zombie') {
             if (bot.isZombie) {
-              if (player.alive) {
+              if (player.alive && bot.team !== player.team) {
                 bestDist = bot.pos.distanceTo(player.pos);
                 targetObj = 'player';
                 targetPos = camera.position.clone();
@@ -2830,18 +3832,46 @@ export default function App() {
                 }
               }
             } else {
-              for (const other of bots) {
-                if (!other.alive || !other.isZombie) continue;
-                const d = bot.pos.distanceTo(other.pos);
-                if (d < 60 && d < bestDist) {
-                  bestDist = d;
-                  targetObj = other;
-                  targetPos = other.pos.clone().add(new THREE.Vector3(0, 1.5, 0));
+              let hasFocusTarget = false;
+              if (bot.team === player.team && focusTargetIDRef.current !== null) {
+                 const focusedBot = bots.find(b => b.id === focusTargetIDRef.current);
+                 if (focusedBot && focusedBot.alive && focusedBot.isZombie) {
+                    targetObj = focusedBot;
+                    targetPos = focusedBot.pos.clone().add(new THREE.Vector3(0, 1.5, 0));
+                    hasFocusTarget = true;
+                 } else {
+                    focusTargetIDRef.current = null;
+                 }
+              }
+              if (!hasFocusTarget) {
+                for (const other of bots) {
+                  if (!other.alive || !other.isZombie) continue;
+                  const d = bot.pos.distanceTo(other.pos);
+                  if (d >= 60) continue;
+
+                  // Squad tactical prioritization
+                  let priorityWeight = d;
+                  const mType = other.mutantType || (other.zType ? other.zType.toUpperCase() : 'WALKER');
+                  if (mType === 'RUNNER' && d <= 5.0) {
+                    priorityWeight -= 45.0; // Intercept charging runner
+                  } else if (mType === 'BANSHEE') {
+                    priorityWeight -= 30.0; // Silence sonic disruptor
+                  } else if (mType === 'MEGABOSS') {
+                    priorityWeight -= 18.0; // Focus boss fire
+                  } else if (mType === 'BLOATER' && d <= 4.0) {
+                    priorityWeight -= 12.0; // Detonation threshold
+                  }
+
+                  if (priorityWeight < bestDist) {
+                    bestDist = priorityWeight;
+                    targetObj = other;
+                    targetPos = other.pos.clone().add(new THREE.Vector3(0, other.hoverHeight ? other.hoverHeight + 0.8 : 1.5, 0));
+                  }
                 }
               }
             }
           } else {
-            if (player.alive) {
+            if (player.alive && bot.team !== player.team) {
               const dPlayer = bot.pos.distanceTo(player.pos);
               if (dPlayer < 55) {
                 bestDist = dPlayer;
@@ -2849,13 +3879,28 @@ export default function App() {
                 targetPos = camera.position.clone();
               }
             }
-            for (const other of bots) {
-              if (!other.alive || other === bot || other.team === bot.team) continue;
-              const d = bot.pos.distanceTo(other.pos);
-              if (d < 50 && d < bestDist) {
-                bestDist = d;
-                targetObj = other;
-                targetPos = other.pos.clone().add(new THREE.Vector3(0, 1.5, 0));
+            // Focus target override for friendly bots
+            let hasFocusTarget = false;
+            if (bot.team === player.team && focusTargetIDRef.current !== null) {
+               const focusedBot = bots.find(b => b.id === focusTargetIDRef.current);
+               if (focusedBot && focusedBot.alive) {
+                  targetObj = focusedBot;
+                  targetPos = focusedBot.pos.clone().add(new THREE.Vector3(0, 1.5, 0));
+                  hasFocusTarget = true;
+               } else {
+                  focusTargetIDRef.current = null; // Clear if dead
+               }
+            }
+            
+            if (!hasFocusTarget) {
+              for (const other of bots) {
+                if (!other.alive || other === bot || other.team === bot.team) continue;
+                const d = bot.pos.distanceTo(other.pos);
+                if (d < 50 && d < bestDist) {
+                  bestDist = d;
+                  targetObj = other;
+                  targetPos = other.pos.clone().add(new THREE.Vector3(0, 1.5, 0));
+                }
               }
             }
           }
@@ -2867,47 +3912,7 @@ export default function App() {
             const ndx = dx / dist;
             const ndz = dz / dist;
 
-            if (bot.isZombie) {
-              const vx = ndx * bot.speed;
-              const vz = ndz * bot.speed;
-              
-              if (dist < 6) {
-                // Close proximity: charge directly along straight-line vector (no steering delay)
-                bot.vel.x = vx;
-                bot.vel.z = vz;
-              } else {
-                bot.vel.x += (vx - bot.vel.x) * Math.min(1, dt * 6);
-                bot.vel.z += (vz - bot.vel.z) * Math.min(1, dt * 6);
-              }
-              
-              world.moveEntityWithCollision(bot.pos, bot.vel, bot.zType === 'tank' ? 0.65 : 0.38, bot.pos.y, bot.pos.y + 1.8, dt);
-              bot.pos.y = world.getHighestSurface(bot.pos.x, bot.pos.z, bot.pos.y);
-              bot.group.position.copy(bot.pos);
-              bot.group.rotation.y = Math.atan2(dx, dz);
-
-              const zDist = bot.pos.distanceTo(camera.position);
-              if (zDist <= 30 && (bot.zType === 'runner' || zDist <= 12 || bot.meleeCooldown > 0)) {
-                const now = performance.now();
-                const alreadyPinged = radarPingsRef.current.some(p => p.type === 'zombie' && Math.hypot(p.x - bot.pos.x, p.z - bot.pos.z) < 2.5 && (now - p.timestamp) < 400);
-                if (!alreadyPinged) {
-                  radarPingsRef.current.push({
-                    x: bot.pos.x,
-                    z: bot.pos.z,
-                    timestamp: now,
-                    duration: 1.2,
-                    type: 'zombie'
-                  });
-                }
-              }
-
-              const reach = bot.zType === 'tank' ? 2.2 : 1.5;
-              if (dist <= reach && bot.meleeCooldown <= 0) {
-                bot.meleeCooldown = 0.9;
-                if (targetObj === 'player') applyDamageToPlayer(bot.meleeDmg, false, false, bot);
-                else if (targetObj && targetObj.alive) damageBot(targetObj, bot.meleeDmg, false, bot);
-              }
-            } else {
-              // Bot tactical healing logic below 35% health
+            // Bot tactical healing logic below 35% health
               let isHealing = false;
               if (bot.healSlot) {
                 if (bot.healSlot.healCooldown > 0) {
@@ -2935,6 +3940,119 @@ export default function App() {
               }
               let moveX = -ndz * bot.strafeDir * 0.75;
               let moveZ = ndx * bot.strafeDir * 0.75;
+
+              // Elite Squad Directives & Dynamic Behavior
+              if (bot.team === 'blue' && bot.isElite) {
+                const directive = squadDirectiveRef.current;
+                const distToPlayer = bot.pos.distanceTo(player.pos);
+                
+                // Tethering Logic
+                let tetherX = player.pos.x;
+                let tetherZ = player.pos.z;
+                
+                if (directive === 'follow_lead') {
+                  const pyaw = player.yaw;
+                  const slotOffsets = {
+                    2: { x: 3.2, z: 2.2 },   // Right flank
+                    3: { x: 0.0, z: -3.8 },  // Rear guard
+                    4: { x: -3.8, z: -2.0 }, // Left flank
+                    5: { x: -3.2, z: 2.2 }   // Front left
+                  };
+                  const off = slotOffsets[bot.eliteSlot || 2] || { x: 2, z: 2 };
+                  tetherX = player.pos.x + Math.sin(pyaw) * off.z + Math.cos(pyaw) * off.x;
+                  tetherZ = player.pos.z + Math.cos(pyaw) * off.z - Math.sin(pyaw) * off.x;
+                  
+                  const dToSlot = Math.hypot(tetherX - bot.pos.x, tetherZ - bot.pos.z);
+                  
+                  if (distToPlayer > 14) {
+                     // Hard Catch-up
+                     bot.pos.x = tetherX;
+                     bot.pos.z = tetherZ;
+                  } else if (distToPlayer > 7.5) {
+                     // Outer Sprint
+                     moveX = ((tetherX - bot.pos.x) / dToSlot) * 2.0;
+                     moveZ = ((tetherZ - bot.pos.z) / dToSlot) * 2.0;
+                  } else if (distToPlayer > 3) {
+                     // Inner Jog
+                     moveX = ((tetherX - bot.pos.x) / dToSlot) * 1.3;
+                     moveZ = ((tetherZ - bot.pos.z) / dToSlot) * 1.3;
+                  } else {
+                     // In formation
+                     if (dToSlot > 1.5) {
+                       moveX = (tetherX - bot.pos.x) * 0.8;
+                       moveZ = (tetherZ - bot.pos.z) * 0.8;
+                     }
+                  }
+                } else if (directive === 'hold_position') {
+                  moveX *= 0.1;
+                  moveZ *= 0.1; // Stay put
+                } else if (directive === 'push_objective') {
+                  // Push ahead of player (sector progression)
+                  tetherZ = player.pos.z + 15; // Push forward
+                  const dToSlot = Math.hypot(tetherX - bot.pos.x, tetherZ - bot.pos.z);
+                  if (dToSlot > 2) {
+                    moveX = ((tetherX - bot.pos.x) / dToSlot) * 1.5;
+                    moveZ = ((tetherZ - bot.pos.z) / dToSlot) * 1.5;
+                  }
+                }
+
+                // Elite Melee Combat Routine
+                if (bot.meleeCooldown > 0) {
+                  bot.meleeCooldown -= dt;
+                } else if (dist <= 2.4) {
+                  bot.meleeCooldown = 0.85;
+                  if (bot.armRPivot) bot.armRPivot.rotation.x = -1.9;
+                  if (targetObj && targetObj !== 'player' && targetObj.alive) {
+                    damageBot(targetObj, bot.meleeDmg, false, bot);
+                    flashHit(targetObj);
+                    AUDIO.bulletHit.play(0.85);
+                  }
+                }
+
+                // Elite Archetype Special Abilities
+                if (bot.eliteRole === 'heavy') {
+                  bot.fireTimer -= dt * 0.35;
+                } else if (bot.eliteRole === 'medic') {
+                  bot.regenAuraTimer = (bot.regenAuraTimer || 0) + dt;
+                  if (bot.regenAuraTimer >= 1.0) {
+                    bot.regenAuraTimer = 0;
+                    if (player.alive && distToPlayer < 7.0 && player.health < player.maxHealth) {
+                      player.health = Math.min(player.maxHealth, player.health + 8);
+                    }
+                    for (const ally of bots) {
+                      if (ally.alive && ally.team === 'blue' && ally !== bot && bot.pos.distanceTo(ally.pos) < 7.0) {
+                        ally.health = Math.min(ally.maxHealth, ally.health + 8);
+                      }
+                    }
+                  }
+                } else if (bot.eliteRole === 'recon') {
+                  bot.reconPingTimer = (bot.reconPingTimer || 0) + dt;
+                  if (bot.reconPingTimer >= 3.5) {
+                    bot.reconPingTimer = 0;
+                    const now = performance.now();
+                    for (const hostile of bots) {
+                      if (hostile.alive && (hostile.isZombie || hostile.team !== 'blue') && bot.pos.distanceTo(hostile.pos) <= 55) {
+                        radarPingsRef.current.push({
+                          x: hostile.pos.x,
+                          z: hostile.pos.z,
+                          timestamp: now,
+                          duration: 2.2,
+                          type: 'zombie'
+                        });
+                      }
+                    }
+                  }
+                } else if (bot.eliteRole === 'engineer') {
+                  if (bot.deployedCoverCooldown && bot.deployedCoverCooldown > 0) {
+                    bot.deployedCoverCooldown -= dt;
+                  } else if (dist <= 18) {
+                    bot.deployedCoverCooldown = 25.0;
+                    world.spawnDeployableCover(bot.pos, bot.facing);
+                    pushKillFeed('WRENCH-5: DEPLOYED FORTIFIED COVER!');
+                    AUDIO.sniperReload.play(0.65);
+                  }
+                }
+              }
 
               // Non-sniper bot engagement range restricted to 45 units (90 for snipers)
               const maxEngageRange = bot.weaponType === 'sniper' ? 90 : 45;
@@ -3026,7 +4144,6 @@ export default function App() {
               }
             }
           }
-        }
 
           // Health bar in screen space
           const eyePos = bot.pos.clone().add(new THREE.Vector3(0, bot.zType === 'tank' ? 2.4 : 1.8, 0)).project(camera);
@@ -3058,11 +4175,135 @@ export default function App() {
           }
         }
 
+        
+        // Extraction Mechanics Update
+        if (extractionPhase && gameStateRef.current === 'playing') {
+          const banner = containerRef.current?.querySelector('#wave-banner');
+          const bannerTitle = containerRef.current?.querySelector('#wave-banner-title');
+          const bannerSub = containerRef.current?.querySelector('#wave-banner-sub');
+          
+          if (factionAlignmentRef.current === 'apex') {
+            if (extractionState === 'mainframe_search') {
+              if (banner && bannerTitle && bannerSub) {
+                banner.style.display = 'block';
+                bannerTitle.textContent = 'DATA HEIST: SEARCH MAINFRAME';
+                bannerSub.textContent = 'LOCATE THE RED SERVER RACK';
+              }
+              const dist = player.pos.distanceTo(extractionTargetObj.position);
+              if (dist < 4) {
+                extractionState = 'hacking';
+                extractionTimer = 60.0;
+                pushKillFeed('HQ: LINK ESTABLISHED. HOLD POSITION FOR 60s.', true);
+              }
+            } else if (extractionState === 'hacking') {
+              extractionTimer -= dt;
+              if (banner && bannerTitle && bannerSub) {
+                bannerTitle.textContent = 'DATA HEIST: HACKING';
+                bannerSub.textContent = `DEFEND MAINFRAME: ${Math.ceil(extractionTimer)}s`;
+              }
+              const dist = player.pos.distanceTo(extractionTargetObj.position);
+              if (dist > 8) {
+                extractionState = 'mainframe_search';
+                pushKillFeed('HQ: CONNECTION LOST. RETURN TO MAINFRAME.', true);
+              }
+              // Spawn runners periodically
+              if (Math.random() < 0.05 * dt * 10) {
+                 zombiesRemaining++;
+                 makeBot(null);
+              }
+              if (extractionTimer <= 0) {
+                extractionState = 'evac';
+                pushKillFeed('HQ: DOWNLOAD COMPLETE. PROCEED TO EVAC.', true);
+                extractionTargetObj.position.set((Math.random() - 0.5) * 40, 1.25, (Math.random() - 0.5) * 40);
+                (extractionTargetObj.material).color.setHex(0x00ff00);
+                (extractionTargetObj.material).emissive.setHex(0x004400);
+              }
+            } else if (extractionState === 'evac') {
+              if (banner && bannerTitle && bannerSub) {
+                bannerTitle.textContent = 'DATA HEIST: EVAC';
+                bannerSub.textContent = 'REACH THE GREEN AIRLOCK';
+              }
+              const dist = player.pos.distanceTo(extractionTargetObj.position);
+              if (dist < 4) {
+                triggerGameOver(true);
+              }
+            }
+          } else {
+            // USMC: Bio-containment
+            if (extractionState === 'cryo_search') {
+              if (banner && bannerTitle && bannerSub) {
+                banner.style.display = 'block';
+                bannerTitle.textContent = 'BIO-CONTAINMENT: SEARCH';
+                bannerSub.textContent = 'LOCATE THE BLUE CRYO-POD';
+              }
+              const dist = player.pos.distanceTo(extractionTargetObj.position);
+              if (dist < 4) {
+                extractionState = 'carrying';
+                pushKillFeed('COMMAND: CRYO-POD SECURED. CARRY TO EVAC.', true);
+                scene.remove(extractionTargetObj);
+                
+                // Spawn Evac
+                const geo = new THREE.BoxGeometry(1.5, 2.5, 1.5);
+                const mat = new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0x004400 });
+                extractionTargetObj = new THREE.Mesh(geo, mat);
+                extractionTargetObj.position.set((Math.random() - 0.5) * 40, 1.25, (Math.random() - 0.5) * 40);
+                scene.add(extractionTargetObj);
+              }
+            } else if (extractionState === 'carrying') {
+              if (banner && bannerTitle && bannerSub) {
+                bannerTitle.textContent = 'BIO-CONTAINMENT: CARRYING';
+                bannerSub.textContent = 'CARRY ASSET TO GREEN EVAC ZONE';
+              }
+              
+              // Apply Debuff
+              player.classSpeedMultiplier = 0.5;
+              if (player.slotIndex === 0 && playerWeaponState[1]) {
+                // Force swap to sidearm
+                switchSlot(1);
+              }
+              
+              const dist = player.pos.distanceTo(extractionTargetObj.position);
+              if (dist < 4) {
+                extractionState = 'defend';
+                pushKillFeed('COMMAND: PREPARING EVAC. DEFEND AGAINST TANK BOSS.', true);
+                extractionTimer = 0;
+              }
+            } else if (extractionState === 'defend') {
+              if (banner && bannerTitle && bannerSub) {
+                bannerTitle.textContent = 'BIO-CONTAINMENT: DEFEND';
+                bannerSub.textContent = 'ELIMINATE THE TANK BOSS';
+              }
+              if (!extractionTankBossSpawned) {
+                extractionTankBossSpawned = true;
+                const boss = makeBot(null);
+                if (boss) {
+                   boss.health = 3000;
+                   boss.maxHealth = 3000;
+                   boss.group.scale.set(1.5, 1.5, 1.5);
+                   boss.flashMats.forEach(mat => {
+                     mat.color.setHex(0x550000);
+                   });
+                   boss.isTankBoss = true;
+                }
+              } else {
+                // Check if boss is dead
+                let bossExists = false;
+                for (const b of bots) {
+                  if (b.isTankBoss) bossExists = true;
+                }
+                if (!bossExists) {
+                  triggerGameOver(true);
+                }
+              }
+            }
+          }
+        }
+
         // Storm shrink
         if (matchConfig.mode !== 'zombie') {
           storm.elapsed += dt;
 
-          if (matchConfig.mode === 'escort' && storm.elapsed >= 180) {
+          if (false && storm.elapsed >= 180) {
             triggerGameOver(true);
             return;
           }
@@ -3072,24 +4313,20 @@ export default function App() {
           storm.mesh.scale.set(storm.radius / STORM_START_R, 1, storm.radius / STORM_START_R);
 
           // Continuous bot spawning to maintain counts
-          if (matchConfig.mode === 'team') {
+          if (matchConfig.mode === 'extraction') {
             let blueAlive = 0;
-            let redAlive = 0;
             for (let i = 0; i < bots.length; i++) {
-              if (bots[i].alive) {
-                if (bots[i].team === 'blue') blueAlive++;
-                if (bots[i].team === 'red') redAlive++;
-              }
+              if (bots[i].alive && bots[i].team === 'blue') blueAlive++;
             }
             if (blueAlive < matchConfig.friendlyCount) makeBot('blue');
-            if (redAlive < matchConfig.enemyCount) makeBot('red');
-          } else if (matchConfig.mode === 'escort') {
+            // Hostile mutants are spawned exclusively by ExtractionGameLoop AI Director
+          } else if (false) {
             let redAlive = 0;
             for (let i = 0; i < bots.length; i++) {
               if (bots[i].alive && bots[i].team === 'red') redAlive++;
             }
             if (redAlive < matchConfig.enemyCount) makeBot('red');
-          } else if (matchConfig.mode === 'ffa') {
+          } else if (false) {
             let aliveCount = 0;
             for (let i = 0; i < bots.length; i++) {
               if (bots[i].alive) aliveCount++;
@@ -3130,15 +4367,13 @@ export default function App() {
         if (scoreBoardEl) {
           if (matchConfig.mode === 'zombie') {
             scoreBoardEl.innerHTML = `<span class="score-zombie">WAVE ${currentWave}</span> <span> | </span> <span class="score-red">ZOMBIES: ${Math.max(0, zombiesRemaining)}</span>`;
-          } else if (matchConfig.mode === 'escort') {
+          } else if (false) {
             const timeLeft = Math.max(0, 180 - storm.elapsed);
             const m = Math.floor(timeLeft / 60);
             const s = Math.floor(timeLeft % 60);
             scoreBoardEl.innerHTML = `<span class="score-blue">DEFEND VIP</span> <span> | </span> <span class="score-target-tag">(TIME: ${m}:${s < 10 ? '0' : ''}${s})</span>`;
-          } else if (matchConfig.mode === 'team') {
-            const blueLabel = matchConfig.faction === 'usmc' ? 'USMC' : 'APEX';
-            const redLabel = matchConfig.faction === 'usmc' ? 'APEX' : 'USMC';
-            scoreBoardEl.innerHTML = `<span class="score-blue">${blueLabel} ${teamScoreBlue}</span> <span> vs </span> <span class="score-red">${teamScoreRed} ${redLabel}</span> <span class="score-target-tag">(TARGET: ${matchConfig.targetScore})</span>`;
+          } else if (matchConfig.mode === 'extraction') {
+            scoreBoardEl.innerHTML = '';
           } else {
             scoreBoardEl.innerHTML = `<span class="score-blue">YOU ${player.kills}</span> <span> | </span> <span class="score-target-tag">(TARGET: ${matchConfig.targetScore})</span>`;
           }
@@ -3225,7 +4460,7 @@ export default function App() {
           strip.style.left = `${140 - deg * pxPerDeg}px`;
         }
 
-        lobbyAvatar.group.visible = false;
+        if (lobbyAvatar) lobbyAvatar.group.visible = false;
         hudSyncTimer += dt;
         if (hudSyncTimer >= 0.05) {
           hudSyncTimer = 0;
@@ -3252,36 +4487,42 @@ export default function App() {
           });
         }
       } else if (gameStateRef.current === 'start') {
+        if (!hangarGroup || !lobbyAvatar) {
+          setupLobbyScene();
+        }
         combatLightGroup.visible = false;
-        hangarGroup.visible = true;
+        if (hangarGroup) hangarGroup.visible = true;
+        scene.background = new THREE.Color(0x0a0d12);
         scene.fog = lobbyFog;
 
         vmManager.root.visible = false;
-        lobbyAvatar.group.visible = true;
-        const t = performance.now() * 0.001;
-        lobbyAvatar.update(t);
-        lobbyAvatar.setFaction(factionAlignmentRef.current);
-        lobbyAvatar.setGearTier(gearTierRef.current);
-        lobbyAvatar.setVisor(visorTypeRef.current);
-        
-        // Pass locker cosmetic configs
-        const h = localStorage.getItem('gun_arena_headgear') as import('./FactionContext').HeadgearOption || 'fast';
-        const tConf = localStorage.getItem('gun_arena_torso') as import('./FactionContext').TorsoOption || 'chest_rig';
-        const lConf = localStorage.getItem('gun_arena_lower') as import('./FactionContext').LowerOption || 'pouches';
-        
-        lobbyAvatar.setHeadgear(h);
-        lobbyAvatar.setTorsoConfig(tConf);
-        lobbyAvatar.setLowerConfig(lConf);
-        
-        lobbyAvatar.setWeapon(selectedPrimaryRef.current);
+        if (lobbyAvatar) {
+          lobbyAvatar.group.visible = true;
+          const t = performance.now() * 0.001;
+          lobbyAvatar.update(t);
+          lobbyAvatar.setFaction(factionAlignmentRef.current);
+          lobbyAvatar.setGearTier(gearTierRef.current);
+          lobbyAvatar.setVisor(visorTypeRef.current);
+          
+          // Pass locker cosmetic configs
+          const h = localStorage.getItem('gun_arena_headgear') as import('./FactionContext').HeadgearOption || 'fast';
+          const tConf = localStorage.getItem('gun_arena_torso') as import('./FactionContext').TorsoOption || 'chest_rig';
+          const lConf = localStorage.getItem('gun_arena_lower') as import('./FactionContext').LowerOption || 'pouches';
+          
+          lobbyAvatar.setHeadgear(h);
+          lobbyAvatar.setTorsoConfig(tConf);
+          lobbyAvatar.setLowerConfig(lConf);
+          
+          lobbyAvatar.setWeapon(selectedPrimaryRef.current);
 
-        const camHeight = terrainHeight(0, 0) + 1.25;
-        const swayX = Math.sin(t * 0.3) * 0.12;
-        const swayY = Math.cos(t * 0.4) * 0.04;
-        camera.position.set(swayX, camHeight + swayY, 2.85);
-        camera.lookAt(0, terrainHeight(0, 0) + 1.05, 0);
+          // Position camera directly in front of the operator in the subterranean bunker at Y=1000!
+          const swayX = Math.sin(t * 0.3) * 0.06;
+          const swayY = Math.cos(t * 0.4) * 0.02;
+          camera.position.set(swayX, 1000 + 1.25 + swayY, 2.65);
+          camera.lookAt(0, 1000 + 1.10, 0);
+        }
       } else {
-        lobbyAvatar.group.visible = false;
+        if (lobbyAvatar) lobbyAvatar.group.visible = false;
         vmManager.root.visible = false;
       }
 
@@ -3314,6 +4555,7 @@ export default function App() {
       window.removeEventListener('wheel', onWheel);
       document.removeEventListener('pointerlockchange', onPointerLockChange);
       window.removeEventListener('resize', onResize);
+      resizeObserver?.disconnect();
       bottomCenterEl?.removeEventListener('click', onBottomCenterClick as EventListener);
       lobbyAvatar.destroy();
       world.dispose();
@@ -3325,7 +4567,7 @@ export default function App() {
   return (
     <div ref={containerRef} className="relative w-full h-screen max-h-screen select-none overflow-hidden font-mono bg-black text-[#e8edf0]">
       {/* 3D Viewport */}
-      <div id="viewport" className="fixed inset-0" />
+      <div id="viewport" className="absolute inset-0 z-0" />
 
       {/* Halo-Style Diegetic Helmet Visor HUD Layer */}
       {gameState === 'playing' && (
@@ -3349,6 +4591,67 @@ export default function App() {
               <span className="text-[10px] text-[#8b98a1]">(ESC / P)</span>
             </button>
           </div>
+
+          {/* Dynamic Squad Command Visor HUD & Companion Matrix */}
+          {(matchMode === 'extraction' || matchMode === 'zombie') && (
+            <div className="absolute top-14 left-6 z-40 pointer-events-none flex flex-col gap-1.5 font-mono">
+              <div className="flex flex-col gap-1 px-3 py-1.5 bg-black/80 border border-[#2de2e6]/50 backdrop-blur-md rounded-xs shadow-[0_0_12px_rgba(45,226,230,0.25)]">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-[#2de2e6] tracking-widest font-bold">SQUAD POSTURE [Z]</span>
+                  <span className="text-[11px] font-bold text-white uppercase tracking-wider">
+                    {squadDirective === 'follow_lead' && '⚡ FOLLOW LEAD (TETHER)'}
+                    {squadDirective === 'hold_position' && '🛡️ HOLD POSITION (ANCHOR)'}
+                    {squadDirective === 'push_objective' && '🎯 PUSH OBJECTIVE (ADVANCE)'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-[9px] text-gray-400">
+                  <span>[X] TARGET LOCK</span>
+                  <span>|</span>
+                  <span>[C] PUSH OBJ</span>
+                  <span>|</span>
+                  <span>[4] MEDKIT (+50 HP)</span>
+                </div>
+              </div>
+              {deploymentProtocol === 'elite' && (
+                <div className="flex items-center gap-2 px-2.5 py-1 bg-black/70 border border-[#2de2e6]/25 backdrop-blur-sm rounded-xs text-[9px]">
+                  <span className="text-[#2de2e6] font-bold tracking-wider">TASK FORCE:</span>
+                  <span className="text-[#8b98a1]">S2 [HEAVY]</span>
+                  <span className="text-[#2de2e6]">•</span>
+                  <span className="text-[#00e5ff]">S3 [MEDIC]</span>
+                  <span className="text-[#2de2e6]">•</span>
+                  <span className="text-[#8b98a1]">S4 [RECON]</span>
+                  <span className="text-[#2de2e6]">•</span>
+                  <span className="text-[#8b98a1]">S5 [ENG]</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Tactical Directive Center Visor Banner */}
+          {squadDirectiveBanner && (
+            <div className="absolute top-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col items-center justify-center animate-pulse">
+              <div className="px-6 py-2 bg-black/90 border-2 border-[#2de2e6] shadow-[0_0_25px_rgba(45,226,230,0.55)] rounded-xs flex flex-col items-center">
+                <div className="text-[10px] font-bold tracking-[0.25em] text-[#2de2e6] uppercase">
+                  SQUAD DIRECTIVE TRANSMITTED
+                </div>
+                <div className="text-xl font-black tracking-widest text-white uppercase mt-0.5">
+                  {squadDirectiveBanner.text}
+                </div>
+                <div className="text-[10px] tracking-wider text-[#8b98a1] mt-0.5">
+                  {squadDirectiveBanner.sub}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Subterranean Extraction Custom Tactical Objective HUD */}
+          {matchMode === 'extraction' && extractionState && (
+            <ExtractionObjectiveHUD
+              state={extractionState}
+              timeStr={hudData.timeStr}
+              kills={hudData.kills}
+            />
+          )}
 
           {/* Diegetic Visor Helmet Overlay with Motion Tracker and Munitions Matrix */}
           <HelmetHUD
@@ -3379,12 +4682,13 @@ export default function App() {
           />
 
           {/* In-Game 1st-Person Combat FX: Crosshair, Scope, Hitmarker, Pickups, Killfeed */}
-          <div id="crosshair">
-            <div className="tick t" />
-            <div className="tick b" />
-            <div className="tick l" />
-            <div className="tick r" />
-            <div className="dot" />
+          <div id="crosshair" style={{ borderColor: targetingPhase ? '#ff4444' : 'rgba(255,255,255,0.7)' }}>
+            {targetingPhase && <div style={{ position: 'absolute', top: -30, left: '50%', transform: 'translateX(-50%)', color: '#ff4444', fontSize: 12, fontWeight: 'bold', textShadow: '0 0 4px red', whiteSpace: 'nowrap' }}>[ PHASE 1: TARGETING ]</div>}
+            <div className="tick t" style={{ backgroundColor: targetingPhase ? '#ff4444' : undefined }} />
+            <div className="tick b" style={{ backgroundColor: targetingPhase ? '#ff4444' : undefined }} />
+            <div className="tick l" style={{ backgroundColor: targetingPhase ? '#ff4444' : undefined }} />
+            <div className="tick r" style={{ backgroundColor: targetingPhase ? '#ff4444' : undefined }} />
+            <div className="dot" style={{ backgroundColor: targetingPhase ? '#ff4444' : undefined }} />
           </div>
           <div id="scope-overlay">
             <div id="scope-hole">
@@ -3426,6 +4730,14 @@ export default function App() {
           setTargetScore={setTargetScore}
           difficultyKey={difficultyKey}
           setDifficultyKey={setDifficultyKey}
+          selectedMapState={selectedMapState}
+          setSelectedMapState={setSelectedMapState}
+          isDevMode={isDevMode}
+          setIsDevMode={setIsDevMode}
+          deploymentProtocol={deploymentProtocol}
+          setDeploymentProtocol={setDeploymentProtocol}
+          eliteSquad={eliteSquad}
+          setEliteSquad={setEliteSquad}
           onDeploy={() => deployHandlerRef.current?.()}
           showAudioHelper={showAudioHelper}
           setShowAudioHelper={setShowAudioHelper}
@@ -3464,13 +4776,126 @@ export default function App() {
         </div>
       </div>
 
-      {/* Match Result Post-Scoreboard Matrix Screen */}
-      <div className={`overlay ${gameState === 'ended' ? '' : 'hidden'}`}>
-        <div className="overlay-box panel" style={{ width: '520px', maxWidth: '95vw' }}>
+      {/* Subterranean Extraction Dedicated Debrief / End Screen */}
+      {gameState === 'DEATH_SCREEN' && matchMode === 'extraction' && extractionState && (
+        <ExtractionEndScreen
+          isVictory={endResult.victory}
+          state={extractionState}
+          kills={stats.kills}
+          accuracyPct={stats.accuracyPct ?? 0}
+          headshotPct={stats.headshotPct ?? 0}
+          timeStr={stats.time || '00:00'}
+          onRedeploy={() => restartHandlerRef.current?.()}
+          onLobby={() => lobbyHandlerRef.current?.()}
+        />
+      )}
+
+      {/* Match Result Post-Scoreboard Matrix Screen with Interactive Faction Career Rewards Ledger */}
+      <div className={`overlay ${(gameState === 'DEATH_SCREEN' && matchMode !== 'extraction') ? '' : 'hidden'}`}>
+        <div className="overlay-box panel" style={{ width: '560px', maxWidth: '95vw', maxHeight: '92vh', overflowY: 'auto' }}>
           <div className={`overlay-title text-center text-3xl font-bold tracking-wider ${endResult.victory ? 'text-[#57d1c9]' : 'text-[#e0473f]'}`}>
             {endResult.title}
           </div>
-          <div className="overlay-sub text-center mb-4">{endResult.sub}</div>
+          <div className="overlay-sub text-center mb-3">{endResult.sub}</div>
+
+          {/* Interactive Faction Career Rewards Breakdown Ledger */}
+          {matchRewards && (
+            <div className="mb-4 p-3 bg-gradient-to-b from-[#141d24] to-[#0d1217] rounded-lg border border-[#2de2e6]/30 shadow-lg text-left">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#2de2e6] animate-ping" />
+                  <span className="text-xs font-extrabold tracking-wider text-white uppercase">
+                    FACTION CAREER LEDGER // POST-MATCH REWARDS
+                  </span>
+                </div>
+                <div className="text-[10px] font-bold text-[#f5a623] px-2 py-0.5 bg-[#f5a623]/10 border border-[#f5a623]/30 rounded">
+                  {getRankTitle(matchRewards.newRank).badge} • {getRankTitle(matchRewards.newRank).title}
+                </div>
+              </div>
+
+              {/* Reward Items Breakdown */}
+              <div className="space-y-1.5 text-xs">
+                {/* 1. Bot Eliminations */}
+                <div className="flex justify-between items-center bg-black/40 px-2.5 py-1.5 rounded border border-white/5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#8b98a1]">Hostile Eliminations ({matchRewards.kills}x)</span>
+                  </div>
+                  <div className="flex items-center gap-3 font-mono">
+                    <span className="text-[#2de2e6] font-bold">+{matchRewards.killXp} XP</span>
+                    <span className="text-[#f5a623] font-bold">+${matchRewards.killFunds}</span>
+                  </div>
+                </div>
+
+                {/* 2. Zombie Wave Milestones */}
+                {matchRewards.wavesCleared > 0 && (
+                  <div className="flex justify-between items-center bg-black/40 px-2.5 py-1.5 rounded border border-white/5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#8b98a1]">Wave Milestones Survived ({matchRewards.wavesCleared}x)</span>
+                    </div>
+                    <div className="flex items-center gap-3 font-mono">
+                      <span className="text-[#2de2e6] font-bold">+{matchRewards.waveXp} XP</span>
+                      <span className="text-[#f5a623] font-bold">+${matchRewards.waveFunds}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Victory Bonus */}
+                {matchRewards.victory && (
+                  <div className="flex justify-between items-center bg-[#57d1c9]/10 px-2.5 py-1.5 rounded border border-[#57d1c9]/30">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#57d1c9] font-bold">★ OPERATION VICTORY BONUS</span>
+                    </div>
+                    <div className="flex items-center gap-3 font-mono">
+                      <span className="text-[#2de2e6] font-bold">+{matchRewards.victoryXp} XP</span>
+                      <span className="text-[#f5a623] font-bold">+${matchRewards.victoryFunds}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Total Earned Summary & Rank Progress Bar */}
+              <div className="mt-3 pt-2.5 border-t border-white/10 flex flex-col gap-2">
+                <div className="flex justify-between items-center font-mono">
+                  <span className="text-[11px] font-bold tracking-wider text-[#8b98a1]">TOTAL MATCH EARNED:</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-extrabold text-[#2de2e6]">+{matchRewards.totalXpEarned} XP</span>
+                    <span className="text-sm font-extrabold text-[#f5a623]">+${matchRewards.totalFundsEarned}</span>
+                  </div>
+                </div>
+
+                {/* Rank Up Announcement Banner if leveled up */}
+                {matchRewards.leveledUp && (
+                  <div className="p-2 bg-gradient-to-r from-[#2de2e6]/20 via-[#00ff66]/20 to-[#2de2e6]/20 border border-[#00ff66]/40 rounded text-center animate-pulse">
+                    <span className="text-xs font-black tracking-widest text-[#00ff66] uppercase">
+                      RANK PROMOTION ACHIEVED: RANK {matchRewards.newRank} // {getRankTitle(matchRewards.newRank).title}
+                    </span>
+                  </div>
+                )}
+
+                {/* Rank Tier Progress Bar */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] text-[#8b98a1] font-mono">
+                    <span>PROGRESSION: TIER {matchRewards.newRank} (RANK {matchRewards.newRank}/50)</span>
+                    <span className="text-white font-bold">{matchRewards.newXp} TOTAL XP</span>
+                  </div>
+                  <div className="w-full h-2 bg-black/60 rounded-full overflow-hidden border border-white/10">
+                    {(() => {
+                      const curRankMin = getXpForRank(matchRewards.newRank);
+                      const nextRankMin = getXpForRank(matchRewards.newRank + 1);
+                      const rankSpan = Math.max(1, nextRankMin - curRankMin);
+                      const pct = Math.min(100, Math.max(0, Math.round(((matchRewards.newXp - curRankMin) / rankSpan) * 100)));
+                      return (
+                        <div
+                          className="h-full bg-gradient-to-r from-[#2de2e6] to-[#00ff66] transition-all duration-500"
+                          style={{ width: `${pct}%` }}
+                        />
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Combat Matrix Grid */}
           <div className="grid grid-cols-2 gap-2 mb-4 p-3 bg-black/40 rounded-lg border border-white/10">
@@ -3494,30 +4919,17 @@ export default function App() {
 
           <div className="stat-row"><span className="label">Total Damage Dealt</span><span className="text-red-400 font-semibold">{stats.damageDealt ?? 0} HP</span></div>
           
-          {matchMode === 'team' && (
-            <>
-              <div className="stat-row">
-                <span className="label">{factionAlignment === 'usmc' ? 'USMC (Blue Team)' : 'MERCENARIES (Blue Team)'} Score</span>
-                <span className="text-[#3f8fe0] font-bold">{stats.blueScore}</span>
-              </div>
-              <div className="stat-row">
-                <span className="label">{factionAlignment === 'usmc' ? 'MERCENARIES (Red Team)' : 'USMC (Red Team)'} Score</span>
-                <span className="text-[#e0473f] font-bold">{stats.redScore}</span>
-              </div>
-            </>
-          )}
-
           {matchMode === 'zombie' && (
             <>
               <div className="stat-row"><span className="label">Waves Survived</span><span className="text-emerald-400 font-semibold">{stats.wavesCleared ?? 0} Waves</span></div>
-              <div className="stat-row"><span className="label">Combat Funds</span><span className="text-[#f5a623] font-semibold">${stats.funds}</span></div>
+              <div className="stat-row"><span className="label">In-Match Points</span><span className="text-[#f5a623] font-semibold">${stats.funds}</span></div>
             </>
           )}
 
           <div className="stat-row"><span className="label">Operation Time</span><span className="font-mono">{stats.time}</span></div>
 
-          <div className="btn mt-4" id="btn-restart-end" onClick={() => restartHandlerRef.current?.()}>DEPLOY AGAIN</div>
-          <div className="btn secondary" id="btn-to-lobby-end" onClick={() => lobbyHandlerRef.current?.()}>RETURN TO BASE LOBBY</div>
+          <div className="btn mt-4" id="btn-restart-end" onClick={() => restartHandlerRef.current?.()}>RESPAWN / RETRY MISSION</div>
+          <div className="btn secondary" id="btn-to-lobby-end" onClick={() => lobbyHandlerRef.current?.()}>RETURN TO MAIN MENU</div>
           <div className="mt-3 text-center">
             <a
               href="https://ais-dev-mlmvjg57dudsycsch4poan-271150104517.asia-southeast1.run.app"

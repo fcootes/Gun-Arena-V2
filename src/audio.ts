@@ -495,3 +495,65 @@ export function playKnifeSlashWhoosh(): void {
   } catch {}
 }
 
+export function playRadioChirp(double = false): void {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+
+    // Tactical squelch noise burst
+    const squelchDur = double ? 0.19 : 0.11;
+    const bufferSize = Math.floor(ctx.sampleRate * squelchDur);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * 0.15;
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.setValueAtTime(2400, now);
+    noiseFilter.Q.setValueAtTime(2.2, now);
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.18, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + squelchDur);
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+    noise.start(now);
+
+    const makeBeep = (time: number, freq: number, dur: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(freq, time);
+      filter.Q.setValueAtTime(4.0, time);
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, time);
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.08, time + dur);
+
+      gain.gain.setValueAtTime(0.001, time);
+      gain.gain.linearRampToValueAtTime(0.24, time + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(time);
+      osc.stop(time + dur);
+    };
+
+    if (double) {
+      makeBeep(now + 0.02, 1950, 0.05);
+      makeBeep(now + 0.09, 2550, 0.06);
+    } else {
+      makeBeep(now + 0.02, 1600, 0.075);
+    }
+  } catch {}
+}
+
