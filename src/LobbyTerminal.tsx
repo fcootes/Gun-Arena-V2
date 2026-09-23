@@ -1256,7 +1256,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
               </div>
               <div className="flex justify-between items-center py-1 border-b border-white/5">
                 <span className="text-[#8b98a1]">TORSO ARMOR:</span>
-                <span className="text-white font-bold uppercase">{factionCtx.torsoConfig.replace('_', ' ')}</span>
+                <span className="text-white font-bold uppercase">{(factionCtx.torsoConfig || '').replace('_', ' ')}</span>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-white/5">
                 <span className="text-[#8b98a1]">LOWER RIG:</span>

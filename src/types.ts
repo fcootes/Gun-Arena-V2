@@ -1664,7 +1664,7 @@ export function creditFunds(data: GamePersistence, amount: number): GamePersiste
 }
 
 export type PurchaseResult =
-  | { ok: true; data: GamePersistence }
+  | { ok: true; data: GamePersistence; reason?: string }
   | { ok: false; reason: string; data: GamePersistence };
 
 export function purchaseWeapon(data: GamePersistence, id: WeaponID): PurchaseResult {

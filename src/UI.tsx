@@ -212,11 +212,11 @@ export const GearLockerTerminal: React.FC<GearLockerTerminalProps> = ({
   const handleBuyGear = useCallback(
     (slot: GearSlot, id: HeadgearId | TorsoId | LowerRigId, name: string) => {
       const res = purchaseGear(data, slot, id);
-      if (res.ok) {
+      if (!res.ok) {
+        flash(res.reason || 'Purchase failed');
+      } else {
         commit(res.data);
         flash(`${name} purchased.`);
-      } else {
-        flash(res.reason);
       }
     },
     [commit, data, flash]
@@ -238,11 +238,11 @@ export const GearLockerTerminal: React.FC<GearLockerTerminalProps> = ({
   const handleBuyWeapon = useCallback(
     (id: WeaponID) => {
       const res = purchaseWeapon(data, id);
-      if (res.ok) {
+      if (!res.ok) {
+        flash(res.reason || 'Purchase failed');
+      } else {
         commit(res.data);
         flash(`${ARSENAL[id].name} added to the locker.`);
-      } else {
-        flash(res.reason);
       }
     },
     [commit, data, flash]
@@ -641,10 +641,13 @@ export const GearLockerTerminal: React.FC<GearLockerTerminalProps> = ({
  * ===========================================================================*/
 
 export interface ExtractionObjectiveHUDProps {
-  objectiveTitle: string;
-  objectiveDetail: string;
-  currentSector: number;
-  stage: string;
+  state?: any;
+  timeStr?: string;
+  kills?: number;
+  objectiveTitle?: string;
+  objectiveDetail?: string;
+  currentSector?: number;
+  stage?: string;
   sector4ObjectiveType?: Sector4ObjectiveType;
   holdTheLineActive?: boolean;
   holdTheLineTimer?: number;
@@ -661,26 +664,28 @@ export interface ExtractionObjectiveHUDProps {
   isPromptObjective?: boolean;
 }
 
-export const ExtractionObjectiveHUD: React.FC<ExtractionObjectiveHUDProps> = ({
-  objectiveTitle,
-  objectiveDetail,
-  currentSector,
-  stage,
-  sector4ObjectiveType,
-  holdTheLineActive,
-  holdTheLineTimer = 0,
-  holdTheLineTotal = 45,
-  hasBioCylinder,
-  hasArmoryKeycard,
-  breakerAlphaPulled,
-  breakerBetaPulled,
-  bossSpawned,
-  bossDefeated,
-  evacReady,
-  mutantsKilled = 0,
-  interactionPrompt,
-  isPromptObjective
-}) => {
+export const ExtractionObjectiveHUD: React.FC<ExtractionObjectiveHUDProps> = (props) => {
+  const s = props.state;
+  const objectiveTitle = props.objectiveTitle ?? s?.objectiveTitle ?? 'SECURE THE ZONE';
+  const objectiveDetail = props.objectiveDetail ?? s?.objectiveDetail ?? '';
+  const currentSector = props.currentSector ?? s?.currentSector ?? 1;
+  const rawStage = props.stage ?? s?.stage ?? 'INFILTRATE';
+  const stage = typeof rawStage === 'string' ? rawStage.replace(/_/g, ' ') : '';
+  const sector4ObjectiveType = props.sector4ObjectiveType ?? s?.sector4ObjectiveType;
+  const holdTheLineActive = props.holdTheLineActive ?? s?.holdTheLineActive ?? false;
+  const holdTheLineTimer = props.holdTheLineTimer ?? s?.holdTheLineTimer ?? 0;
+  const holdTheLineTotal = props.holdTheLineTotal ?? s?.holdTheLineTotal ?? 45;
+  const hasBioCylinder = props.hasBioCylinder ?? s?.hasBioCylinder ?? false;
+  const hasArmoryKeycard = props.hasArmoryKeycard ?? s?.hasArmoryKeycard ?? false;
+  const breakerAlphaPulled = props.breakerAlphaPulled ?? s?.breakerAlphaPulled ?? false;
+  const breakerBetaPulled = props.breakerBetaPulled ?? s?.breakerBetaPulled ?? false;
+  const bossSpawned = props.bossSpawned ?? s?.bossSpawned ?? false;
+  const bossDefeated = props.bossDefeated ?? s?.bossDefeated ?? false;
+  const evacReady = props.evacReady ?? s?.evacReady ?? false;
+  const mutantsKilled = props.mutantsKilled ?? props.kills ?? s?.mutantsKilled ?? 0;
+  const interactionPrompt = props.interactionPrompt ?? s?.interactionPrompt ?? null;
+  const isPromptObjective = props.isPromptObjective ?? s?.isPromptObjective ?? false;
+
   const holdPct = holdTheLineActive
     ? Math.max(0, Math.min(100, (1 - holdTheLineTimer / Math.max(1, holdTheLineTotal)) * 100))
     : 0;
@@ -692,7 +697,7 @@ export const ExtractionObjectiveHUD: React.FC<ExtractionObjectiveHUDProps> = ({
         <div className="rounded border border-cyan-400/30 bg-slate-950/70 backdrop-blur-sm px-4 py-2.5">
           <div className="flex items-center justify-between gap-3">
             <span className="font-mono text-[10px] tracking-[0.25em] text-cyan-400/70">
-              SECTOR {currentSector} · {stage.replace(/_/g, ' ')}
+              SECTOR {currentSector} · {stage}
             </span>
             <span className="font-mono text-[10px] text-slate-500 tabular-nums">{mutantsKilled} purged</span>
           </div>
@@ -924,17 +929,17 @@ export interface EliteSquadSlotStatus {
 export interface SquadStatusHUDProps {
   squad?: EliteCompanionConfig[];
   statuses: EliteSquadSlotStatus[];
-  directive: string;
+  directive?: string;
 }
 
 export const SquadStatusHUD: React.FC<SquadStatusHUDProps> = ({
   squad = DEFAULT_ELITE_SQUAD,
   statuses,
-  directive
+  directive = 'DEFEND'
 }) => (
   <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none select-none w-[212px]">
     <div className="font-mono text-[10px] tracking-[0.25em] text-slate-500 mb-1.5">
-      SQUAD · {directive.replace(/_/g, ' ').toUpperCase()}
+      SQUAD · {(directive || 'DEFEND').replace(/_/g, ' ').toUpperCase()}
     </div>
 
     <div className="space-y-1.5">

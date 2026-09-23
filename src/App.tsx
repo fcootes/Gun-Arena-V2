@@ -4557,10 +4557,10 @@ export default function App() {
       window.removeEventListener('resize', onResize);
       resizeObserver?.disconnect();
       bottomCenterEl?.removeEventListener('click', onBottomCenterClick as EventListener);
-      lobbyAvatar.destroy();
-      world.dispose();
-      botHealthLayer.remove();
-      renderer.dispose();
+      lobbyAvatar?.destroy();
+      world?.dispose();
+      botHealthLayer?.remove();
+      renderer?.dispose();
     };
   }, []);
 

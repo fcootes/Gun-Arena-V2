@@ -20,6 +20,7 @@ export class SoundTrack {
     const candidates: string[] = [];
 
     names.forEach(name => {
+      if (!name || typeof name !== 'string') return;
       candidates.push(name);
       if (!/\.[a-zA-Z0-9]{2,4}$/.test(name)) {
         extensions.forEach(ext => { if (ext) candidates.push(name + ext); });
