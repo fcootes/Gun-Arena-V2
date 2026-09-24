@@ -10,6 +10,119 @@ import {
   TacticalAIState
 } from './types';
 
+/* =============================================================================
+ * PROCEDURAL SURFACE DETAIL — cached canvas bump maps & physical glass
+ * Built once per session and reused across every material that wants them, so
+ * spawning dozens of bots never re-generates a canvas. Applied as bumpMap only
+ * (never as the base color map) so faction palettes stay in full control of
+ * the actual color while gaining a tactile, non-reflective micro-surface.
+ * ===========================================================================*/
+
+let _weaveTex: THREE.CanvasTexture | null = null;
+/** Tight cross-hatch ripstop weave for Cordura vests, BDUs, and slings. */
+function getBallisticWeaveTexture(): THREE.CanvasTexture {
+  if (_weaveTex) return _weaveTex;
+  const size = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = '#808080';
+  ctx.fillRect(0, 0, size, size);
+
+  const cell = 6;
+  for (let y = 0; y < size; y += cell) {
+    for (let x = 0; x < size; x += cell) {
+      const horizontal = ((x / cell) + (y / cell)) % 2 === 0;
+      const shade = 118 + Math.floor(Math.random() * 30);
+      ctx.fillStyle = `rgb(${shade},${shade},${shade})`;
+      if (horizontal) {
+        ctx.fillRect(x, y, cell, cell * 0.42);
+      } else {
+        ctx.fillRect(x, y, cell * 0.42, cell);
+      }
+    }
+  }
+  // A few longer scuff threads to break the perfect grid
+  ctx.strokeStyle = 'rgba(40,40,40,0.25)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 40; i++) {
+    const x1 = Math.random() * size;
+    const y1 = Math.random() * size;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x1 + (Math.random() - 0.5) * 10, y1 + (Math.random() - 0.5) * 10);
+    ctx.stroke();
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(6, 6);
+  _weaveTex = tex;
+  return tex;
+}
+
+let _scratchTex: THREE.CanvasTexture | null = null;
+/** Directional brushed streaks + micro-scuffs for parkerized/anodized metal. */
+function getScratchedMetalTexture(): THREE.CanvasTexture {
+  if (_scratchTex) return _scratchTex;
+  const size = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = '#5a5a5a';
+  ctx.fillRect(0, 0, size, size);
+
+  for (let y = 0; y < size; y += 2) {
+    const shade = 74 + Math.floor(Math.random() * 40);
+    ctx.strokeStyle = `rgba(${shade},${shade},${shade},0.5)`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, y + (Math.random() - 0.5) * 2);
+    ctx.lineTo(size, y + (Math.random() - 0.5) * 2);
+    ctx.stroke();
+  }
+  // Bright edge burnish scuffs
+  ctx.strokeStyle = 'rgba(230,230,230,0.35)';
+  for (let i = 0; i < 14; i++) {
+    const y = Math.random() * size;
+    ctx.beginPath();
+    ctx.moveTo(Math.random() * size * 0.3, y);
+    ctx.lineTo(Math.random() * size * 0.3 + size * 0.5, y + (Math.random() - 0.5) * 6);
+    ctx.stroke();
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(4, 4);
+  _scratchTex = tex;
+  return tex;
+}
+
+/** Visors, NVG lenses, specimen glass — real transmission/clearcoat glass. */
+function makeGlassMaterial(
+  color: number,
+  opts?: { emissive?: number; emissiveIntensity?: number; opacity?: number }
+): THREE.MeshPhysicalMaterial {
+  return new THREE.MeshPhysicalMaterial({
+    color,
+    roughness: 0.05,
+    transmission: 0.85,
+    thickness: 0.15,
+    ior: 1.52,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.05,
+    reflectivity: 0.95,
+    transparent: true,
+    opacity: opts?.opacity ?? 0.9,
+    emissive: opts?.emissive ?? 0x000000,
+    emissiveIntensity: opts?.emissiveIntensity ?? 0
+  });
+}
+
 export interface BotVisualBuildResult {
   rootGroup: THREE.Group;
   torsoGroup: THREE.Group;
@@ -75,6 +188,24 @@ function resolveFactionPalette(factionId: FactionId | undefined, legacy: 'usmc' 
     factionId || (legacy === 'usmc' ? 'USMC_SPEC_OPS' : 'MERCENARY_VANGUARD');
   const avatar = FACTION_AVATARS[resolved];
   return { ...avatar.palette };
+}
+
+/**
+ * A 4-sided radial cylinder rotated 45° reads as a chamfered rectangular
+ * plate rather than a raw box, and giving top/bottom different radii adds a
+ * free "shooter's cut" taper toward the shoulders — the single cheapest
+ * anti-blockiness win for armor plates, helmets and boot toes.
+ */
+function makeChamferedPlate(
+  topRadius: number,
+  bottomRadius: number,
+  height: number,
+  mat: THREE.Material
+): THREE.Mesh {
+  const geo = new THREE.CylinderGeometry(topRadius, bottomRadius, height, 4, 1);
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.rotation.y = Math.PI / 4;
+  return mesh;
 }
 
 /* =============================================================================
@@ -223,14 +354,18 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
   }
 
   /* ------------------------------ MATERIALS ------------------------------ */
-  const matShirt = new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.8 });
-  const matPants = new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.85 });
-  const matVest = new THREE.MeshStandardMaterial({ color: vestColor, roughness: 0.75 });
-  const matPouches = new THREE.MeshStandardMaterial({ color: pouchesColor, roughness: 0.85 });
-  const matHelmet = new THREE.MeshStandardMaterial({ color: helmetColor, roughness: 0.65, metalness: 0.2 });
+  const weaveTex = getBallisticWeaveTexture();
+  const scratchTex = getScratchedMetalTexture();
+
+  const matShirt = new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.8, bumpMap: weaveTex, bumpScale: 0.006 });
+  const matPants = new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.85, bumpMap: weaveTex, bumpScale: 0.006 });
+  const matVest = new THREE.MeshStandardMaterial({ color: vestColor, roughness: 0.75, bumpMap: weaveTex, bumpScale: 0.008 });
+  const matPouches = new THREE.MeshStandardMaterial({ color: pouchesColor, roughness: 0.85, bumpMap: weaveTex, bumpScale: 0.006 });
+  const matHelmet = new THREE.MeshStandardMaterial({ color: helmetColor, roughness: 0.65, metalness: 0.2, bumpMap: scratchTex, bumpScale: 0.004 });
   const matSkin = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.7 });
-  const matGun = new THREE.MeshStandardMaterial({ color: 0x1c1e20, roughness: 0.5, metalness: 0.5 });
+  const matGun = new THREE.MeshStandardMaterial({ color: 0x1c1e20, roughness: 0.32, metalness: 0.88, bumpMap: scratchTex, bumpScale: 0.006 });
   const matBoots = new THREE.MeshStandardMaterial({ color: 0x111214, roughness: 0.9 });
+  const matBootSole = new THREE.MeshStandardMaterial({ color: 0x08090a, roughness: 0.95 });
   const matGloves = new THREE.MeshStandardMaterial({ color: 0x18191c, roughness: 0.85 });
   const matAccent = new THREE.MeshStandardMaterial({
     color: accentColor,
@@ -245,7 +380,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
   const matWhiteCross = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, roughness: 0.6 });
   const matSkullMask = new THREE.MeshStandardMaterial({ color: 0xd8d4cb, roughness: 0.7 });
   const matSocketRecess = new THREE.MeshStandardMaterial({ color: 0x080808, roughness: 0.95 });
-  const matHoodFabric = new THREE.MeshStandardMaterial({ color: 0x151617, roughness: 0.9 });
+  const matHoodFabric = new THREE.MeshStandardMaterial({ color: 0x151617, roughness: 0.9, bumpMap: weaveTex, bumpScale: 0.007 });
   const matNvgGlow = new THREE.MeshStandardMaterial({
     color: 0x00ff66,
     emissive: 0x00ff66,
@@ -254,8 +389,8 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
   });
   const matFoliage = new THREE.MeshStandardMaterial({ color: 0x3d4b2e, roughness: 0.95 });
   const matFoliageSage = new THREE.MeshStandardMaterial({ color: 0x51603f, roughness: 0.95 });
-  const matSteelArmor = new THREE.MeshStandardMaterial({ color: 0x22252a, roughness: 0.35, metalness: 0.85 });
-  const matVisorTint = new THREE.MeshStandardMaterial({ color: 0x152219, roughness: 0.2, metalness: 0.8 });
+  const matSteelArmor = new THREE.MeshStandardMaterial({ color: 0x22252a, roughness: 0.35, metalness: 0.85, bumpMap: scratchTex, bumpScale: 0.005 });
+  const matVisorTint = makeGlassMaterial(0x152219, { opacity: 0.85 });
   const matInnerCavity = new THREE.MeshStandardMaterial({ color: 0x070303, roughness: 0.95 });
   const matBoneRibs = new THREE.MeshStandardMaterial({ color: 0xd8d3bc, roughness: 0.55 });
   const matZombieEyes = new THREE.MeshStandardMaterial({
@@ -308,6 +443,10 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     emissiveIntensity: 3.0,
     roughness: 0.2
   });
+  const matWireBundle = new THREE.MeshStandardMaterial({ color: 0x0c0c0c, roughness: 0.6 });
+  const matTapeWrap = new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.9 });
+  const matZipTie = new THREE.MeshStandardMaterial({ color: 0x2a2a26, roughness: 0.4 });
+  const matBrassShell = new THREE.MeshStandardMaterial({ color: 0xb08d3f, roughness: 0.4, metalness: 0.7 });
 
   flashMats.push(
     matShirt,
@@ -317,6 +456,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     matHelmet,
     matSkin,
     matBoots,
+    matBootSole,
     matGloves,
     matBeard,
     matSkullMask,
@@ -355,7 +495,9 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
   if (!isZombie) {
     if (options.torsoConfig) {
       if (options.torsoConfig === 'molle_vest' || options.torsoConfig === 'CERAMIC_CARRIER' || options.torsoConfig === 'EXO_HARNESS') {
-        const iotvCarrier = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.38, 0.32), matVest);
+        // Heavy carrier: chamfered frustum plates instead of raw boxes, tapered
+        // narrower toward the top so the shoulders have clearance to swing.
+        const iotvCarrier = makeChamferedPlate(0.34, 0.40, 0.38, matVest);
         iotvCarrier.position.set(0, 1.29, 0.01);
         iotvCarrier.castShadow = true;
         torsoGroup.add(iotvCarrier);
@@ -380,13 +522,13 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
           torsoGroup.add(spine);
           hitParts.push(spine);
           [-0.24, 0.24].forEach((px) => {
-            const actuator = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.34, 0.08), matAccent);
+            const actuator = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.026, 0.34, 8), matAccent);
             actuator.position.set(px, 1.24, -0.14);
             torsoGroup.add(actuator);
           });
         }
       } else {
-        const standardPlate = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.34, 0.28), matVest);
+        const standardPlate = makeChamferedPlate(0.29, 0.34, 0.34, matVest);
         standardPlate.position.set(0, 1.28, 0.02);
         torsoGroup.add(standardPlate);
         hitParts.push(standardPlate);
@@ -399,8 +541,10 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         });
       }
     } else {
-      const vestMesh = new THREE.Mesh(
-        new THREE.BoxGeometry(0.58, 0.34, 0.29),
+      const vestMesh = makeChamferedPlate(
+        0.32,
+        0.38,
+        0.34,
         subClass === 'juggernaut' || subClass === 'elite_heavy' ? matSteelArmor : matVest
       );
       vestMesh.position.y = 1.28;
@@ -421,6 +565,87 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         torsoGroup.add(sideL);
         hitParts.push(sideL);
       }
+    }
+
+    /* ------------------- FACTION-SPECIFIC ACCESSORY DETAIL ------------------- */
+    if (faction === 'usmc') {
+      // Chest admin panel with pen/knife insert lines + PTT radio button
+      const adminPanel = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.08, 0.02), matPouches);
+      adminPanel.position.set(0.2, 1.15, 0.19);
+      torsoGroup.add(adminPanel);
+      const insertLineA = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.06, 0.006), matTapeWrap);
+      insertLineA.position.set(0.195, 1.15, 0.201);
+      const insertLineB = insertLineA.clone();
+      insertLineB.position.x = 0.205;
+      torsoGroup.add(insertLineA, insertLineB);
+      const pttButton = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.012, 10), matAccent);
+      pttButton.rotation.x = Math.PI / 2;
+      pttButton.position.set(-0.24, 1.36, 0.16);
+      torsoGroup.add(pttButton);
+
+      // Shoulder-routed antenna: two angled thin cylinder segments
+      const antennaBase = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.008, 0.16, 6), matWireBundle);
+      antennaBase.position.set(-0.3, 1.5, -0.04);
+      antennaBase.rotation.z = 0.12;
+      const antennaTip = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.006, 0.22, 6), matWireBundle);
+      antennaTip.position.set(-0.32, 1.66, -0.06);
+      antennaTip.rotation.z = 0.28;
+      torsoGroup.add(antennaBase, antennaTip);
+
+      // Dump pouch, left hip
+      const dumpPouch = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.13, 0.09), matPouches);
+      dumpPouch.position.set(-0.24, 0.92, 0.05);
+      torsoGroup.add(dumpPouch);
+      hitParts.push(dumpPouch);
+    } else {
+      // Mercenary: Kevlar neck collar as a torus arc (curved, not a box)
+      const neckCollarGeo = new THREE.TorusGeometry(0.15, 0.035, 8, 16, Math.PI * 1.3);
+      const neckCollar = new THREE.Mesh(neckCollarGeo, matSteelArmor);
+      neckCollar.rotation.x = Math.PI / 2;
+      neckCollar.rotation.z = Math.PI * 0.85;
+      neckCollar.position.set(0, 1.48, 0);
+      torsoGroup.add(neckCollar);
+      hitParts.push(neckCollar);
+
+      // Bolted steel pauldron, left shoulder only (asymmetric)
+      const pauldronPlate = makeChamferedPlate(0.1, 0.14, 0.16, matSteelArmor);
+      pauldronPlate.position.set(-0.33, 1.46, 0);
+      pauldronPlate.rotation.z = 0.1;
+      torsoGroup.add(pauldronPlate);
+      hitParts.push(pauldronPlate);
+      for (let b = 0; b < 4; b++) {
+        const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.01, 6), matAccent);
+        bolt.rotation.x = Math.PI / 2;
+        const a = (b / 4) * Math.PI * 2;
+        bolt.position.set(-0.33 + Math.cos(a) * 0.06, 1.46 + Math.sin(a) * 0.06, 0.1);
+        torsoGroup.add(bolt);
+      }
+
+      // Crossed bandolier with shotgun-shell loops
+      const bandolier = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.5, 0.02), matTapeWrap);
+      bandolier.position.set(0.05, 1.28, 0.16);
+      bandolier.rotation.z = 0.5;
+      torsoGroup.add(bandolier);
+      for (let s = 0; s < 5; s++) {
+        const shell = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.045, 8), matBrassShell);
+        shell.position.set(0.05 - 0.06 * s * 0.35, 1.44 - 0.09 * s, 0.17);
+        shell.rotation.z = 0.5;
+        torsoGroup.add(shell);
+      }
+
+      // Zip-tied loose gear
+      [0.18, -0.05].forEach((px) => {
+        const tie = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.004, 6, 10), matZipTie);
+        tie.position.set(px, 1.1, 0.18);
+        torsoGroup.add(tie);
+      });
+
+      // High-capacity assault rucksack on the back
+      const rucksack = makeChamferedPlate(0.16, 0.2, 0.36, matVest);
+      rucksack.position.set(0, 1.24, -0.24);
+      rucksack.rotation.y = Math.PI / 4;
+      torsoGroup.add(rucksack);
+      hitParts.push(rucksack);
     }
 
     if (subClass === 'corpsman') {
@@ -518,26 +743,44 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       torsoGroup.add(commandBand);
 
       if (eliteRole === 'heavy') {
-        // Titan-2 — double plating, ammo backpack, shoulder-mounted feed chute
+        // Titan-2 — double plating, ammo hopper, flexible articulated feed chute
         armorMultiplier = ELITE_HEAVY_ARMOR_MULTIPLIER;
-        const frontPlate = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.42, 0.14), matSteelArmor);
+        const frontPlate = makeChamferedPlate(0.36, 0.42, 0.42, matSteelArmor);
         frontPlate.position.set(0, 1.28, 0.2);
         frontPlate.castShadow = true;
-        const backPlate = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.42, 0.12), matSteelArmor);
+        const backPlate = makeChamferedPlate(0.36, 0.42, 0.40, matSteelArmor);
         backPlate.position.set(0, 1.28, -0.2);
-        const ammoPack = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.34, 0.22), matGun);
-        ammoPack.position.set(0, 1.26, -0.3);
-        const feedChute = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.34), matSteelArmor);
-        feedChute.position.set(0.2, 1.3, -0.1);
-        feedChute.rotation.y = 0.4;
-        torsoGroup.add(frontPlate, backPlate, ammoPack, feedChute);
-        hitParts.push(frontPlate, backPlate, ammoPack);
+        const ammoHopper = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.19, 0.34, 10), matGun);
+        ammoHopper.position.set(0, 1.26, -0.3);
+        // Articulated ammo chute: three angled cylinder links approximating a
+        // flexible belt feed from the hopper into the weapon receiver.
+        const chuteLinkA = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.18, 8), matSteelArmor);
+        chuteLinkA.position.set(0.14, 1.32, -0.16);
+        chuteLinkA.rotation.set(0.2, 0.5, 1.1);
+        const chuteLinkB = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.16, 8), matSteelArmor);
+        chuteLinkB.position.set(0.24, 1.24, -0.04);
+        chuteLinkB.rotation.set(0.1, 0.9, 1.3);
+        const chuteLinkC = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.14, 8), matSteelArmor);
+        chuteLinkC.position.set(0.28, 1.1, 0.1);
+        chuteLinkC.rotation.set(-0.1, 1.1, 1.5);
+        torsoGroup.add(frontPlate, backPlate, ammoHopper, chuteLinkA, chuteLinkB, chuteLinkC);
+        hitParts.push(frontPlate, backPlate, ammoHopper);
         rootGroup.scale.set(1.12, 1.12, 1.12);
         speedMultiplier *= 0.88;
       } else if (eliteRole === 'medic') {
-        // Doc-3 — field surgery pack with a green emitter that seeds the regen field
+        // Doc-3 — trauma pack w/ visible blood bags & tourniquets, shoulder emitter
         const medPack = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.22), matVest);
         medPack.position.set(0, 1.28, -0.24);
+        const bloodBagA = new THREE.Mesh(
+          new THREE.BoxGeometry(0.08, 0.11, 0.03),
+          new THREE.MeshStandardMaterial({ color: 0x8a1010, roughness: 0.3, transparent: true, opacity: 0.85 })
+        );
+        bloodBagA.position.set(-0.1, 1.4, -0.12);
+        const bloodBagB = bloodBagA.clone();
+        bloodBagB.position.set(0.1, 1.4, -0.12);
+        const tourniquetA = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.01, 6, 12), matTapeWrap);
+        tourniquetA.position.set(-0.28, 1.14, 0.02);
+        tourniquetA.rotation.y = Math.PI / 2;
         const emitter = new THREE.Mesh(
           new THREE.CylinderGeometry(0.09, 0.11, 0.16, 12),
           new THREE.MeshStandardMaterial({
@@ -554,11 +797,21 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         crossV.position.set(0, 1.3, 0.212);
         const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.035, 0.03), matRedCross);
         crossH.position.set(0, 1.3, 0.212);
-        torsoGroup.add(medPack, emitter, patchBg, crossV, crossH);
+        torsoGroup.add(medPack, bloodBagA, bloodBagB, tourniquetA, emitter, patchBg, crossV, crossH);
         hitParts.push(medPack);
       } else if (eliteRole === 'recon') {
-        // Spectre-4 — slim ghillie wrap and a shoulder telemetry dish
-        const dishMast = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.26, 0.03), matSteelArmor);
+        // Spectre-4 — ghillie thread bundles, rangefinder monocular, telemetry dish
+        for (let g = 0; g < 10; g++) {
+          const thread = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.1 + Math.random() * 0.08, 5), matFoliage);
+          thread.position.set(
+            (Math.random() - 0.5) * 0.5,
+            1.1 + Math.random() * 0.5,
+            -0.1 + (Math.random() - 0.5) * 0.2
+          );
+          thread.rotation.set(Math.random() * 0.6, Math.random() * Math.PI, Math.random() * 0.6);
+          torsoGroup.add(thread);
+        }
+        const dishMast = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.26, 8), matSteelArmor);
         dishMast.position.set(-0.24, 1.5, -0.12);
         const dish = new THREE.Mesh(
           new THREE.CylinderGeometry(0.11, 0.11, 0.02, 14),
@@ -574,16 +827,20 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         torsoGroup.add(dishMast, dish);
         speedMultiplier *= 1.12;
       } else {
-        // Wrench-5 — tool harness plus a folded tripod slung on the back
+        // Wrench-5 — welder's apron, oxy-acetylene mini-tanks, slung tripod
+        const apron = makeChamferedPlate(0.24, 0.3, 0.5, matTapeWrap);
+        apron.position.set(0, 1.02, 0.16);
         const toolBelt = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.1, 0.26), matPouches);
         toolBelt.position.set(0, 1.02, 0);
         const foldedTripod = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.52, 0.1), matSteelArmor);
         foldedTripod.position.set(0.16, 1.3, -0.26);
         foldedTripod.rotation.z = 0.28;
-        const weldTank = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.34, 10), matAccent);
-        weldTank.position.set(-0.16, 1.28, -0.26);
-        torsoGroup.add(toolBelt, foldedTripod, weldTank);
-        hitParts.push(toolBelt, foldedTripod);
+        const oxyTankA = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.4, 10), matAccent);
+        oxyTankA.position.set(-0.22, 1.28, -0.2);
+        const oxyTankB = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.4, 10), matSteelArmor);
+        oxyTankB.position.set(-0.11, 1.28, -0.24);
+        torsoGroup.add(apron, toolBelt, foldedTripod, oxyTankA, oxyTankB);
+        hitParts.push(toolBelt, foldedTripod, apron);
       }
     }
   } else {
@@ -591,6 +848,15 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     const chestCavity = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.38, 0.09), matInnerCavity);
     chestCavity.position.set(0, 1.28, 0.11);
     torsoGroup.add(chestCavity);
+
+    // Torn uniform fabric shreds hanging asymmetrically off the exposed cavity
+    for (let t = 0; t < 4; t++) {
+      const shred = new THREE.Mesh(new THREE.BoxGeometry(0.05 + Math.random() * 0.05, 0.16 + Math.random() * 0.1, 0.015), matShirt);
+      shred.position.set(-0.24 + t * 0.16, 1.1 + Math.random() * 0.06, 0.14);
+      shred.rotation.z = (Math.random() - 0.5) * 0.5;
+      shred.rotation.x = 0.15 + Math.random() * 0.2;
+      torsoGroup.add(shred);
+    }
 
     [1.16, 1.23, 1.3, 1.37].forEach((ry, idx) => {
       const ribW = idx === 0 || idx === 3 ? 0.24 : 0.3;
@@ -709,7 +975,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
 
   /* ============================ 2. NECK ============================ */
   if (!isZombie) {
-    const neckCylinder = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.24, 12), matSkin);
+    const neckCylinder = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.095, 0.24, 12), matSkin);
     neckCylinder.position.set(0, 1.42, 0);
     neckCylinder.castShadow = true;
     torsoGroup.add(neckCylinder);
@@ -722,26 +988,89 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
   torsoGroup.add(headGroup);
 
   if (!isZombie) {
-    const headMesh = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.24, 0.24), matSkin);
+    // Non-uniformly scaled sphere instead of a box gives a real cranium
+    // silhouette; a small wedge underneath suggests the jawline.
+    const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), matSkin);
+    headMesh.scale.set(0.9, 1.05, 0.96);
     headMesh.position.y = 0.08;
     headMesh.castShadow = true;
     headGroup.add(headMesh);
     hitParts.push(headMesh);
     headParts.add(headMesh);
 
+    const jawWedge = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.09, 0.07, 4, 1), matSkin);
+    jawWedge.rotation.set(Math.PI, Math.PI / 4, 0);
+    jawWedge.position.set(0, -0.035, 0.03);
+    jawWedge.scale.set(1.0, 0.6, 1.15);
+    headGroup.add(jawWedge);
+    hitParts.push(jawWedge);
+
     const hg = options.headgear;
     if (hg) {
       if (hg === 'fast' || hg === 'FAST_HELMET') {
-        const helmetMesh = new THREE.Mesh(new THREE.BoxGeometry(0.29, 0.19, 0.3), matHelmet);
-        helmetMesh.position.set(0, 0.17, -0.01);
+        // Half-sphere shell reads as a real dome rather than a cube.
+        const helmetMesh = new THREE.Mesh(
+          new THREE.SphereGeometry(0.165, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.62),
+          matHelmet
+        );
+        helmetMesh.position.set(0, 0.16, -0.02);
         helmetMesh.castShadow = true;
         headGroup.add(helmetMesh);
         hitParts.push(helmetMesh);
         headParts.add(helmetMesh);
 
+        // Ear cutout notches: small dark inset boxes over the shell
+        [-1, 1].forEach((side) => {
+          const notch = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.06, 0.09), matSocketRecess);
+          notch.position.set(side * 0.15, 0.08, 0.01);
+          headGroup.add(notch);
+        });
+
         const nvgBracket = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.08, 0.04), matSteelArmor);
         nvgBracket.position.set(0, 0.16, 0.15);
         headGroup.add(nvgBracket);
+
+        // Rail teeth along both sides of the shell
+        for (let r = 0; r < 5; r++) {
+          const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.016, 0.03), matSteelArmor);
+          tooth.position.set(-0.155, 0.14, 0.06 - r * 0.035);
+          const toothR = tooth.clone();
+          toothR.position.x = 0.155;
+          headGroup.add(tooth, toothR);
+        }
+
+        // Ops-Core headset ear cups + flexible boom mic
+        const commL = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.05, 10), matSteelArmor);
+        commL.rotation.z = Math.PI / 2;
+        commL.position.set(-0.15, 0.04, 0);
+        const commR = commL.clone();
+        commR.position.x = 0.15;
+        headGroup.add(commL, commR);
+        const boomArm = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.008, 0.12, 6), matGun);
+        boomArm.position.set(-0.1, 0.0, 0.09);
+        boomArm.rotation.set(0, 0.4, 1.3);
+        const boomMic = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.012, 0.02, 8), matGun);
+        boomMic.position.set(-0.05, -0.04, 0.14);
+        headGroup.add(boomArm, boomMic);
+
+        // Flip-down dual-tube PVS-31 NVG, modeled in the lowered position
+        const nvgBridge = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 0.02), matSteelArmor);
+        nvgBridge.position.set(0, -0.02, 0.17);
+        [-1, 1].forEach((side) => {
+          const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.028, 0.09, 10), matSteelArmor);
+          tube.rotation.x = Math.PI / 2;
+          tube.position.set(side * 0.045, -0.02, 0.21);
+          const lens = new THREE.Mesh(new THREE.CircleGeometry(0.02, 10), matNvgGlow);
+          lens.position.set(side * 0.045, -0.02, 0.255);
+          headGroup.add(tube, lens);
+        });
+        headGroup.add(nvgBridge);
+
+        // ESS ballistic goggles strapped over the crown — a curved torus arc
+        const gogglesBand = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.012, 6, 16, Math.PI * 0.7), matTapeWrap);
+        gogglesBand.rotation.set(Math.PI / 2, 0, Math.PI / 2);
+        gogglesBand.position.set(0, 0.24, -0.02);
+        headGroup.add(gogglesBand);
       } else if (hg === 'HEAVY_EOD_VISOR') {
         const eodShell = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.26, 0.34), matSteelArmor);
         eodShell.position.set(0, 0.16, -0.01);
@@ -765,10 +1094,10 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         const skullMask = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.12, 0.13), matSkullMask);
         skullMask.position.set(0, 0.02, 0.1);
         skullMask.castShadow = true;
-        const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.045, 0.03), matSocketRecess);
-        eyeL.position.set(-0.06, 0.05, 0.16);
-        const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.045, 0.03), matSocketRecess);
-        eyeR.position.set(0.06, 0.05, 0.16);
+        const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.045, 0.045), matSocketRecess);
+        eyeL.position.set(-0.06, 0.05, 0.15);
+        const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.045, 0.045), matSocketRecess);
+        eyeR.position.set(0.06, 0.05, 0.15);
         const cap = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.1, 0.25), matShirt);
         cap.position.set(0, 0.22, 0);
         headGroup.add(skullMask, eyeL, eyeR, cap);
@@ -777,8 +1106,11 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         headParts.add(cap);
       }
     } else if (subClass === 'elite_heavy') {
-      const helmetMesh = new THREE.Mesh(new THREE.BoxGeometry(0.31, 0.2, 0.32), matSteelArmor);
-      helmetMesh.position.set(0, 0.17, -0.01);
+      const helmetMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.175, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.62),
+        matSteelArmor
+      );
+      helmetMesh.position.set(0, 0.16, -0.02);
       helmetMesh.castShadow = true;
       const faceShield = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.18, 0.04), matSteelArmor);
       faceShield.position.set(0, 0.08, 0.15);
@@ -789,8 +1121,11 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       headParts.add(helmetMesh);
       headParts.add(faceShield);
     } else if (subClass === 'elite_medic') {
-      const helmetMesh = new THREE.Mesh(new THREE.BoxGeometry(0.29, 0.17, 0.3), matHelmet);
-      helmetMesh.position.set(0, 0.17, -0.01);
+      const helmetMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.165, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.6),
+        matHelmet
+      );
+      helmetMesh.position.set(0, 0.16, -0.02);
       const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.09, 0.02), matWhiteCross);
       crossV.position.set(0, 0.17, 0.155);
       const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.03, 0.02), matWhiteCross);
@@ -799,8 +1134,11 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       hitParts.push(helmetMesh);
       headParts.add(helmetMesh);
     } else if (subClass === 'elite_recon') {
-      const helmetMesh = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.16, 0.29), matHelmet);
-      helmetMesh.position.set(0, 0.17, -0.01);
+      const helmetMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.16, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.58),
+        matHelmet
+      );
+      helmetMesh.position.set(0, 0.16, -0.02);
       headGroup.add(helmetMesh);
       hitParts.push(helmetMesh);
       headParts.add(helmetMesh);
@@ -816,8 +1154,11 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       monocle.position.set(0.055, 0.13, 0.17);
       headGroup.add(monocle);
     } else if (subClass === 'elite_engineer') {
-      const helmetMesh = new THREE.Mesh(new THREE.BoxGeometry(0.29, 0.17, 0.3), matHelmet);
-      helmetMesh.position.set(0, 0.17, -0.01);
+      const helmetMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.165, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.6),
+        matHelmet
+      );
+      helmetMesh.position.set(0, 0.16, -0.02);
       const goggleBridge = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.06, 0.06), matPouches);
       goggleBridge.position.set(0, 0.2, 0.14);
       const lens = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 0.03), matVisorTint);
@@ -825,7 +1166,10 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.04, 10), matAccent);
       lamp.rotation.x = Math.PI / 2;
       lamp.position.set(-0.1, 0.24, 0.13);
-      headGroup.add(helmetMesh, goggleBridge, lens, lamp);
+      // Flip-down tinted blast visor
+      const flipVisor = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.12, 0.015), matVisorTint);
+      flipVisor.position.set(0, 0.06, 0.165);
+      headGroup.add(helmetMesh, goggleBridge, lens, lamp, flipVisor);
       hitParts.push(helmetMesh);
       headParts.add(helmetMesh);
     } else if (subClass === 'sergeant') {
@@ -856,8 +1200,11 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       mic.rotation.y = 0.35;
       headGroup.add(earL, earR, mic);
     } else if (subClass === 'heavy_gunner') {
-      const helmetMesh = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.17, 0.29), matHelmet);
-      helmetMesh.position.set(0, 0.17, -0.01);
+      const helmetMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.16, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.58),
+        matHelmet
+      );
+      helmetMesh.position.set(0, 0.16, -0.02);
       const faceShield = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.17, 0.04), matHelmet);
       faceShield.position.set(0, 0.08, 0.14);
       const visionSlit = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.03, 0.05), matVisorTint);
@@ -867,8 +1214,11 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       headParts.add(helmetMesh);
       headParts.add(faceShield);
     } else if (subClass === 'engineer') {
-      const helmetMesh = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.16, 0.29), matHelmet);
-      helmetMesh.position.set(0, 0.17, -0.01);
+      const helmetMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.16, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.58),
+        matHelmet
+      );
+      helmetMesh.position.set(0, 0.16, -0.02);
       const goggleBridge = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.05, 0.07), matPouches);
       goggleBridge.position.set(0, 0.17, 0.15);
       const lensL = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.03, 8), matVisorTint);
@@ -883,46 +1233,56 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     } else if (subClass === 'ghost') {
       const skullPlate = new THREE.Mesh(new THREE.BoxGeometry(0.23, 0.19, 0.05), matSkullMask);
       skullPlate.position.set(0, 0.05, 0.14);
-      const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.05, 0.04), matSocketRecess);
-      eyeL.position.set(-0.06, 0.09, 0.155);
-      const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.05, 0.04), matSocketRecess);
-      eyeR.position.set(0.06, 0.09, 0.155);
-      const nose = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.035, 0.04), matSocketRecess);
-      nose.position.set(0, 0.04, 0.155);
-      const teeth = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.025, 0.04), matSocketRecess);
-      teeth.position.set(0, -0.015, 0.165);
+      const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.05, 0.045), matSocketRecess);
+      eyeL.position.set(-0.06, 0.09, 0.15);
+      const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.05, 0.045), matSocketRecess);
+      eyeR.position.set(0.06, 0.09, 0.15);
+      const nose = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.035, 0.045), matSocketRecess);
+      nose.position.set(0, 0.04, 0.15);
+      const teeth = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.025, 0.045), matSocketRecess);
+      teeth.position.set(0, -0.015, 0.16);
       const hoodBack = new THREE.Mesh(new THREE.BoxGeometry(0.29, 0.28, 0.15), matHoodFabric);
       hoodBack.position.set(0, 0.07, -0.08);
       const hoodCollar = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.08, 0.24), matHoodFabric);
       hoodCollar.position.set(0, -0.05, 0);
-      headGroup.add(skullPlate, eyeL, eyeR, nose, teeth, hoodBack, hoodCollar);
+      // Taped comms wiring from the mask down to the collar
+      const wireA = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.12, 6), matWireBundle);
+      wireA.position.set(-0.11, -0.02, 0.09);
+      wireA.rotation.set(0.3, 0, 0.6);
+      const wireB = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.1, 6), matWireBundle);
+      wireB.position.set(-0.14, -0.12, 0.02);
+      wireB.rotation.set(0.6, 0, 0.3);
+      headGroup.add(skullPlate, eyeL, eyeR, nose, teeth, hoodBack, hoodCollar, wireA, wireB);
       hitParts.push(skullPlate, hoodBack);
       headParts.add(skullPlate);
       headParts.add(hoodBack);
     } else if (subClass === 'infiltrator') {
-      const balaclava = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.25, 0.25), matHoodFabric);
-      balaclava.position.y = 0.08;
-      const nvgMountArm = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.03, 0.08), matPouches);
+      const balaclava = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.7), matHoodFabric);
+      balaclava.position.y = 0.05;
+      // Quad-tube panoramic GPNVG-18 in a 2x2 cluster
+      [-0.05, 0.05].forEach((lx) => {
+        [0.03, -0.03].forEach((ly) => {
+          const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.05, 8), matPouches);
+          barrel.rotation.x = Math.PI / 2;
+          barrel.position.set(lx, 0.15 + ly, 0.24);
+          const glowLens = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.01, 8), matNvgGlow);
+          glowLens.rotation.x = Math.PI / 2;
+          glowLens.position.set(lx, 0.15 + ly, 0.265);
+          headGroup.add(barrel, glowLens);
+          hitParts.push(barrel);
+        });
+      });
+      const nvgMountArm = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.03, 0.08), matPouches);
       nvgMountArm.position.set(0, 0.17, 0.18);
-      const nvgBar = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.024, 0.03), matPouches);
-      nvgBar.position.set(0, 0.15, 0.22);
-      headGroup.add(balaclava, nvgMountArm, nvgBar);
+      headGroup.add(balaclava, nvgMountArm);
       hitParts.push(balaclava);
       headParts.add(balaclava);
-
-      [-0.065, -0.022, 0.022, 0.065].forEach((lx) => {
-        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.04, 8), matPouches);
-        barrel.rotation.x = Math.PI / 2;
-        barrel.position.set(lx, 0.15, 0.23);
-        const glowLens = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.01, 8), matNvgGlow);
-        glowLens.rotation.x = Math.PI / 2;
-        glowLens.position.set(lx, 0.15, 0.25);
-        headGroup.add(barrel, glowLens);
-        hitParts.push(barrel);
-      });
     } else if (subClass === 'recon') {
-      const helmetMesh = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.16, 0.29), matHelmet);
-      helmetMesh.position.set(0, 0.17, -0.01);
+      const helmetMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.16, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.58),
+        matHelmet
+      );
+      helmetMesh.position.set(0, 0.16, -0.02);
       headGroup.add(helmetMesh);
       hitParts.push(helmetMesh);
       headParts.add(helmetMesh);
@@ -937,16 +1297,16 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       }
     } else {
       const helmetMesh = new THREE.Mesh(
-        new THREE.BoxGeometry(0.29, 0.16, 0.3),
+        new THREE.SphereGeometry(0.165, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.6),
         subClass === 'juggernaut' ? matSteelArmor : matHelmet
       );
-      helmetMesh.position.set(0, 0.17, -0.01);
+      helmetMesh.position.set(0, 0.16, -0.02);
       helmetMesh.castShadow = true;
       const visorBrim = new THREE.Mesh(
         new THREE.BoxGeometry(0.24, 0.024, 0.09),
         subClass === 'juggernaut' ? matSteelArmor : matHelmet
       );
-      visorBrim.position.set(0, 0.12, 0.16);
+      visorBrim.position.set(0, 0.1, 0.16);
       visorBrim.rotation.x = 0.16;
       headGroup.add(helmetMesh, visorBrim);
       hitParts.push(helmetMesh, visorBrim);
@@ -960,16 +1320,18 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         hitParts.push(mandible);
         headParts.add(mandible);
 
-        const headsetL = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.07, 0.07), matPouches);
-        headsetL.position.set(-0.14, 0.08, 0);
-        const headsetR = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.07, 0.07), matPouches);
-        headsetR.position.set(0.14, 0.08, 0);
+        const headsetL = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.06, 10), matPouches);
+        headsetL.rotation.z = Math.PI / 2;
+        headsetL.position.set(-0.15, 0.08, 0);
+        const headsetR = headsetL.clone();
+        headsetR.position.x = 0.15;
         headGroup.add(headsetL, headsetR);
       }
     }
   } else {
-    const skullTop = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.14, 0.24), matSkin);
-    skullTop.position.y = 0.13;
+    const skullTop = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), matSkin);
+    skullTop.scale.set(0.92, 0.86, 0.98);
+    skullTop.position.y = 0.1;
     skullTop.castShadow = true;
     headGroup.add(skullTop);
     hitParts.push(skullTop);
@@ -1025,15 +1387,19 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     const isUsmcSpecialized = isSpecializedBot && faction === 'usmc';
     const lowerArmMat = isApexSpecialized ? matSkin : matShirt;
 
-    const armLUpper = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.26, 0.14), matShirt);
+    // Tapered biceps (wider at the shoulder) instead of a straight box.
+    const armLUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.062, 0.26, 8), matShirt);
     armLUpper.position.set(0, -0.13, 0);
     armLUpper.castShadow = true;
     armLPivot.add(armLUpper);
     hitParts.push(armLUpper);
+    const elbowCapL = new THREE.Mesh(new THREE.SphereGeometry(0.058, 8, 6), matShirt);
+    elbowCapL.position.set(0, -0.26, 0);
+    armLPivot.add(elbowCapL);
 
     armLLowerPivot.position.set(0, -0.26, 0);
     armLPivot.add(armLLowerPivot);
-    const armLLower = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.26, 0.12), lowerArmMat);
+    const armLLower = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.048, 0.26, 8), lowerArmMat);
     armLLower.position.set(0, -0.13, 0.02);
     armLLower.castShadow = true;
     const handL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.08, 0.1), matGloves);
@@ -1041,15 +1407,18 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     armLLowerPivot.add(armLLower, handL);
     hitParts.push(armLLower, handL);
 
-    const armRUpper = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.26, 0.14), matShirt);
+    const armRUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.062, 0.26, 8), matShirt);
     armRUpper.position.set(0, -0.13, 0);
     armRUpper.castShadow = true;
     armRPivot.add(armRUpper);
     hitParts.push(armRUpper);
+    const elbowCapR = new THREE.Mesh(new THREE.SphereGeometry(0.058, 8, 6), matShirt);
+    elbowCapR.position.set(0, -0.26, 0);
+    armRPivot.add(elbowCapR);
 
     armRLowerPivot.position.set(0, -0.26, 0);
     armRPivot.add(armRLowerPivot);
-    const armRLower = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.26, 0.12), lowerArmMat);
+    const armRLower = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.048, 0.26, 8), lowerArmMat);
     armRLower.position.set(0, -0.13, 0.02);
     armRLower.castShadow = true;
     const handR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.08, 0.1), matGloves);
@@ -1128,16 +1497,47 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       new THREE.BoxGeometry(0.08, 0.11, weaponType === 'pistol' ? 0.22 : 0.32),
       matGun
     );
-    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, barrelLen, 6), matGun);
+    const isFluted = weaponType === 'sniper' || weaponType === 'lmg';
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, barrelLen, isFluted ? 10 : 6), matGun);
     barrel.rotation.x = Math.PI / 2;
     barrel.position.set(0, 0.015, barrelLen / 2 + 0.14);
     gGun.add(receiver, barrel);
+
+    if (isFluted) {
+      // Fluting: 5 thin darker recess grooves running the barrel length
+      for (let f = 0; f < 5; f++) {
+        const a = (f / 5) * Math.PI * 2;
+        const flute = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, barrelLen * 0.85, 5), matSteelArmor);
+        flute.rotation.x = Math.PI / 2;
+        flute.position.set(Math.cos(a) * 0.014, 0.015 + Math.sin(a) * 0.014, barrelLen / 2 + 0.14);
+        gGun.add(flute);
+      }
+    }
+
+    // Ringed flash hider with a visible venting shadow ring
+    const flashHiderOuter = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.055, 10), matGun);
+    flashHiderOuter.rotation.x = Math.PI / 2;
+    flashHiderOuter.position.set(0, 0.015, barrelLen + 0.14 + 0.02);
+    const flashHiderVent = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.057, 10), matSocketRecess);
+    flashHiderVent.rotation.x = Math.PI / 2;
+    flashHiderVent.position.copy(flashHiderOuter.position);
+    gGun.add(flashHiderOuter, flashHiderVent);
 
     if (weaponType === 'lmg' || weaponType === 'minigun') {
       const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.1, 12), matGun);
       drum.rotation.z = Math.PI / 2;
       drum.position.set(0, -0.09, 0.04);
       gGun.add(drum);
+    } else {
+      // Curved "banana" magazine composed of two angled box segments —
+      // the layered-prism technique for shapes too complex for a single box.
+      const magSegA = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.1, 0.05), matGun);
+      magSegA.position.set(0, -0.12, 0.02);
+      magSegA.rotation.x = 0.12;
+      const magSegB = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.09, 0.048), matGun);
+      magSegB.position.set(0, -0.2, -0.02);
+      magSegB.rotation.x = 0.32;
+      gGun.add(magSegA, magSegB);
     }
 
     gGun.position.set(0, -0.3, 0.16);
@@ -1149,17 +1549,65 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     muzzleFlash.position.set(0, 0.015, barrelLen + 0.16);
     gGun.add(muzzleFlash);
     muzzleFlashRef = muzzleFlash;
+
+    /* ---- 3D compound starburst, slaved to the sprite's own animation ----
+     * The sprite's scale/opacity is already driven every frame by App.tsx's
+     * existing per-shot timer. Rather than add a second animation path (which
+     * would need App.tsx changes, out of scope this pass), the starburst
+     * mirrors the sprite via onBeforeRender — a per-object hook Three.js
+     * already calls each frame the sprite is rendered, so this works with
+     * zero changes anywhere else. */
+    const starburstGroup = new THREE.Group();
+    starburstGroup.position.copy(muzzleFlash.position);
+    starburstGroup.scale.setScalar(0);
+    const bladeMat = new THREE.MeshBasicMaterial({
+      color: 0xfff0aa,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    for (let bl = 0; bl < 4; bl++) {
+      const blade = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.014), bladeMat);
+      blade.rotation.z = (bl / 4) * Math.PI;
+      starburstGroup.add(blade);
+    }
+    const coreMat = new THREE.MeshBasicMaterial({
+      color: 0xffaa22,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const coreCone = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.09, 8), coreMat);
+    coreCone.rotation.x = -Math.PI / 2;
+    coreCone.position.z = 0.03;
+    starburstGroup.add(coreCone);
+    const starburstLight = new THREE.PointLight(0xff9922, 0, 6, 1.4);
+    starburstGroup.add(starburstLight);
+    gGun.add(starburstGroup);
+
+    muzzleFlash.onBeforeRender = () => {
+      const k = muzzleFlash.scale.x;
+      starburstGroup.visible = k > 0.02;
+      starburstGroup.scale.setScalar(k * 1.6);
+      starburstGroup.rotation.z += 0.5;
+      const op = muzzleFlash.material.opacity ?? 0;
+      bladeMat.opacity = op;
+      coreMat.opacity = op * 0.9;
+      starburstLight.intensity = 4.5 * op;
+    };
   } else {
     armLPivot.rotation.set(-1.35, 0.12, 0);
     armRPivot.rotation.set(-1.35, -0.12, 0);
 
-    const armLMesh = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.44, 0.13), matSkin);
+    const armLMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.058, 0.44, 8), matSkin);
     armLMesh.position.set(0, -0.2, 0);
     armLMesh.castShadow = true;
     armLPivot.add(armLMesh);
     hitParts.push(armLMesh);
 
-    const armRUpper = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.46, 0.16), matSkin);
+    const armRUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.075, 0.46, 8), matSkin);
     armRUpper.position.set(0, -0.21, 0);
     armRUpper.castShadow = true;
     armRPivot.add(armRUpper);
@@ -1171,7 +1619,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     armRPivot.add(boneSpur);
     hitParts.push(boneSpur);
 
-    const armRForearm = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.58, 0.14), matSkin);
+    const armRForearm = new THREE.Mesh(new THREE.CylinderGeometry(0.076, 0.06, 0.58, 8), matSkin);
     armRForearm.position.set(0.06, -0.66, 0.06);
     armRForearm.rotation.z = -0.22;
     armRForearm.rotation.x = -0.32;
@@ -1181,10 +1629,13 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
 
     const clawHand = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), matSkin);
     clawHand.position.set(0.08, -0.98, 0.1);
-    const talon1 = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.14, 0.024), matZombieClaw);
-    talon1.position.set(0.05, -1.1, 0.08);
-    const talon2 = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.14, 0.024), matZombieClaw);
-    talon2.position.set(0.11, -1.1, 0.12);
+    // Jagged bone talons, ~0.2m as specified
+    const talon1 = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.2, 4), matZombieClaw);
+    talon1.position.set(0.05, -1.14, 0.08);
+    talon1.rotation.x = Math.PI;
+    const talon2 = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.2, 4), matZombieClaw);
+    talon2.position.set(0.11, -1.14, 0.12);
+    talon2.rotation.x = Math.PI;
     armRPivot.add(clawHand, talon1, talon2);
     hitParts.push(clawHand);
   }
@@ -1201,38 +1652,63 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
   const legLLowerPivot = new THREE.Group();
   const legRLowerPivot = new THREE.Group();
 
+  /** Sole + raised heel + tapered toe cap, replacing a single flat box boot. */
+  function buildBoot(): THREE.Group {
+    const bootGroup = new THREE.Group();
+    const sole = new THREE.Mesh(new THREE.BoxGeometry(0.145, 0.035, 0.24), matBootSole);
+    sole.position.set(0, -0.4, 0.02);
+    const heel = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.05, 0.09), matBootSole);
+    heel.position.set(0, -0.365, -0.06);
+    const upper = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.11, 0.2), matBoots);
+    upper.position.set(0, -0.335, 0.02);
+    const toeCap = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.06, 8), matBoots);
+    toeCap.rotation.z = Math.PI / 2;
+    toeCap.scale.set(1, 1, 0.55);
+    toeCap.position.set(0, -0.36, 0.13);
+    bootGroup.add(sole, heel, upper, toeCap);
+    return bootGroup;
+  }
+
   if (!isZombie) {
-    const legLUpper = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.36, 0.18), matPants);
+    const legLUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.072, 0.36, 8), matPants);
     legLUpper.position.set(0, -0.18, 0);
     legLUpper.castShadow = true;
     legLPivot.add(legLUpper);
     hitParts.push(legLUpper);
+    const kneeCapL = new THREE.Mesh(new THREE.SphereGeometry(0.068, 8, 6), matPants);
+    kneeCapL.position.set(0, -0.36, 0);
+    legLPivot.add(kneeCapL);
 
     legLLowerPivot.position.set(0, -0.36, 0);
     legLPivot.add(legLLowerPivot);
-    const legLLower = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.36, 0.16), matPants);
+    const legLLower = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.05, 0.36, 8), matPants);
     legLLower.position.set(0, -0.18, -0.01);
     legLLower.castShadow = true;
-    const bootL = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.1, 0.22), matBoots);
-    bootL.position.set(0, -0.36, 0.03);
+    const bootL = buildBoot();
+    bootL.position.set(0, 0, 0.04);
     legLLowerPivot.add(legLLower, bootL);
-    hitParts.push(legLLower, bootL);
+    hitParts.push(legLLower);
+    bootL.children.forEach((c) => hitParts.push(c as THREE.Mesh));
 
-    const legRUpper = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.36, 0.18), matPants);
+    const legRUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.072, 0.36, 8), matPants);
     legRUpper.position.set(0, -0.18, 0);
     legRUpper.castShadow = true;
     legRPivot.add(legRUpper);
     hitParts.push(legRUpper);
+    const kneeCapR = new THREE.Mesh(new THREE.SphereGeometry(0.068, 8, 6), matPants);
+    kneeCapR.position.set(0, -0.36, 0);
+    legRPivot.add(kneeCapR);
 
     legRLowerPivot.position.set(0, -0.36, 0);
     legRPivot.add(legRLowerPivot);
-    const legRLower = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.36, 0.16), matPants);
+    const legRLower = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.05, 0.36, 8), matPants);
     legRLower.position.set(0, -0.18, -0.01);
     legRLower.castShadow = true;
-    const bootR = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.1, 0.22), matBoots);
-    bootR.position.set(0, -0.36, 0.03);
+    const bootR = buildBoot();
+    bootR.position.set(0, 0, 0.04);
     legRLowerPivot.add(legRLower, bootR);
-    hitParts.push(legRLower, bootR);
+    hitParts.push(legRLower);
+    bootR.children.forEach((c) => hitParts.push(c as THREE.Mesh));
 
     const lc = options.lowerConfig;
     if (lc) {
@@ -1241,6 +1717,10 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         holsterDrop.position.set(0.12, -0.05, 0);
         legRUpper.add(holsterDrop);
         hitParts.push(holsterDrop);
+        // Visible sidearm nested in the holster
+        const sidearmSlide = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.1), matGun);
+        sidearmSlide.position.set(0.12, 0.05, 0.03);
+        legRUpper.add(sidearmSlide);
       } else if (lc === 'HEAVY_POUCHES') {
         [-0.11, 0.11].forEach((px) => {
           const pouch = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.16, 0.1), matPouches);
@@ -1252,7 +1732,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         [legLLowerPivot, legRLowerPivot].forEach((pivot) => {
           const brace = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.2, 0.06), matSteelArmor);
           brace.position.set(0, -0.08, 0.1);
-          const actuator = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.22, 0.05), matAccent);
+          const actuator = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.022, 0.22, 8), matAccent);
           actuator.position.set(0.09, -0.1, 0.02);
           pivot.add(brace, actuator);
           hitParts.push(brace);
@@ -1282,15 +1762,39 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         legRPivot.add(thighPlateR);
         hitParts.push(thighPlateR);
       }
+
+      if (faction === 'apex') {
+        // BDU cargo pants: reinforced knee braces + thigh utility pouch + knife sheath
+        const kneeBraceL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.1, 0.06), matSteelArmor);
+        kneeBraceL.position.set(0, -0.04, 0.1);
+        legLLowerPivot.add(kneeBraceL);
+        hitParts.push(kneeBraceL);
+        const kneeBraceR = kneeBraceL.clone();
+        legRLowerPivot.add(kneeBraceR);
+        hitParts.push(kneeBraceR);
+
+        const thighPouch = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.14, 0.08), matPouches);
+        thighPouch.position.set(0, -0.05, 0.09);
+        legLUpper.add(thighPouch);
+        hitParts.push(thighPouch);
+
+        const sheath = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.16, 0.03), matTapeWrap);
+        sheath.position.set(0.08, -0.1, 0.08);
+        legRUpper.add(sheath);
+        const knifeHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.06, 6), matGun);
+        knifeHandle.position.set(0.08, -0.02, 0.08);
+        legRUpper.add(knifeHandle);
+        hitParts.push(sheath);
+      }
     }
   } else {
-    const legLMesh = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.86, 0.2), matPants);
+    const legLMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.085, 0.86, 8), matPants);
     legLMesh.position.set(0, -0.43, 0);
     legLMesh.castShadow = true;
     legLPivot.add(legLMesh);
     hitParts.push(legLMesh);
 
-    const legRMesh = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.86, 0.2), matPants);
+    const legRMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.085, 0.86, 8), matPants);
     legRMesh.position.set(0, -0.43, 0);
     legRMesh.castShadow = true;
     legRPivot.add(legRMesh);
@@ -1335,8 +1839,8 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
 
 /* =============================================================================
  * ENGINEER DEPLOYABLE: TRIPOD MACHINE GUN
- * Barricade + mounted gun. The returned barrelPivot yaws/pitches independently
- * of the barricade so the mounted operator can traverse.
+ * Barricade + M2-style mounted gun. The returned barrelPivot yaws/pitches
+ * independently of the barricade so the mounted operator can traverse.
  * ===========================================================================*/
 
 export interface TripodBuildResult {
@@ -1350,8 +1854,8 @@ export function buildTripodMachineGun(accentHex = 0x2de2e6): TripodBuildResult {
   const group = new THREE.Group();
   const hitMeshes: THREE.Mesh[] = [];
 
-  const matFrame = new THREE.MeshStandardMaterial({ color: 0x2b333c, roughness: 0.55, metalness: 0.7 });
-  const matSteel = new THREE.MeshStandardMaterial({ color: 0x14181d, roughness: 0.4, metalness: 0.85 });
+  const matFrame = new THREE.MeshStandardMaterial({ color: 0x2b333c, roughness: 0.55, metalness: 0.7, bumpMap: getScratchedMetalTexture(), bumpScale: 0.005 });
+  const matSteel = new THREE.MeshStandardMaterial({ color: 0x14181d, roughness: 0.4, metalness: 0.85, bumpMap: getScratchedMetalTexture(), bumpScale: 0.006 });
   const matSandbag = new THREE.MeshStandardMaterial({ color: 0x5a5042, roughness: 0.95 });
   const matGlow = new THREE.MeshStandardMaterial({
     color: accentHex,
@@ -1359,29 +1863,40 @@ export function buildTripodMachineGun(accentHex = 0x2de2e6): TripodBuildResult {
     emissiveIntensity: 1.6,
     roughness: 0.3
   });
+  const matBrass = new THREE.MeshStandardMaterial({ color: 0xb08d3f, roughness: 0.35, metalness: 0.75 });
 
-  /* --- Barricade: ballistic plate on a sandbag base --- */
-  const sandbags = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.38, 0.85), matSandbag);
-  sandbags.position.set(0, 0.19, 0.2);
-  sandbags.castShadow = true;
-  sandbags.receiveShadow = true;
-  group.add(sandbags);
-  hitMeshes.push(sandbags);
+  /* --- Barricade: sandbag crescent + ballistic shield --- */
+  // A shallow arc of overlapping cylindrical sandbags reads as a crescent,
+  // not a straight-edged box.
+  for (let s = -2; s <= 2; s++) {
+    const bag = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.42, 10), matSandbag);
+    bag.rotation.z = Math.PI / 2;
+    const a = s * 0.22;
+    bag.position.set(Math.sin(a) * 1.1, 0.2, 0.2 + Math.cos(a) * 0.15 - 0.15);
+    bag.rotation.y = a;
+    bag.castShadow = true;
+    bag.receiveShadow = true;
+    group.add(bag);
+    hitMeshes.push(bag);
+  }
 
-  const plate = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.66, 0.16), matFrame);
+  const plate = makeChamferedPlate(1.15, 1.25, 0.66, matFrame);
   plate.position.set(0, 0.71, 0.3);
+  plate.rotation.y = 0;
   plate.castShadow = true;
   group.add(plate);
   hitMeshes.push(plate);
 
-  // Gun port cut into the plate, marked with accent trim
+  // Gun port cut into the plate, marked with accent trim, plus a status beacon strip
   const portTrimL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.3, 0.2), matGlow);
   portTrimL.position.set(-0.34, 0.86, 0.32);
   const portTrimR = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.3, 0.2), matGlow);
   portTrimR.position.set(0.34, 0.86, 0.32);
-  group.add(portTrimL, portTrimR);
+  const sightSlit = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.05, 0.05), matSocketRecessLocal());
+  sightSlit.position.set(0, 0.98, 0.34);
+  group.add(portTrimL, portTrimR, sightSlit);
 
-  /* --- Tripod legs --- */
+  /* --- Tripod legs with locking pins and ground claw pads --- */
   const legAngles = [-0.62, 0.62, Math.PI];
   legAngles.forEach((a) => {
     const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 1.05, 8), matSteel);
@@ -1391,9 +1906,25 @@ export function buildTripodMachineGun(accentHex = 0x2de2e6): TripodBuildResult {
     leg.castShadow = true;
     group.add(leg);
 
-    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.06, 0.16), matSteel);
+    const lockPin = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.08, 6), matBrass);
+    lockPin.position.set(Math.sin(a) * 0.3, 0.72, Math.cos(a) * 0.3);
+    lockPin.rotation.z = Math.PI / 2;
+    group.add(lockPin);
+
+    const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.05, 6), matSteel);
     foot.position.set(Math.sin(a) * 0.46, 0.03, Math.cos(a) * 0.46);
     group.add(foot);
+    for (let claw = 0; claw < 3; claw++) {
+      const ca = (claw / 3) * Math.PI * 2;
+      const clawPad = new THREE.Mesh(new THREE.ConeGeometry(0.015, 0.05, 4), matSteel);
+      clawPad.position.set(
+        Math.sin(a) * 0.46 + Math.cos(ca) * 0.09,
+        -0.01,
+        Math.cos(a) * 0.46 + Math.sin(ca) * 0.09
+      );
+      clawPad.rotation.x = Math.PI;
+      group.add(clawPad);
+    }
   });
 
   const cradle = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.14, 12), matSteel);
@@ -1401,7 +1932,7 @@ export function buildTripodMachineGun(accentHex = 0x2de2e6): TripodBuildResult {
   group.add(cradle);
   hitMeshes.push(cradle);
 
-  /* --- Traversing gun assembly --- */
+  /* --- Traversing gun assembly: M2-style receiver --- */
   const barrelPivot = new THREE.Group();
   barrelPivot.position.set(0, 1.14, 0);
   group.add(barrelPivot);
@@ -1417,17 +1948,23 @@ export function buildTripodMachineGun(accentHex = 0x2de2e6): TripodBuildResult {
   barrelShroud.position.set(0, 0.03, 0.62);
   barrelPivot.add(barrelShroud);
 
-  // Cooling vents
-  for (let i = 0; i < 5; i++) {
-    const vent = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.015, 0.05), matSteel);
-    vent.position.set(0, 0.095, 0.38 + i * 0.1);
-    barrelPivot.add(vent);
+  // Circular cooling ports ringing the jacket, not just flat vent slats
+  for (let ring = 0; ring < 4; ring++) {
+    const ringZ = 0.4 + ring * 0.12;
+    for (let hole = 0; hole < 6; hole++) {
+      const a = (hole / 6) * Math.PI * 2;
+      const port = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.02, 6), matSocketRecessLocal());
+      port.rotation.z = Math.PI / 2;
+      port.position.set(Math.cos(a) * 0.058, 0.03 + Math.sin(a) * 0.058, ringZ);
+      barrelPivot.add(port);
+    }
   }
 
   const muzzleBrake = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.11, 0.14), matSteel);
   muzzleBrake.position.set(0, 0.03, 1.06);
   barrelPivot.add(muzzleBrake);
 
+  // 250-round ammo can with a beaded chain hinting at belted rounds
   const ammoBox = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.24, 0.34), matFrame);
   ammoBox.position.set(-0.26, -0.06, -0.06);
   barrelPivot.add(ammoBox);
@@ -1437,6 +1974,13 @@ export function buildTripodMachineGun(accentHex = 0x2de2e6): TripodBuildResult {
   beltFeed.position.set(-0.14, 0.02, -0.02);
   barrelPivot.add(beltFeed);
 
+  for (let round = 0; round < 6; round++) {
+    const shell = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.03, 6), matBrass);
+    shell.rotation.z = Math.PI / 2;
+    shell.position.set(-0.2 - round * 0.018, 0.0, -0.06);
+    barrelPivot.add(shell);
+  }
+
   const spadeBar = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.05, 0.05), matSteel);
   spadeBar.position.set(0, -0.02, -0.3);
   barrelPivot.add(spadeBar);
@@ -1445,6 +1989,11 @@ export function buildTripodMachineGun(accentHex = 0x2de2e6): TripodBuildResult {
     const grip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.2, 0.06), matSteel);
     grip.position.set(gx, -0.13, -0.3);
     barrelPivot.add(grip);
+    // Butterfly trigger tab
+    const triggerTab = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.05, 0.015), matBrass);
+    triggerTab.position.set(gx, -0.2, -0.26);
+    triggerTab.rotation.x = 0.4;
+    barrelPivot.add(triggerTab);
   });
 
   const muzzlePoint = new THREE.Object3D();
@@ -1459,8 +2008,13 @@ export function buildTripodMachineGun(accentHex = 0x2de2e6): TripodBuildResult {
   return { group, barrelPivot, muzzlePoint, hitMeshes };
 }
 
+/** Small shared dark-recess material for vents/sights on deployables. */
+function matSocketRecessLocal(): THREE.MeshStandardMaterial {
+  return new THREE.MeshStandardMaterial({ color: 0x060606, roughness: 0.95 });
+}
+
 /* =============================================================================
- * MEDIC REGEN FIELD — green wireframe sphere
+ * MEDIC REGEN FIELD — dual-layer holographic sphere
  * ===========================================================================*/
 
 export function buildRegenFieldMesh(radius = REGEN_FIELD_RADIUS): THREE.Mesh {
@@ -1474,8 +2028,20 @@ export function buildRegenFieldMesh(radius = REGEN_FIELD_RADIUS): THREE.Mesh {
   });
   const mesh = new THREE.Mesh(geo, mat);
 
+  // Second, smaller wireframe layer — inherits the outer mesh's rotation for
+  // a free dual-layer holographic look with no extra per-frame driving needed.
+  const innerWireGeo = new THREE.IcosahedronGeometry(radius * 0.78, 1);
+  const innerWireMat = new THREE.MeshBasicMaterial({
+    color: 0x67e8f9,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.28,
+    depthWrite: false
+  });
+  mesh.add(new THREE.Mesh(innerWireGeo, innerWireMat));
+
   // Solid inner glow shell keeps the field readable against bright floors
-  const innerGeo = new THREE.SphereGeometry(radius * 0.97, 20, 16);
+  const innerGeo = new THREE.SphereGeometry(radius * 0.6, 20, 16);
   const innerMat = new THREE.MeshBasicMaterial({
     color: 0x16a34a,
     transparent: true,
@@ -1489,7 +2055,7 @@ export function buildRegenFieldMesh(radius = REGEN_FIELD_RADIUS): THREE.Mesh {
 }
 
 /* =============================================================================
- * RECON TELEMETRY MARK — red overhead caret + outline cage
+ * RECON TELEMETRY MARK — inverted caret + bounding tracking bracket
  * ===========================================================================*/
 
 export function buildTelemetryMarker(): THREE.Group {
@@ -1518,6 +2084,153 @@ export function buildTelemetryMarker(): THREE.Group {
   cage.position.y = 0.95;
   group.add(cage);
 
+  // Bracket-box corner ticks for a HUD tracking-reticle look
+  const tickMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, depthTest: false });
+  const corners: [number, number][] = [
+    [-1, -1],
+    [1, -1],
+    [-1, 1],
+    [1, 1]
+  ];
+  corners.forEach(([sx, sz]) => {
+    const tickH = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.014, 0.014), tickMat);
+    tickH.position.set(sx * 0.42, 1.85, sz * 0.35);
+    const tickV = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.014, 0.14), tickMat);
+    tickV.position.copy(tickH.position);
+    group.add(tickH, tickV);
+  });
+
   group.renderOrder = 999;
   return group;
+}
+
+/* =============================================================================
+ * REUSABLE IMPACT PARTICLE SYSTEM — dust chips, ricochet sparks, blood
+ * -----------------------------------------------------------------------------
+ * Self-contained and ready to integrate: call createImpactParticleSystem(scene)
+ * once, call .update(dt) every frame, and call the spawn* methods wherever a
+ * hit is currently handled. Not wired into App.tsx's existing hit-handling
+ * calls in this pass — that file is out of scope here — but this drop-in
+ * module can replace the ad-hoc sparkPool there with zero behavioural change
+ * beyond richer, three-tier particle types.
+ * ===========================================================================*/
+
+interface ImpactParticle {
+  mesh: THREE.Mesh;
+  vel: THREE.Vector3;
+  life: number;
+  maxLife: number;
+  gravity: number;
+  spin: THREE.Vector3;
+}
+
+export interface ImpactParticleSystem {
+  group: THREE.Group;
+  spawnDust: (pos: THREE.Vector3) => void;
+  spawnSpark: (pos: THREE.Vector3, dir?: THREE.Vector3) => void;
+  spawnBlood: (pos: THREE.Vector3, dir?: THREE.Vector3) => void;
+  update: (dt: number) => void;
+  dispose: () => void;
+}
+
+export function createImpactParticleSystem(scene: THREE.Scene): ImpactParticleSystem {
+  const group = new THREE.Group();
+  scene.add(group);
+
+  const particles: ImpactParticle[] = [];
+
+  const dustGeo = new THREE.BoxGeometry(0.035, 0.035, 0.035);
+  const dustMat = new THREE.MeshStandardMaterial({ color: 0x9a8f7c, roughness: 0.95 });
+
+  const sparkGeo = new THREE.BoxGeometry(0.02, 0.02, 0.06);
+  const sparkMat = new THREE.MeshBasicMaterial({ color: 0xffe9a8 });
+
+  const bloodGeo = new THREE.BoxGeometry(0.045, 0.045, 0.045);
+  const bloodMatBase = { color: 0x7a0e0e, roughness: 0.35 };
+
+  function spawn(mesh: THREE.Mesh, pos: THREE.Vector3, vel: THREE.Vector3, life: number, gravity: number) {
+    mesh.position.copy(pos);
+    group.add(mesh);
+    particles.push({
+      mesh,
+      vel,
+      life,
+      maxLife: life,
+      gravity,
+      spin: new THREE.Vector3(Math.random() * 8, Math.random() * 8, Math.random() * 8)
+    });
+  }
+
+  function spawnDust(pos: THREE.Vector3): void {
+    for (let i = 0; i < 5; i++) {
+      const mesh = new THREE.Mesh(dustGeo, dustMat);
+      const vel = new THREE.Vector3((Math.random() - 0.5) * 2.2, Math.random() * 1.6, (Math.random() - 0.5) * 2.2);
+      spawn(mesh, pos, vel, 0.6 + Math.random() * 0.3, 6);
+    }
+  }
+
+  function spawnSpark(pos: THREE.Vector3, dir?: THREE.Vector3): void {
+    const base = dir ? dir.clone().normalize() : new THREE.Vector3(0, 1, 0);
+    for (let i = 0; i < 6; i++) {
+      const mesh = new THREE.Mesh(sparkGeo, sparkMat);
+      const vel = base
+        .clone()
+        .multiplyScalar(-2.5)
+        .add(new THREE.Vector3((Math.random() - 0.5) * 4, Math.random() * 3, (Math.random() - 0.5) * 4));
+      spawn(mesh, pos, vel, 0.15 + Math.random() * 0.1, 10);
+    }
+  }
+
+  function spawnBlood(pos: THREE.Vector3, dir?: THREE.Vector3): void {
+    const base = dir ? dir.clone().normalize() : new THREE.Vector3(0, 1, 0);
+    for (let i = 0; i < 7; i++) {
+      const shade = 0x50 + Math.floor(Math.random() * 30);
+      const mat = new THREE.MeshStandardMaterial({ ...bloodMatBase, color: (bloodMatBase.color & 0xffff00) | shade });
+      const mesh = new THREE.Mesh(bloodGeo, mat);
+      const vel = base
+        .clone()
+        .multiplyScalar(-1.8)
+        .add(new THREE.Vector3((Math.random() - 0.5) * 3, Math.random() * 2.4 + 1, (Math.random() - 0.5) * 3));
+      spawn(mesh, pos, vel, 1.2 + Math.random() * 0.5, 14);
+    }
+  }
+
+  function update(dt: number): void {
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.life -= dt;
+      if (p.life <= 0) {
+        group.remove(p.mesh);
+        (p.mesh.material as THREE.Material).dispose();
+        particles.splice(i, 1);
+        continue;
+      }
+      p.vel.y -= p.gravity * dt;
+      p.mesh.position.addScaledVector(p.vel, dt);
+      p.mesh.rotation.x += p.spin.x * dt;
+      p.mesh.rotation.y += p.spin.y * dt;
+      p.mesh.rotation.z += p.spin.z * dt;
+      const mat = p.mesh.material as THREE.Material & { opacity: number; transparent: boolean };
+      if (p.life < p.maxLife * 0.3) {
+        mat.transparent = true;
+        mat.opacity = Math.max(0, p.life / (p.maxLife * 0.3));
+      }
+    }
+  }
+
+  function dispose(): void {
+    particles.forEach((p) => {
+      group.remove(p.mesh);
+      (p.mesh.material as THREE.Material).dispose();
+    });
+    particles.length = 0;
+    scene.remove(group);
+    dustGeo.dispose();
+    dustMat.dispose();
+    sparkGeo.dispose();
+    sparkMat.dispose();
+    bloodGeo.dispose();
+  }
+
+  return { group, spawnDust, spawnSpark, spawnBlood, update, dispose };
 }
