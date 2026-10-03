@@ -1,6 +1,8 @@
+import { ModePosters } from './ModePosters';
+import { ClassIcon, TacticalSquad } from './TacticalSquad';
 import React, { useState, useEffect, useRef } from 'react';
 import { WorldMapId, GameMode, ClassId, DeploymentProtocol, EliteCompanionConfig, DEFAULT_ELITE_SQUAD } from './types';
-import { CLASSES } from './App';
+import { CLASSES } from './classes';
 import { VisorType, FactionType } from './lobbyAvatar';
 import { LoadoutDMZ, VAULT_WEAPONS, WeaponSilhouette } from './LoadoutDMZ';
 import { useFaction, GearTier, HeadgearOption, TorsoOption, LowerOption } from './FactionContext';
@@ -31,6 +33,10 @@ export interface PersistentStats {
 }
 
 export interface LobbyTerminalProps {
+  operatorZoom: 'full' | 'head' | 'torso' | 'legs';
+  setOperatorZoom: (zoom: 'full' | 'head' | 'torso' | 'legs') => void;
+  deploymentPreset: import('./types').SquadDirective;
+  setDeploymentPreset: (preset: import('./types').SquadDirective) => void;
   activeTab: LobbyTab;
   setActiveTab: (tab: LobbyTab) => void;
   factionAlignment: FactionType;
@@ -326,6 +332,7 @@ export const getPersistentStats = (): PersistentStats => {
 };
 
 export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
+  operatorZoom, setOperatorZoom, deploymentPreset, setDeploymentPreset,
   activeTab,
   setActiveTab,
   factionAlignment,
@@ -354,7 +361,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
   setSelectedMapState,
   isDevMode,
   setIsDevMode,
-  deploymentProtocol = 'elite',
+  deploymentProtocol = 'elite' as DeploymentProtocol,
   setDeploymentProtocol,
   eliteSquad = DEFAULT_ELITE_SQUAD,
   setEliteSquad,
@@ -757,6 +764,8 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
               </button>
             </div>
 
+<TacticalSquad squad={eliteSquad} setSquad={setEliteSquad} leader={selectedClassId} protocol={deploymentProtocol} setProtocol={setDeploymentProtocol} preset={deploymentPreset} setPreset={setDeploymentPreset} friendlyCount={friendlyCount} setFriendlyCount={setFriendlyCount} compact />
+<div className="grid grid-cols-3 gap-1 text-[9px]">{(['shattered_wall', 'hangar', 'training'] as WorldMapId[]).map(map => <button type="button" key={map} aria-pressed={selectedMapState === map} onClick={() => setSelectedMapState(map)} className={`border p-2 ${selectedMapState === map ? 'border-cyan-300 text-cyan-200' : 'border-white/20 text-slate-400'}`}>{map === 'shattered_wall' ? 'SHATTERED WALL' : map === 'hangar' ? 'BUNKER HANGAR' : 'TRAINING FIELD'}</button>)}</div>
             {/* Top Split Section: Left Stacked Telemetry Labels + Right Micro-Grid Canvas */}
             <div className="flex items-start justify-between gap-2">
               {/* Left Column: Telemetry category tags */}
@@ -878,6 +887,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
                     <div
                       key={cls.id}
                       onClick={() => setSelectedClassId(cls.id)}
+                      role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedClassId(cls.id); } }}
                       className={`p-3.5 rounded-xl border backdrop-blur-md transition-all cursor-pointer flex flex-col justify-between gap-3 select-none ${
                         isSelected
                           ? 'bg-white/10 shadow-lg'
@@ -892,10 +902,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
                         {/* Class Header */}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span
-                              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: cls.color, boxShadow: `0 0 8px ${cls.color}` }}
-                            />
+                            <ClassIcon id={cls.id} className="w-8 h-8" />
                             <span className="text-xs font-black tracking-wide text-white uppercase">
                               {cls.name}
                             </span>
@@ -961,6 +968,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
               </div>
             </div>
 
+<TacticalSquad squad={eliteSquad} setSquad={setEliteSquad} leader={selectedClassId} protocol={deploymentProtocol} setProtocol={setDeploymentProtocol} preset={deploymentPreset} setPreset={setDeploymentPreset} friendlyCount={friendlyCount} setFriendlyCount={setFriendlyCount} />
             {/* Faction Allegiance Selection Matrix */}
             <div className="flex flex-col gap-3 mt-2">
               <div className="flex items-center justify-between text-xs font-bold text-[#8b98a1] tracking-widest px-1">
@@ -1071,6 +1079,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
               </p>
             </div>
 
+<div className="grid grid-cols-4 gap-1" aria-label="Operator camera zoom">{(['full', 'head', 'torso', 'legs'] as const).map(zoom => <button key={zoom} type="button" aria-pressed={operatorZoom === zoom} onClick={() => setOperatorZoom(zoom)} className={`text-[9px] border p-2 ${operatorZoom === zoom ? 'border-cyan-300 text-cyan-200' : 'border-white/20 text-slate-400'}`}>{zoom.toUpperCase()}</button>)}</div><p className="text-[9px] text-slate-400">DRAG THE OPERATOR VIEW TO ROTATE 360°</p>
             {/* Headgear Configuration */}
             <div className="bg-black/40 border border-white/10 p-3 rounded-xs flex flex-col gap-2">
               <div className="flex items-center justify-between">
@@ -1339,107 +1348,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
               </button>
             </div>
 
-                        {/* 2 Distinct Styled Scenario Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-              {/* CARD 1: TEAM DEATHMATCH */}
-              <div
-                onClick={() => setMatchMode('team')}
-                className={`p-4 rounded-xs border transition-all cursor-pointer flex flex-col justify-between h-72 ${
-                  matchMode === 'team'
-                    ? 'border-[#57d1c9] bg-[#57d1c9]/10 shadow-[0_0_16px_rgba(87,209,201,0.35)]'
-                    : 'border-white/10 bg-black/50 hover:border-white/30'
-                }`}
-              >
-                <div>
-                  <div className="w-full h-28 bg-[#1a2522] rounded-xs border border-white/10 flex items-center justify-center relative overflow-hidden mb-3">
-                    <div className="text-4xl">⚔️</div>
-                  </div>
-                  <div className="text-xs font-extrabold text-white tracking-wider">TEAM DEATHMATCH</div>
-                  <div className="text-[9px] text-[#57d1c9] font-bold mt-0.5">SQUAD VS SQUAD</div>
-                  <div className="text-[9px] text-[#8b98a1] mt-1.5 leading-relaxed">
-                    Classic tactical team-based combat. First team to reach the target score wins.
-                  </div>
-                </div>
-              </div>
-              
-              {/* CARD 2: FREE FOR ALL */}
-              <div
-                onClick={() => setMatchMode('ffa')}
-                className={`p-4 rounded-xs border transition-all cursor-pointer flex flex-col justify-between h-72 ${
-                  matchMode === 'ffa'
-                    ? 'border-[#f5a623] bg-[#f5a623]/10 shadow-[0_0_16px_rgba(245,166,35,0.35)]'
-                    : 'border-white/10 bg-black/50 hover:border-white/30'
-                }`}
-              >
-                <div>
-                  <div className="w-full h-28 bg-[#25201a] rounded-xs border border-white/10 flex items-center justify-center relative overflow-hidden mb-3">
-                    <div className="text-4xl">🔥</div>
-                  </div>
-                  <div className="text-xs font-extrabold text-white tracking-wider">FREE FOR ALL</div>
-                  <div className="text-[9px] text-[#f5a623] font-bold mt-0.5">LONE WOLF</div>
-                  <div className="text-[9px] text-[#8b98a1] mt-1.5 leading-relaxed">
-                    Every operator for themselves. Eliminate targets and dominate the battlefield.
-                  </div>
-                </div>
-              </div>
-
-              {/* CARD 1: EXTRACTION */}
-              <div
-                onClick={() => setMatchMode('extraction')}
-                className={`p-4 rounded-xs border transition-all cursor-pointer flex flex-col justify-between h-72 ${
-                  matchMode === 'extraction'
-                    ? 'border-[#2de2e6] bg-[#2de2e6]/10 shadow-[0_0_16px_rgba(45,226,230,0.35)]'
-                    : 'border-white/10 bg-black/50 hover:border-white/30'
-                }`}
-              >
-                <div>
-                  <div className="w-full h-28 bg-[#15191e] rounded-xs border border-white/10 flex items-center justify-center relative overflow-hidden mb-3">
-                    <svg viewBox="0 0 100 100" className="w-20 h-20 text-[#2de2e6]/80 stroke-current fill-none">
-                      <circle cx="50" cy="50" r="38" strokeWidth="1.5" strokeDasharray="4 2" />
-                      <line x1="50" y1="5" x2="50" y2="95" strokeWidth="1.2" />
-                      <line x1="5" y1="50" x2="95" y2="50" strokeWidth="1.2" />
-                      <path d="M32 60 C32 35, 68 35, 68 60 L74 65 L66 65 L64 74 L36 74 L34 65 L26 65 Z" fill="currentColor" fillOpacity="0.3" strokeWidth="1.5" />
-                    </svg>
-                    <div className="absolute top-2 left-2 text-[8px] text-[#2de2e6] font-bold">THEATER 01</div>
-                  </div>
-                  <div className="text-xs font-extrabold text-white tracking-wider">{selectedMapState === 'shattered_wall' ? 'SHATTERED WALL EXTRACTION' : 'BIO-HAZARD EXTRACTION'}</div>
-                  <div className="text-[9px] text-[#2de2e6] font-bold mt-0.5">{selectedMapState === 'shattered_wall' ? 'OFFSHORE HOLDOUT & EXFIL' : 'LINEAR MISSION FLOW'}</div>
-                  <div className="text-[9px] text-[#8b98a1] mt-1.5 leading-relaxed">
-                    {selectedMapState === 'shattered_wall' ? 'Signal the transport, defend the storm-battered helipad, and board to extract.' : 'Progress through 5 containment sectors. Hack the mainframe, survive the Mega-Boss, and extract.'}
-                  </div>
-                </div>
-              </div>
-
-              {/* CARD 2: WAVE SURVIVAL */}
-              <div
-                onClick={() => {
-                  setMatchMode('zombie');
-                  if (selectedMapState === 'training') setSelectedMapState('hangar');
-                }}
-                className={`p-4 rounded-xs border transition-all cursor-pointer flex flex-col justify-between h-72 ${
-                  matchMode === 'zombie'
-                    ? 'border-[#ff2a2a] bg-[#ff2a2a]/10 shadow-[0_0_16px_rgba(255,42,42,0.35)]'
-                    : 'border-white/10 bg-black/50 hover:border-white/30'
-                }`}
-              >
-                <div>
-                  <div className="w-full h-28 bg-[#1f1012] rounded-xs border border-red-900/40 flex items-center justify-center relative overflow-hidden mb-3">
-                    <svg viewBox="0 0 100 100" className="w-20 h-20 text-[#ff2a2a]/80 stroke-current fill-none">
-                      <path d="M30 45 C30 20, 70 20, 70 45 C70 55, 62 60, 60 70 L60 82 L40 82 L40 70 C38 60, 30 55, 30 45 Z" fill="#ff2a2a" fillOpacity="0.25" strokeWidth="1.8" />
-                      <circle cx="42" cy="42" r="6" fill="#ff2a2a" />
-                      <circle cx="58" cy="42" r="6" fill="#ff2a2a" />
-                      <path d="M44 65 L56 65 L50 74 Z" fill="#ff2a2a" />
-                    </svg>
-                    <div className="absolute top-2 left-2 text-[8px] text-[#ff4444] font-bold">THEATER 02 // ENDLESS</div>
-                  </div>
-                  <div className="text-xs font-extrabold text-white tracking-wider">HORDE SURVIVAL</div>
-                  <div className="text-[9px] text-[#ff4444] font-bold mt-0.5">ZOMBIE INFECTION WAVES</div>
-                  <div className="text-[9px] text-[#8b98a1] mt-1.5 leading-relaxed">
-                    High-intensity wave defense against Walkers, Runners, Brutes, and Banshees.
-                  </div>
-                </div>
-              </div>
-            </div>
+<ModePosters mode={matchMode} map={selectedMapState} onSelect={mode => { setMatchMode(mode); if ((mode === 'zombie' || mode === 'extraction') && selectedMapState === 'training') setSelectedMapState('hangar'); }} />
             {/* Scenario Configuration: Map & Rules */}
             <div className="flex flex-col md:flex-row gap-3">
               {/* Map Selection Toggle Grid */}
@@ -1507,183 +1416,6 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
                   <span>DEPLOYMENT PROTOCOL & RULES</span>
                   <span className="text-[9px] text-[#8b98a1]">ALLIED DOCTRINE</span>
                 </div>
-
-                {/* 2-Way Protocol Mode Selector Toggle */}
-                <div className="mb-4">
-                  <div className="text-[9px] font-bold text-[#8b98a1] mb-1.5 flex items-center justify-between">
-                    <span>ALLIED COMMAND STRUCTURE</span>
-                    <span className={deploymentProtocol === 'elite' ? 'text-[#2de2e6] font-bold' : 'text-[#f5a623] font-bold'}>
-                      {deploymentProtocol === 'elite' ? 'ELITE TASK FORCE (5 SLOTS)' : `BATTALION (${friendlyCount} BOTS)`}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (setDeploymentProtocol) setDeploymentProtocol('elite');
-                        setFriendlyCount(4);
-                      }}
-                      className={`p-2.5 rounded-xs border text-left transition-all cursor-pointer relative overflow-hidden ${
-                        deploymentProtocol === 'elite'
-                          ? 'border-[#2de2e6] bg-gradient-to-r from-[#2de2e6]/20 to-transparent shadow-[0_0_12px_rgba(45,226,230,0.25)] text-white'
-                          : 'border-white/10 bg-black/50 text-[#8b98a1] hover:border-white/25 hover:text-white'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black tracking-wide text-white flex items-center gap-1.5">
-                          <span>🎖️</span>
-                          <span>ELITE SQUAD PROTOCOL</span>
-                        </span>
-                        {deploymentProtocol === 'elite' && (
-                          <span className="text-[8px] bg-[#2de2e6]/20 border border-[#2de2e6]/40 text-[#2de2e6] px-1.5 py-0.5 rounded font-bold">
-                            ACTIVE
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[8px] text-[#8b98a1] mt-1 leading-tight">
-                        5 Specialized slots: Leader + 4 Elite bots with 2.5x stats, melee & unique perks.
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (setDeploymentProtocol) setDeploymentProtocol('standard');
-                      }}
-                      className={`p-2.5 rounded-xs border text-left transition-all cursor-pointer relative overflow-hidden ${
-                        deploymentProtocol === 'standard'
-                          ? 'border-[#f5a623] bg-gradient-to-r from-[#f5a623]/20 to-transparent shadow-[0_0_12px_rgba(245,166,35,0.25)] text-white'
-                          : 'border-white/10 bg-black/50 text-[#8b98a1] hover:border-white/25 hover:text-white'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black tracking-wide text-white flex items-center gap-1.5">
-                          <span>👥</span>
-                          <span>STANDARD BATTALION</span>
-                        </span>
-                        {deploymentProtocol === 'standard' && (
-                          <span className="text-[8px] bg-[#f5a623]/20 border border-[#f5a623]/40 text-[#f5a623] px-1.5 py-0.5 rounded font-bold">
-                            ACTIVE
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[8px] text-[#8b98a1] mt-1 leading-tight">
-                        Mass deployment threshold. Up to 20 low-tier grunts with standard combat routines.
-                      </div>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Conditional Allied Squad UI: Standard Slider vs Elite Grid */}
-                {deploymentProtocol === 'standard' ? (
-                  <div className="mb-3 bg-black/60 border border-white/10 p-2.5 rounded-xs">
-                    <div className="flex justify-between text-[9px] font-bold text-[#8b98a1] mb-1">
-                      <span>MASS BATTALION ALLIED COMBATANTS</span>
-                      <span className="text-white font-mono">{friendlyCount} RECRUITS</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="20"
-                      value={friendlyCount}
-                      onChange={(e) => setFriendlyCount(parseInt(e.target.value))}
-                      className="w-full accent-[#f5a623]"
-                    />
-                    <div className="text-[8px] text-[#8b98a1] mt-1 flex justify-between">
-                      <span>SOLO (0 BOTS)</span>
-                      <span>SQUAD (10)</span>
-                      <span>FULL PLATOON (20)</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mb-3 space-y-2">
-                    <div className="flex items-center justify-between text-[9px] font-bold text-[#2de2e6]">
-                      <span>OPERATIONAL SQUAD ROSTER (SLOTS 2 - 5)</span>
-                      <span className="text-[8px] text-[#8b98a1]">CUSTOMIZE COMPANION LOADOUTS</span>
-                    </div>
-
-                    {/* 4 Distinct Allied Deployment Slots Horizontal Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                      {(eliteSquad || DEFAULT_ELITE_SQUAD).map((companion) => {
-                        const updateCompanionWeapon = (slotKey: 'primaryWeapon' | 'secondaryWeapon', weaponId: string) => {
-                          if (!setEliteSquad) return;
-                          const updated = (eliteSquad || DEFAULT_ELITE_SQUAD).map(m => {
-                            if (m.slotId === companion.slotId) {
-                              return { ...m, [slotKey]: weaponId };
-                            }
-                            return m;
-                          });
-                          setEliteSquad(updated);
-                        };
-
-                        return (
-                          <div
-                            key={companion.slotId}
-                            className="bg-black/70 border border-white/15 p-2.5 rounded-xs flex flex-col justify-between relative group hover:border-[#2de2e6]/50 transition-all"
-                          >
-                            <div className="flex items-center justify-between border-b border-white/10 pb-1.5 mb-1.5">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-sm">{companion.icon}</span>
-                                <div>
-                                  <div className="text-[8px] text-[#8b98a1] font-bold uppercase tracking-wider">
-                                    SLOT 0{companion.slotId} // {companion.archetype.toUpperCase()}
-                                  </div>
-                                  <div className="text-[10px] font-black text-white">
-                                    {companion.callsign}
-                                  </div>
-                                </div>
-                              </div>
-                              <span className="text-[7px] font-mono text-[#2de2e6] border border-[#2de2e6]/30 px-1 py-0.5 rounded bg-[#2de2e6]/10">
-                                2.5x STATS
-                              </span>
-                            </div>
-
-                            <div className="text-[8px] text-[#8b98a1] leading-tight mb-2">
-                              {companion.perkDescription}
-                            </div>
-
-                            {/* Loadout Customization Sub-nodes */}
-                            <div className="space-y-1.5 pt-1 border-t border-white/10">
-                              <div>
-                                <label className="text-[7px] text-[#8b98a1] font-bold block mb-0.5">
-                                  PRIMARY FIREARM
-                                </label>
-                                <select
-                                  value={companion.primaryWeapon}
-                                  onChange={(e) => updateCompanionWeapon('primaryWeapon', e.target.value)}
-                                  className="w-full bg-[#12171d] border border-white/20 text-white text-[9px] px-1.5 py-1 rounded-xs focus:outline-none focus:border-[#2de2e6]"
-                                >
-                                  {ARMORY_CATEGORIES.primary.map(w => (
-                                    <option key={w.id} value={w.id}>
-                                      {w.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-
-                              <div>
-                                <label className="text-[7px] text-[#8b98a1] font-bold block mb-0.5">
-                                  SECONDARY SIDEARM
-                                </label>
-                                <select
-                                  value={companion.secondaryWeapon}
-                                  onChange={(e) => updateCompanionWeapon('secondaryWeapon', e.target.value)}
-                                  className="w-full bg-[#12171d] border border-white/20 text-white text-[9px] px-1.5 py-1 rounded-xs focus:outline-none focus:border-[#2de2e6]"
-                                >
-                                  {ARMORY_CATEGORIES.secondary.map(w => (
-                                    <option key={w.id} value={w.id}>
-                                      {w.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
 
                 <div className="space-y-3 pt-2 border-t border-white/10">
                   <div>

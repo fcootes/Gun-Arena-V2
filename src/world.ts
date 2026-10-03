@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import type { WorldCollider, Door, GroundPickup, GameMode, WorldMapId } from './types';
+import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
+import type { WorldCollider, Door, GroundPickup, GameMode, WorldMapId, Bot } from './types';
 export type { WorldMapId } from './types';
 import { WEAPONS } from './weapons';
 
@@ -61,7 +62,10 @@ export interface ObjectivePropInstance {
   dispose: () => void;
 }
 
+export interface HeliDefenseHit { bot: Bot; damage: number; }
+
 export interface WorldManager {
+  updateHeliDefenses?: (delta: number, zombies: readonly Bot[]) => readonly HeliDefenseHit[];
   mapId: WorldMapId;
   updateWorld: (delta: number, time: number, currentMode: GameMode) => void;
   getSpawnPoints: (mode: GameMode) => SpawnPoint[];
@@ -1680,6 +1684,11 @@ export interface HelicopterMesh {
   rotorDisk: THREE.Mesh;
   tailDisk: THREE.Mesh;
   doors: readonly [THREE.Group, THREE.Group];
+  defenseMount: THREE.Group;
+  defenseBarrels: THREE.Group;
+  defenseMuzzle: THREE.Object3D;
+  defenseFlash: THREE.Mesh;
+  defenseTracer: THREE.Line;
   navigationLight: THREE.PointLight;
   state: HelicopterState;
   rotorSpeed: number;
@@ -1978,10 +1987,24 @@ export function buildHelicopterMesh(): HelicopterMesh {
     box(0.12, 2.1, 3.7, 0, 0, 0, hull, door); box(0.14, 0.75, 1.1, 0, 0.35, -0.45, glass, door);
     box(0.2, 0.08, 0.35, side * 0.09, -0.1, 1.2, trim, door); group.add(door);
   });
+  const defenseMount = new THREE.Group(); defenseMount.position.set(1.9, 1.75, 0); group.add(defenseMount);
+  box(.28, .28, .45, 0, 0, 0, trim, defenseMount);
+  const defenseBarrels = new THREE.Group(); defenseMount.add(defenseBarrels);
+  for (let i = 0; i < 6; i++) {
+    const angle = i * Math.PI / 3;
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, .85, 8), trim);
+    barrel.rotation.x = Math.PI / 2; barrel.position.set(Math.cos(angle) * .075, Math.sin(angle) * .075, .55); defenseBarrels.add(barrel);
+  }
+  const defenseMuzzle = new THREE.Object3D(); defenseMuzzle.position.z = 1.03; defenseMount.add(defenseMuzzle);
+  const defenseFlash = new THREE.Mesh(new THREE.SphereGeometry(.12, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffd078, transparent: true, opacity: .9, depthWrite: false }));
+  defenseFlash.position.z = 1.03; defenseFlash.visible = false; defenseMount.add(defenseFlash);
+  const tracerGeometry = new THREE.BufferGeometry(); tracerGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+  const defenseTracer = new THREE.Line(tracerGeometry, new THREE.LineBasicMaterial({ color: 0xffca79, transparent: true, opacity: .8, depthWrite: false }));
+  defenseTracer.frustumCulled = false; defenseTracer.visible = false; group.add(defenseTracer);
   resources.track(group);
   let disposed = false; let doorOpening = 0;
   const result: HelicopterMesh = {
-    group, mainRotor, tailRotor, rotorDisk, tailDisk, doors: doorGroups, navigationLight,
+    group, mainRotor, tailRotor, rotorDisk, tailDisk, doors: doorGroups, defenseMount, defenseBarrels, defenseMuzzle, defenseFlash, defenseTracer, navigationLight,
     state: 'IDLE_INBOUND', rotorSpeed: 0,
     update(delta, time) {
       if (disposed) return;
@@ -2512,6 +2535,48 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
     registerHittable(node);
   });
   resources.track(root);
+  const defenseHits: HeliDefenseHit[] = [];
+  let defenseCooldown = 0;
+  const defenseOrigin = new THREE.Vector3(), defenseTarget = new THREE.Vector3(), defenseDirection = new THREE.Vector3();
+  const defenseLocalOrigin = new THREE.Vector3(), defenseLocalTarget = new THREE.Vector3();
+  const defenseRay = new THREE.Raycaster();
+  const defenseObstacles: THREE.Object3D[] = [], defenseIntersections: THREE.Intersection[] = [];
+  function updateHeliDefenses(delta: number, zombies: readonly Bot[]): readonly HeliDefenseHit[] {
+    defenseHits.length = 0;
+    helicopter.defenseFlash.visible = false; helicopter.defenseTracer.visible = false;
+    if (disposed || !Number.isFinite(delta) || delta <= 0 || !helicopter.group.visible || (offshore.phase !== 'HELIPAD_HOLDOUT' && offshore.phase !== 'BOARD_HELICOPTER')) return defenseHits;
+    const dt = Math.min(delta, .1);
+    defenseCooldown = Math.max(0, defenseCooldown - dt);
+    helicopter.defenseBarrels.rotation.z += dt * 35;
+    if (defenseCooldown > 0) return defenseHits;
+    helicopter.group.updateWorldMatrix(true, true);
+    helicopter.defenseMuzzle.getWorldPosition(defenseOrigin);
+    defenseObstacles.length = 0;
+    for (const object of hittableObjects) if (object.userData.type !== 'botpart' && object.visible && object.userData.type !== 'pickup') defenseObstacles.push(object);
+    let target: Bot | null = null, nearest = 75 * 75;
+    for (const zombie of zombies) {
+      if (!zombie.alive || !zombie.isZombie || zombie.team === 'blue') continue;
+      defenseTarget.copy(zombie.pos); defenseTarget.y += 1.2;
+      const distanceSq = defenseOrigin.distanceToSquared(defenseTarget);
+      if (distanceSq >= nearest || distanceSq < .01) continue;
+      defenseDirection.copy(defenseTarget).sub(defenseOrigin).normalize();
+      defenseRay.set(defenseOrigin, defenseDirection); defenseRay.far = Math.sqrt(distanceSq) - .1;
+      defenseIntersections.length = 0; defenseRay.intersectObjects(defenseObstacles, false, defenseIntersections);
+      if (defenseIntersections.length) continue;
+      target = zombie; nearest = distanceSq;
+    }
+    if (!target) return defenseHits;
+    defenseTarget.copy(target.pos); defenseTarget.y += 1.2;
+    helicopter.defenseMount.lookAt(defenseTarget); helicopter.group.updateWorldMatrix(true, true);
+    helicopter.defenseMuzzle.getWorldPosition(defenseOrigin);
+    defenseLocalOrigin.copy(defenseOrigin); helicopter.group.worldToLocal(defenseLocalOrigin);
+    defenseLocalTarget.copy(defenseTarget); helicopter.group.worldToLocal(defenseLocalTarget);
+    const positions = helicopter.defenseTracer.geometry.getAttribute('position') as THREE.BufferAttribute;
+    positions.setXYZ(0, defenseLocalOrigin.x, defenseLocalOrigin.y, defenseLocalOrigin.z); positions.setXYZ(1, defenseLocalTarget.x, defenseLocalTarget.y, defenseLocalTarget.z); positions.needsUpdate = true;
+    helicopter.defenseTracer.visible = true; helicopter.defenseFlash.visible = true;
+    defenseCooldown = .1; defenseHits.push({ bot: target, damage: 16 });
+    return defenseHits;
+  }
   function dispose(): void {
     if (disposed) return; disposed = true;
     helicopter.dispose(); resources.dispose(); root.removeFromParent(); root.clear();
@@ -2520,7 +2585,7 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
     if (scene.fog === stormFog) scene.fog = previousFog;
   }
   return {
-    mapId: 'shattered_wall', terrainMesh, worldColliders, doors, hittableObjects, groundPickups, structures, offshore, lobbyGroup,
+    mapId: 'shattered_wall', updateHeliDefenses, terrainMesh, worldColliders, doors, hittableObjects, groundPickups, structures, offshore, lobbyGroup,
     sectorCenters: { 1: new THREE.Vector3(8, 8, 34), 2: new THREE.Vector3(0, 14, 0), 3: new THREE.Vector3(34, 11, 16), 4: new THREE.Vector3(0, 14, 0), 5: new THREE.Vector3(0, 14.5, 0) },
     hangarCorridorNodes: { mainframe: new THREE.Vector3(8, 8, 34), cryo: new THREE.Vector3(34, 11, 16), evac: new THREE.Vector3(0, 14, 0), center: new THREE.Vector3(0, 14, 0) },
     getSpawnPoints: (mode) => SHATTERED_WALL_SPAWNS[mode].map(({ position, rotation }) => ({ position: position.clone(), rotation: rotation.clone() })),
@@ -2529,12 +2594,34 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
   };
 }
 
+export function tuneLegacyAtmosphere(scene: THREE.Scene, manager: WorldManager): void {
+  const previousFog = scene.fog;
+  const fog = new THREE.FogExp2(manager.mapId === 'hangar' ? 0x141c22 : 0x9eb8bd, manager.mapId === 'hangar' ? .014 : .0038);
+  const floor = manager.terrainMesh.material;
+  if (floor instanceof THREE.MeshStandardMaterial) { floor.roughness = manager.mapId === 'hangar' ? .28 : .68; floor.metalness = manager.mapId === 'hangar' ? .72 : .16; }
+  const geometry = new THREE.PlaneGeometry(manager.mapId === 'hangar' ? 58 : 5, manager.mapId === 'hangar' ? 208 : 5);
+  const reflection = new Reflector(geometry, { textureWidth: 512, textureHeight: 512, clipBias: .003, color: manager.mapId === 'hangar' ? 0x697c87 : 0x869ba1, multisample: 0 });
+  reflection.name = 'Legacy_WetFloorReflection';
+  reflection.rotation.x = -Math.PI / 2;
+  reflection.position.set(0, manager.mapId === 'hangar' ? .012 : terrainHeight(0, 0) + .015, manager.mapId === 'hangar' ? -85 : 0);
+  const material = reflection.material as THREE.ShaderMaterial;
+  material.uniforms.reflectionOpacity = { value: manager.mapId === 'hangar' ? .23 : .12 };
+  material.fragmentShader = material.fragmentShader.replace('uniform vec3 color;', 'uniform vec3 color;\nuniform float reflectionOpacity;').replace('vec4( blendOverlay( base.rgb, color ), 1.0 )', 'vec4( blendOverlay( base.rgb, color ), reflectionOpacity )');
+  material.transparent = true; material.depthWrite = false;
+  reflection.renderOrder = 1; reflection.visible = false; scene.add(reflection);
+  const update = manager.updateWorld, dispose = manager.dispose;
+  let disposed = false;
+  manager.updateWorld = (delta, time, mode) => { if (disposed) return; scene.fog = fog; reflection.visible = true; update(delta, time, mode); };
+  manager.dispose = () => { if (disposed) return; disposed = true; reflection.removeFromParent(); reflection.dispose(); geometry.dispose(); if (scene.fog === fog) scene.fog = previousFog; dispose(); };
+}
+
 let activeWorld: WorldManager | null = null;
 let activeScene: THREE.Scene | null = null;
 
 /** Compatibility factory used by the existing App.tsx engine. */
 export function createWorld(scene: THREE.Scene, mapId: WorldMapId = 'training'): WorldManager {
   const manager = mapId === 'shattered_wall' ? createOffshoreWorld(scene) : createLegacyWorld(scene, mapId);
+  if (mapId !== 'shattered_wall') tuneLegacyAtmosphere(scene, manager);
   activeWorld = manager; activeScene = scene;
   const disposeManager = manager.dispose;
   manager.dispose = () => { disposeManager(); if (activeWorld === manager) { activeWorld = null; activeScene = null; } };
@@ -2566,4 +2653,10 @@ export function getExtractionZones(): ExtractionZones | null {
 export function cleanupWorld(scene: THREE.Scene): void {
   if (activeScene && activeScene !== scene) return;
   activeWorld?.dispose(); activeWorld = null; activeScene = null;
+}
+
+const EMPTY_HELI_HITS: readonly HeliDefenseHit[] = Object.freeze([]);
+/** App applies returned hits through its existing damage and kill pipeline. */
+export function updateHeliDefenses(delta: number, zombies: readonly Bot[]): readonly HeliDefenseHit[] {
+  return activeWorld?.updateHeliDefenses?.(delta, zombies) ?? EMPTY_HELI_HITS;
 }

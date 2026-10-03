@@ -2678,7 +2678,7 @@ export function updateEliteSquad(dt: number, ctx: CombatSystemsContext): Map<num
 
     switch (bot.eliteRole) {
       /* ---------------- TITAN-2 · HEAVY ---------------- */
-      case 'heavy': {
+      case 'support': {
         // Prefers open sightlines: sample positions around the player and keep
         // the one with clear LOS to the most hostiles.
         bot.highGroundTimer = (bot.highGroundTimer ?? 0) - dt;
