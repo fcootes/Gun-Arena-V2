@@ -2464,6 +2464,10 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
   let lightningCountdown = 7 + Math.random() * 10; let lightningEnvelope = 0;
   function updateWorld(delta: number, time: number, _mode: GameMode): void {
     if (disposed) return;
+    // The lobby temporarily overrides these; reclaim the offshore atmosphere
+    // when App resumes this world's gameplay update, reusing the same objects.
+    if (scene.fog !== stormFog) scene.fog = stormFog;
+    if (scene.background !== stormBackground) scene.background = stormBackground;
     const dt = Math.min(Math.max(Number.isFinite(delta) ? delta : 0, 0), 0.1); const clockTime = Number.isFinite(time) ? time : 0;
     oceanMaterial.uniforms.uTime.value = clockTime;
     for (let i = 0; i < rainCount; i++) {

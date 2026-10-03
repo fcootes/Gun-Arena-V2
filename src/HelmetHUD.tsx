@@ -24,6 +24,7 @@ export interface HelmetHUDProps {
   slotIndex: number;
   playerLoadout: WeaponDef[];
   playerLoadoutStates: WeaponSlotState[];
+  onSelectSlot?: (index: number) => void;
   matchMode: 'ffa' | 'team' | 'zombie' | 'escort' | 'extraction';
   factionAlignment: 'usmc' | 'apex';
   blueScore: number;
@@ -97,6 +98,7 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
   slotIndex,
   playerLoadout,
   playerLoadoutStates,
+  onSelectSlot,
   matchMode,
   factionAlignment,
   blueScore,
@@ -283,6 +285,10 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
     ammoDisplay = `${weaponSlotState.count ?? 0}`;
     reserveDisplay = 'GRENADES';
     fireModeLabel = 'EXPLOSIVE';
+  } else if (currentWeapon.type === 'consumable') {
+    ammoDisplay = `${weaponSlotState.count ?? 0}`;
+    reserveDisplay = 'KITS';
+    fireModeLabel = 'FIELD KIT';
   }
 
   // Calculate current yaw in compass degrees [0, 360)
@@ -451,11 +457,11 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* 4. TOP-RIGHT TACTICAL MUNITIONS MATRIX (Ammo Readout + SVG Silhouette)    */}
+      {/* 4. BOTTOM-RIGHT TACTICAL MUNITIONS MATRIX (Ammo Readout + SVG Silhouette)    */}
       {/* ========================================================================= */}
       <div
-        className="absolute top-6 right-8 p-3 rounded-sm bg-black/80 border border-white/15 backdrop-blur-sm flex flex-col items-end"
-        style={{ minWidth: '240px' }}
+        data-testid="ammo-status"
+        className="absolute bottom-6 right-4 sm:right-8 w-[180px] sm:w-[220px] p-3 rounded-sm bg-black/80 border border-white/15 backdrop-blur-sm flex flex-col items-end"
       >
         <div className="flex items-center justify-between w-full text-[9px] tracking-wider text-[#8b98a1] mb-1">
           <span className="font-bold text-white uppercase">{currentWeapon.name}</span>
@@ -479,6 +485,15 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
           </span>
         </div>
 
+        {currentWeapon.type === 'weapon' && (currentWeapon.mag ?? 0) > 0 && !['laser', 'minigun'].includes(currentWeapon.id) && (
+          <div className="mt-1 text-[9px] text-[#8b98a1] tracking-wider">
+            {Math.ceil((weaponSlotState.reserve ?? 0) / currentWeapon.mag!)} RESERVE MAGS
+          </div>
+        )}
+        {currentWeapon.type === 'consumable' && (
+          <div className="mt-1 text-[9px] text-[#8b98a1]">LMB TO APPLY FIELD KIT</div>
+        )}
+
         {/* Reloading / Overheating Status Tag */}
         {weaponSlotState.reloading && (
           <div className="mt-1 px-2 py-0.5 bg-yellow-500/20 border border-yellow-400 text-yellow-300 text-[9px] font-bold animate-pulse rounded-xs">
@@ -496,10 +511,8 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
       {/* 5. BOTTOM-LEFT CIRCULAR TACTICAL RADAR                                    */}
       {/* ========================================================================= */}
       <div
-        className="absolute bottom-6 left-8 p-1.5 rounded-full bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center transition-all duration-300"
+        className="absolute bottom-6 left-4 sm:left-8 w-[120px] h-[120px] sm:w-[144px] sm:h-[144px] p-1.5 rounded-full bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center transition-all duration-300"
         style={{
-          width: '144px',
-          height: '144px',
           border: `1.5px solid ${vTheme.accentBorder}`,
           boxShadow: vTheme.glowShadow
         }}
@@ -508,7 +521,7 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
           ref={radarCanvasRef}
           width={132}
           height={132}
-          className="block rounded-full"
+          className="block rounded-full w-[108px] h-[108px] sm:w-[132px] sm:h-[132px]"
         />
         <div
           className="absolute -bottom-2 px-2 py-0.5 rounded-xs bg-black/95 text-[8px] font-bold tracking-wider"
@@ -522,16 +535,20 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* 6. BOTTOM-CENTER 3-SLOT TACTICAL LOADOUT HOTBAR                           */}
+      {/* 6. BOTTOM-CENTER 4-SLOT TACTICAL LOADOUT HOTBAR                           */}
       {/* ========================================================================= */}
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2">
-        {playerLoadout.slice(0, 3).map((weapon, idx) => {
+      <div data-testid="loadout-hotbar" className="absolute bottom-[190px] lg:bottom-5 left-1/2 -translate-x-1/2 grid grid-cols-4 gap-1.5 w-[calc(100vw-2rem)] sm:w-auto max-w-[calc(100vw-2rem)]">
+        {playerLoadout.slice(0, 4).map((weapon, idx) => {
           const isSelected = slotIndex === idx;
           const slotState = playerLoadoutStates[idx];
           return (
-            <div
+            <button
+              type="button"
+              onClick={() => onSelectSlot?.(idx)}
+              aria-pressed={isSelected}
+              aria-label={`Slot ${idx + 1}: ${['Primary', 'Secondary', 'Tactical', 'Field Kit'][idx]} — ${weapon.name}`}
               key={`hotbar-${weapon.id}-${idx}`}
-              className={`px-3 py-1.5 rounded-xs bg-black/85 backdrop-blur-sm flex items-center gap-2.5 transition-all ${
+              className={`w-full sm:w-28 xl:w-36 px-2 py-1.5 rounded-xs bg-black/85 backdrop-blur-sm flex items-center gap-1.5 transition-all pointer-events-auto cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-white ${
                 isSelected ? 'scale-105 shadow-lg' : 'border border-white/10 opacity-70'
               }`}
               style={isSelected ? {
@@ -550,22 +567,25 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
                   color: '#fff'
                 }}
               >
-                {idx === 2 ? '3/G' : idx + 1}
+                {idx + 1}
               </div>
-              <div className="text-left">
+              <div className="text-left min-w-0">
                 <div
                   className="text-[9px] font-bold tracking-wider uppercase"
                   style={{ color: isSelected ? vTheme.accent : '#fff' }}
                 >
-                  {weapon.name}
+                  {['PRIMARY', 'SECONDARY', 'TACTICAL', 'FIELD KIT'][idx]}
                 </div>
+                <div className="text-[8px] text-[#8b98a1] truncate" title={weapon.name}>{weapon.name}</div>
                 <div className="text-[8px] text-[#8b98a1]">
                   {weapon.type === 'grenade'
                     ? `x${slotState?.count ?? 0} EXPLOSIVE`
+                    : weapon.type === 'consumable'
+                    ? `x${slotState?.count ?? 0} KITS`
                     : `${slotState?.ammo ?? 0} / ${slotState?.reserve ?? 0}`}
                 </div>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
