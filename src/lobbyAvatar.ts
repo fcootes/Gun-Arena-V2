@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { disposeBotVisuals } from './botBuilder';
+import type { WorldMapId } from './types';
 import { GearTier } from './FactionContext';
 
 export type VisorType = 'standard' | 'recon' | 'apex';
@@ -7,6 +9,7 @@ export type FactionType = 'usmc' | 'apex';
 export interface LobbyAvatarController {
   group: THREE.Group;
   update: (timeSec: number) => void;
+  setEnvironment: (map: WorldMapId, faction: FactionType) => void;
   setFaction: (faction: FactionType) => void;
   setGearTier: (tier: GearTier) => void;
   setVisor: (visor: VisorType) => void;
@@ -15,6 +18,24 @@ export interface LobbyAvatarController {
   setLowerConfig: (lower: import('./FactionContext').LowerOption) => void;
   setWeapon: (weaponId: string) => void;
   destroy: () => void;
+}
+
+// Avatar textures are private to this controller; bot cache textures are not used here.
+function disposeAvatarResources(root: THREE.Object3D) {
+  const textures = new Set<THREE.Texture>();
+  root.traverse(object => {
+    const material = (object as THREE.Mesh).material;
+    for (const item of material ? (Array.isArray(material) ? material : [material]) : []) {
+      Object.values(item).forEach(value => { if (value instanceof THREE.Texture) textures.add(value); });
+    }
+  });
+  disposeBotVisuals(root);
+  textures.forEach(texture => texture.dispose());
+}
+function clearOwnedChildren(group: THREE.Group) {
+  const retired = new THREE.Group();
+  if (group.children.length) retired.add(...group.children.slice());
+  disposeAvatarResources(retired);
 }
 
 export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): LobbyAvatarController {
@@ -200,9 +221,7 @@ export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): L
 
   function buildCharacter() {
     // Clear old character children
-    while (characterGroup.children.length > 0) {
-      characterGroup.remove(characterGroup.children[0]);
-    }
+    clearOwnedChildren(characterGroup);
 
     const isUSMC = currentFaction === 'usmc';
     const isSpecialized = currentGearTier === 'specialized';
@@ -416,7 +435,8 @@ export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): L
     headGroup.position.set(0, 1.53, 0);
     torsoGroup.add(headGroup);
 
-    const headBase = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.24, 0.24), matSkin);
+    const headBase = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), matSkin);
+    headBase.scale.set(0.9, 1.05, 0.96);
     headBase.position.y = 0.08;
     headBase.castShadow = true;
     headGroup.add(headBase);
@@ -586,10 +606,91 @@ export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): L
     buildWeaponMesh(weaponGroup, currentWeapon);
   }
 
-  function buildWeaponMesh(targetGroup: THREE.Group, weaponId: string) {
-    while (targetGroup.children.length > 0) {
-      targetGroup.remove(targetGroup.children[0]);
+
+  buildCharacter();
+
+  return {
+    group: root,
+    setEnvironment: (map, faction) => {
+      const warm = map === 'hangar';
+      spotLight.color.setHex(warm ? 0xffd3a0 : map === 'shattered_wall' ? 0x93c9ff : 0xe5f4ff);
+      topSpot.color.copy(spotLight.color);
+      tacticalFill.color.setHex(warm ? 0x69432a : 0x294865);
+      tacticalFill.intensity = 0.8;
+      rimLightL.color.setHex(faction === 'apex' ? 0xb55359 : warm ? 0xb18c62 : 0x688ba6);
+      rimLightR.color.copy(rimLightL.color);
+    },
+    update: (timeSec: number) => {
+      // Organic breathing simulation
+      const breathPhase = timeSec * 2.0;
+      const breathScale = 1.0 + Math.sin(breathPhase) * 0.022;
+      if (chestMesh) {
+        chestMesh.scale.set(breathScale, breathScale, breathScale);
+      }
+      if (headGroup) {
+        headGroup.position.y = 1.53 + Math.sin(breathPhase) * 0.007;
+        headGroup.rotation.y = Math.sin(timeSec * 0.4) * 0.06;
+      }
+      if (torsoGroup) {
+        torsoGroup.position.y = Math.sin(breathPhase) * 0.004;
+      }
+      if (weaponGroup) {
+        weaponGroup.position.y = 1.05 + Math.sin(breathPhase) * 0.003;
+      }
+
+      // Smooth turntable base rotation
+      pedestalRing.rotation.z = timeSec * 0.15;
+    },
+    setFaction: (faction: FactionType) => {
+      if (currentFaction !== faction) {
+        currentFaction = faction;
+        buildCharacter();
+      }
+    },
+    setGearTier: (tier: GearTier) => {
+      if (currentGearTier !== tier) {
+        currentGearTier = tier;
+        buildCharacter();
+      }
+    },
+    setVisor: (visor: VisorType) => {
+      if (currentVisor !== visor) {
+        currentVisor = visor;
+        buildCharacter();
+      }
+    },
+    setHeadgear: (h) => {
+      if (currentHeadgear !== h) {
+        currentHeadgear = h;
+        buildCharacter();
+      }
+    },
+    setTorsoConfig: (t) => {
+      if (currentTorsoConfig !== t) {
+        currentTorsoConfig = t;
+        buildCharacter();
+      }
+    },
+    setLowerConfig: (l) => {
+      if (currentLowerConfig !== l) {
+        currentLowerConfig = l;
+        buildCharacter();
+      }
+    },
+    setWeapon: (weaponId: string) => {
+      if (currentWeapon !== weaponId) {
+        currentWeapon = weaponId;
+        if (weaponGroup) buildWeaponMesh(weaponGroup, weaponId);
+      }
+    },
+    destroy: () => {
+      disposeAvatarResources(root);
     }
+  };
+}
+
+export function buildWeaponMesh(targetGroup: THREE.Group, weaponId: string) {
+    clearOwnedChildren(targetGroup);
 
     const matGunMetal = new THREE.MeshStandardMaterial({ color: 0x22252a, roughness: 0.42, metalness: 0.82 });
     const matGunDark = new THREE.MeshStandardMaterial({ color: 0x101214, roughness: 0.68, metalness: 0.4 });
@@ -798,77 +899,7 @@ export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): L
       opticReticle.position.set(0, 0.075, -0.056);
       targetGroup.add(receiver, barrel, flashHider, handguard, mag, grip, stock, optic, opticReticle);
     }
+    const used = new Set<THREE.Material>();
+    targetGroup.traverse((object) => { const mesh = object as THREE.Mesh; if (mesh.material) (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach(m => used.add(m)); });
+    [matGunMetal, matGunDark, matGunGrey, matAccent, matLaserGlow, matOpticCyan].forEach(m => { if (!used.has(m)) m.dispose(); });
   }
-
-  buildCharacter();
-
-  return {
-    group: root,
-    update: (timeSec: number) => {
-      // Organic breathing simulation
-      const breathPhase = timeSec * 2.0;
-      const breathScale = 1.0 + Math.sin(breathPhase) * 0.022;
-      if (chestMesh) {
-        chestMesh.scale.set(breathScale, breathScale, breathScale);
-      }
-      if (headGroup) {
-        headGroup.position.y = 1.53 + Math.sin(breathPhase) * 0.007;
-        headGroup.rotation.y = Math.sin(timeSec * 0.4) * 0.06;
-      }
-      if (torsoGroup) {
-        torsoGroup.position.y = Math.sin(breathPhase) * 0.004;
-      }
-      if (weaponGroup) {
-        weaponGroup.position.y = 1.05 + Math.sin(breathPhase) * 0.003;
-      }
-
-      // Smooth turntable base rotation
-      pedestalRing.rotation.z = timeSec * 0.15;
-    },
-    setFaction: (faction: FactionType) => {
-      if (currentFaction !== faction) {
-        currentFaction = faction;
-        buildCharacter();
-      }
-    },
-    setGearTier: (tier: GearTier) => {
-      if (currentGearTier !== tier) {
-        currentGearTier = tier;
-        buildCharacter();
-      }
-    },
-    setVisor: (visor: VisorType) => {
-      if (currentVisor !== visor) {
-        currentVisor = visor;
-        buildCharacter();
-      }
-    },
-    setHeadgear: (h) => {
-      if (currentHeadgear !== h) {
-        currentHeadgear = h;
-        buildCharacter();
-      }
-    },
-    setTorsoConfig: (t) => {
-      if (currentTorsoConfig !== t) {
-        currentTorsoConfig = t;
-        buildCharacter();
-      }
-    },
-    setLowerConfig: (l) => {
-      if (currentLowerConfig !== l) {
-        currentLowerConfig = l;
-        buildCharacter();
-      }
-    },
-    setWeapon: (weaponId: string) => {
-      if (currentWeapon !== weaponId) {
-        currentWeapon = weaponId;
-        if (weaponGroup) buildWeaponMesh(weaponGroup, weaponId);
-      }
-    },
-    destroy: () => {
-      scene.remove(root);
-    }
-  };
-}

@@ -1,6 +1,7 @@
+import { WeaponStudio } from './WeaponStudio';
 import React, { useState, useEffect } from 'react';
 import { ClassId } from './types';
-import { CLASSES } from './App';
+import { CLASSES } from './classes';
 import { VisorType } from './lobbyAvatar';
 import { WeaponSilhouette } from './WeaponSilhouettes';
 import {
@@ -277,6 +278,7 @@ export const LoadoutDMZ: React.FC<LoadoutDMZProps> = ({
   onDeploy
 }) => {
   // Currently inspected weapon in the armory (defaults to 'br' to match reference image)
+  const [compareSlot, setCompareSlot] = useState<'primary' | 'secondary'>('primary');
   const [previewId, setPreviewId] = useState<string>(selectedPrimary || 'br');
   // Optional category filter
   const [stashFilter, setStashFilter] = useState<'ALL' | 'RIFLE' | 'CQB' | 'HEAVY' | 'TECH'>('ALL');
@@ -288,14 +290,8 @@ export const LoadoutDMZ: React.FC<LoadoutDMZProps> = ({
     setCareerLedger(getCareerLedger());
   }, []);
 
-  // Immediately synchronize active preview weapon with 3D lobby operator in real-time
-  useEffect(() => {
-    if ((window as any).__lobbyAvatar && previewId) {
-      (window as any).__lobbyAvatar.setWeapon(previewId);
-    }
-  }, [previewId]);
-
   const activeWeapon: WeaponVaultItem = VAULT_WEAPONS[previewId] || VAULT_WEAPONS.br;
+  const baseline = VAULT_WEAPONS[compareSlot === 'primary' ? selectedPrimary : selectedSecondary] || VAULT_WEAPONS.ar;
   const primaryItem: WeaponVaultItem = VAULT_WEAPONS[selectedPrimary] || VAULT_WEAPONS.ar;
   const secondaryItem: WeaponVaultItem = VAULT_WEAPONS[selectedSecondary] || VAULT_WEAPONS.pistol;
 
@@ -407,11 +403,12 @@ export const LoadoutDMZ: React.FC<LoadoutDMZProps> = ({
         </div>
       </div>
 
+      <div className="order-2 mb-4 space-y-2"><WeaponStudio weaponId={previewId} /><div className="flex gap-2 text-[10px] text-slate-300"><span>COMPARE EQUIPPED:</span>{(['primary', 'secondary'] as const).map(slot => <button type="button" key={slot} aria-pressed={compareSlot === slot} onClick={() => setCompareSlot(slot)} className={`px-2 border ${compareSlot === slot ? 'border-cyan-300 text-cyan-200' : 'border-white/20'}`}>{slot.toUpperCase()}</button>)}<span>{baseline.name}</span></div></div>
       {/* --------------------------------------------------------------------- */}
       {/* 2. UNIFORM ARMORY CARD GRID LAYOUT (Exact Modern Warfare Card Style)  */}
       {/* --------------------------------------------------------------------- */}
-      <div className="w-full shrink-0 mb-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
+      <div className="w-full shrink-0 mb-4 order-4">
+        <div className="flex overflow-x-auto gap-3.5 pb-3">
           {displayedWeaponIds.map((weaponId) => {
             const weapon = VAULT_WEAPONS[weaponId];
             if (!weapon) return null;
@@ -425,19 +422,10 @@ export const LoadoutDMZ: React.FC<LoadoutDMZProps> = ({
             return (
               <div
                 key={weapon.id}
-                onClick={() => {
-                  setPreviewId(weapon.id);
-                  if (isUnlocked) {
-                    if (selectedSecondary === weapon.id) {
-                      if ((window as any).__lobbyAvatar) {
-                        (window as any).__lobbyAvatar.setWeapon(weapon.id);
-                      }
-                    } else {
-                      handleEquipSlot1(weapon.id);
-                    }
-                  }
-                }}
-                className={`group relative flex flex-col justify-between rounded-xl p-3.5 sm:p-4 transition-all duration-150 cursor-pointer select-none bg-[#202325] h-48 sm:h-52 ${
+                role="button" tabIndex={0} aria-pressed={isSelected} aria-label={`Inspect ${weapon.name}`}
+                onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setPreviewId(weapon.id); } }}
+                onClick={() => setPreviewId(weapon.id)}
+                className={`group relative w-48 shrink-0 flex flex-col justify-between rounded-xl p-3.5 sm:p-4 transition-all duration-150 cursor-pointer select-none bg-[#202325] h-48 sm:h-52 ${
                   isSelected
                     ? 'border-2 border-white shadow-[0_0_20px_rgba(255,255,255,0.22)] bg-[#25292c]'
                     : 'border border-[#383d40] hover:border-white/50 hover:bg-[#25282b]'
@@ -510,7 +498,7 @@ export const LoadoutDMZ: React.FC<LoadoutDMZProps> = ({
       {/* --------------------------------------------------------------------- */}
       {/* 3. TACTICAL TELEMETRY & EQUIPPING CONTROL DRAWER                      */}
       {/* --------------------------------------------------------------------- */}
-      <div className="w-full bg-[#181a1c] border border-[#2c3033] rounded-xl p-4 sm:p-5 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-5 shrink-0">
+      <div className="w-full bg-[#181a1c] border border-[#2c3033] rounded-xl p-4 sm:p-5 flex flex-col lg:flex-row order-3 items-stretch lg:items-center justify-between gap-5 shrink-0">
         {/* Left: Weapon Platform Summary */}
         <div className="lg:max-w-md space-y-1.5">
           <div className="flex items-center gap-2 text-[10px] font-mono">
@@ -533,74 +521,10 @@ export const LoadoutDMZ: React.FC<LoadoutDMZProps> = ({
           </p>
         </div>
 
-        {/* Center: Real Tactical Attributes Stat Bar Gauges */}
-        <div className="flex-1 max-w-xl grid grid-cols-2 sm:grid-cols-3 gap-x-5 gap-y-2 py-2 lg:py-0 lg:border-x lg:border-[#2c3033] lg:px-6">
-          {/* Damage */}
-          <div className="space-y-0.5">
-            <div className="flex justify-between text-[10px] font-mono text-[#8b98a1]">
-              <span>DAMAGE</span>
-              <span className="text-white font-bold">{activeWeapon.damage}</span>
-            </div>
-            <div className="w-full h-1 bg-[#282c2f] rounded-full overflow-hidden">
-              <div className="h-full bg-white transition-all duration-300" style={{ width: `${activeWeapon.damage}%` }} />
-            </div>
-          </div>
-
-          {/* Fire Rate */}
-          <div className="space-y-0.5">
-            <div className="flex justify-between text-[10px] font-mono text-[#8b98a1]">
-              <span>FIRE RATE</span>
-              <span className="text-white font-bold">{activeWeapon.fireRate}</span>
-            </div>
-            <div className="w-full h-1 bg-[#282c2f] rounded-full overflow-hidden">
-              <div className="h-full bg-white transition-all duration-300" style={{ width: `${activeWeapon.fireRate}%` }} />
-            </div>
-          </div>
-
-          {/* Range */}
-          <div className="space-y-0.5">
-            <div className="flex justify-between text-[10px] font-mono text-[#8b98a1]">
-              <span>RANGE</span>
-              <span className="text-white font-bold">{activeWeapon.range}</span>
-            </div>
-            <div className="w-full h-1 bg-[#282c2f] rounded-full overflow-hidden">
-              <div className="h-full bg-white transition-all duration-300" style={{ width: `${activeWeapon.range}%` }} />
-            </div>
-          </div>
-
-          {/* Accuracy */}
-          <div className="space-y-0.5">
-            <div className="flex justify-between text-[10px] font-mono text-[#8b98a1]">
-              <span>ACCURACY</span>
-              <span className="text-white font-bold">{activeWeapon.accuracy}</span>
-            </div>
-            <div className="w-full h-1 bg-[#282c2f] rounded-full overflow-hidden">
-              <div className="h-full bg-white transition-all duration-300" style={{ width: `${activeWeapon.accuracy}%` }} />
-            </div>
-          </div>
-
-          {/* Recoil Control */}
-          <div className="space-y-0.5">
-            <div className="flex justify-between text-[10px] font-mono text-[#8b98a1]">
-              <span>RECOIL CTRL</span>
-              <span className="text-white font-bold">{activeWeapon.recoilControl}</span>
-            </div>
-            <div className="w-full h-1 bg-[#282c2f] rounded-full overflow-hidden">
-              <div className="h-full bg-white transition-all duration-300" style={{ width: `${activeWeapon.recoilControl}%` }} />
-            </div>
-          </div>
-
-          {/* Mobility */}
-          <div className="space-y-0.5">
-            <div className="flex justify-between text-[10px] font-mono text-[#8b98a1]">
-              <span>MOBILITY</span>
-              <span className="text-white font-bold">{activeWeapon.mobility}</span>
-            </div>
-            <div className="w-full h-1 bg-[#282c2f] rounded-full overflow-hidden">
-              <div className="h-full bg-white transition-all duration-300" style={{ width: `${activeWeapon.mobility}%` }} />
-            </div>
-          </div>
-        </div>
+        <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-3 lg:px-5" aria-label="Weapon stat comparison">{(['damage', 'fireRate', 'range', 'accuracy', 'recoilControl', 'mobility'] as const).map(stat => {
+          const delta = activeWeapon[stat] - baseline[stat];
+          return <div key={stat}><div className="flex justify-between text-[9px] text-slate-400"><span>{stat.replace(/([A-Z])/g, ' $1').toUpperCase()}</span><span className={delta > 0 ? 'text-green-400' : delta < 0 ? 'text-red-400' : 'text-slate-400'}>{activeWeapon[stat]} / {delta > 0 ? '+' : ''}{delta}</span></div><div className="relative h-1.5 bg-white/10 mt-1"><div className="h-full bg-white/70" style={{ width: `${Math.max(0, Math.min(100, activeWeapon[stat]))}%` }} /><div className="absolute top-0 h-full w-0.5 bg-cyan-300" style={{ left: `${Math.max(0, Math.min(100, baseline[stat]))}%` }} /></div></div>;
+        })}</div>
 
         {/* Right: Quick Equip Loadout Buttons or Unlock Action */}
         <div className="flex flex-col sm:flex-row lg:flex-col gap-2 shrink-0 justify-center min-w-[210px]">

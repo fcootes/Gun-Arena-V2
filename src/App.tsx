@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { createSceneEffects } from './sceneEffects';
 import {
   Bot,
   WeaponDef,
@@ -19,6 +21,7 @@ import {
   EliteCompanionConfig,
   DEFAULT_ELITE_SQUAD
 } from './types';
+import { CLASSES } from './classes';
 import { WEAPONS, createViewmodelManager } from './weapons';
 import {
   AUDIO,
@@ -35,7 +38,7 @@ import {
   updateAdrenalineHeartbeat,
   playKnifeSlashWhoosh
 } from './audio';
-import { createWorld, initWorld, cleanupWorld, terrainHeight, randomMapPoint } from './world';
+import { createWorld, initWorld, cleanupWorld, terrainHeight, randomMapPoint, updateHeliDefenses } from './world';
 import { buildBotVisuals, disposeBotVisuals, disposeBotTextureCache } from './botBuilder';
 import { createLobbyAvatar, VisorType, FactionType, LobbyAvatarController } from './lobbyAvatar';
 import { HelmetHUD, RadarPing } from './HelmetHUD';
@@ -63,136 +66,7 @@ import {
   getXpForRank
 } from './careerLedger';
 
-export const CLASSES: Record<ClassId, ClassConfig> = {
-  assault: {
-    id: 'assault',
-    name: 'ASSAULT',
-    tagline: 'FRONTLINE RIFLE SPECIALIST',
-    perkName: 'TACTICAL SLEIGHT OF HAND',
-    perkDesc: '+25% Faster Weapon Reload Animation Speed across all guns',
-    color: '#57d1c9',
-    defaultPrimary: 'ar',
-    defaultSecondary: 'pistol',
-    reloadMultiplier: 0.75, // 25% faster reload duration
-    speedMultiplier: 1.0,
-    maxHealth: 100,
-    initialHealth: 100,
-    maxShield: 100,
-    initialShield: 100
-  },
-  heavy: {
-    id: 'heavy',
-    name: 'HEAVY',
-    tagline: 'HEAVY SUPPRESSION TANK',
-    perkName: 'TITAN ARMORED PLATING',
-    perkDesc: 'Boosts max White Health pool to 200 points (-15% Movement Velocity penalty)',
-    color: '#e0473f',
-    defaultPrimary: 'minigun',
-    defaultSecondary: 'lmg',
-    reloadMultiplier: 1.0,
-    speedMultiplier: 0.85, // -15% movement velocity
-    maxHealth: 200,
-    initialHealth: 200,
-    maxShield: 100,
-    initialShield: 100
-  },
-  recon: {
-    id: 'recon',
-    name: 'RECON',
-    tagline: 'HIGH-VELOCITY SCOUT & MARKSMAN',
-    perkName: 'LIGHTWEIGHT AGILITY',
-    perkDesc: '+20% Base Walking & Sprinting Velocity',
-    color: '#00e5ff',
-    defaultPrimary: 'sniper',
-    defaultSecondary: 'smg',
-    reloadMultiplier: 1.0,
-    speedMultiplier: 1.20, // +20% movement velocity
-    maxHealth: 100,
-    initialHealth: 100,
-    maxShield: 100,
-    initialShield: 100
-  },
-  medic: {
-    id: 'medic',
-    name: 'MEDIC',
-    tagline: 'COMBAT TRIAGE & SHIELD BIO-GEN',
-    perkName: 'FIELD TRIAGE NANITES',
-    perkDesc: 'Reinforced 125 HP & 125 Shield with rapid biological regeneration',
-    color: '#22c55e',
-    defaultPrimary: 'br',
-    defaultSecondary: 'pistol',
-    reloadMultiplier: 0.9,
-    speedMultiplier: 1.05,
-    maxHealth: 125,
-    initialHealth: 125,
-    maxShield: 125,
-    initialShield: 125
-  },
-  engineer: {
-    id: 'engineer',
-    name: 'ENGINEER',
-    tagline: 'FORTIFIED DEMOLITIONS & DEFENSE',
-    perkName: 'OVERCHARGED ENERGY GRID',
-    perkDesc: '150 Overcharged Blue Shield points and reinforced blast protection',
-    color: '#3f8fe0',
-    defaultPrimary: 'shotgun',
-    defaultSecondary: 'railgun',
-    reloadMultiplier: 1.0,
-    speedMultiplier: 1.0,
-    maxHealth: 100,
-    initialHealth: 100,
-    maxShield: 150,
-    initialShield: 150
-  },
-  breacher: {
-    id: 'breacher',
-    name: 'BREACHER',
-    tagline: 'FORTIFIED POINTMAN',
-    perkName: 'OVERCHARGED ENERGY SHIELD',
-    perkDesc: 'Initializes match with 150 Blue Shield points (Cap: 150)',
-    color: '#3f8fe0',
-    defaultPrimary: 'shotgun',
-    defaultSecondary: 'laser',
-    reloadMultiplier: 1.0,
-    speedMultiplier: 1.0,
-    maxHealth: 100,
-    initialHealth: 100,
-    maxShield: 150,
-    initialShield: 150
-  },
-  juggernaut: {
-    id: 'juggernaut',
-    name: 'JUGGERNAUT',
-    tagline: 'HEAVY SUPPRESSION TANK',
-    perkName: 'TITAN ARMORED PLATING',
-    perkDesc: 'Boosts max White Health pool to 200 points (-15% Movement Velocity penalty)',
-    color: '#e0473f',
-    defaultPrimary: 'minigun',
-    defaultSecondary: 'lmg',
-    reloadMultiplier: 1.0,
-    speedMultiplier: 0.85,
-    maxHealth: 200,
-    initialHealth: 200,
-    maxShield: 100,
-    initialShield: 100
-  },
-  vanguard: {
-    id: 'vanguard',
-    name: 'VANGUARD',
-    tagline: 'ALL-ROUND STRIKE SPECIALIST',
-    perkName: 'STANDARDIZED PRECISION',
-    perkDesc: 'Standard balanced 100 HP / 100 Shield military loadout',
-    color: '#f5a623',
-    defaultPrimary: 'br',
-    defaultSecondary: 'railgun',
-    reloadMultiplier: 1.0,
-    speedMultiplier: 1.0,
-    maxHealth: 100,
-    initialHealth: 100,
-    maxShield: 100,
-    initialShield: 100
-  }
-};
+export { CLASSES } from './classes';
 
 export const ARMORY_OPTIONS: ArmoryOption[] = [
   { id: 'ar', label: 'Assault Rifle', slotNum: '1' },
@@ -458,6 +332,11 @@ export default function App() {
   }, [squadDirectiveBanner]);
 
   const [activeTab, setActiveTab] = useState<LobbyTab>('play');
+  const activeTabRef = useRef(activeTab); activeTabRef.current = activeTab;
+  const [operatorZoom, setOperatorZoom] = useState<'full' | 'head' | 'torso' | 'legs'>('full');
+  const operatorZoomRef = useRef(operatorZoom); operatorZoomRef.current = operatorZoom;
+  const [deploymentPreset, setDeploymentPreset] = useState<SquadDirective>('push_objective');
+  const deploymentPresetRef = useRef(deploymentPreset); deploymentPresetRef.current = deploymentPreset;
   const [visorType, setVisorType] = useState<VisorType>('standard');
   const visorTypeRef = useRef<VisorType>(visorType);
   visorTypeRef.current = visorType;
@@ -510,6 +389,15 @@ export default function App() {
     const camera = new THREE.PerspectiveCamera(HIP_FOV, window.innerWidth / window.innerHeight, 0.05, 500);
     camera.rotation.order = 'YXZ';
     scene.add(camera);
+    const effects = createSceneEffects(renderer, scene, camera);
+    effects.resize(window.innerWidth, window.innerHeight);
+    const operatorControls = new OrbitControls(camera, renderer.domElement);
+    operatorControls.enabled = false; operatorControls.enablePan = false; operatorControls.enableZoom = false;
+    operatorControls.enableDamping = true;
+    operatorControls.minPolarAngle = Math.PI / 2; operatorControls.maxPolarAngle = Math.PI / 2;
+    let previousOperatorZoom = '';
+    let previousLobbyMap: WorldMapId | null = null;
+    let previousLobbyFaction: FactionType | null = null;
 
     // Sky & Lighting (Combat)
     const combatLightGroup = new THREE.Group();
@@ -532,7 +420,7 @@ export default function App() {
     sunLight.shadow.camera.far = 450;
     combatLightGroup.add(sunLight);
     const combatFog = new THREE.Fog(0xbfd6e6, 80, 360);
-    scene.fog = combatFog;
+    // Gameplay fog is owned by the active world.
 
     // Sky dome
     const skyGeo = new THREE.SphereGeometry(420, 20, 20);
@@ -551,6 +439,8 @@ export default function App() {
     combatLightGroup.add(skyMesh);
 
     // Subterranean Concrete Hangar Bunker Environment & Armory (Lobby Scene)
+    const lobbyBackground = new THREE.Color(0x0a0d12);
+    const hangarBackground = new THREE.Color(0x14181f);
     const lobbyFog = new THREE.Fog(0x0a0d12, 10, 32);
     let hangarGroup: THREE.Group | null = null;
     let lobbyAvatar: LobbyAvatarController | null = null;
@@ -560,6 +450,7 @@ export default function App() {
         teardownLobbyScene();
       }
 
+      previousLobbyMap = null; previousLobbyFaction = null;
       hangarGroup = new THREE.Group();
       hangarGroup.position.set(0, 1000, 0);
       scene.add(hangarGroup);
@@ -2048,12 +1939,12 @@ export default function App() {
       if (world.offshore) {
          skyMesh.visible = false;
       } else if (isHangar) {
-         scene.background = new THREE.Color(0x14181f);
-         scene.fog = new THREE.Fog(0x14181f, 25, 140);
+         scene.background = hangarBackground;
+         // Gameplay fog is owned and restored by world.updateWorld().
          skyMesh.visible = false;
       } else {
          scene.background = null;
-         scene.fog = combatFog;
+         // Gameplay fog is owned by the active world.
          skyMesh.visible = true;
       }
 
@@ -2131,6 +2022,8 @@ export default function App() {
 
       // Initialize primary, secondary, tactical and field kit slots
       setupPlayerLoadout();
+      squadDirectiveRef.current = deploymentPresetRef.current;
+      setSquadDirective(deploymentPresetRef.current);
       pushKillFeed(`DEPLOYED: ${activeClass.name.toUpperCase()} [${activeClass.perkName}]`);
 
       storm.elapsed = 0;
@@ -2913,6 +2806,7 @@ export default function App() {
 
     const onResize = () => {
       renderer.setSize(window.innerWidth, window.innerHeight);
+      effects.resize(window.innerWidth, window.innerHeight);
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
     };
@@ -3062,18 +2956,20 @@ export default function App() {
       const dt = Math.min(0.05, clock.getDelta());
 
       if (gameStateRef.current === 'playing') {
+        operatorControls.enabled = false; previousOperatorZoom = '';
         if (hangarGroup) hangarGroup.visible = false;
         if (lobbyAvatar) lobbyAvatar.group.visible = false;
         combatLightGroup.visible = !world.offshore;
         if (world.lobbyGroup) world.lobbyGroup.visible = false;
         world.updateWorld(dt, clock.elapsedTime, matchConfig.mode);
+        if (matchConfig.mode === 'extraction') for (const hit of updateHeliDefenses(dt, bots)) damageBot(hit.bot, hit.damage, false, 'player');
         
         if (!world.offshore && selectedMapStateRef.current === 'hangar') {
-           scene.background = new THREE.Color(0x14181f);
-           scene.fog = new THREE.Fog(0x14181f, 25, 140);
+           scene.background = hangarBackground;
+           // Gameplay fog is owned and restored by world.updateWorld().
         } else if (!world.offshore) {
            scene.background = null;
-           scene.fog = combatFog;
+           // Gameplay fog is owned by the active world.
         }
         // 1. Player movement & physics
         if (player.alive && world.offshore?.phase !== 'DEPARTING') {
@@ -4050,7 +3946,7 @@ export default function App() {
                 }
 
                 // Elite Archetype Special Abilities
-                if (bot.eliteRole === 'heavy') {
+                if (bot.eliteRole === 'support') {
                   bot.fireTimer -= dt * 0.35;
                 } else if (bot.eliteRole === 'medic') {
                   bot.regenAuraTimer = (bot.regenAuraTimer || 0) + dt;
@@ -4534,7 +4430,7 @@ export default function App() {
         combatLightGroup.visible = false;
         if (hangarGroup) hangarGroup.visible = !world.lobbyGroup;
         if (world.lobbyGroup) world.lobbyGroup.visible = true;
-        scene.background = new THREE.Color(0x0a0d12);
+        scene.background = lobbyBackground;
         scene.fog = lobbyFog;
 
         vmManager.root.visible = false;
@@ -4557,11 +4453,31 @@ export default function App() {
           
           lobbyAvatar.setWeapon(selectedPrimaryRef.current);
 
-          // Position camera directly in front of the operator in the subterranean bunker at Y=1000!
-          const swayX = Math.sin(t * 0.3) * 0.06;
-          const swayY = Math.cos(t * 0.4) * 0.02;
-          camera.position.set(swayX, 1000 + 1.25 + swayY, 2.65);
-          camera.lookAt(0, 1000 + 1.10, 0);
+          const map = selectedMapStateRef.current;
+          const faction = factionAlignmentRef.current;
+          if (previousLobbyMap !== map || previousLobbyFaction !== faction) {
+            lobbyAvatar.setEnvironment(map, faction);
+            const warm = map === 'hangar';
+            hangarGroup?.traverse(object => { if (object instanceof THREE.SpotLight || object instanceof THREE.AmbientLight) object.color.setHex(warm ? 0xffd0a0 : map === 'shattered_wall' ? 0x81baff : 0xd3e6ff); });
+            previousLobbyMap = map; previousLobbyFaction = faction;
+          }
+          const locker = activeTabRef.current === 'locker';
+          operatorControls.enabled = locker;
+          if (locker) {
+            const zoom = operatorZoomRef.current;
+            if (previousOperatorZoom !== zoom) {
+              const heights = { full: 1.05, head: 1.6, torso: 1.2, legs: 0.48 };
+              const distance = zoom === 'full' ? 2.65 : zoom === 'head' ? 0.85 : 1.35;
+              operatorControls.target.set(0, 1000 + heights[zoom], 0);
+              camera.position.set(0, operatorControls.target.y, distance);
+              previousOperatorZoom = zoom;
+            }
+            operatorControls.update();
+          } else {
+            previousOperatorZoom = '';
+            camera.position.set(Math.sin(t * .3) * .06, 1001.25, 2.65);
+            camera.lookAt(0, 1001.10, 0);
+          }
         }
       } else {
         if (lobbyAvatar) lobbyAvatar.group.visible = false;
@@ -4569,7 +4485,7 @@ export default function App() {
       }
 
       if (world.offshore?.phase === 'DEPARTING') camera.position.copy(player.pos);
-      renderer.render(scene, camera);
+      effects.render(dt, selectedMapStateRef.current);
     }
     let hudSyncTimer = 0;
     animate();
@@ -4610,6 +4526,8 @@ export default function App() {
       cleanupWorld(scene);
       disposeBotVisuals(combatLightGroup);
       botHealthLayer?.remove();
+      operatorControls.dispose();
+      effects.dispose();
       renderer?.dispose();
     };
   }, []);
@@ -4759,6 +4677,10 @@ export default function App() {
       {/* 1v1.lol Inspired Tabbed Main Menu Lobby */}
       {gameState === 'start' && (
         <LobbyTerminal
+          operatorZoom={operatorZoom}
+          setOperatorZoom={setOperatorZoom}
+          deploymentPreset={deploymentPreset}
+          setDeploymentPreset={setDeploymentPreset}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           factionAlignment={factionAlignment}

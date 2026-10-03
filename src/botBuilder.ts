@@ -257,13 +257,13 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
   let subClass = 'rifleman';
   if (eliteRole) {
     subClass =
-      eliteRole === 'heavy'
+      eliteRole === 'support'
         ? 'elite_heavy'
         : eliteRole === 'medic'
         ? 'elite_medic'
         : eliteRole === 'recon'
         ? 'elite_recon'
-        : 'elite_engineer';
+        : eliteRole === 'engineer' ? 'elite_engineer' : 'elite_assault';
   } else if (faction === 'usmc') {
     const usmcList = ['rifleman', 'sergeant', 'pointman', 'corpsman', 'heavy_gunner', 'engineer'];
     if (isVIP) subClass = 'sergeant';
@@ -742,7 +742,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       commandBand.position.set(-0.3, 1.34, 0);
       torsoGroup.add(commandBand);
 
-      if (eliteRole === 'heavy') {
+      if (eliteRole === 'support') {
         // Titan-2 — double plating, ammo hopper, flexible articulated feed chute
         armorMultiplier = ELITE_HEAVY_ARMOR_MULTIPLIER;
         const frontPlate = makeChamferedPlate(0.36, 0.42, 0.42, matSteelArmor);
@@ -826,7 +826,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         dish.rotation.x = 0.5;
         torsoGroup.add(dishMast, dish);
         speedMultiplier *= 1.12;
-      } else {
+      } else if (eliteRole === 'engineer') {
         // Wrench-5 — welder's apron, oxy-acetylene mini-tanks, slung tripod
         const apron = makeChamferedPlate(0.24, 0.3, 0.5, matTapeWrap);
         apron.position.set(0, 1.02, 0.16);

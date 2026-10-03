@@ -137,18 +137,11 @@ export type DeploymentProtocol = 'elite' | 'battalion' | 'standard';
 
 export type SquadDirective = 'follow_lead' | 'hold_position' | 'push_objective' | 'focus_target';
 
-export type ClassId =
-  | 'assault'
-  | 'heavy'
-  | 'recon'
-  | 'medic'
-  | 'engineer'
-  | 'breacher'
-  | 'juggernaut'
-  | 'vanguard';
+export type ClassId = 'assault' | 'engineer' | 'medic' | 'support' | 'recon';
 
 export interface ClassConfig {
   id: ClassId;
+  icon: 'delta' | 'gear' | 'cross' | 'ammo' | 'crosshair';
   name: string;
   tagline: string;
   perkName: string;
@@ -1202,7 +1195,7 @@ export const SWARM_TUNING = {
  * SECTION 5 — ELITE SQUAD PROTOCOL
  * ===========================================================================*/
 
-export type EliteArchetype = 'heavy' | 'medic' | 'recon' | 'engineer';
+export type EliteArchetype = ClassId;
 
 export interface EliteCompanionConfig {
   slotId: number; // 2, 3, 4, 5
@@ -1222,7 +1215,7 @@ export const DEFAULT_ELITE_SQUAD: EliteCompanionConfig[] = [
     slotId: 2,
     roleTitle: 'Second-in-Command',
     callsign: 'TITAN-2',
-    archetype: 'heavy',
+    archetype: 'support',
     icon: '🛡️',
     primaryWeapon: 'lmg',
     secondaryWeapon: 'pistol',
