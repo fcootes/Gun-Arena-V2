@@ -170,6 +170,8 @@ export interface ArmoryOption {
   slotNum: string;
 }
 
+export type WorldMapId = 'training' | 'hangar' | 'shattered_wall';
+
 export type GameMode = 'ffa' | 'team' | 'zombie' | 'extraction';
 
 export interface MatchConfig {

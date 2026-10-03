@@ -2234,3 +2234,26 @@ export function createImpactParticleSystem(scene: THREE.Scene): ImpactParticleSy
 
   return { group, spawnDust, spawnSpark, spawnBlood, update, dispose };
 }
+
+/** Dispose bot-local draw resources; session-wide bump textures are shared. */
+export function disposeBotVisuals(root: THREE.Object3D): void {
+  const geometries = new Set<THREE.BufferGeometry>();
+  const materials = new Set<THREE.Material>();
+  root.traverse((object) => {
+    const mesh = object as THREE.Mesh;
+    if (mesh.geometry) geometries.add(mesh.geometry);
+    if (mesh.material) for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) materials.add(material);
+    if (object instanceof THREE.Light) object.dispose();
+  });
+  geometries.forEach((geometry) => geometry.dispose());
+  materials.forEach((material) => material.dispose());
+  root.removeFromParent();
+  root.clear();
+}
+
+export function disposeBotTextureCache(): void {
+  _weaveTex?.dispose();
+  _scratchTex?.dispose();
+  _weaveTex = null;
+  _scratchTex = null;
+}

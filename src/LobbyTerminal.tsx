@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GameMode, ClassId, DeploymentProtocol, EliteCompanionConfig, DEFAULT_ELITE_SQUAD } from './types';
+import { WorldMapId, GameMode, ClassId, DeploymentProtocol, EliteCompanionConfig, DEFAULT_ELITE_SQUAD } from './types';
 import { CLASSES } from './App';
 import { VisorType, FactionType } from './lobbyAvatar';
 import { LoadoutDMZ, VAULT_WEAPONS, WeaponSilhouette } from './LoadoutDMZ';
@@ -55,8 +55,8 @@ export interface LobbyTerminalProps {
   setTargetScore: (n: number) => void;
   difficultyKey: string;
   setDifficultyKey: (d: string) => void;
-  selectedMapState: 'training' | 'hangar';
-  setSelectedMapState: (m: 'training' | 'hangar') => void;
+  selectedMapState: WorldMapId;
+  setSelectedMapState: (m: WorldMapId) => void;
   isDevMode: boolean;
   setIsDevMode: (b: boolean) => void;
   deploymentProtocol?: DeploymentProtocol;
@@ -440,7 +440,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
 
   // Strict Map Rules State Guardrail: Horde Mode strictly enforces Subterranean Hangar map
   useEffect(() => {
-    if ((matchMode === 'zombie' || matchMode === 'extraction') && selectedMapState !== 'hangar') {
+    if ((matchMode === 'zombie' || matchMode === 'extraction') && selectedMapState === 'training') {
       setSelectedMapState('hangar');
     }
   }, [matchMode, selectedMapState, setSelectedMapState]);
@@ -1402,10 +1402,10 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
                     </svg>
                     <div className="absolute top-2 left-2 text-[8px] text-[#2de2e6] font-bold">THEATER 01</div>
                   </div>
-                  <div className="text-xs font-extrabold text-white tracking-wider">BIO-HAZARD EXTRACTION</div>
-                  <div className="text-[9px] text-[#2de2e6] font-bold mt-0.5">LINEAR MISSION FLOW</div>
+                  <div className="text-xs font-extrabold text-white tracking-wider">{selectedMapState === 'shattered_wall' ? 'SHATTERED WALL EXTRACTION' : 'BIO-HAZARD EXTRACTION'}</div>
+                  <div className="text-[9px] text-[#2de2e6] font-bold mt-0.5">{selectedMapState === 'shattered_wall' ? 'OFFSHORE HOLDOUT & EXFIL' : 'LINEAR MISSION FLOW'}</div>
                   <div className="text-[9px] text-[#8b98a1] mt-1.5 leading-relaxed">
-                    Progress through 5 containment sectors. Hack the mainframe, survive the Mega-Boss, and extract.
+                    {selectedMapState === 'shattered_wall' ? 'Signal the transport, defend the storm-battered helipad, and board to extract.' : 'Progress through 5 containment sectors. Hack the mainframe, survive the Mega-Boss, and extract.'}
                   </div>
                 </div>
               </div>
@@ -1414,7 +1414,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
               <div
                 onClick={() => {
                   setMatchMode('zombie');
-                  setSelectedMapState('hangar');
+                  if (selectedMapState === 'training') setSelectedMapState('hangar');
                 }}
                 className={`p-4 rounded-xs border transition-all cursor-pointer flex flex-col justify-between h-72 ${
                   matchMode === 'zombie'
@@ -1447,7 +1447,11 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
                 <div className="text-[10px] text-[#2de2e6] font-bold tracking-widest mb-3">
                   OPERATIONAL THEATER // MAP SELECT
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
+                  <button type="button" onClick={() => setSelectedMapState('shattered_wall')} className={`h-20 flex flex-col justify-end p-2 border rounded-xs text-left ${selectedMapState === 'shattered_wall' ? 'border-[#edc155] bg-[#edc155]/15' : 'border-white/10 bg-black/60'}`}>
+                    <div className="text-[9px] font-bold text-[#edc155]">PACIFIC RIM // OFFSHORE</div>
+                    <div className="text-xs font-black text-white">SHATTERED WALL</div>
+                  </button>
                   <button
                     type="button"
                     disabled={matchMode === 'zombie' || matchMode === 'extraction'}
@@ -1490,7 +1494,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
                     <div className="text-xs font-black text-white">BUNKER HANGAR</div>
                     {(matchMode === 'zombie' || matchMode === 'extraction') && (
                       <div className="absolute top-2 left-2 text-[8px] font-black text-[#ff4444] bg-[#ff4444]/25 px-1.5 py-0.5 rounded-xs border border-[#ff4444]/40">
-                        MANDATORY HORDE/EXT MAP
+                        FACILITY THEATER
                       </div>
                     )}
                   </button>

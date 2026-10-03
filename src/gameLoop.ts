@@ -7,6 +7,7 @@ import {
   ToxicPuddle,
   Sector4ObjectiveType,
   WorldCollider,
+  WorldMapId,
   SquadDirective,
   TacticalAIState,
   CoverPoint,
@@ -757,6 +758,99 @@ export class ExtractionGameLoop {
   }
 }
 
+/** Offshore mission uses world-owned volumes rather than facility coordinates. */
+export class ShatteredWallExtractionGameLoop extends ExtractionGameLoop {
+  private offshoreConfig: ExtractionManagerConfig;
+  private completed = false;
+
+  constructor(config: ExtractionManagerConfig) {
+    super(config);
+    if (!config.world.offshore) throw new Error('Shattered Wall director requires an offshore world.');
+    this.offshoreConfig = config;
+    this.state.sector4ObjectiveType = 'HOLD_THE_LINE';
+    this.state.holdTheLineTotal = 60;
+    this.state.holdTheLineTimer = 60;
+    this.state.objectiveTitle = 'SIGNAL BEACON: REQUEST EXTRACTION';
+    this.state.objectiveDetail = 'Activate the terminal on the lower south catwalk, then defend the helipad.';
+  }
+
+  public override update(dt: number, keys: Record<string, boolean>): { interactionPrompt: string | null; isPromptObjective: boolean } {
+    const config = this.offshoreConfig;
+    const offshore = config.world.offshore!;
+    const position = config.player.pos;
+    this.state.missionDuration += dt;
+    let interactionPrompt: string | null = null;
+    this.state.currentSector = offshore.phase === 'SIGNAL_BEACON' ? 1 : offshore.phase === 'HELIPAD_HOLDOUT' ? 2 : 5;
+    if (offshore.phase === 'SIGNAL_BEACON') {
+      if (offshore.zones.signalBeacon.bounds.containsPoint(position)) {
+        interactionPrompt = '[E] ACTIVATE SIGNAL BEACON';
+        if (keys.KeyE) {
+          keys.KeyE = false;
+          offshore.activateSignal();
+          this.state.stage = 'OBJECTIVE_ACTIVE';
+          config.pushKillFeed('EXFIL REQUEST ACKNOWLEDGED. DEFEND THE HELIPAD FOR 60 SECONDS.', true);
+        }
+      }
+    }
+    if (offshore.phase === 'HELIPAD_HOLDOUT') {
+      const zone = offshore.zones.holdout;
+      const inHoldout = zone.bounds.containsPoint(position) && Math.hypot(position.x - zone.center.x, position.z - zone.center.z) <= zone.radius;
+      if (inHoldout) offshore.holdoutRemaining = Math.max(0, offshore.holdoutRemaining - dt);
+      this.state.holdTheLineTotal = offshore.holdoutDuration;
+      this.state.holdTheLineTimer = offshore.holdoutRemaining;
+      this.state.holdTheLineActive = true;
+      this.state.objectiveTitle = `HELIPAD HOLDOUT: ${Math.ceil(offshore.holdoutRemaining)}s`;
+      this.state.objectiveDetail = inHoldout ? 'Hold the marked perimeter. Hostiles are climbing the lower staircases.' : 'Reach the helipad and stay within the marked 15m perimeter to advance the timer.';
+      interactionPrompt = inHoldout ? `EXFIL ETA: ${Math.ceil(offshore.holdoutRemaining)}s` : 'HOLDOUT TIMER PAUSED: ENTER THE HELIPAD PERIMETER';
+      offshore.waveElapsed += dt;
+      if (offshore.waveElapsed >= 6) {
+        offshore.waveElapsed = 0;
+        const alive = config.bots.filter((bot: Bot) => bot.alive && bot.isZombie).length;
+        const nodes = config.world.getSpawnPoints('zombie');
+        for (let i = 0; i < Math.min(3, 20 - alive); i++) {
+          const node = nodes[(this.state.mutantsKilled + i + Math.floor(this.state.missionDuration / 6)) % nodes.length];
+          const type = offshore.holdoutRemaining < 25 && i === 2 ? 'brute' : i % 2 ? 'runner' : 'walker';
+          const bot = config.makeBot('zombie', type, false);
+          if (bot) { bot.pos.copy(node.position); bot.group.position.copy(bot.pos); }
+        }
+      }
+      if (offshore.holdoutRemaining === 0) {
+        offshore.phase = 'BOARD_HELICOPTER';
+        offshore.helicopter.state = 'HOVERING_EXFIL';
+        offshore.helicopter.group.visible = true;
+        this.state.holdTheLineComplete = true;
+        this.state.holdTheLineActive = false;
+        this.state.stage = 'EVAC_READY';
+        this.state.evacReady = true;
+        config.pushKillFeed('TRANSPORT ON STATION. BOARD THROUGH EITHER SIDE DOOR.', true);
+      }
+    }
+    if (offshore.phase === 'BOARD_HELICOPTER') {
+      this.state.objectiveTitle = 'BOARD THE EXTRACTION TRANSPORT';
+      this.state.objectiveDetail = 'Enter the open side doors at the center of the helipad.';
+      interactionPrompt = 'TRANSPORT READY: ENTER THE CABIN';
+      offshore.tryBoard(position);
+    }
+    if (offshore.phase === 'DEPARTING' || offshore.phase === 'COMPLETE') {
+      config.player.pos.copy(offshore.helicopter.group.position);
+      config.player.pos.y += 1.8;
+      this.state.objectiveTitle = 'EXFIL CONFIRMED';
+      this.state.objectiveDetail = 'Transport departing the Pacific Rim rig.';
+      interactionPrompt = 'EXTRACTION IN PROGRESS';
+      if (offshore.phase === 'COMPLETE' && !this.completed) {
+        this.completed = true;
+        this.state.stage = 'COMPLETED';
+        config.onVictory();
+      }
+    }
+    return { interactionPrompt, isPromptObjective: interactionPrompt !== null };
+  }
+
+  public override canOpenDoor(): { allowed: boolean; reason?: string } { return { allowed: true }; }
+  public override recordMutantKill(): void { this.state.mutantsKilled++; }
+  public override recordBossDefeated(): void { this.state.bossDefeated = true; }
+}
+
 /* =============================================================================
  * HAZARDS: TOXIC PUDDLES & SONIC DISTORTION (preserved)
  * ===========================================================================*/
@@ -939,7 +1033,7 @@ export interface BioMutantAIContext {
   damageBot: (bot: Bot, amount: number, isHeadshot: boolean, attacker: any, dir?: THREE.Vector3) => void;
   focusTargetId: number | null;
   scrambleRadar: (duration: number) => void;
-  selectedMap?: 'training' | 'hangar';
+  selectedMap?: WorldMapId;
 }
 
 /**
@@ -1050,11 +1144,15 @@ export function updateBioMutantAI(bot: Bot, dt: number, ctx: BioMutantAIContext)
 
   if (!targetPos) return;
 
-  const dx = targetPos.x - bot.pos.x;
-  const dz = targetPos.z - bot.pos.z;
-  const dist = Math.hypot(dx, dz);
-  const ndx = dist > 0.001 ? dx / dist : 0;
-  const ndz = dist > 0.001 ? dz / dist : 1;
+  const movementTarget = ctx.world.getNavigationTarget?.(bot.pos, targetPos) ?? targetPos;
+  const dx = movementTarget.x - bot.pos.x;
+  const dz = movementTarget.z - bot.pos.z;
+  const navigationDistance = Math.hypot(dx, dz);
+  const targetHeight = targetPos.y - (targetIsPlayer ? 1.65 : 0);
+  const dist = Math.hypot(targetPos.x - bot.pos.x, targetPos.z - bot.pos.z,
+    ctx.world.offshore ? targetHeight - bot.pos.y : 0);
+  const ndx = navigationDistance > 0.001 ? dx / navigationDistance : 0;
+  const ndz = navigationDistance > 0.001 ? dz / navigationDistance : 1;
 
   if (bot.attackCooldown && bot.attackCooldown > 0) bot.attackCooldown -= dt;
   if (bot.meleeCooldown > 0) bot.meleeCooldown -= dt;
@@ -1083,7 +1181,7 @@ export function updateBioMutantAI(bot: Bot, dt: number, ctx: BioMutantAIContext)
       let steerX = ndx;
       let steerZ = ndz;
 
-      if (targetIsPlayer) {
+      if (targetIsPlayer && (!ctx.world.offshore || Math.abs(targetPos.y - bot.pos.y) < 3)) {
         const pYaw = ctx.player.yaw;
         const forwardX = Math.sin(pYaw);
         const forwardZ = Math.cos(pYaw);
@@ -1288,7 +1386,7 @@ export function updateBioMutantAI(bot: Bot, dt: number, ctx: BioMutantAIContext)
   } else {
     bot.pos.x += bot.vel.x * dt;
     bot.pos.z += bot.vel.z * dt;
-    const baseFloorY = ctx.world.getHighestSurface(bot.pos.x, bot.pos.z, 0);
+    const baseFloorY = ctx.world.getHighestSurface(bot.pos.x, bot.pos.z, ctx.world.offshore ? bot.pos.y : 0);
     bot.pos.y = baseFloorY + 1.2 + Math.sin(performance.now() * 0.0035 + bot.id) * 0.16;
   }
 

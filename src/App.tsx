@@ -8,6 +8,7 @@ import {
   ExplosionEffect,
   MatchConfig,
   GameMode,
+  WorldMapId,
   DifficultyConfig,
   ClassId,
   ClassConfig,
@@ -34,14 +35,17 @@ import {
   updateAdrenalineHeartbeat,
   playKnifeSlashWhoosh
 } from './audio';
-import { createWorld, terrainHeight, randomMapPoint } from './world';
-import { buildBotVisuals } from './botBuilder';
+import { createWorld, initWorld, cleanupWorld, terrainHeight, randomMapPoint } from './world';
+import { buildBotVisuals, disposeBotVisuals, disposeBotTextureCache } from './botBuilder';
 import { createLobbyAvatar, VisorType, FactionType, LobbyAvatarController } from './lobbyAvatar';
 import { HelmetHUD, RadarPing } from './HelmetHUD';
 import { LobbyTerminal, LobbyTab } from './LobbyTerminal';
 import { useFaction } from './FactionContext';
 import {
   ExtractionGameLoop,
+  ShatteredWallExtractionGameLoop,
+  updateSonicDistortionRings,
+  clearCombatSystems,
   ExtractionState,
   updateBioMutantAI,
   BioMutantAIContext,
@@ -354,7 +358,7 @@ export default function App() {
   const [selectedPrimary, setSelectedPrimary] = useState<string>('ar');
   const [selectedSecondary, setSelectedSecondary] = useState<string>('pistol');
   
-  const [selectedMapState, setSelectedMapState] = useState<'training' | 'hangar'>('training');
+  const [selectedMapState, setSelectedMapState] = useState<WorldMapId>('shattered_wall');
   const [isDevMode, setIsDevMode] = useState(false);
   
   // Update window global for non-React contexts
@@ -386,7 +390,7 @@ export default function App() {
 
   // Strict Map Rules State Guardrail: Horde Mode strictly enforces Subterranean Hangar map
   useEffect(() => {
-    if (matchMode === 'zombie' && selectedMapState !== 'hangar') {
+    if (matchMode === 'zombie' && selectedMapState === 'training') {
       setSelectedMapState('hangar');
     }
   }, [matchMode, selectedMapState]);
@@ -759,10 +763,9 @@ export default function App() {
     }
 
     // Initialize lobby turntable scene
+    // World is initialized before the first lobby render.
+    let world = initWorld(scene, camera);
     setupLobbyScene();
-
-    // World & Colliders
-    let world = createWorld(scene, 'training');
 
     // Muzzle flash particle sprite
     function buildFlashTexture(): THREE.CanvasTexture {
@@ -1357,6 +1360,7 @@ export default function App() {
 
     function applyDamageToPlayer(amount: number, ignoreShield: boolean, skipFlash: boolean, attackerBot: Bot | null) {
       if (!player.alive) return;
+      if (world.offshore?.phase === 'DEPARTING' || world.offshore?.phase === 'COMPLETE') return;
       if (!ignoreShield && player.shield > 0) {
         const absorbed = Math.min(player.shield, amount);
         player.shield -= absorbed;
@@ -1414,7 +1418,7 @@ export default function App() {
         scrambleRadar: (duration: number) => {
           (window as any).radarScrambleTimer = Math.max((window as any).radarScrambleTimer || 0, duration);
         },
-        selectedMap: selectedMapStateRef.current as any
+        selectedMap: selectedMapStateRef.current
       };
     }
 
@@ -1704,8 +1708,14 @@ export default function App() {
       isVIP = false,
       eliteConfig?: EliteCompanionConfig
     ): Bot {
-      const p = randomMapPoint(14);
-      const y = terrainHeight(p.x, p.z);
+      if (matchConfig.mode === 'team' && assignedTeam === null) assignedTeam = botIdCounter % 2 === 0 ? 'blue' : 'red';
+      const offshoreNodes = world.offshore ? world.getSpawnPoints(
+        assignedTeam === 'zombie' || (matchConfig.mode === 'zombie' && assignedTeam !== 'blue') ? 'zombie' : matchConfig.mode
+      ) : null;
+      const teamOffset = matchConfig.mode === 'team' && assignedTeam === 'red' ? 4 : 0;
+      const offshoreSpawn = offshoreNodes?.[((botIdCounter + 1) % (matchConfig.mode === 'team' ? 4 : offshoreNodes.length)) + teamOffset];
+      const p = offshoreSpawn ? { x: offshoreSpawn.position.x, z: offshoreSpawn.position.z } : randomMapPoint(14);
+      const y = offshoreSpawn ? offshoreSpawn.position.y : terrainHeight(p.x, p.z);
       const botId = botIdCounter++;
       const isZombie = ((matchConfig.mode === "zombie" || assignedTeam === "zombie") && assignedTeam !== "blue");
       let team = assignedTeam;
@@ -1755,6 +1765,8 @@ export default function App() {
         weaponType,
         factionAlignment: factionAlignmentRef.current,
         gearTier: gearTierRef.current,
+        eliteRole: eliteConfig?.archetype,
+        eliteSlot: eliteConfig?.slotId,
         headgear: team === 'blue' ? pHeadgear : undefined,
         torsoConfig: team === 'blue' ? pTorso : undefined,
         lowerConfig: team === 'blue' ? pLower : undefined,
@@ -1764,6 +1776,7 @@ export default function App() {
 
       const rootGroup = visuals.rootGroup;
       rootGroup.position.set(p.x, y, p.z);
+      if (offshoreSpawn) rootGroup.rotation.copy(offshoreSpawn.rotation);
       scene.add(rootGroup);
 
       const healthEl = document.createElement('div');
@@ -1917,7 +1930,7 @@ export default function App() {
         fillEl,
         pos: new THREE.Vector3(p.x, (isZombie && zType === 'banshee') ? y + 1.2 : y, p.z),
         vel: new THREE.Vector3(0, 0, 0),
-        facing: 0,
+        facing: offshoreSpawn?.rotation.y ?? 0,
         health: baseHealth,
         maxHealth: baseHealth,
         speed: moveSpeed,
@@ -1946,13 +1959,16 @@ export default function App() {
     }
 
     function removeBot(bot: Bot) {
-      scene.remove(bot.group);
+      bot.hitParts.forEach(world.unregisterHittable);
+      disposeBotVisuals(bot.group);
       bot.healthEl.remove();
       const i = bots.indexOf(bot);
       if (i >= 0) bots.splice(i, 1);
     }
 
     function clearMatchEntities() {
+      clearCombatSystems(scene, world);
+      extractionDirector = null;
       extractionPhase = false;
       extractionState = 'none';
       extractionTimer = 0;
@@ -2013,18 +2029,22 @@ export default function App() {
         matchModeRef.current === 'zombie' ||
         matchModeRef.current === 'extraction'
       );
-      const activeMap = isFacilityMode ? 'hangar' : selectedMapStateRef.current;
+      const activeMap = isFacilityMode && selectedMapStateRef.current === 'training' ? 'hangar' : selectedMapStateRef.current;
       selectedMapStateRef.current = activeMap;
 
       world.dispose();
-      world = createWorld(scene, activeMap);
+      world = activeMap === 'shattered_wall' ? initWorld(scene, camera) : createWorld(scene, activeMap);
       
       const isHangar = activeMap === 'hangar';
-      combatLightGroup.visible = true;
+      combatLightGroup.visible = !world.offshore;
+      if (world.lobbyGroup) world.lobbyGroup.visible = false;
+      storm.mesh.visible = !world.offshore && matchConfig.mode !== 'extraction';
       hemiLight.intensity = isHangar ? 0.55 : 0.65;
       sunLight.intensity = isHangar ? 0.75 : 1.05;
       
-      if (isHangar) {
+      if (world.offshore) {
+         skyMesh.visible = false;
+      } else if (isHangar) {
          scene.background = new THREE.Color(0x14181f);
          scene.fog = new THREE.Fog(0x14181f, 25, 140);
          skyMesh.visible = false;
@@ -2060,7 +2080,13 @@ export default function App() {
         }
       }
 
-      if (matchConfig.mode === 'extraction') {
+      if (world.offshore) {
+        const node = world.getSpawnPoints(matchConfig.mode === 'zombie' ? 'ffa' : matchConfig.mode)[0];
+        player.pos.copy(node.position);
+        player.pos.y += PLAYER_EYE;
+        player.vel.set(0, 0, 0);
+        player.yaw = node.rotation.y;
+      } else if (matchConfig.mode === 'extraction') {
         player.pos.set(0, 1.2, 5); // Sector 1: Ingress Airlock
         player.vel.set(0, 0, 0);
         player.yaw = 0; // Look forward down negative Z towards Sector 2, 3, 4, 5
@@ -2076,7 +2102,8 @@ export default function App() {
       player.team = matchConfig.mode === 'ffa' ? 'player' : 'blue';
 
       if (matchConfig.mode === 'extraction') {
-        extractionDirector = new ExtractionGameLoop({
+        const Director = world.offshore ? ShatteredWallExtractionGameLoop : ExtractionGameLoop;
+        extractionDirector = new Director({
           faction: factionAlignmentRef.current,
           player,
           world,
@@ -2120,14 +2147,17 @@ export default function App() {
           squad.forEach((companion, idx) => {
             const off = formationOffsets[idx] || { x: 3, z: 3 };
             const bot = makeBot('blue', null, false, companion);
-            bot.pos.set(player.pos.x + off.x, terrainHeight(player.pos.x + off.x, player.pos.z + off.z), player.pos.z + off.z);
+            if (world.offshore) {
+              const node = world.getSpawnPoints(matchConfig.mode === 'zombie' ? 'ffa' : 'extraction')[(idx + 1) % 4];
+              bot.pos.copy(node.position);
+            } else bot.pos.set(player.pos.x + off.x, terrainHeight(player.pos.x + off.x, player.pos.z + off.z), player.pos.z + off.z);
             bot.group.position.copy(bot.pos);
           });
           pushKillFeed('COMMAND: ELITE TASK FORCE DEPLOYED');
         } else {
           for (let i = 0; i < matchConfig.friendlyCount; i++) {
             const bot = makeBot('blue');
-            bot.pos.set(player.pos.x + (Math.random() - 0.5) * 4, 1.2, player.pos.z + (Math.random() - 0.5) * 4);
+            if (!world.offshore) bot.pos.set(player.pos.x + (Math.random() - 0.5) * 4, 1.2, player.pos.z + (Math.random() - 0.5) * 4);
             bot.group.position.copy(bot.pos);
           }
         }
@@ -2147,14 +2177,17 @@ export default function App() {
           squad.forEach((companion, idx) => {
             const off = formationOffsets[idx] || { x: 3, z: 3 };
             const bot = makeBot('blue', null, false, companion);
-            bot.pos.set(player.pos.x + off.x, terrainHeight(player.pos.x + off.x, player.pos.z + off.z), player.pos.z + off.z);
+            if (world.offshore) {
+              const node = world.getSpawnPoints(matchConfig.mode === 'zombie' ? 'ffa' : 'extraction')[(idx + 1) % 4];
+              bot.pos.copy(node.position);
+            } else bot.pos.set(player.pos.x + off.x, terrainHeight(player.pos.x + off.x, player.pos.z + off.z), player.pos.z + off.z);
             bot.group.position.copy(bot.pos);
           });
           pushKillFeed('COMMAND: ELITE TASK FORCE DEPLOYED');
         } else {
           for (let i = 0; i < matchConfig.friendlyCount; i++) {
             const bot = makeBot('blue');
-            bot.pos.set(player.pos.x + (Math.random() - 0.5) * 4, 1.2, player.pos.z + (Math.random() - 0.5) * 4);
+            if (!world.offshore) bot.pos.set(player.pos.x + (Math.random() - 0.5) * 4, 1.2, player.pos.z + (Math.random() - 0.5) * 4);
             bot.group.position.copy(bot.pos);
           }
         }
@@ -2168,7 +2201,7 @@ export default function App() {
         } else {
           for (let i = 0; i < matchConfig.friendlyCount; i++) {
             const bot = makeBot('blue');
-            bot.pos.set(player.pos.x + (Math.random() - 0.5) * 4, 1.2, player.pos.z + (Math.random() - 0.5) * 4);
+            if (!world.offshore) bot.pos.set(player.pos.x + (Math.random() - 0.5) * 4, 1.2, player.pos.z + (Math.random() - 0.5) * 4);
             bot.group.position.copy(bot.pos);
           }
         }
@@ -2927,7 +2960,7 @@ export default function App() {
       mouseSensitivity = (sensitivityValRef.current || 11) / 5000;
 
       // Map Rules State Guardrail: Horde and Extraction Modes strictly enforce Subterranean Hangar map
-      if (matchConfig.mode === 'zombie' || matchConfig.mode === 'extraction') {
+      if ((matchConfig.mode === 'zombie' || matchConfig.mode === 'extraction') && selectedMapStateRef.current === 'training') {
         selectedMapStateRef.current = 'hangar';
         setSelectedMapState('hangar');
       }
@@ -2961,12 +2994,12 @@ export default function App() {
     };
 
     const restartHandler = () => {
-      if (
+      if (selectedMapStateRef.current === 'training' && (
         matchConfig.mode === 'zombie' ||
         matchConfig.mode === 'extraction' ||
         matchModeRef.current === 'zombie' ||
         matchModeRef.current === 'extraction'
-      ) {
+      )) {
         selectedMapStateRef.current = 'hangar';
         setSelectedMapState('hangar');
       }
@@ -3037,17 +3070,19 @@ export default function App() {
       if (gameStateRef.current === 'playing') {
         if (hangarGroup) hangarGroup.visible = false;
         if (lobbyAvatar) lobbyAvatar.group.visible = false;
-        combatLightGroup.visible = true;
+        combatLightGroup.visible = !world.offshore;
+        if (world.lobbyGroup) world.lobbyGroup.visible = false;
+        world.updateWorld(dt, clock.elapsedTime, matchConfig.mode);
         
-        if (selectedMapStateRef.current === 'hangar') {
+        if (!world.offshore && selectedMapStateRef.current === 'hangar') {
            scene.background = new THREE.Color(0x14181f);
            scene.fog = new THREE.Fog(0x14181f, 25, 140);
-        } else {
+        } else if (!world.offshore) {
            scene.background = null;
            scene.fog = combatFog;
         }
         // 1. Player movement & physics
-        if (player.alive) {
+        if (player.alive && world.offshore?.phase !== 'DEPARTING') {
           const eyeHeight = player.crouching ? PLAYER_EYE_CROUCH : PLAYER_EYE;
           let speed = player.crouching ? CROUCH_SPEED : (player.sprinting ? SPRINT_SPEED : WALK_SPEED);
           speed *= player.classSpeedMultiplier; // Recon: +20% (1.20), Juggernaut: -15% (0.85)
@@ -3134,8 +3169,10 @@ export default function App() {
             }
           }
 
-          // Storm damage
-          if (matchConfig.mode !== 'zombie') {
+          if (world.offshore && player.pos.y < 1.1) applyDamageToPlayer(player.maxHealth + player.maxShield, true, true, null);
+
+          // Storm damage applies to the arena modes.
+          if (matchConfig.mode !== 'zombie' && matchConfig.mode !== 'extraction') {
             const distFromCenter = Math.hypot(player.pos.x - storm.center.x, player.pos.z - storm.center.z);
             if (distFromCenter > storm.radius) {
               applyDamageToPlayer(STORM_DPS * dt, true, true, null);
@@ -3463,7 +3500,7 @@ export default function App() {
         }
         
         // 6. World doors & interactions
-        world.updateDoors(dt);
+        // Doors and debris are advanced by world.updateWorld().
 
         let nearestDoor = null;
         let nearestDoorDist = 999;
@@ -3538,9 +3575,7 @@ export default function App() {
                   pushKillFeed(`COLLECTED ${wType.name} AMMO (+ $50 CONVERTED)`);
                   addPoints(50);
                 }
-                scene.remove(pItem.group);
-                const idxInArr = world.groundPickups.indexOf(pItem);
-                if (idxInArr >= 0) world.groundPickups.splice(idxInArr, 1);
+                world.removeGroundPickup(pItem);
               }
             }
           } else {
@@ -3678,6 +3713,8 @@ export default function App() {
           alive: player.alive,
           applyDamage: (dmg, isHead, isExp, attacker) => applyDamageToPlayer(dmg, false, false, attacker)
         }, bots, damageBot);
+
+        updateSonicDistortionRings(dt, scene);
 
         // Update radar scramble countdown
         if ((window as any).radarScrambleTimer && (window as any).radarScrambleTimer > 0) {
@@ -3906,11 +3943,13 @@ export default function App() {
           }
 
           if (targetPos) {
-            const dx = targetPos.x - bot.pos.x;
-            const dz = targetPos.z - bot.pos.z;
-            const dist = Math.hypot(dx, dz) || 0.001;
-            const ndx = dx / dist;
-            const ndz = dz / dist;
+            const movementTarget = world.getNavigationTarget?.(bot.pos, targetPos) ?? targetPos;
+            const dx = movementTarget.x - bot.pos.x;
+            const dz = movementTarget.z - bot.pos.z;
+            const navigationDistance = Math.hypot(dx, dz) || 0.001;
+            const dist = Math.hypot(targetPos.x - bot.pos.x, targetPos.z - bot.pos.z);
+            const ndx = dx / navigationDistance;
+            const ndz = dz / navigationDistance;
 
             // Bot tactical healing logic below 35% health
               let isHealing = false;
@@ -3966,8 +4005,15 @@ export default function App() {
                   
                   if (distToPlayer > 14) {
                      // Hard Catch-up
-                     bot.pos.x = tetherX;
-                     bot.pos.z = tetherZ;
+                     if (world.offshore) {
+                       const waypoint = world.getNavigationTarget?.(bot.pos, player.pos) ?? player.pos;
+                       const length = Math.hypot(waypoint.x - bot.pos.x, waypoint.z - bot.pos.z) || 1;
+                       moveX = (waypoint.x - bot.pos.x) / length * 2;
+                       moveZ = (waypoint.z - bot.pos.z) / length * 2;
+                     } else {
+                       bot.pos.x = tetherX;
+                       bot.pos.z = tetherZ;
+                     }
                   } else if (distToPlayer > 7.5) {
                      // Outer Sprint
                      moveX = ((tetherX - bot.pos.x) / dToSlot) * 2.0;
@@ -3988,7 +4034,7 @@ export default function App() {
                   moveZ *= 0.1; // Stay put
                 } else if (directive === 'push_objective') {
                   // Push ahead of player (sector progression)
-                  tetherZ = player.pos.z + 15; // Push forward
+                  tetherZ = world.offshore ? 0 : player.pos.z + 15;
                   const dToSlot = Math.hypot(tetherX - bot.pos.x, tetherZ - bot.pos.z);
                   if (dToSlot > 2) {
                     moveX = ((tetherX - bot.pos.x) / dToSlot) * 1.5;
@@ -4491,7 +4537,8 @@ export default function App() {
           setupLobbyScene();
         }
         combatLightGroup.visible = false;
-        if (hangarGroup) hangarGroup.visible = true;
+        if (hangarGroup) hangarGroup.visible = !world.lobbyGroup;
+        if (world.lobbyGroup) world.lobbyGroup.visible = true;
         scene.background = new THREE.Color(0x0a0d12);
         scene.fog = lobbyFog;
 
@@ -4526,6 +4573,7 @@ export default function App() {
         vmManager.root.visible = false;
       }
 
+      if (world.offshore?.phase === 'DEPARTING') camera.position.copy(player.pos);
       renderer.render(scene, camera);
     }
     let hudSyncTimer = 0;
@@ -4557,8 +4605,14 @@ export default function App() {
       window.removeEventListener('resize', onResize);
       resizeObserver?.disconnect();
       bottomCenterEl?.removeEventListener('click', onBottomCenterClick as EventListener);
-      lobbyAvatar?.destroy();
-      world?.dispose();
+      teardownLobbyScene();
+      clearMatchEntities();
+      disposeBotVisuals(vmManager.root);
+      flashTexture.dispose();
+      disposeBotTextureCache();
+      world.dispose();
+      cleanupWorld(scene);
+      disposeBotVisuals(combatLightGroup);
       botHealthLayer?.remove();
       renderer?.dispose();
     };
