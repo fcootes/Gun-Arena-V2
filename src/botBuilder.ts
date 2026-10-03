@@ -2018,6 +2018,9 @@ function matSocketRecessLocal(): THREE.MeshStandardMaterial {
  * ===========================================================================*/
 
 export function buildRegenFieldMesh(radius = REGEN_FIELD_RADIUS): THREE.Mesh {
+  if (!Number.isFinite(radius) || radius <= 0) {
+    throw new RangeError('Regen field radius must be finite and positive.');
+  }
   const geo = new THREE.IcosahedronGeometry(radius, 2);
   const mat = new THREE.MeshBasicMaterial({
     color: 0x22c55e,
@@ -2065,7 +2068,8 @@ export function buildTelemetryMarker(): THREE.Group {
     color: 0xff3344,
     transparent: true,
     opacity: 0.95,
-    depthTest: false
+    depthTest: false,
+    depthWrite: false
   });
 
   const caret = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.4, 4), markMat);
@@ -2078,14 +2082,15 @@ export function buildTelemetryMarker(): THREE.Group {
     wireframe: true,
     transparent: true,
     opacity: 0.5,
-    depthTest: false
+    depthTest: false,
+    depthWrite: false
   });
   const cage = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.85, 0.7), cageMat);
   cage.position.y = 0.95;
   group.add(cage);
 
   // Bracket-box corner ticks for a HUD tracking-reticle look
-  const tickMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, depthTest: false });
+  const tickMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, depthTest: false, depthWrite: false });
   const corners: [number, number][] = [
     [-1, -1],
     [1, -1],
@@ -2241,7 +2246,8 @@ export function disposeBotVisuals(root: THREE.Object3D): void {
   const materials = new Set<THREE.Material>();
   root.traverse((object) => {
     const mesh = object as THREE.Mesh;
-    if (mesh.geometry) geometries.add(mesh.geometry);
+    // Sprite geometry is shared by Three.js globally, not owned by this bot.
+    if (!(object instanceof THREE.Sprite) && mesh.geometry) geometries.add(mesh.geometry);
     if (mesh.material) for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) materials.add(material);
     if (object instanceof THREE.Light) object.dispose();
   });
@@ -2252,8 +2258,8 @@ export function disposeBotVisuals(root: THREE.Object3D): void {
 }
 
 export function disposeBotTextureCache(): void {
-  _weaveTex?.dispose();
-  _scratchTex?.dispose();
+  const textures = new Set([_weaveTex, _scratchTex]);
   _weaveTex = null;
   _scratchTex = null;
+  textures.forEach((texture) => texture?.dispose());
 }

@@ -336,6 +336,7 @@ function findClearPathAngle(
 
 export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const selectLoadoutSlotRef = useRef<(index: number) => void>(() => {});
 
   // React UI state for overlays and audio guidance
   const [gameState, setGameState] = useState<'start' | 'playing' | 'paused' | 'DEATH_SCREEN'>('start');
@@ -475,7 +476,7 @@ export default function App() {
     currentWeapon: WEAPONS[0],
     weaponSlotState: { ammo: 30, reserve: 120, reloading: false, overheated: false } as WeaponSlotState,
     slotIndex: 0,
-    playerLoadout: WEAPONS.slice(0, 3),
+    playerLoadout: [WEAPONS[0], WEAPONS[3], WEAPONS.find(w => w.type === 'grenade')!, WEAPONS.find(w => w.id === 'medkit')!],
     playerLoadoutStates: [] as WeaponSlotState[],
     playerPos: { x: 0, z: 0 },
     playerYaw: 0,
@@ -892,10 +893,11 @@ export default function App() {
       team: 'player'
     };
 
-    // Player's hard-locked 3-slot tactical loadout:
+    // Player's four-slot tactical loadout:
     // Slot 0: Primary (chosen in lobby dropdown)
     // Slot 1: Secondary (chosen in lobby dropdown)
-    // Slot 2: Grenades (tactical explosives)
+    // Slot 2: Tactical grenade
+    // Slot 3: Field kit (tactical heal)
     let playerLoadout: WeaponDef[] = [];
     let playerWeaponState: WeaponSlotState[] = [];
 
@@ -904,7 +906,8 @@ export default function App() {
       const sec = WEAPONS.find(w => w.id === selectedSecondaryRef.current) || WEAPONS[3];
       const gren = WEAPONS.find(w => w.type === 'grenade') || WEAPONS[10];
 
-      const heal = WEAPONS.find(w => w.id === 'medkit') || WEAPONS[11]; playerLoadout = [prim, sec, gren, heal];
+      const heal = WEAPONS.find(w => w.id === 'medkit')!;
+      playerLoadout = [prim, sec, gren, heal];
 
       playerWeaponState = playerLoadout.map(w => {
         if (w.type === 'grenade' || w.type === 'consumable') {
@@ -2126,7 +2129,7 @@ export default function App() {
         setExtractionState(null);
       }
 
-      // Initialize strictly isolated 3-slot loadout (Primary, Secondary, Grenades)
+      // Initialize primary, secondary, tactical and field kit slots
       setupPlayerLoadout();
       pushKillFeed(`DEPLOYED: ${activeClass.name.toUpperCase()} [${activeClass.perkName}]`);
 
@@ -2211,7 +2214,7 @@ export default function App() {
       }
     }
 
-    // Weapons firing and reload: hard-locked to active 3-slot loadout
+    // Weapons and consumables use the active four-slot loadout.
     function currentSlot(): WeaponDef { return playerLoadout[player.slotIndex] || playerLoadout[0] || WEAPONS[0]; }
     function currentSlotState(): WeaponSlotState { return playerWeaponState[player.slotIndex] || playerWeaponState[0] || { ammo: 30, reserve: 90 }; }
 
@@ -2633,26 +2636,13 @@ export default function App() {
       }
     }
 
-    function activateMedkit() {
-      if (player.isDrinking) return; // Already healing
-      if (player.health < player.maxHealth) {
-        player.isDrinking = true;
-        player.drinkTimer = 2.0;
-        // Medkit activation will finish in the update loop
-        pushKillFeed('APPLYING MEDKIT...');
-        AUDIO.sniperReload.play(0.65); // Radio sound effect proxy
-      } else {
-        pushKillFeed('HP FULL // MEDKIT CONSERVED', true);
-      }
-    }
-    
     function switchSlot(index: number) {
       if (extractionState === 'carrying' && index === 0) {
          pushKillFeed('COMMAND: CANNOT EQUIP PRIMARY WHILE CARRYING CRYO-POD.', true);
          return;
       }
 
-      if (index < 0 || index > 3) return; // Strictly truncated: only index 0, 1, 2
+      if (!Number.isInteger(index) || index < 0 || index >= playerLoadout.length) return;
       if (player.slotIndex !== index) {
         AUDIO.arSpray.stop();
         AUDIO.laserBeam.stop();
@@ -2684,6 +2674,10 @@ export default function App() {
         player.slotIndex = index;
       }
     }
+
+    selectLoadoutSlotRef.current = (index) => {
+      if (gameStateRef.current === 'playing') switchSlot(index);
+    };
 
     // Safe pointer lock helper that catches permission errors in iframes
     const requestGamePointerLock = () => {
@@ -2797,9 +2791,9 @@ export default function App() {
       if (e.code === 'Digit1') switchSlot(0);
       if (e.code === 'Digit2') switchSlot(1);
       if (e.code === 'Digit3') switchSlot(2);
-      if (e.code === 'Digit4') activateMedkit();
+      if (e.code === 'Digit4') switchSlot(3);
       
-      // Digits 4 through 0 are completely eradicated to eliminate ghost inventories
+      // Digits 1–4 select the four loadout slots; higher digits remain unused.
     };
 
     const onKeyUp = (e: KeyboardEvent) => {
@@ -2895,7 +2889,7 @@ export default function App() {
     const onWheel = (e: WheelEvent) => {
       if (gameStateRef.current !== 'playing') return;
       const dir = e.deltaY > 0 ? 1 : -1;
-      const next = (player.slotIndex + dir + 3) % 3; // Strictly cycle active 3 slots
+      const next = (player.slotIndex + dir + playerLoadout.length) % playerLoadout.length;
       switchSlot(next);
     };
 
@@ -2939,7 +2933,7 @@ export default function App() {
       const match = target.id.match(/slot-(\d+)/);
       if (match) {
         const slotIdx = parseInt(match[1], 10) - 1;
-        if (slotIdx >= 0 && slotIdx < 3) {
+        if (slotIdx >= 0 && slotIdx < playerLoadout.length) {
           switchSlot(slotIdx);
         }
       }
@@ -3183,7 +3177,7 @@ export default function App() {
           }
         }
 
-        // 2. Weapon reload progress, cooling, & auto fire for the active 3-slot loadout
+        // 2. Weapon reload progress, cooling, & auto fire for the active loadout
         playerLoadout.forEach((w, i) => {
           if (w.type !== 'weapon') return;
           const ws = playerWeaponState[i];
@@ -4475,12 +4469,12 @@ export default function App() {
           } else if (curW.type === 'grenade') {
             reloadTagEl.textContent = 'LMB OR [G] TO THROW';
           } else {
-            reloadTagEl.textContent = player.isDrinking ? `DRINKING ${player.drinkTimer.toFixed(1)}s` : 'LMB OR [X] TO DRINK';
+            reloadTagEl.textContent = player.isDrinking ? `DRINKING ${player.drinkTimer.toFixed(1)}s` : 'LMB TO APPLY FIELD KIT';
           }
         }
 
-        // Highlight selected inventory slot across the 3 locked loadout assets
-        for (let s = 0; s < 3; s++) {
+        // Highlight all four active loadout slots.
+        for (let s = 0; s < playerLoadout.length; s++) {
           const slotEl = containerRef.current?.querySelector(`#slot-${s + 1}`);
           if (slotEl) {
             slotEl.classList.toggle('selected', player.slotIndex === s);
@@ -4489,7 +4483,8 @@ export default function App() {
               const itemW = playerLoadout[s];
               const itemWs = playerWeaponState[s];
               if (!itemW || !itemWs) continue;
-              if (itemW.type === 'grenade') labelEl.textContent = `GRENADES (x${itemWs?.count ?? 0})`;
+              if (itemW.type === 'consumable') labelEl.textContent = `FIELD KIT (x${itemWs?.count ?? 0})`;
+              else if (itemW.type === 'grenade') labelEl.textContent = `GRENADES (x${itemWs?.count ?? 0})`;
               else if (itemW.id === 'laser') labelEl.textContent = `LASER (${Math.round(itemWs?.heat ?? 0)}%)`;
               else if (itemW.id === 'minigun') labelEl.textContent = `MINIGUN (${Math.round(itemWs?.heat ?? 0)}%)`;
               else if (itemW.id === 'railgun') labelEl.textContent = `RAILGUN (${itemWs?.ammo ?? 0})`;
@@ -4604,6 +4599,7 @@ export default function App() {
       document.removeEventListener('pointerlockchange', onPointerLockChange);
       window.removeEventListener('resize', onResize);
       resizeObserver?.disconnect();
+      selectLoadoutSlotRef.current = () => {};
       bottomCenterEl?.removeEventListener('click', onBottomCenterClick as EventListener);
       teardownLobbyScene();
       clearMatchEntities();
@@ -4720,6 +4716,7 @@ export default function App() {
             slotIndex={hudData.slotIndex}
             playerLoadout={hudData.playerLoadout}
             playerLoadoutStates={hudData.playerLoadoutStates}
+            onSelectSlot={(index) => selectLoadoutSlotRef.current(index)}
             matchMode={matchMode}
             factionAlignment={factionAlignment}
             blueScore={hudData.blueScore}

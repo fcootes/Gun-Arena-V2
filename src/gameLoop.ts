@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { WorldManager } from './world';
-import { buildTripodMachineGun, buildRegenFieldMesh, buildTelemetryMarker } from './botBuilder';
+import { buildTripodMachineGun, buildRegenFieldMesh, buildTelemetryMarker, disposeBotVisuals } from './botBuilder';
 import {
   Bot,
   MutantType,
@@ -2890,13 +2890,7 @@ export function updateEliteSquad(dt: number, ctx: CombatSystemsContext): Map<num
 
     if (field.life <= 0) {
       ctx.scene.remove(field.mesh);
-      field.mesh.traverse((o) => {
-        const m = o as THREE.Mesh;
-        if (m.isMesh) {
-          m.geometry?.dispose();
-          (m.material as THREE.Material)?.dispose();
-        }
-      });
+      disposeBotVisuals(field.mesh);
       activeRegenFields.splice(i, 1);
     }
   }
@@ -2920,13 +2914,7 @@ export function updateEliteSquad(dt: number, ctx: CombatSystemsContext): Map<num
       mark.marker.rotation.y += dt * 1.6;
     } else {
       if (mark.marker.parent) mark.marker.parent.remove(mark.marker);
-      mark.marker.traverse((o) => {
-        const m = o as THREE.Mesh;
-        if (m.isMesh) {
-          m.geometry?.dispose();
-          (m.material as THREE.Material)?.dispose();
-        }
-      });
+      disposeBotVisuals(mark.marker);
       activeTelemetryMarks.splice(i, 1);
     }
   }
@@ -2954,12 +2942,12 @@ export function clearCombatSystems(scene: THREE.Scene, world: WorldManager): voi
   explosionFx.length = 0;
 
   for (const field of activeRegenFields) {
-    scene.remove(field.mesh);
+    disposeBotVisuals(field.mesh);
   }
   activeRegenFields.length = 0;
 
   for (const mark of activeTelemetryMarks) {
-    if (mark.marker.parent) mark.marker.parent.remove(mark.marker);
+    disposeBotVisuals(mark.marker);
   }
   activeTelemetryMarks.length = 0;
 
