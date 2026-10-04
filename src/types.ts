@@ -19,6 +19,7 @@ export interface WeaponDef {
   id: string;
   name: string;
   type: 'weapon' | 'grenade' | 'consumable' | 'empty' | 'gadget';
+  arsenalId?: WeaponID;
   damage?: number;
   headshotMult?: number;
   pellets?: number;
@@ -919,7 +920,7 @@ export const ARSENAL: Record<WeaponID, ArsenalWeaponDef> = {
     name: 'RPG-7',
     weaponClass: 'EXPLOSIVE',
     price: 45000,
-    legacyId: 'railgun',
+    legacyId: 'rocket',
     damage: 120,
     headshotMult: 1.0,
     pellets: 1,
@@ -951,7 +952,7 @@ export const ARSENAL: Record<WeaponID, ArsenalWeaponDef> = {
     name: 'M32 Grenade Launcher',
     weaponClass: 'EXPLOSIVE',
     price: 42000,
-    legacyId: 'shotgun',
+    legacyId: 'grenade_launcher',
     damage: 60,
     headshotMult: 1.0,
     pellets: 1,
@@ -1356,6 +1357,7 @@ export interface ActiveProjectile {
   ownerTeam: string;
   ownerIsPlayer: boolean;
   ownerBotId: number;
+  ownerBotRef?: Bot;
   life: number;
   armed: boolean;
   trailTimer: number;
@@ -1447,6 +1449,11 @@ export interface Bot {
   gunMesh: THREE.Group | null;
   muzzleFlash: THREE.Sprite | null;
   muzzleFlashT: number;
+  weaponEffects?: import('./weaponEffects').WeaponMuzzleEffect;
+  weaponAssembly?: import('./weaponModels').WeaponAssembly;
+  weaponAmmo?: number;
+  weaponReserve?: number;
+  weaponReloadTimer?: number;
   weaponTypeIndex: number;
   weaponType: string;
   flashMats: THREE.MeshStandardMaterial[];

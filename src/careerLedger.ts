@@ -239,7 +239,7 @@ export const UNLOCK_CATALOG: Record<string, UnlockRequirement> = {
   },
   lmg: {
     id: 'lmg',
-    name: 'SAKIN HEAVY LMG',
+    name: 'M250 SUPPORT LMG',
     category: 'weapon',
     reqType: 'rank',
     minRank: 6,
@@ -273,6 +273,8 @@ export const UNLOCK_CATALOG: Record<string, UnlockRequirement> = {
     fundsPrice: 4000,
     description: 'Motorized heavy suppression rotary cannon.'
   },
+  rocket: { id: 'rocket', name: 'ROCKET LAUNCHER', category: 'weapon', reqType: 'both', minRank: 8, fundsPrice: 2400, description: 'Flat-flight rocket with six-metre blast radius.' },
+  grenade_launcher: { id: 'grenade_launcher', name: 'M32 GRENADE LAUNCHER', category: 'weapon', reqType: 'both', minRank: 6, fundsPrice: 1800, description: 'Six-round 40mm revolver launcher with arcing shells.' },
   railgun: {
     id: 'railgun',
     name: 'TACTICAL AP RAILGUN',

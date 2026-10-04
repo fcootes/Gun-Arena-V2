@@ -1,3 +1,4 @@
+import { createWeaponAssembly } from './weaponModels';
 import * as THREE from 'three';
 import { disposeBotVisuals } from './botBuilder';
 import type { WorldMapId } from './types';
@@ -22,15 +23,16 @@ export interface LobbyAvatarController {
 
 // Avatar textures are private to this controller; bot cache textures are not used here.
 function disposeAvatarResources(root: THREE.Object3D) {
-  const textures = new Set<THREE.Texture>();
+  const textures = new Set<THREE.Texture>(), owned = new Set<THREE.Texture>();
   root.traverse(object => {
     const material = (object as THREE.Mesh).material;
     for (const item of material ? (Array.isArray(material) ? material : [material]) : []) {
+      for(const texture of item.userData.ownedTextures??[])owned.add(texture);
       Object.values(item).forEach(value => { if (value instanceof THREE.Texture) textures.add(value); });
     }
   });
   disposeBotVisuals(root);
-  textures.forEach(texture => texture.dispose());
+  textures.forEach(texture => { if(!owned.has(texture))texture.dispose(); });
 }
 function clearOwnedChildren(group: THREE.Group) {
   const retired = new THREE.Group();
@@ -690,216 +692,8 @@ export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): L
 }
 
 export function buildWeaponMesh(targetGroup: THREE.Group, weaponId: string) {
-    clearOwnedChildren(targetGroup);
-
-    const matGunMetal = new THREE.MeshStandardMaterial({ color: 0x22252a, roughness: 0.42, metalness: 0.82 });
-    const matGunDark = new THREE.MeshStandardMaterial({ color: 0x101214, roughness: 0.68, metalness: 0.4 });
-    const matGunGrey = new THREE.MeshStandardMaterial({ color: 0x3e434a, roughness: 0.45, metalness: 0.65 });
-    const matAccent = new THREE.MeshStandardMaterial({ color: 0x5a6270, roughness: 0.35, metalness: 0.6 });
-    const matLaserGlow = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00bcd4, emissiveIntensity: 2.0 });
-    const matOpticCyan = new THREE.MeshStandardMaterial({ color: 0x2de2e6, roughness: 0.1, transparent: true, opacity: 0.85, emissive: 0x00838f, emissiveIntensity: 0.9 });
-
-    if (weaponId === 'shotgun') {
-      // Expedite 12 Tactical Shotgun
-      const body = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.10, 0.42), matGunDark);
-      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.52, 10), matGunMetal);
-      barrel.rotation.x = Math.PI / 2;
-      barrel.position.set(0, 0.03, 0.24);
-      const magTube = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.46, 10), matGunDark);
-      magTube.rotation.x = Math.PI / 2;
-      magTube.position.set(0, -0.01, 0.22);
-      const pump = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.075, 0.16), matGunMetal);
-      pump.position.set(0, -0.01, 0.18);
-      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.12, 0.07), matGunDark);
-      grip.position.set(0, -0.08, -0.06);
-      grip.rotation.x = 0.25;
-      const stock = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.09, 0.22), matGunDark);
-      stock.position.set(0, -0.01, -0.20);
-      targetGroup.add(body, barrel, magTube, pump, grip, stock);
-
-    } else if (weaponId === 'sniper') {
-      // Signal 50 Heavy Anti-Materiel Sniper Rifle
-      const body = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.11, 0.55), matGunDark);
-      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.78, 10), matGunMetal);
-      barrel.rotation.x = Math.PI / 2;
-      barrel.position.set(0, 0.03, 0.38);
-      const muzzleBrake = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.045, 0.09), matGunMetal);
-      muzzleBrake.position.set(0, 0.03, 0.78);
-      const scopeTube = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.32, 10), matGunDark);
-      scopeTube.rotation.x = Math.PI / 2;
-      scopeTube.position.set(0, 0.11, 0.05);
-      const scopeLens = new THREE.Mesh(new THREE.CircleGeometry(0.020, 12), matOpticCyan);
-      scopeLens.position.set(0, 0.11, -0.11);
-      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.13, 0.07), matGunDark);
-      grip.position.set(0, -0.09, -0.05);
-      grip.rotation.x = 0.25;
-      const stock = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.10, 0.26), matGunDark);
-      stock.position.set(0, -0.01, -0.22);
-      const mag = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.16, 0.10), matGunMetal);
-      mag.position.set(0, -0.10, 0.08);
-      mag.rotation.x = 0.2;
-      targetGroup.add(body, barrel, muzzleBrake, scopeTube, scopeLens, grip, stock, mag);
-
-    } else if (weaponId === 'pistol') {
-      // Combat 9mm Tactical Sidearm
-      const slide = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.065, 0.22), matGunMetal);
-      slide.position.set(0, 0.04, 0.04);
-      const frame = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.05, 0.20), matGunDark);
-      frame.position.set(0, 0.0, 0.04);
-      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.13, 0.075), matGunDark);
-      grip.position.set(0, -0.08, -0.04);
-      grip.rotation.x = 0.24;
-      const triggerGuard = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.04, 0.06), matGunMetal);
-      triggerGuard.position.set(0, -0.04, 0.02);
-      targetGroup.add(slide, frame, grip, triggerGuard);
-
-    } else if (weaponId === 'smg') {
-      // VEL-46 Submachine Gun
-      const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.09, 0.32), matGunDark);
-      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.24, 10), matGunMetal);
-      barrel.rotation.x = Math.PI / 2;
-      barrel.position.set(0, 0.02, 0.20);
-      const mag = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.22, 0.05), matGunMetal);
-      mag.position.set(0, -0.12, 0.06);
-      mag.rotation.x = 0.18;
-      const foregrip = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.10, 0.04), matGunDark);
-      foregrip.position.set(0, -0.08, 0.18);
-      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.12, 0.065), matGunDark);
-      grip.position.set(0, -0.08, -0.04);
-      grip.rotation.x = 0.25;
-      const optic = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.04, 0.08), matAccent);
-      optic.position.set(0, 0.07, 0.02);
-      targetGroup.add(receiver, barrel, mag, foregrip, grip, optic);
-
-    } else if (weaponId === 'lmg') {
-      // Sakin Heavy LMG with underslung drum
-      const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.13, 0.48), matGunDark);
-      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.58, 10), matGunMetal);
-      barrel.rotation.x = Math.PI / 2;
-      barrel.position.set(0, 0.02, 0.28);
-      const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.13, 16), matGunMetal);
-      drum.rotation.z = Math.PI / 2;
-      drum.position.set(0, -0.12, 0.06);
-      const carryHandle = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.06, 0.16), matAccent);
-      carryHandle.position.set(0, 0.10, 0.12);
-      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.12, 0.07), matGunDark);
-      grip.position.set(0, -0.09, -0.08);
-      grip.rotation.x = 0.24;
-      const stock = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.11, 0.22), matGunDark);
-      stock.position.set(0, -0.01, -0.24);
-      targetGroup.add(receiver, barrel, drum, carryHandle, grip, stock);
-
-    } else if (weaponId === 'br') {
-      // F2000 Bullpup Battle Rifle (Monolithic chassis, integrated optic, bullpup rear magazine)
-      const chassis = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.12, 0.44), matGunDark);
-      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.35, 10), matGunMetal);
-      barrel.rotation.x = Math.PI / 2;
-      barrel.position.set(0, 0.02, 0.26);
-      const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.035, 0.06), matGunMetal);
-      muzzle.position.set(0, 0.02, 0.42);
-      // Integrated carry handle & optic box
-      const opticShroud = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.065, 0.24), matGunGrey);
-      opticShroud.position.set(0, 0.09, 0.02);
-      const opticLens = new THREE.Mesh(new THREE.CircleGeometry(0.016, 12), matOpticCyan);
-      opticLens.position.set(0, 0.09, -0.10);
-      // Ergonomic front handguard
-      const handguard = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.09, 0.18), matGunMetal);
-      handguard.position.set(0, -0.03, 0.16);
-      // Pistol Grip
-      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.12, 0.065), matGunDark);
-      grip.position.set(0, -0.09, 0.02);
-      grip.rotation.x = 0.24;
-      // Rear bullpup magazine (strictly situated BEHIND pistol grip in stock)
-      const bullpupMag = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.15, 0.075), matGunMetal);
-      bullpupMag.position.set(0, -0.08, -0.14);
-      bullpupMag.rotation.x = -0.15;
-      // Thumbhole rear stock
-      const stock = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.12, 0.22), matGunDark);
-      stock.position.set(0, -0.01, -0.22);
-      targetGroup.add(chassis, barrel, muzzle, opticShroud, opticLens, handguard, grip, bullpupMag, stock);
-
-    } else if (weaponId === 'laser') {
-      // Covenant Plasma Beam Rifle (Curved chassis, heat louvers, glowing power core)
-      const matAlienChassis = new THREE.MeshStandardMaterial({ color: 0x3d205c, roughness: 0.35, metalness: 0.85 });
-      const mainFrame = new THREE.Mesh(new THREE.BoxGeometry(0.068, 0.11, 0.45), matAlienChassis);
-      const emitterSnout = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.15, 12), matGunMetal);
-      emitterSnout.rotation.x = -Math.PI / 2;
-      emitterSnout.position.set(0, 0.01, 0.28);
-      const glowingCore = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.18), matLaserGlow);
-      glowingCore.position.set(0, 0.04, 0.02);
-      const heatFins = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.14), matAlienChassis);
-      heatFins.position.set(0, 0.02, -0.10);
-      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.12, 0.065), matGunDark);
-      grip.position.set(0, -0.08, 0.0);
-      grip.rotation.x = 0.25;
-      targetGroup.add(mainFrame, emitterSnout, glowingCore, heatFins, grip);
-
-    } else if (weaponId === 'minigun') {
-      // Vulcan Rotary Cannon (Rotating 6-barrel cluster, motor housing, chainsaw carry handle)
-      const motorHousing = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, 0.32), matGunDark);
-      const barrelCluster = new THREE.Group();
-      barrelCluster.position.set(0, 0, 0.28);
-      for (let i = 0; i < 6; i++) {
-        const angle = (i / 6) * Math.PI * 2;
-        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.44, 8), matGunMetal);
-        b.rotation.x = Math.PI / 2;
-        b.position.set(Math.cos(angle) * 0.038, Math.sin(angle) * 0.038, 0);
-        barrelCluster.add(b);
-      }
-      const ring1 = new THREE.Mesh(new THREE.TorusGeometry(0.042, 0.008, 8, 16), matGunMetal);
-      ring1.position.z = 0.12;
-      const ring2 = new THREE.Mesh(new THREE.TorusGeometry(0.042, 0.008, 8, 16), matGunMetal);
-      ring2.position.z = -0.12;
-      barrelCluster.add(ring1, ring2);
-
-      const topHandle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.08, 0.22), matAccent);
-      topHandle.position.set(0, 0.11, 0.04);
-      const rearGrip = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.14, 0.08), matGunDark);
-      rearGrip.position.set(0, -0.06, -0.14);
-      targetGroup.add(motorHousing, barrelCluster, topHandle, rearGrip);
-
-    } else if (weaponId === 'railgun') {
-      // Kinetic AP Railgun (Dual parallel electromagnetic accelerator rails)
-      const chassis = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.11, 0.48), matGunDark);
-      const topRail = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.58), matGunMetal);
-      topRail.position.set(0, 0.045, 0.26);
-      const bottomRail = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.58), matGunMetal);
-      bottomRail.position.set(0, -0.015, 0.26);
-      const acceleratorGlow = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.04, 0.50), matLaserGlow);
-      acceleratorGlow.position.set(0, 0.015, 0.24);
-      const capacitorStock = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.24), matGunDark);
-      capacitorStock.position.set(0, 0, -0.22);
-      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.12, 0.065), matGunDark);
-      grip.position.set(0, -0.08, -0.04);
-      grip.rotation.x = 0.25;
-      targetGroup.add(chassis, topRail, bottomRail, acceleratorGlow, capacitorStock, grip);
-
-    } else {
-      // Default M4A1 Tactical Assault Rifle (quad-rail, STANAG mag, holographic optic)
-      const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.10, 0.38), matGunMetal);
-      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.42, 10), matGunDark);
-      barrel.rotation.x = Math.PI / 2;
-      barrel.position.set(0, 0.025, 0.26);
-      const flashHider = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.05, 8), matGunMetal);
-      flashHider.rotation.x = Math.PI / 2;
-      flashHider.position.set(0, 0.025, 0.48);
-      const handguard = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.065, 0.22), matGunDark);
-      handguard.position.set(0, 0.025, 0.18);
-      const mag = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.16, 0.08), matGunDark);
-      mag.position.set(0, -0.10, 0.05);
-      mag.rotation.x = 0.22;
-      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.046, 0.12, 0.065), matGunDark);
-      grip.position.set(0, -0.08, -0.06);
-      grip.rotation.x = 0.26;
-      const stock = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.09, 0.20), matGunDark);
-      stock.position.set(0, -0.01, -0.22);
-      const optic = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.045, 0.11), matAccent);
-      optic.position.set(0, 0.075, 0.0);
-      const opticReticle = new THREE.Mesh(new THREE.CircleGeometry(0.014, 10), matOpticCyan);
-      opticReticle.position.set(0, 0.075, -0.056);
-      targetGroup.add(receiver, barrel, flashHider, handguard, mag, grip, stock, optic, opticReticle);
-    }
-    const used = new Set<THREE.Material>();
-    targetGroup.traverse((object) => { const mesh = object as THREE.Mesh; if (mesh.material) (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach(m => used.add(m)); });
-    [matGunMetal, matGunDark, matGunGrey, matAccent, matLaserGlow, matOpticCyan].forEach(m => { if (!used.has(m)) m.dispose(); });
-  }
+  clearOwnedChildren(targetGroup);
+  const assembly = createWeaponAssembly(weaponId);
+  targetGroup.add(assembly.root);
+  targetGroup.userData.weaponAssembly = assembly;
+}

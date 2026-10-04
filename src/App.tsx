@@ -1,3 +1,4 @@
+import { createWeaponAssembly, disposeWeaponObject } from './weaponModels';
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -39,7 +40,7 @@ import {
   playKnifeSlashWhoosh
 } from './audio';
 import { createWorld, initWorld, cleanupWorld, terrainHeight, randomMapPoint, updateHeliDefenses } from './world';
-import { buildBotVisuals, disposeBotVisuals, disposeBotTextureCache } from './botBuilder';
+import { buildBotVisuals, disposeBotVisuals, disposeBotTextureCache, setActorWeaponModel } from './botBuilder';
 import { createLobbyAvatar, VisorType, FactionType, LobbyAvatarController } from './lobbyAvatar';
 import { HelmetHUD, RadarPing } from './HelmetHUD';
 import { LobbyTerminal, LobbyTab } from './LobbyTerminal';
@@ -53,7 +54,7 @@ import {
   updateBioMutantAI,
   BioMutantAIContext,
   updateToxicPuddles,
-  detonateBloater
+  detonateBloater, firePlayerLauncher, updateProjectiles, fireBotLauncher, updateBotLauncherReload, type CombatSystemsContext
 } from './gameLoop';
 import { MutantType } from './types';
 import { ExtractionObjectiveHUD, ExtractionEndScreen } from './UI';
@@ -69,6 +70,8 @@ import {
 export { CLASSES } from './classes';
 
 export const ARMORY_OPTIONS: ArmoryOption[] = [
+  { id: 'rocket', label: 'Rocket Launcher', slotNum: '1' },
+  { id: 'grenade_launcher', label: 'Grenade Launcher', slotNum: '1' },
   { id: 'ar', label: 'Assault Rifle', slotNum: '1' },
   { id: 'shotgun', label: 'Pump Shotgun', slotNum: '2' },
   { id: 'sniper', label: 'Bolt-Action Sniper', slotNum: '3' },
@@ -659,44 +662,11 @@ export default function App() {
     let world = initWorld(scene, camera);
     setupLobbyScene();
 
-    // Muzzle flash particle sprite
-    function buildFlashTexture(): THREE.CanvasTexture {
-      const size = 128;
-      const canvas = document.createElement('canvas');
-      canvas.width = canvas.height = size;
-      const ctx = canvas.getContext('2d')!;
-      const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-      grad.addColorStop(0, 'rgba(255,255,255,1)');
-      grad.addColorStop(0.22, 'rgba(255,224,160,0.95)');
-      grad.addColorStop(0.5, 'rgba(255,150,40,0.55)');
-      grad.addColorStop(1, 'rgba(255,90,20,0)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, size, size);
-      return new THREE.CanvasTexture(canvas);
-    }
-    const flashTexture = buildFlashTexture();
-    function makeFlashSprite(depthTest: boolean): THREE.Sprite {
-      const sprite = new THREE.Sprite(
-        new THREE.SpriteMaterial({
-          map: flashTexture,
-          transparent: true,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-          depthTest
-        })
-      );
-      sprite.scale.set(0, 0, 0);
-      return sprite;
+    function triggerPlayerFlash() {
+      const id=currentSlot().id;vmManager.triggerMuzzleFlash(id);
+      if(thirdPerson&&thirdPersonActor){setActorWeaponModel(thirdPersonActor,id);thirdPersonActor.weaponEffects?.trigger();}
     }
 
-    const playerFlash = makeFlashSprite(false);
-    playerFlash.position.set(0.2, -0.16, -0.65);
-    camera.add(playerFlash);
-    let playerFlashT = 0;
-    function triggerPlayerFlash() {
-      playerFlashT = 0.07;
-      playerFlash.material.rotation = Math.random() * Math.PI * 2;
-    }
 
     // 3D Laser Plasma Beam mesh for continuous fire
     const laserBeamGeo = new THREE.CylinderGeometry(0.015, 0.024, 1, 8);
@@ -726,6 +696,37 @@ export default function App() {
 
     // Viewmodels
     const vmManager = createViewmodelManager();
+    let thirdPerson=false;
+    let thirdPersonActor: ReturnType<typeof buildBotVisuals> | null=null;
+    let carriedWeapon: THREE.Group | null=null;
+    let carriedId='';
+    const fireCamera=new THREE.PerspectiveCamera();
+    function getFireCamera(){fireCamera.copy(camera,false);fireCamera.position.copy(player.pos);fireCamera.updateMatrixWorld();return fireCamera;}
+    const chaseDirection=new THREE.Vector3(),chaseTarget=new THREE.Vector3(),chaseRay=new THREE.Raycaster();
+    function updateThirdPerson(delta:number) {
+      if(!thirdPerson||!player.alive){if(thirdPersonActor)thirdPersonActor.rootGroup.visible=false;return;}
+      const w=currentSlot();
+      if(!thirdPersonActor){thirdPersonActor=buildBotVisuals({botId:-1,team:player.team,isZombie:false,zType:'walker',isVIP:false,
+        weaponTypeIndex:WEAPONS.findIndex(item=>item.id===selectedPrimaryRef.current),weaponType:selectedPrimaryRef.current,
+        factionAlignment:factionAlignmentRef.current,gearTier:gearTierRef.current,
+        headgear:localStorage.getItem('gun_arena_headgear')??'fast',torsoConfig:localStorage.getItem('gun_arena_torso')??'chest_rig',lowerConfig:localStorage.getItem('gun_arena_lower')??'pouches'});scene.add(thirdPersonActor.rootGroup);}
+      const actor=thirdPersonActor;actor.rootGroup.visible=true;
+      if(w.type==='weapon')setActorWeaponModel(actor,w.id);
+      if(actor.gunMesh)actor.gunMesh.visible=w.type==='weapon';
+      const backId=w.id===selectedPrimaryRef.current?selectedSecondaryRef.current:selectedPrimaryRef.current;
+      if(carriedId!==backId){if(carriedWeapon)disposeWeaponObject(carriedWeapon);carriedWeapon=createWeaponAssembly(backId).root;carriedWeapon.position.set(-.10,1.22,-.17);carriedWeapon.rotation.set(-Math.PI/2,.1,-.25);actor.rootGroup.add(carriedWeapon);carriedId=backId;}
+      actor.rootGroup.scale.y=player.crouching?.7:1;actor.rootGroup.position.set(player.pos.x,player.pos.y-1.7*actor.rootGroup.scale.y,player.pos.z);actor.rootGroup.rotation.y=player.yaw+Math.PI;
+      const walk=player.vel.lengthSq()>1?Math.sin(clock.elapsedTime*9)*.35:0;actor.legLPivot.rotation.x=walk;actor.legRPivot.rotation.x=-walk;
+      actor.weaponAssembly?.update(delta,currentSlotState().chargeTimer??0,w.id==='minigun'?delta*30:0);actor.weaponEffects?.update(delta);
+      vmManager.root.visible=false;
+      camera.getWorldDirection(chaseDirection);chaseDirection.negate();
+      chaseRay.set(player.pos,chaseDirection);chaseRay.far=3.2;
+      const hit=chaseRay.intersectObjects(world.hittableObjects,false).find(h=>h.object.userData.type!=='botpart'&&h.object.userData.type!=='pickup');
+      const distance=hit?Math.max(.15,hit.distance-.18):3.2;
+      if(distance<.8){actor.rootGroup.visible=false;vmManager.root.visible=true;camera.position.copy(player.pos);camera.updateMatrixWorld();return;}
+      chaseTarget.copy(player.pos).addScaledVector(chaseDirection,distance);camera.position.copy(chaseTarget);camera.updateMatrixWorld();
+    }
+
     camera.add(vmManager.root);
 
     // Storm
@@ -1126,7 +1127,7 @@ export default function App() {
 
       const origin = camera.position.clone();
       const dir = new THREE.Vector3();
-      camera.getWorldDirection(dir);
+      getFireCamera().getWorldDirection(dir);
       const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
       const spawnPos = origin.clone()
         .add(dir.clone().multiplyScalar(0.45))
@@ -1642,7 +1643,8 @@ export default function App() {
       else if (roll < 0.65) weaponTypeIndex = 4; // SMG
       else if (roll < 0.78) weaponTypeIndex = 5; // LMG
       else if (roll < 0.90) weaponTypeIndex = 6; // Battle Rifle
-      else weaponTypeIndex = 2; // Sniper
+      else if(roll < .94) weaponTypeIndex = 2;
+      else { const ids=['laser','minigun','railgun','rocket','grenade_launcher']; weaponTypeIndex=WEAPONS.findIndex(w=>w.id===ids[Math.min(4,Math.floor((roll-.94)/.012))]); }
       const weaponType = WEAPONS[weaponTypeIndex].id;
 
       const pHeadgear = localStorage.getItem('gun_arena_headgear') || 'fast';
@@ -1664,8 +1666,7 @@ export default function App() {
         headgear: team === 'blue' ? pHeadgear : undefined,
         torsoConfig: team === 'blue' ? pTorso : undefined,
         lowerConfig: team === 'blue' ? pLower : undefined,
-        mode: matchConfig.mode,
-        makeFlashSprite
+        mode: matchConfig.mode
       });
 
       const rootGroup = visuals.rootGroup;
@@ -1814,6 +1815,7 @@ export default function App() {
         legLLowerPivot: visuals.legLLowerPivot,
         legRLowerPivot: visuals.legRLowerPivot,
         gunMesh: visuals.gunMesh,
+        weaponAssembly: visuals.weaponAssembly, weaponEffects: visuals.weaponEffects,
         muzzleFlash: visuals.muzzleFlash,
         muzzleFlashT: 0,
         weaponTypeIndex,
@@ -1862,6 +1864,8 @@ export default function App() {
 
     function clearMatchEntities() {
       clearCombatSystems(scene, world);
+      vmManager.resetEffects();
+      if(thirdPersonActor)disposeBotVisuals(thirdPersonActor.rootGroup);thirdPersonActor=null;carriedWeapon=null;carriedId='';
       extractionDirector = null;
       extractionPhase = false;
       extractionState = 'none';
@@ -2149,6 +2153,14 @@ export default function App() {
         return;
       }
 
+      if(w.arsenalId) {
+        const ws=currentSlotState(),direction=new THREE.Vector3();getFireCamera().getWorldDirection(direction);
+        const result=firePlayerLauncher(scene,w,ws,player.pos,direction,player.team,performance.now()/1000);
+        if(result==='reload')reloadWeapon();
+        if(result==='fired'){player.shotsFired++;vmManager.addRecoil(w.kick??.1,.10);recoilKick+=w.kick??.1;triggerPlayerFlash();AUDIO.shotgunShot.play(.8,true);}
+        return;
+      }
+
       const ws = currentSlotState();
       if (ws.reloading) return;
 
@@ -2208,6 +2220,7 @@ export default function App() {
       } else if (w.id === 'sniper') {
         vmManager.addRecoil(0.09, 0.12);
         AUDIO.sniperShot.play(1.0, true);
+
       } else if (w.id === 'shotgun') {
         vmManager.addRecoil(0.075, 0.095);
         vmManager.triggerShotgunPump();
@@ -2236,7 +2249,7 @@ export default function App() {
         const ndcX = (Math.random() - 0.5) * spread * 2;
         const ndcY = (Math.random() - 0.5) * spread * 2;
         const raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
+        raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), getFireCamera());
         raycaster.far = w.range ?? 100;
         const hits = raycaster.intersectObjects(world.hittableObjects, false);
         if (hits.length > 0) {
@@ -2323,7 +2336,7 @@ export default function App() {
       const ndcX = (Math.random() - 0.5) * spread * 2;
       const ndcY = (Math.random() - 0.5) * spread * 2;
       const raycaster = new THREE.Raycaster();
-      raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
+      raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), getFireCamera());
       raycaster.far = w.range ?? 160;
       const hits = raycaster.intersectObjects(world.hittableObjects, false);
       if (hits.length > 0) {
@@ -2375,8 +2388,8 @@ export default function App() {
       AUDIO.railgunFire.play(1.0, true);
 
       const dir = new THREE.Vector3();
-      camera.getWorldDirection(dir);
-      const raycaster = new THREE.Raycaster(camera.position, dir, 0.1, w.range ?? 500);
+      getFireCamera().getWorldDirection(dir);
+      const raycaster = new THREE.Raycaster(player.pos, dir, 0.1, w.range ?? 500);
       const allHits = raycaster.intersectObjects(world.hittableObjects, false);
 
       // Environmental block degradation from railgun (+75%)
@@ -2610,6 +2623,7 @@ export default function App() {
       if (e.code === 'ShiftLeft') player.aiming = true;
       if (e.code === 'ControlLeft') player.crouching = true;
       if (e.code === 'Space' && player.onGround) player.vel.y = JUMP_SPEED;
+      if (e.code === 'KeyV' && !e.repeat) { thirdPerson=!thirdPerson; pushKillFeed(thirdPerson?'THIRD-PERSON VIEW':'FIRST-PERSON VIEW'); }
       if (e.code === 'KeyR') reloadWeapon();
       if (e.code === 'KeyG') throwGrenade();
       
@@ -3128,7 +3142,7 @@ export default function App() {
             // Vent yellow particle smoke from Minigun vents
             const origin = camera.position.clone();
             const dir = new THREE.Vector3();
-            camera.getWorldDirection(dir);
+            getFireCamera().getWorldDirection(dir);
             const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
             const ventPt = origin.clone()
               .add(dir.clone().multiplyScalar(0.40))
@@ -3230,7 +3244,7 @@ export default function App() {
               const ndcX = (Math.random() - 0.5) * spread * 2;
               const ndcY = (Math.random() - 0.5) * spread * 2;
               const raycaster = new THREE.Raycaster();
-              raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
+              raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), getFireCamera());
               raycaster.far = curW.range ?? 120;
               const hits = raycaster.intersectObjects(world.hittableObjects, false);
               if (hits.length > 0) {
@@ -3281,7 +3295,7 @@ export default function App() {
           laserBeamMesh.visible = true;
           const origin = camera.position.clone();
           const dir = new THREE.Vector3();
-          camera.getWorldDirection(dir);
+          getFireCamera().getWorldDirection(dir);
           const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
           const startPt = origin.clone()
             .add(dir.clone().multiplyScalar(0.35))
@@ -3308,7 +3322,7 @@ export default function App() {
           railgunAimLaserMesh.visible = true;
           const origin = camera.position.clone();
           const dir = new THREE.Vector3();
-          camera.getWorldDirection(dir);
+          getFireCamera().getWorldDirection(dir);
           const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
           const startPt = origin.clone()
             .add(dir.clone().multiplyScalar(0.40))
@@ -3344,21 +3358,6 @@ export default function App() {
         if (crossEl) crossEl.style.display = showScope ? 'none' : 'block';
 
         // 4. Muzzle flash fade
-        if (playerFlashT > 0) {
-          playerFlashT -= dt;
-          const k = Math.max(0, playerFlashT / 0.07);
-          const s = 0.55 * k + 0.12;
-          playerFlash.scale.set(s, s, 1);
-          playerFlash.material.opacity = k;
-          
-          const targetX = player.aiming ? 0 : 0.2;
-          const targetY = player.aiming ? -0.05 : -0.16;
-          playerFlash.position.x += (targetX - playerFlash.position.x) * dt * 15;
-          playerFlash.position.y += (targetY - playerFlash.position.y) * dt * 15;
-        } else {
-          playerFlash.scale.set(0, 0, 0);
-        }
-
         // 5. Viewmodels update
         const isMoving = player.onGround && (keys['KeyW'] || keys['KeyS'] || keys['KeyA'] || keys['KeyD']);
         vmManager.update(
@@ -3616,6 +3615,9 @@ export default function App() {
           bot.flashMats.forEach(m => {
             if (m.emissiveIntensity > 0) m.emissiveIntensity = Math.max(0, m.emissiveIntensity - dt * 4);
           });
+          bot.weaponEffects?.update(dt);
+          bot.weaponAssembly?.update(dt,0,bot.weaponType==='minigun'?dt*30:0);
+          updateBotLauncherReload(bot,dt);
           if (bot.muzzleFlashT > 0 && bot.muzzleFlash) {
             bot.muzzleFlashT -= dt;
             const k = Math.max(0, bot.muzzleFlashT / 0.07);
@@ -4044,6 +4046,12 @@ export default function App() {
                     bot.weaponType === 'pistol' ? 0.7 :
                     bot.weaponType === 'shotgun' ? 1.4 : 1.0
                   ) * currentDifficulty.botFireRateMult;
+                  const launcher=bot.weaponType==='rocket'||bot.weaponType==='grenade_launcher';
+                  if(launcher){
+                    const fired=fireBotLauncher(scene,bot,tgtPos,currentDifficulty.botDamageMult);
+                    bot.fireTimer=(WEAPONS.find(w=>w.id===bot.weaponType)?.fireRate??1)*currentDifficulty.botFireRateMult;
+                    if(!fired)bot.fireTimer=.25;
+                  } else bot.weaponEffects?.trigger();
                   bot.muzzleFlashT = 0.07;
                   const shotVol = getSpatialVolume(camera.position, bot.pos);
                   if (bot.weaponType === 'pistol') AUDIO.pistolShot.play(shotVol);
@@ -4054,7 +4062,7 @@ export default function App() {
                   else if (bot.weaponType === 'shotgun') AUDIO.shotgunShot.play(shotVol);
                   else if (bot.weaponType === 'sniper') AUDIO.sniperShot.play(shotVol);
 
-                  if (Math.random() < currentDifficulty.botAccuracy) {
+                  if (!launcher && Math.random() < currentDifficulty.botAccuracy) {
                     let hitDmg = 12;
                     if (bot.weaponType === 'pistol') hitDmg = 14;
                     else if (bot.weaponType === 'smg') hitDmg = 10;
@@ -4092,6 +4100,15 @@ export default function App() {
             bot.healthEl.style.display = 'none';
           }
         }
+
+        const combatContext: CombatSystemsContext = {
+          scene,camera,world,bots,damageBot,pushKillFeed,
+          squadDirective:squadDirectiveRef.current,focusTargetId:focusTargetIDRef.current,
+          player:{pos:player.pos,yaw:player.yaw,pitch:player.pitch,health:player.health,maxHealth:player.maxHealth,alive:player.alive,team:player.team,
+            applyDamage:applyDamageToPlayer,heal:amount=>{player.health=Math.min(player.maxHealth,player.health+amount);}},
+          onExplosionHit:(target,amount)=>{if(target!== 'player'&&amount>0){showHitmarker(false);}}
+        };
+        updateProjectiles(dt,combatContext);
 
         // Zombie wave intermission
         if (matchConfig.mode === 'zombie' && waveIntermission) {
@@ -4484,8 +4501,11 @@ export default function App() {
         vmManager.root.visible = false;
       }
 
+      if(gameStateRef.current==='playing')updateThirdPerson(dt);
+      else if(gameStateRef.current==='start'&&thirdPersonActor)thirdPersonActor.rootGroup.visible=false;
       if (world.offshore?.phase === 'DEPARTING') camera.position.copy(player.pos);
-      effects.render(dt, selectedMapStateRef.current);
+      if(gameStateRef.current==='start'&&activeTabRef.current==='loadout')renderer.clear();
+      else effects.render(dt, selectedMapStateRef.current);
     }
     let hudSyncTimer = 0;
     animate();
@@ -4519,8 +4539,8 @@ export default function App() {
       bottomCenterEl?.removeEventListener('click', onBottomCenterClick as EventListener);
       teardownLobbyScene();
       clearMatchEntities();
+      if(thirdPersonActor)disposeBotVisuals(thirdPersonActor.rootGroup);
       disposeBotVisuals(vmManager.root);
-      flashTexture.dispose();
       disposeBotTextureCache();
       world.dispose();
       cleanupWorld(scene);
@@ -4650,6 +4670,7 @@ export default function App() {
             radarPingsRef={radarPingsRef}
           />
 
+          <div className="absolute top-20 right-6 text-[9px] text-white/50 pointer-events-none">[V] FIRST / THIRD PERSON</div>
           {/* In-Game 1st-Person Combat FX: Crosshair, Scope, Hitmarker, Pickups, Killfeed */}
           <div id="crosshair" style={{ borderColor: targetingPhase ? '#ff4444' : 'rgba(255,255,255,0.7)' }}>
             {targetingPhase && <div style={{ position: 'absolute', top: -30, left: '50%', transform: 'translateX(-50%)', color: '#ff4444', fontSize: 12, fontWeight: 'bold', textShadow: '0 0 4px red', whiteSpace: 'nowrap' }}>[ PHASE 1: TARGETING ]</div>}
