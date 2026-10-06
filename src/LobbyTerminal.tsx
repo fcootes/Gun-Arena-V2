@@ -487,11 +487,11 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
   const slot2Item = VAULT_WEAPONS[selectedSecondary] || VAULT_WEAPONS.pistol;
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-10 flex flex-col justify-between select-none font-mono overflow-hidden">
+    <div className={`absolute inset-0 pointer-events-none z-10 flex flex-col justify-between select-none font-mono overflow-hidden ${activeTab === 'gamemode' ? 'mode-selection-environment' : ''}`}>
       {/* ========================================================================= */}
       {/* 1. TOP HUD HEADER BAR: Exact Reference Layout                             */}
       {/* ========================================================================= */}
-      <div className="w-full bg-[#080c10]/95 border-b border-white/10 backdrop-blur-md px-4 sm:px-6 py-2.5 flex items-center justify-between pointer-events-auto z-40 shadow-2xl">
+      <div className="w-full bg-[#080c10]/95 border-b border-white/10 backdrop-blur-md px-4 sm:px-6 py-2.5 flex flex-wrap lg:flex-nowrap gap-2 items-center justify-between pointer-events-auto z-40 shadow-2xl">
         {/* Left Section: Back Button and Title */}
         <div className="flex items-center gap-3">
           <button 
@@ -508,7 +508,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
         </div>
 
         {/* Center: Centered borderless high-contrast tab row */}
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="order-3 lg:order-none w-full lg:w-auto flex items-center justify-start sm:justify-center gap-1 sm:gap-2 overflow-x-auto whitespace-nowrap">
           {(['play', 'factions', 'loadout', 'locker', 'gamemode', 'intel'] as LobbyTab[]).map((tab) => {
             const isActive = activeTab === tab;
             const tabLabels: Record<LobbyTab, string> = {
@@ -523,7 +523,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-2.5 py-1 text-xs tracking-wider transition-all cursor-pointer rounded-xs ${
+                className={`shrink-0 px-2.5 py-1 text-xs tracking-wider transition-all cursor-pointer rounded-xs ${
                   isActive
                     ? 'bg-[#e8edf0] text-black font-extrabold shadow-sm'
                     : 'text-[#8b98a1] hover:text-white font-semibold'
@@ -1333,9 +1333,9 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
       {/* TAB 3: [ GAME MODE ] Visual Scenario Deck                                */}
       {/* ------------------------------------------------------------------------- */}
       {activeTab === 'gamemode' && (
-        <div className="flex-1 w-full p-6 flex items-center justify-center pointer-events-auto">
-          <div className="w-[900px] max-w-[95vw] bg-[#0c1015]/95 border border-white/15 backdrop-blur-md p-5 rounded-sm shadow-2xl flex flex-col gap-4 overflow-y-auto max-h-[calc(100vh-180px)] custom-scrollbar">
-            <div className="flex items-center justify-between border-b border-white/10 pb-2">
+        <div className="flex-1 min-h-0 w-full p-3 sm:p-6 flex items-center justify-center pointer-events-auto">
+          <div className="w-[1200px] max-w-[95vw] bg-[#101820]/70 border border-white/15 backdrop-blur-xl p-3 sm:p-5 rounded-sm shadow-2xl flex flex-col gap-4 overflow-y-auto max-h-full custom-scrollbar" data-mode-selection="isolated">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-2">
               <div>
                 <div className="text-sm font-extrabold tracking-widest text-[#2de2e6]">
                   VISUAL SCENARIO DECK // SIMULATION MODES
@@ -1352,7 +1352,13 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
               </button>
             </div>
 
-<ModePosters mode={matchMode} map={selectedMapState} onSelect={mode => { setMatchMode(mode); if ((mode === 'zombie' || mode === 'extraction') && selectedMapState === 'training') setSelectedMapState('hangar'); }} />
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div><div className="text-[9px] text-slate-400 tracking-widest">ACTIVE COMBAT FACTION</div><div className="text-[10px] text-white/60 mt-1">Scene artwork follows your faction and operational theater.</div></div>
+              <div className="flex gap-2" role="group" aria-label="Mode artwork faction">
+                {(['usmc', 'apex'] as const).map(faction => <button key={faction} type="button" aria-pressed={factionAlignment === faction} onClick={() => setFactionAlignment(faction)} className={`px-3 py-2 border text-[10px] font-bold tracking-wider focus-visible:outline focus-visible:outline-white ${factionAlignment === faction ? faction === 'apex' ? 'border-[#ee6e7a] bg-[#ee6e7a]/15 text-[#ff969e]' : 'border-[#a6cab7] bg-[#a6cab7]/15 text-[#c1e4d0]' : 'border-white/15 bg-black/30 text-slate-400 hover:text-white'}`}>{faction === 'apex' ? 'APEX MERCENARIES' : 'USMC'}</button>)}
+              </div>
+            </div>
+            <ModePosters mode={matchMode} map={selectedMapState} faction={factionAlignment} onSelect={mode => { setMatchMode(mode); if ((mode === 'zombie' || mode === 'extraction') && selectedMapState === 'training') setSelectedMapState('hangar'); }} />
             {/* Scenario Configuration: Map & Rules */}
             <div className="flex flex-col md:flex-row gap-3">
               {/* Map Selection Toggle Grid */}

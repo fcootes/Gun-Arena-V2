@@ -25,6 +25,15 @@ export interface WeaponAssembly {
   update: (dt: number, charge?: number, spin?: number) => void;
 }
 
+/** Models face -Z; characters face +Z and cameras look down -Z.
+ * Set an absolute attachment correction so re-equipping never accumulates flips.
+ * Inspection models deliberately do not use this holding transform.
+ */
+export function orientHeldWeapon(assembly: WeaponAssembly, forward: 'positive-z' | 'negative-z') {
+  assembly.root.rotation.y = forward === 'positive-z' ? Math.PI : 0;
+  assembly.root.userData.holdingForward = forward;
+}
+
 /** Every model owns its materials/textures. Shared references inside a model are released once. */
 export function disposeWeaponObject(root: THREE.Object3D) {
   const geometries = new Set<THREE.BufferGeometry>(),

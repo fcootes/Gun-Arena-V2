@@ -1,3 +1,4 @@
+import './ModePosters.css';
 import { createWeaponAssembly, disposeWeaponObject } from './weaponModels';
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
@@ -4504,7 +4505,8 @@ export default function App() {
       if(gameStateRef.current==='playing')updateThirdPerson(dt);
       else if(gameStateRef.current==='start'&&thirdPersonActor)thirdPersonActor.rootGroup.visible=false;
       if (world.offshore?.phase === 'DEPARTING') camera.position.copy(player.pos);
-      if(gameStateRef.current==='start'&&activeTabRef.current==='loadout')renderer.clear();
+      // These tabs own opaque UI environments; skip the lobby/storm and bloom passes.
+      if(gameStateRef.current==='start'&&(activeTabRef.current==='loadout'||activeTabRef.current==='gamemode'))renderer.clear();
       else effects.render(dt, selectedMapStateRef.current);
     }
     let hudSyncTimer = 0;
