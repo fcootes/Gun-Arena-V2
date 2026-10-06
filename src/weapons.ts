@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { WeaponDef, WeaponSlotState, ARSENAL } from './types';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
-import { createWeaponAssembly, type WeaponAssembly } from './weaponModels';
+import { createWeaponAssembly, orientHeldWeapon, type WeaponAssembly } from './weaponModels';
 import {
   createWeaponMuzzleEffect,
   type WeaponMuzzleEffect,
@@ -410,6 +410,7 @@ export function createViewmodelManager(): ViewmodelManager {
       effects = createWeaponMuzzleEffect(assembly),
       hands = new THREE.Group();
     hands.name = 'GlovedHands';
+    orientHeldWeapon(assembly, 'negative-z');
     addBox(hands, 0.05, 0.065, 0.075, 0.018, -0.095, 0.09, gloveMaterial);
     addBox(
       hands,

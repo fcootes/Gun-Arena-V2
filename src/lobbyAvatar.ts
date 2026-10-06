@@ -1,4 +1,4 @@
-import { createWeaponAssembly } from './weaponModels';
+import { createWeaponAssembly, orientHeldWeapon } from './weaponModels';
 import * as THREE from 'three';
 import { disposeBotVisuals } from './botBuilder';
 import type { WorldMapId } from './types';
@@ -694,6 +694,7 @@ export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): L
 export function buildWeaponMesh(targetGroup: THREE.Group, weaponId: string) {
   clearOwnedChildren(targetGroup);
   const assembly = createWeaponAssembly(weaponId);
+  orientHeldWeapon(assembly, 'positive-z');
   targetGroup.add(assembly.root);
   targetGroup.userData.weaponAssembly = assembly;
 }

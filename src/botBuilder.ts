@@ -1,4 +1,4 @@
-import { createWeaponAssembly, disposeWeaponObject, type WeaponAssembly } from './weaponModels';
+import { createWeaponAssembly, disposeWeaponObject, orientHeldWeapon, type WeaponAssembly } from './weaponModels';
 import { createWeaponMuzzleEffect, type WeaponMuzzleEffect } from './weaponEffects';
 import * as THREE from 'three';
 import {
@@ -1490,7 +1490,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
 
     const gGun = new THREE.Group();
     weaponAssembly = createWeaponAssembly(weaponType);
-    weaponAssembly.root.rotation.y = Math.PI;
+    orientHeldWeapon(weaponAssembly, 'positive-z');
     weaponEffects = createWeaponMuzzleEffect(weaponAssembly);
     gGun.add(weaponAssembly.root);
     gGun.position.set(0, -0.3, 0.16);
@@ -2172,6 +2172,6 @@ export function disposeBotTextureCache(): void {
 export function setActorWeaponModel(actor: { gunMesh: THREE.Group | null; weaponAssembly?: WeaponAssembly; weaponEffects?: WeaponMuzzleEffect }, id: string) {
   if(!actor.gunMesh||actor.weaponAssembly?.root.userData.weaponId===id)return;
   if(actor.weaponAssembly)disposeWeaponObject(actor.weaponAssembly.root);
-  const assembly=createWeaponAssembly(id);assembly.root.rotation.y=Math.PI;
+  const assembly=createWeaponAssembly(id);orientHeldWeapon(assembly, 'positive-z');
   actor.gunMesh.add(assembly.root);actor.weaponAssembly=assembly;actor.weaponEffects=createWeaponMuzzleEffect(assembly);
 }
