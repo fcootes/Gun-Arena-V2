@@ -15,6 +15,7 @@ import {
   TACTICAL_TUNING,
   SWARM_TUNING,
   ActiveProjectile,
+  WeaponDef, WeaponSlotState,
   ArsenalWeaponDef,
   ARSENAL,
   WeaponID,
@@ -1963,6 +1964,55 @@ function buildGrenadeShellMesh(): THREE.Group {
   return g;
 }
 
+/** Segment sweep returns earliest entry, including thin geometry and fast projectiles. */
+export function segmentAABBHitFraction(start: THREE.Vector3, end: THREE.Vector3, box: {minX:number;maxX:number;minY:number;maxY:number;minZ:number;maxZ:number}): number | null {
+  let lo=0,hi=1;
+  for (const axis of ['x','y','z'] as const) {
+    const min=box[axis==='x'?'minX':axis==='y'?'minY':'minZ'],max=box[axis==='x'?'maxX':axis==='y'?'maxY':'maxZ'];
+    const delta=end[axis]-start[axis];
+    if(Math.abs(delta)<1e-8){if(start[axis]<min||start[axis]>max)return null;continue;}
+    const a=(min-start[axis])/delta,b=(max-start[axis])/delta;
+    lo=Math.max(lo,Math.min(a,b));hi=Math.min(hi,Math.max(a,b));if(lo>hi)return null;
+  }
+  return lo;
+}
+export function updateBotLauncherReload(bot: Bot, delta: number) {
+  const id = bot.weaponType === 'rocket' ? 'RPG7_ROCKET' : bot.weaponType === 'grenade_launcher' ? 'M32_GRENADE' : null;
+  if (!id) return;
+  const def=ARSENAL[id];
+  bot.weaponAmmo ??= def.mag; bot.weaponReserve ??= def.reserve;
+  if ((bot.weaponReloadTimer ?? 0)>0) {
+    bot.weaponReloadTimer=Math.max(0,bot.weaponReloadTimer!-delta);
+    if(bot.weaponReloadTimer===0){const fill=Math.min(def.mag,bot.weaponReserve);bot.weaponAmmo=fill;bot.weaponReserve-=fill;}
+  }
+}
+export function fireBotLauncher(scene: THREE.Scene, bot: Bot, target: THREE.Vector3, damageMultiplier=1): ActiveProjectile | null {
+  const id = bot.weaponType === 'rocket' ? 'RPG7_ROCKET' : bot.weaponType === 'grenade_launcher' ? 'M32_GRENADE' : null;
+  if(!id||!bot.alive||(bot.weaponReloadTimer??0)>0)return null;
+  const def=ARSENAL[id];bot.weaponAmmo??=def.mag;bot.weaponReserve??=def.reserve;
+  if(bot.weaponAmmo<=0){if(bot.weaponReserve>0)bot.weaponReloadTimer=def.reloadTime;return null;}
+  const origin=bot.pos.clone().add(new THREE.Vector3(0,1.5,0));
+  // Elevate the arc solution to compensate for projectile gravity at the target distance.
+  const direction=target.clone().sub(origin),distance=Math.hypot(direction.x,direction.z);
+  if(def.projectileGravity<0){
+    const speed2=def.projectileSpeed**2,g=-def.projectileGravity,discriminant=speed2**2-g*(g*distance**2+2*direction.y*speed2);
+    if(discriminant<0||distance<.01)return null;
+    const rise=(speed2-Math.sqrt(discriminant))/g;direction.y=rise;
+  }
+  if(direction.lengthSq()<.01)return null;
+  const projectile=spawnProjectile(scene,id,origin,direction.normalize(),bot.team,false,bot.id);
+  if(projectile){projectile.ownerBotRef=bot;bot.weaponAmmo--;projectile.splashDamage*=damageMultiplier;bot.weaponEffects?.trigger();}
+  return projectile;
+}
+
+/** Adapter shared with the real player firing handler. Consume ammo only after spawning. */
+export function firePlayerLauncher(scene: THREE.Scene, weapon: WeaponDef, state: WeaponSlotState, origin: THREE.Vector3, direction: THREE.Vector3, team: string, now: number): 'fired' | 'reload' | 'blocked' {
+  if(!weapon.arsenalId||state.reloading||now-(state.lastFired??-Infinity)<(weapon.fireRate??1))return 'blocked';
+  if((state.ammo??0)<=0)return 'reload';
+  if(!spawnProjectile(scene,weapon.arsenalId,origin,direction,team,true))return 'blocked';
+  state.ammo!--;state.lastFired=now;return 'fired';
+}
+
 export function spawnProjectile(
   scene: THREE.Scene,
   weaponId: WeaponID,
@@ -1973,7 +2023,7 @@ export function spawnProjectile(
   ownerBotId = -1
 ): ActiveProjectile | null {
   const def: ArsenalWeaponDef = ARSENAL[weaponId];
-  if (!def) return null;
+  if (!def || activeProjectiles.length >= 48 || dir.lengthSq() < 1e-8 || ![origin.x, origin.y, origin.z, dir.x, dir.y, dir.z].every(Number.isFinite)) return null;
   if (def.projectile !== 'ROCKET' && def.projectile !== 'ARC_GRENADE') return null;
 
   const kind: 'ROCKET' | 'ARC_GRENADE' = def.projectile === 'ROCKET' ? 'ROCKET' : 'ARC_GRENADE';
@@ -2050,11 +2100,11 @@ export function detonateExplosion(
       bot.staggerTimer = Math.max(bot.staggerTimer ?? 0, 0.5);
       bot.isStaggered = true;
     }
-    if (ctx.onExplosionHit) ctx.onExplosionHit(bot, dealt);
+    if (ownerIsPlayer && ctx.onExplosionHit) ctx.onExplosionHit(bot, dealt);
   }
 
   /* --- Player --- */
-  if (ctx.player.alive && (!ownerIsPlayer || true)) {
+  if (ctx.player.alive) {
     const pOverlap = aabbOverlap(
       minX, maxX, minY, maxY, minZ, maxZ,
       ctx.player.pos.x - PLAYER_BODY_RADIUS, ctx.player.pos.x + PLAYER_BODY_RADIUS,
@@ -2101,6 +2151,8 @@ export function detonateExplosion(
 }
 
 export function updateProjectiles(dt: number, ctx: CombatSystemsContext): void {
+  if(!Number.isFinite(dt)||dt<=0)return;
+  dt=Math.min(dt,.1);
   const colliders = ctx.world.worldColliders;
 
   for (let i = activeProjectiles.length - 1; i >= 0; i--) {
@@ -2129,50 +2181,28 @@ export function updateProjectiles(dt: number, ctx: CombatSystemsContext): void {
       detonate = true;
     }
 
-    /* --- Hard geometry along the travelled segment --- */
-    if (!detonate) {
-      for (let c = 0; c < colliders.length; c++) {
-        const col = colliders[c];
-        if (col.active === false) continue;
-        if (p.pos.y < col.minY || p.pos.y > col.maxY) continue;
-        if (
-          segmentIntersectsAABB2D(
-            p.prevPos.x, p.prevPos.z, p.pos.x, p.pos.z,
-            col.minX, col.maxX, col.minZ, col.maxZ
-          )
-        ) {
-          detonate = true;
-          break;
-        }
-      }
+    let earliest = Infinity;
+    if(detonate){
+      const startFloor=ctx.world.getHighestSurface(p.prevPos.x,p.prevPos.z,p.prevPos.y)+.08;
+      const startDistance=p.prevPos.y-startFloor,endDistance=p.pos.y-(floorY+.08);
+      earliest=startDistance>0?THREE.MathUtils.clamp(startDistance/(startDistance-endDistance),0,1):0;
     }
-
-    /* --- Direct hit on a hostile --- */
-    if (!detonate) {
-      for (const bot of ctx.bots) {
-        if (!bot.alive || bot.team === p.ownerTeam) continue;
-        const r = botColliderRadius(bot) + 0.25;
-        const h = botColliderHeight(bot);
-        if (
-          p.pos.x >= bot.pos.x - r && p.pos.x <= bot.pos.x + r &&
-          p.pos.z >= bot.pos.z - r && p.pos.z <= bot.pos.z + r &&
-          p.pos.y >= bot.pos.y && p.pos.y <= bot.pos.y + h
-        ) {
-          impact.copy(p.pos);
-          detonate = true;
-          break;
-        }
-      }
+    for(const col of colliders) {
+      if(col.active===false)continue;
+      const t=segmentAABBHitFraction(p.prevPos,p.pos,col);if(t!==null&&t<earliest)earliest=t;
     }
-
-    /* --- Direct hit on the player (enemy ordnance) --- */
-    if (!detonate && ctx.player.alive && p.ownerTeam !== ctx.player.team) {
-      const dxy = Math.hypot(p.pos.x - ctx.player.pos.x, p.pos.z - ctx.player.pos.z);
-      if (dxy < PLAYER_BODY_RADIUS + 0.25 && Math.abs(p.pos.y - (ctx.player.pos.y - 0.9)) < 1.2) {
-        impact.copy(p.pos);
-        detonate = true;
-      }
+    for(const bot of ctx.bots) {
+      if(!bot.alive||bot.team===p.ownerTeam)continue;
+      const r=botColliderRadius(bot)+.12,h=botColliderHeight(bot);
+      const t=segmentAABBHitFraction(p.prevPos,p.pos,{minX:bot.pos.x-r,maxX:bot.pos.x+r,minY:bot.pos.y,maxY:bot.pos.y+h,minZ:bot.pos.z-r,maxZ:bot.pos.z+r});
+      if(t!==null&&t<earliest)earliest=t;
     }
+    if(ctx.player.alive&&p.ownerTeam!==ctx.player.team){
+      const v=ctx.player.pos,r=PLAYER_BODY_RADIUS+.12;
+      const t=segmentAABBHitFraction(p.prevPos,p.pos,{minX:v.x-r,maxX:v.x+r,minY:v.y-PLAYER_BODY_HEIGHT,maxY:v.y+.2,minZ:v.z-r,maxZ:v.z+r});
+      if(t!==null&&t<earliest)earliest=t;
+    }
+    if(Number.isFinite(earliest)){detonate=true;impact.lerpVectors(p.prevPos,p.pos,earliest);}
 
     /* --- Smoke trail --- */
     p.trailTimer -= dt;
@@ -2203,18 +2233,10 @@ export function updateProjectiles(dt: number, ctx: CombatSystemsContext): void {
           p.ownerTeam,
           p.ownerIsPlayer,
           ctx,
-          p.ownerIsPlayer ? 'player' : (ctx.bots.find((b) => b.id === p.ownerBotId) as Bot) || 'player'
+          p.ownerIsPlayer ? 'player' : p.ownerBotRef ?? ctx.bots.find((b) => b.id === p.ownerBotId) ?? p.ownerTeam
         );
       }
-      ctx.scene.remove(p.group);
-      p.group.traverse((o) => {
-        const m = o as THREE.Mesh;
-        if (m.isMesh) {
-          m.geometry?.dispose();
-          if (Array.isArray(m.material)) m.material.forEach((mm) => mm.dispose());
-          else (m.material as THREE.Material)?.dispose();
-        }
-      });
+      disposeBotVisuals(p.group);
       activeProjectiles.splice(i, 1);
     }
   }
@@ -2931,13 +2953,13 @@ export function clearCombatSystems(scene: THREE.Scene, world: WorldManager): voi
   resetTacticalEngine();
 
   for (const p of activeProjectiles) {
-    scene.remove(p.group);
+    disposeBotVisuals(p.group);
   }
   activeProjectiles.length = 0;
 
   for (const fx of explosionFx) {
-    scene.remove(fx.mesh);
-    if (fx.light) scene.remove(fx.light);
+    disposeBotVisuals(fx.mesh);
+    if (fx.light) disposeBotVisuals(fx.light);
   }
   explosionFx.length = 0;
 

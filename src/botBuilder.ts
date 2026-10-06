@@ -1,3 +1,5 @@
+import { createWeaponAssembly, disposeWeaponObject, type WeaponAssembly } from './weaponModels';
+import { createWeaponMuzzleEffect, type WeaponMuzzleEffect } from './weaponEffects';
 import * as THREE from 'three';
 import {
   EliteArchetype,
@@ -136,6 +138,8 @@ export interface BotVisualBuildResult {
   legRLowerPivot: THREE.Group;
   gunMesh: THREE.Group | null;
   muzzleFlash: THREE.Sprite | null;
+  weaponAssembly?: WeaponAssembly;
+  weaponEffects?: WeaponMuzzleEffect;
   flashMats: THREE.MeshStandardMaterial[];
   hitParts: THREE.Mesh[];
   headParts: Set<THREE.Mesh>;
@@ -166,7 +170,7 @@ export interface BotBuildOptions {
   /** Elite squad archetype — drives 2.5x stats and role-specific silhouette. */
   eliteRole?: EliteArchetype;
   eliteSlot?: number;
-  makeFlashSprite: (depthTest: boolean) => THREE.Sprite;
+  makeFlashSprite?: (depthTest: boolean) => THREE.Sprite;
 }
 
 /* =============================================================================
@@ -1381,6 +1385,8 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
 
   let gunMeshRef: THREE.Group | null = null;
   let muzzleFlashRef: THREE.Sprite | null = null;
+  let weaponAssembly: WeaponAssembly | undefined;
+  let weaponEffects: WeaponMuzzleEffect | undefined;
 
   if (!isZombie) {
     const isApexSpecialized = isSpecializedBot && faction === 'apex';
@@ -1483,120 +1489,14 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     armLLowerPivot.rotation.x = -0.35;
 
     const gGun = new THREE.Group();
-    const barrelLen =
-      weaponType === 'shotgun'
-        ? 0.26
-        : weaponType === 'sniper'
-        ? 0.58
-        : weaponType === 'pistol'
-        ? 0.18
-        : weaponType === 'lmg' || weaponType === 'minigun'
-        ? 0.46
-        : 0.32;
-    const receiver = new THREE.Mesh(
-      new THREE.BoxGeometry(0.08, 0.11, weaponType === 'pistol' ? 0.22 : 0.32),
-      matGun
-    );
-    const isFluted = weaponType === 'sniper' || weaponType === 'lmg';
-    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, barrelLen, isFluted ? 10 : 6), matGun);
-    barrel.rotation.x = Math.PI / 2;
-    barrel.position.set(0, 0.015, barrelLen / 2 + 0.14);
-    gGun.add(receiver, barrel);
-
-    if (isFluted) {
-      // Fluting: 5 thin darker recess grooves running the barrel length
-      for (let f = 0; f < 5; f++) {
-        const a = (f / 5) * Math.PI * 2;
-        const flute = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, barrelLen * 0.85, 5), matSteelArmor);
-        flute.rotation.x = Math.PI / 2;
-        flute.position.set(Math.cos(a) * 0.014, 0.015 + Math.sin(a) * 0.014, barrelLen / 2 + 0.14);
-        gGun.add(flute);
-      }
-    }
-
-    // Ringed flash hider with a visible venting shadow ring
-    const flashHiderOuter = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.055, 10), matGun);
-    flashHiderOuter.rotation.x = Math.PI / 2;
-    flashHiderOuter.position.set(0, 0.015, barrelLen + 0.14 + 0.02);
-    const flashHiderVent = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.057, 10), matSocketRecess);
-    flashHiderVent.rotation.x = Math.PI / 2;
-    flashHiderVent.position.copy(flashHiderOuter.position);
-    gGun.add(flashHiderOuter, flashHiderVent);
-
-    if (weaponType === 'lmg' || weaponType === 'minigun') {
-      const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.1, 12), matGun);
-      drum.rotation.z = Math.PI / 2;
-      drum.position.set(0, -0.09, 0.04);
-      gGun.add(drum);
-    } else {
-      // Curved "banana" magazine composed of two angled box segments —
-      // the layered-prism technique for shapes too complex for a single box.
-      const magSegA = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.1, 0.05), matGun);
-      magSegA.position.set(0, -0.12, 0.02);
-      magSegA.rotation.x = 0.12;
-      const magSegB = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.09, 0.048), matGun);
-      magSegB.position.set(0, -0.2, -0.02);
-      magSegB.rotation.x = 0.32;
-      gGun.add(magSegA, magSegB);
-    }
-
+    weaponAssembly = createWeaponAssembly(weaponType);
+    weaponAssembly.root.rotation.y = Math.PI;
+    weaponEffects = createWeaponMuzzleEffect(weaponAssembly);
+    gGun.add(weaponAssembly.root);
     gGun.position.set(0, -0.3, 0.16);
     gGun.rotation.x = 0.45;
     armRLowerPivot.add(gGun);
     gunMeshRef = gGun;
-
-    const muzzleFlash = makeFlashSprite(true);
-    muzzleFlash.position.set(0, 0.015, barrelLen + 0.16);
-    gGun.add(muzzleFlash);
-    muzzleFlashRef = muzzleFlash;
-
-    /* ---- 3D compound starburst, slaved to the sprite's own animation ----
-     * The sprite's scale/opacity is already driven every frame by App.tsx's
-     * existing per-shot timer. Rather than add a second animation path (which
-     * would need App.tsx changes, out of scope this pass), the starburst
-     * mirrors the sprite via onBeforeRender — a per-object hook Three.js
-     * already calls each frame the sprite is rendered, so this works with
-     * zero changes anywhere else. */
-    const starburstGroup = new THREE.Group();
-    starburstGroup.position.copy(muzzleFlash.position);
-    starburstGroup.scale.setScalar(0);
-    const bladeMat = new THREE.MeshBasicMaterial({
-      color: 0xfff0aa,
-      transparent: true,
-      opacity: 0,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    });
-    for (let bl = 0; bl < 4; bl++) {
-      const blade = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.014), bladeMat);
-      blade.rotation.z = (bl / 4) * Math.PI;
-      starburstGroup.add(blade);
-    }
-    const coreMat = new THREE.MeshBasicMaterial({
-      color: 0xffaa22,
-      transparent: true,
-      opacity: 0,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    });
-    const coreCone = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.09, 8), coreMat);
-    coreCone.rotation.x = -Math.PI / 2;
-    coreCone.position.z = 0.03;
-    starburstGroup.add(coreCone);
-    const starburstLight = new THREE.PointLight(0xff9922, 0, 6, 1.4);
-    starburstGroup.add(starburstLight);
-    gGun.add(starburstGroup);
-
-    muzzleFlash.onBeforeRender = () => {
-      const k = muzzleFlash.scale.x;
-      starburstGroup.visible = k > 0.02;
-      starburstGroup.scale.setScalar(k * 1.6);
-      starburstGroup.rotation.z += 0.5;
-      const op = muzzleFlash.material.opacity ?? 0;
-      bladeMat.opacity = op;
-      coreMat.opacity = op * 0.9;
-      starburstLight.intensity = 4.5 * op;
-    };
   } else {
     armLPivot.rotation.set(-1.35, 0.12, 0);
     armRPivot.rotation.set(-1.35, -0.12, 0);
@@ -1825,6 +1725,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     legRLowerPivot,
     gunMesh: gunMeshRef,
     muzzleFlash: muzzleFlashRef,
+    weaponAssembly, weaponEffects,
     flashMats,
     hitParts,
     headParts,
@@ -2244,7 +2145,9 @@ export function createImpactParticleSystem(scene: THREE.Scene): ImpactParticleSy
 export function disposeBotVisuals(root: THREE.Object3D): void {
   const geometries = new Set<THREE.BufferGeometry>();
   const materials = new Set<THREE.Material>();
+  const ownedTextures = new Set<THREE.Texture>();
   root.traverse((object) => {
+    object.userData.cleanupWeaponEffect?.();
     const mesh = object as THREE.Mesh;
     // Sprite geometry is shared by Three.js globally, not owned by this bot.
     if (!(object instanceof THREE.Sprite) && mesh.geometry) geometries.add(mesh.geometry);
@@ -2252,7 +2155,8 @@ export function disposeBotVisuals(root: THREE.Object3D): void {
     if (object instanceof THREE.Light) object.dispose();
   });
   geometries.forEach((geometry) => geometry.dispose());
-  materials.forEach((material) => material.dispose());
+  materials.forEach((material) => { for (const texture of material.userData.ownedTextures ?? []) ownedTextures.add(texture); material.dispose(); });
+  ownedTextures.forEach(texture => texture.dispose());
   root.removeFromParent();
   root.clear();
 }
@@ -2262,4 +2166,12 @@ export function disposeBotTextureCache(): void {
   _weaveTex = null;
   _scratchTex = null;
   textures.forEach((texture) => texture?.dispose());
+}
+
+/** Replace an actor's held assembly without rebuilding its hitboxes or skeleton. */
+export function setActorWeaponModel(actor: { gunMesh: THREE.Group | null; weaponAssembly?: WeaponAssembly; weaponEffects?: WeaponMuzzleEffect }, id: string) {
+  if(!actor.gunMesh||actor.weaponAssembly?.root.userData.weaponId===id)return;
+  if(actor.weaponAssembly)disposeWeaponObject(actor.weaponAssembly.root);
+  const assembly=createWeaponAssembly(id);assembly.root.rotation.y=Math.PI;
+  actor.gunMesh.add(assembly.root);actor.weaponAssembly=assembly;actor.weaponEffects=createWeaponMuzzleEffect(assembly);
 }

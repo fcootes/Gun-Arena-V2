@@ -443,6 +443,10 @@ export const WeaponSilhouette: React.FC<{ id: string; className?: string }> = ({
         </svg>
       );
 
+    case 'rocket':
+      return <svg viewBox="0 0 220 70" className={className} fill="none" stroke={stroke} strokeWidth={strokeWidth}><path d="M20 25h157l25-8v33l-25-8H20zM45 26v15m10-15v15m10-15v15m10-15v15m10-15v15m10-15v15m10-15v15M57 42l-4 17h11l5-17m67 0-4 17h11l5-17M94 25V13h42v12M29 25V12h6v13"/><ellipse cx="19" cy="33" rx="5" ry="9"/></svg>;
+    case 'grenade_launcher':
+      return <svg viewBox="0 0 220 70" className={className} fill="none" stroke={stroke} strokeWidth={strokeWidth}><path d="M29 25h69v15H29zM124 20h47l8 7 28-2v25l-30-5-16-8h-34M151 39l-8 20h15l10-21M54 41v16h16V41M92 21V9h9v12M176 28v15"/><ellipse cx="111" cy="33" rx="21" ry="23"/><ellipse cx="105" cy="24" rx="7" ry="6"/><ellipse cx="114" cy="42" rx="7" ry="6"/><path d="M95 18v29m11-36v12m17-2v26"/></svg>;
     case 'grenade':
     default:
       return (
@@ -458,3 +462,12 @@ export const WeaponSilhouette: React.FC<{ id: string; className?: string }> = ({
       );
   }
 };
+
+export function WeaponArchetypeIcon({weaponId}:{weaponId:string}) {
+  const path = weaponId==='ar'||weaponId==='br'?'M16 3 29 28H3L16 3Z'
+    : ['shotgun','lmg','grenade_launcher'].includes(weaponId)?'M9 3h14l8 13-8 13H9L1 16 9 3Z'
+    : weaponId==='pistol'?'M16 3v26M3 16h26'
+    : weaponId==='smg'?'M5 5l22 22M27 5 5 27'
+    : 'M16 2v28M2 16h28M16 6a10 10 0 1 0 0 20 10 10 0 1 0 0-20Z';
+  return <svg viewBox="0 0 32 32" className="w-6 h-6 shrink-0 text-cyan-100" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d={path}/></svg>;
+}

@@ -1,9 +1,10 @@
 import { WeaponStudio } from './WeaponStudio';
 import React, { useState, useEffect } from 'react';
-import { ClassId } from './types';
+import { ClassId, ARSENAL } from './types';
+import { WEAPONS } from './weapons';
 import { CLASSES } from './classes';
 import { VisorType } from './lobbyAvatar';
-import { WeaponSilhouette } from './WeaponSilhouettes';
+import { WeaponSilhouette, WeaponArchetypeIcon } from './WeaponSilhouettes';
 import {
   getCareerLedger,
   FactionCareerLedger,
@@ -132,7 +133,7 @@ export const VAULT_WEAPONS: Record<string, WeaponVaultItem> = {
   },
   lmg: {
     id: 'lmg',
-    name: 'SAKIN HEAVY LMG',
+    name: 'M250 SUPPORT LMG',
     category: 'LIGHT MACHINE GUN',
     caliber: '7.62x51mm NATO',
     fireMode: 'FULL AUTO',
@@ -151,7 +152,7 @@ export const VAULT_WEAPONS: Record<string, WeaponVaultItem> = {
   },
   br: {
     id: 'br',
-    name: 'F2000 BATTLE RIFLE',
+    name: 'BR55 BATTLE RIFLE',
     category: 'BATTLE RIFLE',
     caliber: '7.62x51mm HV',
     fireMode: '3-ROUND BURST',
@@ -228,9 +229,31 @@ export const VAULT_WEAPONS: Record<string, WeaponVaultItem> = {
 };
 
 // Canonical 5-column by 2-row layout order matching reference Modern Warfare armory concept art
+for (const id of ['RPG7_ROCKET', 'M32_GRENADE'] as const) {
+  const def = ARSENAL[id];
+  VAULT_WEAPONS[def.legacyId] = { id: def.legacyId, name: def.name, category: 'LAUNCHER', caliber: id === 'RPG7_ROCKET' ? 'ROCKET' : '40 MM', fireMode: 'SEMI',
+    description: def.blurb, damage: def.splashDamage, fireRate: 60 / def.fireRate, range: def.range, accuracy: 70, recoilControl: 30, mobility: 40,
+    rounds: def.mag, reserve: def.reserve, level: 'PLATFORM', levelProgress: 100, affinity: 'EXPLOSIVE', isInsuredEligible: false };
+}
+
+export function getWeaponPerformance(id: string) {
+  const w = WEAPONS.find(w => w.id === id && w.type === 'weapon') ?? WEAPONS[0];
+  return {
+    damage: w.arsenalId ? ARSENAL[w.arsenalId].splashDamage : w.damage ?? 0,
+    fireRate: 60 * (w.burst ? w.burstCount ?? 1 : 1) / (w.fireRate ?? 1),
+    range: w.range ?? 0,
+    accuracy: Math.round(Math.max(0, 100 - (w.adsSpread ?? .01) * 900)),
+    recoilControl: Math.round(Math.max(0, 100 - (w.kick ?? .03) * 600)),
+    mobility: ({ pistol: 96, smg: 92, ar: 72, br: 64, shotgun: 66, sniper: 40, lmg: 44, laser: 74, minigun: 32, railgun: 36, rocket: 38, grenade_launcher: 48 } as Record<string, number>)[w.id] ?? 50
+  };
+}
+for (const [id,item] of Object.entries(VAULT_WEAPONS)) {
+  const live=WEAPONS.find(w=>w.id===id);
+  Object.assign(item,getWeaponPerformance(id),{rounds:live?.mag??item.rounds,reserve:live?.reserve??item.reserve});
+}
 export const ARMORY_GRID_ORDER: string[] = [
   'ar', 'shotgun', 'sniper', 'pistol', 'smg',
-  'lmg', 'br', 'laser', 'minigun', 'railgun'
+  'lmg', 'br', 'laser', 'minigun', 'railgun', 'rocket', 'grenade_launcher'
 ];
 
 // Tactical Ordnance for Insured Slot 3
@@ -302,7 +325,7 @@ export const LoadoutDMZ: React.FC<LoadoutDMZProps> = ({
     if (stashFilter === 'ALL') return true;
     if (stashFilter === 'RIFLE') return ['ASSAULT RIFLE', 'BATTLE RIFLE', 'PRECISION RIFLE'].includes(item.category);
     if (stashFilter === 'CQB') return ['SHOTGUN', 'SIDEARM', 'SUBMACHINE GUN'].includes(item.category);
-    if (stashFilter === 'HEAVY') return ['LIGHT MACHINE GUN', 'SPECIAL HEAVY'].includes(item.category);
+    if (stashFilter === 'HEAVY') return ['LIGHT MACHINE GUN', 'SPECIAL HEAVY', 'LAUNCHER'].includes(item.category);
     if (stashFilter === 'TECH') return ['DIRECTED ENERGY', 'ELECTROMAGNETIC'].includes(item.category);
     return true;
   });
@@ -349,7 +372,7 @@ export const LoadoutDMZ: React.FC<LoadoutDMZProps> = ({
   };
 
   return (
-    <div className="flex-1 w-full h-[calc(100vh-80px)] p-3 sm:p-5 flex flex-col pointer-events-auto select-none font-mono overflow-y-auto">
+    <div className="flex-1 w-full h-[calc(100vh-80px)] p-3 sm:p-5 flex flex-col pointer-events-auto select-none font-mono overflow-y-auto bg-[#080e14] border-x border-white/5" aria-label="Optical testing vault">
       {/* --------------------------------------------------------------------- */}
       {/* 1. TOP HEADER STRIP: Modern Tactical Armory Status                    */}
       {/* --------------------------------------------------------------------- */}
@@ -425,34 +448,35 @@ export const LoadoutDMZ: React.FC<LoadoutDMZProps> = ({
                 role="button" tabIndex={0} aria-pressed={isSelected} aria-label={`Inspect ${weapon.name}`}
                 onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setPreviewId(weapon.id); } }}
                 onClick={() => setPreviewId(weapon.id)}
-                className={`group relative w-48 shrink-0 flex flex-col justify-between rounded-xl p-3.5 sm:p-4 transition-all duration-150 cursor-pointer select-none bg-[#202325] h-48 sm:h-52 ${
+                className={`group relative w-60 shrink-0 flex flex-col justify-between rounded-xl p-3.5 sm:p-4 transition-all duration-150 cursor-pointer select-none bg-[#202325] h-48 sm:h-52 ${
                   isSelected
                     ? 'border-2 border-white shadow-[0_0_20px_rgba(255,255,255,0.22)] bg-[#25292c]'
                     : 'border border-[#383d40] hover:border-white/50 hover:bg-[#25282b]'
                 } ${!isUnlocked ? 'opacity-85' : ''}`}
               >
                 {/* Top Row: Category in tiny minimalist font (top-left) & Slot Badges (top-right) */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center gap-2">
+                  <WeaponArchetypeIcon weaponId={weapon.id} />
                   <span className="text-[9.5px] sm:text-[10px] font-mono font-semibold tracking-wider text-[#8b98a1] uppercase truncate max-w-[65%]">
                     {weapon.category}
                   </span>
 
                   {/* Slot Indicator Pill or Locked Status */}
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="w-full flex items-center gap-1 shrink-0">
                     {!isUnlocked && (
                       <span className="px-1.5 py-0.5 rounded text-[8px] font-mono font-bold bg-[#382020] text-[#f87171] border border-[#5a2828] tracking-wider flex items-center gap-1">
                         <span>🔒</span>
-                        <span>{req?.minRank ? `R-${req.minRank}` : 'LOCKED'}</span>
+                        <span>{req?.minRank ? `LOCKED R-${req.minRank}` : 'LOCKED'}</span>
                       </span>
                     )}
                     {isSlot2 && (
                       <span className="px-2 py-0.5 rounded text-[8.5px] font-mono font-bold bg-[#1a2d1d] text-[#4ade80] border border-[#2e5233] tracking-wider">
-                        SLOT 2
+                        [SLOT 2] EQUIPPED
                       </span>
                     )}
                     {isSlot1 && (
                       <span className="px-2 py-0.5 rounded text-[8.5px] font-mono font-bold bg-[#142834] text-[#38bdf8] border border-[#1e4963] tracking-wider">
-                        SLOT 1
+                        [SLOT 1] EQUIPPED
                       </span>
                     )}
                   </div>
@@ -478,7 +502,7 @@ export const LoadoutDMZ: React.FC<LoadoutDMZProps> = ({
                 {/* Bottom Row: Name & Level (bottom-left), Ammo Capacity (bottom-right) */}
                 <div className="flex items-end justify-between pt-1 border-t border-[#2a2e31]">
                   <div className="flex flex-col min-w-0 pr-2">
-                    <span className="text-xs sm:text-sm font-black text-white tracking-wide uppercase truncate leading-tight">
+                    <span className="text-xs sm:text-sm font-black text-white tracking-wide uppercase leading-tight">
                       {weapon.name}
                     </span>
                     <span className="text-[9px] sm:text-[9.5px] font-mono text-[#8b98a1] uppercase mt-0.5 tracking-normal">
@@ -521,10 +545,16 @@ export const LoadoutDMZ: React.FC<LoadoutDMZProps> = ({
           </p>
         </div>
 
-        <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-3 lg:px-5" aria-label="Weapon stat comparison">{(['damage', 'fireRate', 'range', 'accuracy', 'recoilControl', 'mobility'] as const).map(stat => {
-          const delta = activeWeapon[stat] - baseline[stat];
-          return <div key={stat}><div className="flex justify-between text-[9px] text-slate-400"><span>{stat.replace(/([A-Z])/g, ' $1').toUpperCase()}</span><span className={delta > 0 ? 'text-green-400' : delta < 0 ? 'text-red-400' : 'text-slate-400'}>{activeWeapon[stat]} / {delta > 0 ? '+' : ''}{delta}</span></div><div className="relative h-1.5 bg-white/10 mt-1"><div className="h-full bg-white/70" style={{ width: `${Math.max(0, Math.min(100, activeWeapon[stat]))}%` }} /><div className="absolute top-0 h-full w-0.5 bg-cyan-300" style={{ left: `${Math.max(0, Math.min(100, baseline[stat]))}%` }} /></div></div>;
-        })}</div>
+        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5 lg:px-5" aria-label="Weapon stat comparison">
+          {([
+            { title: 'CORE PERFORMANCE', stats: [{ id: 'damage', label: 'DAMAGE', unit: activeWeapon.category === 'LAUNCHER' ? 'BLAST' : 'HP', max: 200 }, { id: 'fireRate', label: 'RATE OF FIRE', unit: 'RPM', max: 1500 }, { id: 'range', label: 'RANGE', unit: 'M', max: 500 }] },
+            { title: 'TACTICAL', stats: [{ id: 'accuracy', label: 'PRECISION', unit: '/100', max: 100 }, { id: 'recoilControl', label: 'CONTROL', unit: '/100', max: 100 }, { id: 'mobility', label: 'MOBILITY', unit: '/100', max: 100 }] }
+          ] as const).map(group => <section key={group.title} className="space-y-3"><h3 className="text-[10px] tracking-[.18em] text-white border-b border-white/15 pb-2">{group.title}</h3>{group.stats.map(stat => {
+            const value=getWeaponPerformance(activeWeapon.id)[stat.id],equipped=getWeaponPerformance(baseline.id)[stat.id],delta=value-equipped;
+            const changed=Math.abs(delta)>.05;
+            return <div key={stat.id}><div className="flex justify-between text-[9px] text-slate-400"><span>{stat.label}</span><span className="text-white">{Math.round(value)} {stat.unit} <span aria-label={`${stat.label} ${delta>0?'increase':delta<0?'decrease':'unchanged'} versus equipped`} className={delta>0?'text-green-400':delta<0?'text-red-400':'text-slate-500'}>{changed?`${delta>0?'↑ +':'↓ '}${Math.round(delta)}`:'—'}</span></span></div><div className="relative h-1.5 bg-white/10 mt-1"><div className={delta>0?'h-full bg-green-400/70':delta<0?'h-full bg-red-400/70':'h-full bg-white/60'} style={{width:`${Math.min(100,value/stat.max*100)}%`}}/><div className="absolute top-0 h-full w-0.5 bg-white" style={{left:`${Math.min(100,equipped/stat.max*100)}%`}}/></div></div>;
+          })}</section>)}
+        </div>
 
         {/* Right: Quick Equip Loadout Buttons or Unlock Action */}
         <div className="flex flex-col sm:flex-row lg:flex-col gap-2 shrink-0 justify-center min-w-[210px]">

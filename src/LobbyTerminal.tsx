@@ -77,16 +77,20 @@ export interface LobbyTerminalProps {
 export const ARMORY_CATEGORIES = {
   primary: [
     { id: 'ar', label: 'M4A1 Tactical Suppressed', category: 'ASSAULT RIFLES' },
-    { id: 'br', label: 'FAMAS Bullpup Burst', category: 'ASSAULT RIFLES' },
+    { id: 'br', label: 'BR55 Burst Rifle', category: 'ASSAULT RIFLES' },
     { id: 'shotgun', label: 'Pump-Action 12-Gauge', category: 'SHOTGUNS' },
     { id: 'lmg', label: 'LMG Support Box', category: 'SPECIAL HEAVIES' },
     { id: 'minigun', label: 'Heavy Minigun', category: 'SPECIAL HEAVIES' },
+    { id: 'rocket', label: 'Rocket Launcher', category: 'LAUNCHERS' },
+    { id: 'grenade_launcher', label: 'M32 Grenade Launcher', category: 'LAUNCHERS' },
     { id: 'railgun', label: 'Kinetic AP Railgun', category: 'SPECIAL HEAVIES' },
     { id: 'sniper', label: 'Bolt-Action Heavy Sniper', category: 'PRECISION' },
     { id: 'laser', label: 'Covenant Plasma Rifle', category: 'ENERGY' }
   ],
   secondary: [
     { id: 'pistol', label: 'Combat 9mm Pistol', category: 'SIDEARMS' },
+    { id: 'rocket', label: 'Rocket Launcher', category: 'LAUNCHERS' },
+    { id: 'grenade_launcher', label: 'M32 Grenade Launcher', category: 'LAUNCHERS' },
     { id: 'smg', label: 'Submachine Gun (SMG)', category: 'COMPACT FIREARMS' },
     { id: 'shotgun', label: 'Pump-Action 12-Gauge', category: 'SHOTGUNS' },
     { id: 'laser', label: 'Covenant Plasma Rifle', category: 'ENERGY' }

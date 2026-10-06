@@ -10,7 +10,8 @@
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "test:batch1": "node --import tsx tests/batch1.test.ts",
-    "test:batch2": "node --import tsx tests/batch2.test.ts"
+    "test:batch2": "node --import tsx tests/batch2.test.ts",
+    "test:weapons": "node --import tsx tests/weapons.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
