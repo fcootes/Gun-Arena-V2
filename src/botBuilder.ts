@@ -153,6 +153,7 @@ export interface BotVisualBuildResult {
 }
 
 export interface BotBuildOptions {
+  campaignEntity?: import('./types').CampaignEntity;
   botId: number;
   team: string;
   isZombie: boolean;
@@ -281,6 +282,8 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     else if (weaponTypeIndex === 2) subClass = 'recon';
     else subClass = apexList[botId % apexList.length];
   }
+
+  if (options.campaignEntity) subClass = options.campaignEntity === 'spartan' ? 'spartan' : options.campaignEntity === 'security' ? 'military_police' : 'rifleman';
 
   /* --------------------------- COLOUR PALETTE --------------------------- */
   const basePalette = resolveFactionPalette(
@@ -966,6 +969,8 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       spinePlate2.castShadow = true;
       torsoGroup.add(coreMesh, carapaceL, carapaceR, chestPlate, spinePlate1, spinePlate2);
       hitParts.push(coreMesh, carapaceL, carapaceR, chestPlate, spinePlate1, spinePlate2);
+      const crystalMat=new THREE.MeshStandardMaterial({color:0x397586,emissive:0x176c85,emissiveIntensity:.8,roughness:.35,metalness:.25});
+      for(let i=0;i<7;i++){const spike=new THREE.Mesh(new THREE.ConeGeometry(.08,.35+i*.045,5),crystalMat);spike.position.set(.35+i*.028,1.54,-.18+i*.045);spike.rotation.z=-.35-i*.14;torsoGroup.add(spike);hitParts.push(spike);}
     } else if (zType === 'tank') {
       const carapaceL = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.18, 0.28), matBoneCarapace);
       carapaceL.position.set(-0.35, 1.46, 0);
@@ -1010,9 +1015,23 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     headGroup.add(jawWedge);
     hitParts.push(jawWedge);
 
-    const hg = options.headgear;
+    const hg = options.campaignEntity === 'security' ? 'mp_cap' : options.campaignEntity === 'spartan' ? 'spartan' : options.campaignEntity === 'marine' ? 'fast' : options.headgear;
     if (hg) {
-      if (hg === 'fast' || hg === 'FAST_HELMET') {
+      if (hg === 'mp_cap') {
+        const capMat=new THREE.MeshStandardMaterial({color:0xd7dbcf,roughness:.7});
+        const crown=new THREE.Mesh(new THREE.CylinderGeometry(.18,.15,.11,12),capMat);crown.position.y=.21;
+        const brim=new THREE.Mesh(new THREE.BoxGeometry(.3,.025,.14),matGun);brim.position.set(0,.14,.11);headGroup.add(crown,brim);hitParts.push(crown);headParts.add(crown);
+        const badge=new THREE.Mesh(new THREE.BoxGeometry(.05,.05,.015),matAccent);badge.position.set(0,.21,.165);headGroup.add(badge);
+      } else if (hg === 'spartan') {
+        const armor=new THREE.MeshStandardMaterial({color:0x262c2e,metalness:.65,roughness:.46});
+        const helmet=new THREE.Mesh(new THREE.SphereGeometry(.2,12,10),armor);helmet.scale.set(1,1.2,1.05);helmet.position.y=.14;headGroup.add(helmet);hitParts.push(helmet);headParts.add(helmet);
+        const slitMat=new THREE.MeshStandardMaterial({color:0xb42b21,emissive:0xff2111,emissiveIntensity:2});
+        const slit=new THREE.Mesh(new THREE.BoxGeometry(.27,.04,.025),slitMat);slit.position.set(0,.14,.208);headGroup.add(slit);
+        const mask=new THREE.Mesh(new THREE.BoxGeometry(.25,.19,.1),armor);mask.position.set(0,-.015,.16);headGroup.add(mask);hitParts.push(mask);headParts.add(mask);
+        for(const side of [-1,1]){const plate=new THREE.Mesh(new THREE.BoxGeometry(.22,.25,.24),armor);plate.position.set(side*.32,1.35,0);torsoGroup.add(plate);hitParts.push(plate);}
+        const chest=new THREE.Mesh(new THREE.BoxGeometry(.53,.5,.16),armor);chest.position.set(0,1.17,.2);torsoGroup.add(chest);hitParts.push(chest);
+        healthMultiplier=2.8;speedMultiplier=1.45;armorMultiplier=2;rootGroup.scale.setScalar(1.1);
+      } else if (hg === 'fast' || hg === 'FAST_HELMET') {
         // Half-sphere shell reads as a real dome rather than a cube.
         const helmetMesh = new THREE.Mesh(
           new THREE.SphereGeometry(0.165, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.62),
@@ -1700,6 +1719,13 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     legRMesh.castShadow = true;
     legRPivot.add(legRMesh);
     hitParts.push(legRMesh);
+  }
+
+  if(options.campaignEntity === 'security') {
+    const canvas=document.createElement('canvas');canvas.width=128;canvas.height=64;const ctx=canvas.getContext('2d');
+    if(ctx){ctx.fillStyle='#12191a';ctx.fillRect(0,0,128,64);ctx.fillStyle='#f0efdb';ctx.font='bold 48px sans-serif';ctx.textAlign='center';ctx.fillText('MP',64,49);}
+    const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+    const badge=new THREE.Mesh(new THREE.PlaneGeometry(.32,.16),new THREE.MeshBasicMaterial({map:texture}));badge.material.userData.ownedTextures=[texture];badge.position.set(0,1.25,.257);torsoGroup.add(badge);
   }
 
   /* ---------------------- MUTANT SCALE & POSTURE ---------------------- */

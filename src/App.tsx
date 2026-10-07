@@ -1,3 +1,5 @@
+import { Area51ExtractionGameLoop } from './area51Campaign';
+import { audioManager } from './campaignAudio';
 import { PostDeathMenu } from './PostDeathMenu';
 import { beginWeaponReload, advanceWeaponReload, cancelWeaponReload, interruptShellReload } from './weaponReload';
 import './ModePosters.css';
@@ -1259,7 +1261,7 @@ export default function App() {
 
     function applyDamageToPlayer(amount: number, ignoreShield: boolean, skipFlash: boolean, attackerBot: Bot | null) {
       if (!player.alive) return;
-      if (world.offshore?.phase === 'DEPARTING' || world.offshore?.phase === 'COMPLETE') return;
+      if (world.facility?.controlsLocked || world.offshore?.phase === 'DEPARTING' || world.offshore?.phase === 'COMPLETE') return;
       if (!ignoreShield && player.shield > 0) {
         const absorbed = Math.min(player.shield, amount);
         player.shield -= absorbed;
@@ -1334,7 +1336,7 @@ export default function App() {
     }
 
     function damageBot(bot: Bot, amount: number, isHeadshot: boolean, attacker: 'player' | Bot, impactDir?: THREE.Vector3) {
-      if (!bot.alive) return;
+      if (!bot.alive || bot.userData?.boarded || bot.userData?.entranceActive) return;
 
       const mType = bot.mutantType || (bot.zType ? bot.zType.toUpperCase() : 'WALKER');
       if (bot.isZombie && (mType === 'BRUTE' || bot.zType === 'tank')) {
@@ -1353,6 +1355,7 @@ export default function App() {
         }
       }
 
+      if(bot.campaignEntity === 'spartan' && !isHeadshot && (bot.armor ?? 0)>0){const absorbed=Math.min(bot.armor!,amount*.65);bot.armor!-=absorbed;amount-=absorbed;}
       bot.health -= amount;
       if (attacker === 'player') {
         player.damageDealt += Math.round(amount);
@@ -1415,13 +1418,13 @@ export default function App() {
             zombiesRemaining--;
             pushKillFeed(isHeadshot ? 'HEADSHOT ELIMINATION! (+ $100)' : 'ZOMBIE KILLED! (+ $100)');
           } else if (matchConfig.mode === 'extraction') {
-            if (extractionDirector && bot.isZombie) {
+            if (extractionDirector && bot.team !== 'blue') {
               extractionDirector.recordMutantKill(bot);
               if (bot.zType === 'megaboss') {
                 extractionDirector.recordBossDefeated();
               }
             }
-            pushKillFeed(isHeadshot ? 'HEADSHOT ELIMINATION! MUTANT KILLED!' : 'MUTANT KILLED!');
+            pushKillFeed(isHeadshot ? 'HEADSHOT // HOSTILE ELIMINATED' : 'HOSTILE ELIMINATED');
           } else {
             pushKillFeed(isHeadshot ? `HEADSHOT ELIMINATION! (${player.kills}/${matchConfig.targetScore})` : `ELIMINATED BOT #${bot.id}! (${player.kills}/${matchConfig.targetScore})`);
           }
@@ -1435,16 +1438,16 @@ export default function App() {
               pushKillFeed('A SURVIVOR ALLY HAS FALLEN TO THE HORDE!');
             }
           } else if (matchConfig.mode === 'extraction') {
-            if (attacker.team === 'blue' && bot.isZombie) {
+            if (attacker.team === 'blue' && bot.team !== 'blue') {
               if (extractionDirector) {
                 extractionDirector.recordMutantKill(bot);
                 if (bot.zType === 'megaboss') {
                   extractionDirector.recordBossDefeated();
                 }
               }
-              pushKillFeed('SQUAD ELIMINATED A MUTANT!');
-            } else if (bot.team === 'blue' && attacker.isZombie) {
-              pushKillFeed('A SQUAD MEMBER WAS KILLED BY A MUTANT!');
+              pushKillFeed('SQUAD ELIMINATED A HOSTILE!');
+            } else if (bot.team === 'blue' && attacker.team !== 'blue') {
+              pushKillFeed('A SQUAD MEMBER WAS KILLED BY A HOSTILE!');
             }
           }
         }
@@ -1625,10 +1628,11 @@ export default function App() {
       assignedTeam: string | null = null,
       zombieTypeOverride: 'walker' | 'runner' | 'tank' | 'brute' | 'banshee' | 'bloater' | 'megaboss' | null = null,
       isVIP = false,
-      eliteConfig?: EliteCompanionConfig
+      eliteConfig?: EliteCompanionConfig,
+      campaignEntity?: import('./types').CampaignEntity
     ): Bot {
       if (matchConfig.mode === 'team' && assignedTeam === null) assignedTeam = botIdCounter % 2 === 0 ? 'blue' : 'red';
-      const offshoreNodes = world.offshore ? world.getSpawnPoints(
+      const offshoreNodes = world.offshore || world.facility ? world.getSpawnPoints(
         assignedTeam === 'zombie' || (matchConfig.mode === 'zombie' && assignedTeam !== 'blue') ? 'zombie' : matchConfig.mode
       ) : null;
       const teamOffset = matchConfig.mode === 'team' && assignedTeam === 'red' ? 4 : 0;
@@ -1669,6 +1673,7 @@ export default function App() {
       else if (roll < 0.90) weaponTypeIndex = 6; // Battle Rifle
       else if(roll < .94) weaponTypeIndex = 2;
       else { const ids=['laser','minigun','railgun','rocket','grenade_launcher']; weaponTypeIndex=WEAPONS.findIndex(w=>w.id===ids[Math.min(4,Math.floor((roll-.94)/.012))]); }
+      if(campaignEntity) weaponTypeIndex = campaignEntity === 'security' ? (botId % 2 ? 3 : 4) : 0;
       const weaponType = WEAPONS[weaponTypeIndex].id;
 
       const pHeadgear = localStorage.getItem('gun_arena_headgear') || 'fast';
@@ -1676,6 +1681,7 @@ export default function App() {
       const pLower = localStorage.getItem('gun_arena_lower') || 'pouches';
 
       const visuals = buildBotVisuals({
+        campaignEntity,
         botId,
         team,
         isZombie,
@@ -1790,8 +1796,11 @@ export default function App() {
       }
 
       const bot: Bot = {
+        campaignEntity,
+        armor: campaignEntity === 'spartan' ? 140 : undefined,
+        maxArmor: campaignEntity === 'spartan' ? 140 : undefined,
         id: botId,
-        classId: eliteConfig?.archetype ?? visuals.classId,
+        classId: campaignEntity ? 'assault' : eliteConfig?.archetype ?? visuals.classId,
         team,
         isZombie,
         zType,
@@ -1888,6 +1897,7 @@ export default function App() {
     }
 
     function clearMatchEntities() {
+      audioManager.stop();
       clearCombatSystems(scene, world);
       world.clearDeployableCover?.();
       for(const pack of [...world.groundPickups])if(pack.group.userData.ammoPack)world.removeGroundPickup(pack);
@@ -1961,9 +1971,9 @@ export default function App() {
       world = activeMap === 'shattered_wall' ? initWorld(scene, camera) : createWorld(scene, activeMap);
       
       const isHangar = activeMap === 'hangar';
-      combatLightGroup.visible = !world.offshore;
+      combatLightGroup.visible = !world.offshore && !world.facility;
       if (world.lobbyGroup) world.lobbyGroup.visible = false;
-      storm.mesh.visible = !world.offshore && matchConfig.mode !== 'extraction';
+      storm.mesh.visible = !world.offshore && !world.facility && matchConfig.mode !== 'extraction';
       hemiLight.intensity = isHangar ? 0.55 : 0.65;
       sunLight.intensity = isHangar ? 0.75 : 1.05;
       
@@ -2005,7 +2015,7 @@ export default function App() {
         }
       }
 
-      if (world.offshore) {
+      if (world.offshore || world.facility) {
         const node = world.getSpawnPoints(matchConfig.mode === 'zombie' ? 'ffa' : matchConfig.mode)[0];
         player.pos.copy(node.position);
         player.pos.y += PLAYER_EYE;
@@ -2027,7 +2037,7 @@ export default function App() {
       player.team = matchConfig.mode === 'ffa' ? 'player' : 'blue';
 
       if (matchConfig.mode === 'extraction') {
-        const Director = world.offshore ? ShatteredWallExtractionGameLoop : ExtractionGameLoop;
+        const Director = world.offshore ? ShatteredWallExtractionGameLoop : world.facility ? Area51ExtractionGameLoop : ExtractionGameLoop;
         extractionDirector = new Director({
           faction: factionAlignmentRef.current,
           player,
@@ -2143,6 +2153,7 @@ export default function App() {
     function currentSlotState(): WeaponSlotState { return playerWeaponState[player.slotIndex] || playerWeaponState[0] || { ammo: 30, reserve: 90 }; }
 
     function fireWeapon() {
+      if (world.facility?.controlsLocked) return;
       const w = currentSlot();
       if (w.type === 'consumable') {
         const ws = currentSlotState();
@@ -2747,7 +2758,7 @@ export default function App() {
     };
 
     const onMouseMove = (e: MouseEvent) => {
-      if (gameStateRef.current !== 'playing') return;
+      if (gameStateRef.current !== 'playing' || world.facility?.controlsLocked) return;
       const isLocked = document.pointerLockElement === renderer.domElement;
       // Allow aiming when pointer locked, OR when dragging with mouse if pointer lock is restricted
       if (!isLocked && !isMouseDown) return;
@@ -2942,20 +2953,21 @@ export default function App() {
         operatorControls.enabled = false; previousOperatorZoom = '';
         if (hangarGroup) hangarGroup.visible = false;
         if (lobbyAvatar) lobbyAvatar.group.visible = false;
-        combatLightGroup.visible = !world.offshore;
+        combatLightGroup.visible = !world.offshore && !world.facility;
         if (world.lobbyGroup) world.lobbyGroup.visible = false;
         world.updateWorld(dt, clock.elapsedTime, matchConfig.mode);
+        if(world.facility?.controlsLocked){player.fireHeld=false;player.vel.set(0,0,0);player.aiming=false;}
         if (matchConfig.mode === 'extraction') for (const hit of updateHeliDefenses(dt, bots)) damageBot(hit.bot, hit.damage, false, 'player');
         
-        if (!world.offshore && selectedMapStateRef.current === 'hangar') {
+        if (!world.offshore && !world.facility && selectedMapStateRef.current === 'hangar') {
            scene.background = hangarBackground;
            // Gameplay fog is owned and restored by world.updateWorld().
-        } else if (!world.offshore) {
+        } else if (!world.offshore && !world.facility) {
            scene.background = null;
            // Gameplay fog is owned by the active world.
         }
         // 1. Player movement & physics
-        if (player.alive && world.offshore?.phase !== 'DEPARTING') {
+        if (player.alive && world.offshore?.phase !== 'DEPARTING' && !world.facility?.controlsLocked) {
           const eyeHeight = player.crouching ? PLAYER_EYE_CROUCH : PLAYER_EYE;
           let speed = player.crouching ? CROUCH_SPEED : (player.sprinting ? SPRINT_SPEED : WALK_SPEED);
           speed *= player.classSpeedMultiplier; // Recon: +20% (1.20), Juggernaut: -15% (0.85)
@@ -3042,10 +3054,11 @@ export default function App() {
             }
           }
 
+          if(world.facility && player.pos.y < -5)applyDamageToPlayer(player.maxHealth+player.maxShield,true,true,null);
           if (world.offshore && player.pos.y < 1.1) applyDamageToPlayer(player.maxHealth + player.maxShield, true, true, null);
 
           // Storm damage applies to the arena modes.
-          if (matchConfig.mode !== 'zombie' && matchConfig.mode !== 'extraction') {
+          if (!world.facility && matchConfig.mode !== 'zombie' && matchConfig.mode !== 'extraction') {
             const distFromCenter = Math.hypot(player.pos.x - storm.center.x, player.pos.z - storm.center.z);
             if (distFromCenter > storm.radius) {
               applyDamageToPlayer(STORM_DPS * dt, true, true, null);
@@ -3339,6 +3352,22 @@ export default function App() {
           }
         }
         
+        if(world.facility && !world.facility.controlsLocked && !extPromptResult.interactionPrompt){
+          if(matchConfig.mode !== 'extraction' && Math.abs(player.pos.x+12)<2.6 && Math.abs(player.pos.z+136)<3.6){
+            extPromptResult={interactionPrompt:player.pos.y>10?'[E] LIFT TO BIO-LAB':'[E] LIFT TO LEVEL 4',isPromptObjective:false};
+            if(keys.KeyE){keys.KeyE=false;world.facility.transferLift(player.pos,player.pos.y>10?0:15,player.crouching?PLAYER_EYE_CROUCH:PLAYER_EYE);}
+          } else {
+            let supply:import('./area51World').FacilityInteraction|undefined,closest=2.4;
+            for(const item of world.facility.interactions){const distance=player.pos.distanceTo(item.position);if(distance<closest){closest=distance;supply=item;}}
+            if(supply){
+              extPromptResult={interactionPrompt:supply.kind==='ammo'?'[E] REFILL LOADOUT AMMO':`[E] EQUIP ${WEAPONS[supply.weaponIndex!].name}`,isPromptObjective:false};
+              if(keys.KeyE){keys.KeyE=false;
+                if(supply.kind==='ammo'){playerLoadout.forEach((w,i)=>{if(w.type==='weapon'){cancelWeaponReload(playerWeaponState[i]);playerWeaponState[i].ammo=w.mag;playerWeaponState[i].reserve=w.reserve;playerWeaponState[i].needsChamber=false;playerWeaponState[i].pendingReloadShot=false;playerWeaponState[i].boltCycleT=0;}});pushKillFeed('FIELD AMMO REFILLED');}
+                else{cancelWeaponReload(playerWeaponState[0]);const w=WEAPONS[supply.weaponIndex!];playerLoadout[0]=w;playerWeaponState[0]={ammo:w.mag,reserve:w.reserve};switchSlot(0);pushKillFeed(`FIELD ARMORY: ${w.name}`);}
+              }
+            }
+          }
+        }
         // 6. World doors & interactions
         // Doors and debris are advanced by world.updateWorld().
 
@@ -3358,7 +3387,7 @@ export default function App() {
           const item = world.groundPickups[i];
           item.group.rotation.y += dt * 1.6;
           item.group.position.y = terrainHeight(item.group.position.x, item.group.position.z) + 0.55 + Math.sin(storm.elapsed * 3 + i) * 0.08;
-          const dist = Math.hypot(player.pos.x - item.group.position.x, player.pos.z - item.group.position.z);
+          const dist = player.pos.distanceTo(item.group.position);
           if (dist < 2.3 && dist < nearestPickupDist) {
             nearestPickup = item;
             nearestPickupDist = dist;
@@ -3566,6 +3595,7 @@ export default function App() {
 
         // 10. Bots & AI logic
         for (const bot of bots) {
+          if(bot.userData?.boarded || bot.userData?.entranceActive)continue;
           bot.flashMats.forEach(m => {
             if (m.emissiveIntensity > 0) m.emissiveIntensity = Math.max(0, m.emissiveIntensity - dt * 4);
           });
@@ -4110,6 +4140,7 @@ export default function App() {
       if(gameStateRef.current==='playing')updateThirdPerson(dt);
       else if(gameStateRef.current==='start'&&thirdPersonActor)thirdPersonActor.rootGroup.visible=false;
       if (world.offshore?.phase === 'DEPARTING') camera.position.copy(player.pos);
+      if(gameStateRef.current==='playing' && world.facility?.controlsLocked){world.facility.updateCamera(camera,player);vmManager.root.visible=false;if(thirdPersonActor)thirdPersonActor.rootGroup.visible=false;}
       // These tabs own opaque UI environments; skip the lobby/storm and bloom passes.
       if(gameStateRef.current==='start'&&(activeTabRef.current==='loadout'||activeTabRef.current==='gamemode'))renderer.clear();
       else effects.render(dt, selectedMapStateRef.current);
@@ -4151,6 +4182,7 @@ export default function App() {
       disposeBotTextureCache();
       world.dispose();
       cleanupWorld(scene);
+      audioManager.dispose();
       disposeBotVisuals(combatLightGroup);
       botHealthLayer?.remove();
       operatorControls.dispose();
@@ -4382,14 +4414,16 @@ export default function App() {
       {/* Subterranean Extraction Dedicated Debrief / End Screen */}
       {gameState === 'DEATH_SCREEN' && endResult.victory && matchMode === 'extraction' && extractionState && (
         <ExtractionEndScreen
-          isVictory={endResult.victory}
-          state={extractionState}
-          kills={stats.kills}
-          accuracyPct={stats.accuracyPct ?? 0}
-          headshotPct={stats.headshotPct ?? 0}
-          timeStr={stats.time || '00:00'}
-          onRedeploy={() => restartHandlerRef.current?.()}
-          onLobby={() => lobbyHandlerRef.current?.()}
+          victory={endResult.victory}
+          campaign={extractionState.campaign}
+          faction={extractionState.faction}
+          mutantsKilled={extractionState.mutantsKilled}
+          missionDuration={extractionState.missionDuration}
+          sectorReached={extractionState.currentSector}
+          fundsEarned={matchRewards?.totalFundsEarned ?? 0}
+          totalFunds={matchRewards?.newFunds ?? 0}
+          onRestart={() => restartHandlerRef.current?.()}
+          onReturnToLobby={() => lobbyHandlerRef.current?.()}
         />
       )}
 

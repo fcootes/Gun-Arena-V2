@@ -1372,7 +1372,10 @@ export interface ActiveProjectile {
  * SECTION 6 — BOT ENTITY
  * ===========================================================================*/
 
+export type CampaignEntity = 'security' | 'marine' | 'spartan';
+
 export interface Bot {
+  campaignEntity?: CampaignEntity;
   id: number;
   team: string;
   isZombie: boolean;
@@ -1637,7 +1640,7 @@ export function resetPersistence(faction: FactionId = 'USMC_SPEC_OPS'): GamePers
 
 /** True when a kill should pay the heavy bounty rather than the standard one. */
 export function isHeavyTarget(bot: Bot): boolean {
-  if (bot.isElite) return true;
+  if (bot.isElite || bot.campaignEntity === 'spartan') return true;
   if (bot.isTankBoss) return true;
   if (bot.isZombie) {
     return bot.zType === 'brute' || bot.zType === 'tank' || bot.zType === 'megaboss' || bot.zType === 'bloater';

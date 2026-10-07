@@ -41,7 +41,7 @@ export function modeSceneDescription(
   const apex = faction === "apex",
     storm = map === "shattered_wall";
   if (mode === "team")
-    return `${apex ? "APEX spearhead" : "USMC fireteam"}: desert-camo marines clash with red-and-grey mercenaries across ${storm ? "a storm-lashed offshore deck" : map === "hangar" ? "the bunker loading bay" : "an urban training arena"}.`;
+    return `${apex ? "APEX spearhead" : "USMC fireteam"}: desert-camo marines clash with red-and-grey mercenaries across ${storm ? "a storm-lashed offshore deck" : map === "hangar" ? "the Area 51 staging bay" : "an urban training arena"}.`;
   if (mode === "ffa")
     return `${apex ? "APEX" : "USMC"} solo operatives caught in a 360-degree urban crossfire. ${storm ? "Rain sweeps the coastal industrial blocks." : map === "hangar" ? "Alarm lights wash the underground combat district." : "Dust and ricochets fill the streets."}`;
   if (mode === "zombie")
@@ -885,7 +885,7 @@ export function ModePosters({
     map === "shattered_wall"
       ? "SHATTERED WALL"
       : map === "hangar"
-        ? "BUNKER HANGAR"
+        ? "AREA 51 FACILITY"
         : "TRAINING FIELD";
   return (
     <div
