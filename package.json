@@ -12,7 +12,8 @@
     "test:batch1": "node --import tsx tests/batch1.test.ts",
     "test:batch2": "node --import tsx tests/batch2.test.ts",
     "test:weapons": "node --import tsx tests/weapons.test.ts",
-    "test:scenes": "node --import tsx tests/scenes.test.ts"
+    "test:scenes": "node --import tsx tests/scenes.test.ts",
+    "test:tactical": "node --import tsx tests/tactical.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

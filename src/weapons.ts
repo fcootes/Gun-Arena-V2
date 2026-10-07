@@ -321,6 +321,7 @@ export function createViewmodelManager(): ViewmodelManager {
     venting = false,
     radioTimer = 0,
     radioHold = false;
+  const reloadRotation = new THREE.Quaternion(), reloadEuler = new THREE.Euler(), reloadPosition = new THREE.Vector3();
   const gloveMaterial = new THREE.MeshStandardMaterial({
     color: 0x20282b,
     roughness: 0.88,
@@ -532,37 +533,54 @@ export function createViewmodelManager(): ViewmodelManager {
     assembly.root.position.y +=
       Math.abs(Math.sin(bob)) * 0.012 * walk + Math.sin(time * 1.5) * 0.002;
     assembly.root.rotation.set(recoilRotation, 0, sprinting ? -0.15 : 0);
-    if (ws?.reloading && (ws.totalReloadT ?? 0) > 0) {
-      const p = THREE.MathUtils.clamp(
-          1 - (ws.reloadT ?? 0) / ws.totalReloadT!,
-          0,
-          1,
-        ),
-        heave = Math.sin(p * Math.PI);
-      assembly.root.rotation.z = -heave * 0.24;
-      assembly.root.position.y += heave * 0.035;
-      if (parts.magazine) {
-        const offset = p < 0.45 ? p / 0.45 : (1 - p) / 0.55;
-        parts.magazine.position.y -= Math.sin((offset * Math.PI) / 2) * 0.27;
-        parts.magazine.visible = p < 0.4 || p > 0.55;
+    if (parts.reloadRound) parts.reloadRound.visible = false;
+    const sequence = ws?.reloadSequence;
+    if (ws?.reloading && sequence) {
+      const phase = sequence.phases[sequence.index];
+      const p = THREE.MathUtils.smoothstep(sequence.elapsed / phase.duration, 0, 1);
+      const progress = 1 - (ws.reloadT ?? 0) / (ws.totalReloadT || 1);
+      const lift = Math.min(1, progress * 7, (1 - progress) * 7);
+      reloadRotation.setFromEuler(reloadEuler.set(.14, -.18, -.38));
+      assembly.root.quaternion.slerp(reloadRotation, lift);
+      reloadPosition.copy(assembly.root.position); reloadPosition.x -= .02; reloadPosition.y += .05; reloadPosition.z += .025;
+      assembly.root.position.lerp(reloadPosition, lift);
+      const removed = phase.phase === 'eject' ? p : phase.phase === 'insert' ? 1 - p : 0;
+      if (parts.magazine && sequence.kind !== 'shell') {
+        const base = pose.get(parts.magazine)!;
+        reloadPosition.copy(base.position); reloadPosition.x += sequence.kind === 'cylinder' ? .15 : -.035; reloadPosition.y -= .25; reloadPosition.z += .025;
+        parts.magazine.position.lerpVectors(base.position, reloadPosition, removed);
+        reloadRotation.setFromEuler(reloadEuler.set(0, 0, sequence.kind === 'cylinder' ? .85 : -.18));
+        parts.magazine.quaternion.slerp(reloadRotation, removed);
       }
-      if (parts.feedTray) parts.feedTray.rotation.x = heave * 1.0;
-      if (parts.bolt)
-        parts.bolt.position.z +=
-          Math.sin(Math.max(0, (p - 0.65) / 0.35) * Math.PI) * 0.045;
-      if (parts.pump) parts.pump.position.z += heave * 0.075;
-      if (w.id === 'grenade_launcher' && parts.magazine) {
-        parts.magazine.position.x += heave * 0.1;
-        parts.magazine.rotation.z = (heave * Math.PI) / 3;
+      const opened = phase.phase === 'open' ? p : phase.phase === 'close' ? 1 - p : 1;
+      if (parts.feedTray) { reloadRotation.setFromEuler(reloadEuler.set(-.9, 0, 0)); parts.feedTray.quaternion.slerp(reloadRotation, opened); }
+      if (parts.vent) { reloadRotation.setFromEuler(reloadEuler.set(0, 0, -.95)); parts.vent.quaternion.slerp(reloadRotation, phase.phase === 'close' ? 1-p : opened); }
+      if (phase.phase === 'chamber' && sequence.empty) {
+        const pull = Math.sin(p * Math.PI);
+        if (parts.bolt) parts.bolt.position.z += pull * (w.id === 'br' ? .07 : .045);
+        if (parts.slide) parts.slide.position.z += pull * .048;
+        if (parts.pump) parts.pump.position.z += pull * .08;
       }
+      if (parts.reloadRound && phase.phase === 'insert') {
+        const base = pose.get(parts.reloadRound)!;
+        reloadPosition.copy(base.position); reloadPosition.x -= .15; reloadPosition.y -= .12; reloadPosition.z += w.id === 'rocket' ? -.2 : .08;
+        parts.reloadRound.position.lerpVectors(reloadPosition, base.position, p);
+        parts.reloadRound.visible = p < .92;
+      }
+      // Support hand reaches into the magwell/loading port, then returns to its grip.
+      hands.position.set(-.055 * Math.sin(p * Math.PI), -.02 * lift, .025 * lift);
     } else {
-      if (parts.slide)
-        parts.slide.position.z +=
-          Math.sin((slideTimer / 0.12) * Math.PI) * 0.045;
-      if (parts.bolt)
-        parts.bolt.position.z += Math.sin((boltTimer / 0.07) * Math.PI) * 0.025;
-      if (parts.pump)
-        parts.pump.position.z += Math.sin((pumpTimer / 0.42) * Math.PI) * 0.075;
+      hands.position.set(0, 0, 0);
+      if (parts.slide) parts.slide.position.z += Math.sin((slideTimer / .12) * Math.PI) * .045;
+      if (parts.bolt) parts.bolt.position.z += Math.sin((boltTimer / .07) * Math.PI) * .025;
+      if (parts.pump) parts.pump.position.z += Math.sin((pumpTimer / .42) * Math.PI) * .075;
+      if (w.id === 'shotgun' && (ws?.boltCycleT ?? 0) > 0 && parts.pump) parts.pump.position.z += Math.sin((1-ws!.boltCycleT!/.42)*Math.PI)*.08;
+      if (w.id === 'sniper' && (ws?.boltCycleT ?? 0) > 0 && parts.bolt) {
+        const p = 1 - ws!.boltCycleT! / .85;
+        parts.bolt.position.z += Math.sin(p * Math.PI) * .085;
+        reloadRotation.setFromEuler(reloadEuler.set(0, 0, Math.sin(p * Math.PI) * .9));
+        parts.bolt.quaternion.slerp(reloadRotation, 1);
+      }
     }
     assembly.update(dt, charge, spin);
     spin = 0;

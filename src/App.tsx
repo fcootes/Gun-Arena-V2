@@ -1,3 +1,5 @@
+import { PostDeathMenu } from './PostDeathMenu';
+import { beginWeaponReload, advanceWeaponReload, cancelWeaponReload, interruptShellReload } from './weaponReload';
 import './ModePosters.css';
 import { createWeaponAssembly, disposeWeaponObject } from './weaponModels';
 import { useEffect, useRef, useState } from 'react';
@@ -55,6 +57,7 @@ import {
   updateBioMutantAI,
   BioMutantAIContext,
   updateToxicPuddles,
+  updateClassCombatBot, updateTripods,
   detonateBloater, firePlayerLauncher, updateProjectiles, fireBotLauncher, updateBotLauncherReload, type CombatSystemsContext
 } from './gameLoop';
 import { MutantType } from './types';
@@ -1293,6 +1296,18 @@ export default function App() {
       }
     }
 
+    function getCombatContext(): CombatSystemsContext {
+      return {
+          scene,camera,world,bots,damageBot,pushKillFeed,
+          squadDirective:squadDirectiveRef.current,focusTargetId:focusTargetIDRef.current,
+          player:{pos:player.pos,yaw:player.yaw,pitch:player.pitch,health:player.health,maxHealth:player.maxHealth,alive:player.alive,team:player.team,
+            applyDamage:applyDamageToPlayer,heal:amount=>{player.health=Math.min(player.maxHealth,player.health+amount);}},
+          needsAmmo:()=>playerWeaponState.slice(0,2).some(ws=>(ws.reserve??0)<30),
+          onBotShot:(bot,weapon)=>{radarPingsRef.current.push({x:bot.pos.x,z:bot.pos.z,timestamp:performance.now(),duration:1.5,type:'gunfire'});const audio=weapon.id==='sniper'?AUDIO.sniperShot:weapon.id==='pistol'?AUDIO.pistolShot:weapon.id==='shotgun'?AUDIO.shotgunShot:AUDIO.arSingle;audio.play(getSpatialVolume(camera.position,bot.pos));},
+          onExplosionHit:(target,amount)=>{if(target!== 'player'&&amount>0){showHitmarker(false);}}
+      };
+    }
+
     function getMutantAIContext(): BioMutantAIContext {
       return {
         player: {
@@ -1341,6 +1356,10 @@ export default function App() {
       bot.health -= amount;
       if (attacker === 'player') {
         player.damageDealt += Math.round(amount);
+      }
+      if (bot.health <= 0 && !bot.isZombie && !bot.isVIP && !bot.downed && (bot.revivesUsed ?? 0) === 0 && bots.some(ally=>ally.alive&&ally.team===bot.team&&(ally.classId??ally.eliteRole)==='medic')) {
+        bot.health=0;bot.alive=false;bot.downed=true;bot.deathT=20;bot.downedAttacker=attacker;bot.vel.set(0,0,0);
+        bot.group.rotation.x=-1.2;bot.healthEl.style.display='none';pushKillFeed(`${bot.callsign??'OPERATOR'} DOWNED — MEDIC REQUIRED`);return;
       }
       if (bot.health <= 0) {
         bot.health = 0;
@@ -1500,6 +1519,10 @@ export default function App() {
     }
 
     function triggerGameOver(victory: boolean, winningBot: Bot | null = null) {
+      if (gameStateRef.current === 'DEATH_SCREEN') return;
+      gameStateRef.current = 'DEATH_SCREEN';
+      player.fireHeld = false; player.aiming = false; for(const key of Object.keys(keys))keys[key]=false;
+      AUDIO.laserBeam.stop(); AUDIO.minigunFire.stop(); updateMinigunSpinAudio(false,0);
       AUDIO.arSpray.stop();
       updateAdrenalineHeartbeat(false);
       const adrenalineEl = containerRef.current?.querySelector('#adrenaline-overlay') as HTMLElement | null;
@@ -1768,6 +1791,7 @@ export default function App() {
 
       const bot: Bot = {
         id: botId,
+        classId: eliteConfig?.archetype ?? visuals.classId,
         team,
         isZombie,
         zType,
@@ -1865,6 +1889,8 @@ export default function App() {
 
     function clearMatchEntities() {
       clearCombatSystems(scene, world);
+      world.clearDeployableCover?.();
+      for(const pack of [...world.groundPickups])if(pack.group.userData.ammoPack)world.removeGroundPickup(pack);
       vmManager.resetEffects();
       if(thirdPersonActor)disposeBotVisuals(thirdPersonActor.rootGroup);thirdPersonActor=null;carriedWeapon=null;carriedId='';
       extractionDirector = null;
@@ -2163,7 +2189,9 @@ export default function App() {
       }
 
       const ws = currentSlotState();
-      if (ws.reloading) return;
+      interruptShellReload(w, ws);
+      if (ws.reloading || (ws.boltCycleT ?? 0) > 0) return;
+      if (ws.needsChamber) { reloadWeapon(); return; }
 
       // Laser gun heat & overheat check
       if (w.id === 'laser') {
@@ -2219,6 +2247,7 @@ export default function App() {
           reloadWeapon();
         }
       } else if (w.id === 'sniper') {
+        ws.boltCycleT = .85;
         vmManager.addRecoil(0.09, 0.12);
         AUDIO.sniperShot.play(1.0, true);
 
@@ -2454,6 +2483,7 @@ export default function App() {
       // Minigun manual overheat vent
       if (w.id === 'minigun') {
         if (ws.overheated || (ws.heat ?? 0) <= 0) return;
+        beginWeaponReload(w, ws, player.classReloadMultiplier);
         ws.overheated = true;
         ws.ventTimer = 2.0;
         ws.spinWarmup = 0;
@@ -2466,81 +2496,15 @@ export default function App() {
         return;
       }
 
-      // Laser gun venting reload
-      if (w.id === 'laser') {
-        if (ws.reloading || (ws.heat ?? 0) <= 0) return;
-        ws.reloading = true;
-        AUDIO.laserBeam.stop();
-        laserBeamMesh.visible = false;
-        
-        ws.heat = 0;
-        ws.overheated = false;
-
-        const reloadDur = (w.reloadTime ?? 2.2) * player.classReloadMultiplier;
-        ws.reloadT = reloadDur;
-        ws.totalReloadT = reloadDur;
-        AUDIO.laserVent.play(1.0);
-        
-        for (let s = 0; s < 12; s++) {
-          const pt = new THREE.Vector3(0, 0, -0.6);
-          pt.applyMatrix4(vmManager.root.matrixWorld);
-          const sm = new THREE.Mesh(
-            new THREE.BoxGeometry(0.02, 0.02, 0.02),
-            new THREE.MeshBasicMaterial({ color: 0xffaa00 })
-          );
-          sm.position.copy(pt);
-          const vel = new THREE.Vector3((Math.random()-0.5)*1.5, (Math.random()-0.5)*1.5, (Math.random()-0.5)*1.5 - 2);
-          vel.applyQuaternion(camera.quaternion);
-          smokePool.push({ mesh: sm, life: 0.3 + Math.random()*0.3, maxLife: 0.6, vel });
-          scene.add(sm);
-        }
-        return;
-      }
-
-      if (ws.reloading || ws.ammo === w.mag || (ws.reserve ?? 0) <= 0) return;
-
-      ws.reloading = true;
-      
-      const isTactical = (ws.ammo ?? 0) > 0;
-      ws.isTacticalReload = isTactical;
-      
-      AUDIO.arSpray.stop();
-      AUDIO.laserBeam.stop();
-      AUDIO.minigunFire.stop();
-      laserBeamMesh.visible = false;
-      player.continuousShots = 0;
-
-      let reloadDur = (w.reloadTime ?? 2.4) * player.classReloadMultiplier;
-      if (w.id === 'br') {
-        ws.burstRemaining = 0;
-        ws.burstTimer = 0;
-        reloadDur = (isTactical ? 1.2 : 1.8) * player.classReloadMultiplier;
-      } else if (!isTactical && ['pistol', 'smg', 'ar', 'lmg'].includes(w.id)) {
-        reloadDur *= 1.4; // 40% slower empty reload
-      }
-      ws.reloadT = reloadDur;
-      ws.totalReloadT = reloadDur;
-
-      if (['pistol', 'smg', 'ar', 'lmg', 'br'].includes(w.id)) {
-        if (isTactical) AUDIO.reloadTactical.play(1.0);
-        else AUDIO.reloadEmpty.play(1.0);
-      } else if (w.id === 'shotgun') {
-        setTimeout(() => {
-          if (player.alive && currentSlot().id === 'shotgun' && ws.reloading) {
-            AUDIO.shotgunReload.play(1.0);
-          }
-        }, 150);
-      } else if (w.id === 'sniper') {
-        AUDIO.sniperReload.play(1.0);
-      } else if (w.id === 'smg') {
-        AUDIO.smgReload.play(1.0);
-      } else if (w.id === 'lmg') {
-        AUDIO.lmgReload.play(1.0);
-      } else if (w.id === 'br') {
-        AUDIO.brReload.play(1.0);
-      } else if (w.id === 'railgun') {
-        AUDIO.sniperReload.play(1.0);
-      }
+      if (!beginWeaponReload(w, ws, player.classReloadMultiplier)) return;
+      player.aiming = false;
+      AUDIO.arSpray.stop(); AUDIO.laserBeam.stop(); AUDIO.minigunFire.stop();
+      laserBeamMesh.visible = false; player.continuousShots = 0;
+      if (w.id === 'laser') AUDIO.laserVent.play(1.0);
+      else if (w.id === 'shotgun') AUDIO.shotgunReload.play(1.0);
+      else if (w.id === 'sniper') AUDIO.sniperReload.play(1.0);
+      else if (ws.isTacticalReload) AUDIO.reloadTactical.play(1.0);
+      else AUDIO.reloadEmpty.play(1.0);
     }
 
     function switchSlot(index: number) {
@@ -2572,7 +2536,7 @@ export default function App() {
         AUDIO.laserVent.stop();
         const oldWs = playerWeaponState[player.slotIndex];
         if (oldWs) {
-          if (oldWs.reloading !== undefined) oldWs.reloading = false;
+          cancelWeaponReload(oldWs);
           oldWs.charging = false;
           oldWs.chargeTimer = 0;
           oldWs.spinWarmup = 0;
@@ -2927,6 +2891,10 @@ export default function App() {
     };
 
     const lobbyHandler = () => {
+      gameStateRef.current = 'start';
+      player.fireHeld=false;player.aiming=false;for(const key of Object.keys(keys))keys[key]=false;
+      AUDIO.laserBeam.stop();AUDIO.minigunFire.stop();updateMinigunSpinAudio(false,0);
+      setActiveTab('play');
       AUDIO.arSpray.stop();
       if (document.pointerLockElement) {
         try { document.exitPointerLock?.(); } catch {}
@@ -3017,7 +2985,7 @@ export default function App() {
 
           player.vel.x = moveX * speed;
           player.vel.z = moveZ * speed;
-          world.moveEntityWithCollision(player.pos, player.vel, PLAYER_RADIUS, player.pos.y - eyeHeight, player.pos.y + 0.25, dt);
+          world.moveEntityWithCollision(player.pos, player.vel, PLAYER_RADIUS, player.pos.y - eyeHeight, player.pos.y + 0.25, dt, player.team);
 
           player.vel.y += GRAVITY * dt;
           player.pos.y += player.vel.y * dt;
@@ -3101,33 +3069,14 @@ export default function App() {
                 ws.heat = Math.max(0, ws.heat - dt * 26);
               }
             }
-            if (ws.reloading) {
-              ws.reloadT = (ws.reloadT ?? 0) - dt;
-              if (ws.reloadT <= 0) {
-                ws.heat = 0;
-                ws.overheated = false;
-                ws.reloading = false;
-                ws.reloadT = 0;
-              }
-            }
-            return;
           }
-
-          if (ws.reloading) {
-            ws.reloadT = (ws.reloadT ?? 0) - dt;
-            if (ws.reloadT <= 0) {
-              const need = (w.mag ?? 30) - (ws.ammo ?? 0);
-              const take = Math.min(need, ws.reserve ?? 0);
-              ws.ammo = (ws.ammo ?? 0) + take;
-              ws.reserve = (ws.reserve ?? 0) - take;
-              ws.reloading = false;
-              ws.reloadT = 0;
-            }
-          }
+          const inserted = advanceWeaponReload(w, ws, dt);
+          if (inserted > 0 && player.slotIndex === i) AUDIO.shotgunReload.play(.85);
         });
 
         const curW = currentSlot();
         const curWs = currentSlotState();
+        if (curWs.pendingReloadShot && (curWs.boltCycleT ?? 0) <= 0) { curWs.pendingReloadShot=false; if(player.fireHeld)fireWeapon(); }
         if (player.fireHeld && curW.auto && curW.type === 'weapon' && !curWs.reloading) {
           fireWeapon();
         }
@@ -3157,7 +3106,7 @@ export default function App() {
               curWs.ventTimer = 0;
               pushKillFeed('MINIGUN SYSTEM COOLED');
             }
-          } else if (player.fireHeld && player.alive) {
+          } else if (player.fireHeld && player.alive && !curWs.reloading) {
             // Warmup barrel spin (0.5s delay)
             curWs.spinWarmup = Math.min(0.5, (curWs.spinWarmup ?? 0) + dt);
             const spinProgress = (curWs.spinWarmup ?? 0) / 0.5;
@@ -3171,6 +3120,7 @@ export default function App() {
               curWs.heat = Math.min(100, (curWs.heat ?? 0) + (dt / 4.0) * 100);
               if ((curWs.heat ?? 0) >= 100) {
                 curWs.heat = 100;
+                beginWeaponReload(curW,curWs,player.classReloadMultiplier);
                 curWs.overheated = true;
                 curWs.ventTimer = 2.0;
                 AUDIO.minigunFire.stop();
@@ -3451,7 +3401,10 @@ export default function App() {
               keys['KeyE'] = false;
               const pItem = nearestPickup;
               const wType = WEAPONS[pItem.typeIndex];
-              if (wType) {
+              if(pItem.group.userData.ammoPack){
+                playerWeaponState.slice(0,2).forEach(ws=>{ws.reserve=(ws.reserve??0)+pItem.ammo;});
+                pushKillFeed(`SUPPORT RESUPPLY: +${pItem.ammo} AMMO PER SLOT`);
+              } else if (wType) {
                 if (wType.type === 'grenade') {
                   playerWeaponState[2].count = Math.min(6, (playerWeaponState[2].count ?? 0) + pItem.ammo);
                   pushKillFeed(`+${pItem.ammo} TACTICAL GRENADES`);
@@ -3631,6 +3584,11 @@ export default function App() {
 
           if (bot.meleeCooldown > 0) bot.meleeCooldown -= dt;
 
+          if (bot.downed) {
+            bot.deathT-=dt;
+            if(bot.deathT<=0){bot.downed=false;bot.revivesUsed=1;bot.alive=true;bot.health=1;damageBot(bot,9999,false,bot.downedAttacker??bot);}
+            continue;
+          }
           if (!bot.alive) {
             if (Math.abs(bot.group.rotation[bot.fallAxis]) < 1.55) {
               bot.group.rotation[bot.fallAxis] += bot.fallDir * dt * 3.2;
@@ -3740,355 +3698,7 @@ export default function App() {
             bot.armRPivot.rotation.x = -1.6 - slash * 0.7;
           }
 
-          // Target acquisition
-          let targetPos: THREE.Vector3 | null = null;
-          let targetObj: Bot | 'player' | null = null;
-          let bestDist = 999;
-
-          if (matchConfig.mode === 'zombie') {
-            if (bot.isZombie) {
-              if (player.alive && bot.team !== player.team) {
-                bestDist = bot.pos.distanceTo(player.pos);
-                targetObj = 'player';
-                targetPos = camera.position.clone();
-              }
-              for (const other of bots) {
-                if (!other.alive || other.team !== 'blue') continue;
-                const d = bot.pos.distanceTo(other.pos);
-                if (d < bestDist) {
-                  bestDist = d;
-                  targetObj = other;
-                  targetPos = other.pos.clone().add(new THREE.Vector3(0, 1.5, 0));
-                }
-              }
-            } else {
-              let hasFocusTarget = false;
-              if (bot.team === player.team && focusTargetIDRef.current !== null) {
-                 const focusedBot = bots.find(b => b.id === focusTargetIDRef.current);
-                 if (focusedBot && focusedBot.alive && focusedBot.isZombie) {
-                    targetObj = focusedBot;
-                    targetPos = focusedBot.pos.clone().add(new THREE.Vector3(0, 1.5, 0));
-                    hasFocusTarget = true;
-                 } else {
-                    focusTargetIDRef.current = null;
-                 }
-              }
-              if (!hasFocusTarget) {
-                for (const other of bots) {
-                  if (!other.alive || !other.isZombie) continue;
-                  const d = bot.pos.distanceTo(other.pos);
-                  if (d >= 60) continue;
-
-                  // Squad tactical prioritization
-                  let priorityWeight = d;
-                  const mType = other.mutantType || (other.zType ? other.zType.toUpperCase() : 'WALKER');
-                  if (mType === 'RUNNER' && d <= 5.0) {
-                    priorityWeight -= 45.0; // Intercept charging runner
-                  } else if (mType === 'BANSHEE') {
-                    priorityWeight -= 30.0; // Silence sonic disruptor
-                  } else if (mType === 'MEGABOSS') {
-                    priorityWeight -= 18.0; // Focus boss fire
-                  } else if (mType === 'BLOATER' && d <= 4.0) {
-                    priorityWeight -= 12.0; // Detonation threshold
-                  }
-
-                  if (priorityWeight < bestDist) {
-                    bestDist = priorityWeight;
-                    targetObj = other;
-                    targetPos = other.pos.clone().add(new THREE.Vector3(0, other.hoverHeight ? other.hoverHeight + 0.8 : 1.5, 0));
-                  }
-                }
-              }
-            }
-          } else {
-            if (player.alive && bot.team !== player.team) {
-              const dPlayer = bot.pos.distanceTo(player.pos);
-              if (dPlayer < 55) {
-                bestDist = dPlayer;
-                targetObj = 'player';
-                targetPos = camera.position.clone();
-              }
-            }
-            // Focus target override for friendly bots
-            let hasFocusTarget = false;
-            if (bot.team === player.team && focusTargetIDRef.current !== null) {
-               const focusedBot = bots.find(b => b.id === focusTargetIDRef.current);
-               if (focusedBot && focusedBot.alive) {
-                  targetObj = focusedBot;
-                  targetPos = focusedBot.pos.clone().add(new THREE.Vector3(0, 1.5, 0));
-                  hasFocusTarget = true;
-               } else {
-                  focusTargetIDRef.current = null; // Clear if dead
-               }
-            }
-            
-            if (!hasFocusTarget) {
-              for (const other of bots) {
-                if (!other.alive || other === bot || other.team === bot.team) continue;
-                const d = bot.pos.distanceTo(other.pos);
-                if (d < 50 && d < bestDist) {
-                  bestDist = d;
-                  targetObj = other;
-                  targetPos = other.pos.clone().add(new THREE.Vector3(0, 1.5, 0));
-                }
-              }
-            }
-          }
-
-          if (targetPos) {
-            const movementTarget = world.getNavigationTarget?.(bot.pos, targetPos) ?? targetPos;
-            const dx = movementTarget.x - bot.pos.x;
-            const dz = movementTarget.z - bot.pos.z;
-            const navigationDistance = Math.hypot(dx, dz) || 0.001;
-            const dist = Math.hypot(targetPos.x - bot.pos.x, targetPos.z - bot.pos.z);
-            const ndx = dx / navigationDistance;
-            const ndz = dz / navigationDistance;
-
-            // Bot tactical healing logic below 35% health
-              let isHealing = false;
-              if (bot.healSlot) {
-                if (bot.healSlot.healCooldown > 0) {
-                  bot.healSlot.healCooldown -= dt;
-                  isHealing = true;
-                } else if (bot.health < bot.maxHealth * 0.35) {
-                  if (bot.healSlot.medkitCount > 0) {
-                    bot.healSlot.medkitCount--;
-                    bot.healSlot.healCooldown = 2.0; // 2s pause
-                    bot.health = Math.min(bot.maxHealth, bot.health + 50);
-                    isHealing = true;
-                  } else if (bot.healSlot.shieldPotCount > 0) {
-                    bot.healSlot.shieldPotCount--;
-                    bot.healSlot.healCooldown = 2.0;
-                    bot.health = Math.min(bot.maxHealth, bot.health + 30);
-                    isHealing = true;
-                  }
-                }
-              }
-
-              bot.strafeTimer -= dt;
-              if (bot.strafeTimer <= 0) {
-                bot.strafeDir *= -1;
-                bot.strafeTimer = 1.2 + Math.random() * 1.4;
-              }
-              let moveX = -ndz * bot.strafeDir * 0.75;
-              let moveZ = ndx * bot.strafeDir * 0.75;
-
-              // Elite Squad Directives & Dynamic Behavior
-              if (bot.team === 'blue' && bot.isElite) {
-                const directive = squadDirectiveRef.current;
-                const distToPlayer = bot.pos.distanceTo(player.pos);
-                
-                // Tethering Logic
-                let tetherX = player.pos.x;
-                let tetherZ = player.pos.z;
-                
-                if (directive === 'follow_lead') {
-                  const pyaw = player.yaw;
-                  const slotOffsets = {
-                    2: { x: 3.2, z: 2.2 },   // Right flank
-                    3: { x: 0.0, z: -3.8 },  // Rear guard
-                    4: { x: -3.8, z: -2.0 }, // Left flank
-                    5: { x: -3.2, z: 2.2 }   // Front left
-                  };
-                  const off = slotOffsets[bot.eliteSlot || 2] || { x: 2, z: 2 };
-                  tetherX = player.pos.x + Math.sin(pyaw) * off.z + Math.cos(pyaw) * off.x;
-                  tetherZ = player.pos.z + Math.cos(pyaw) * off.z - Math.sin(pyaw) * off.x;
-                  
-                  const dToSlot = Math.hypot(tetherX - bot.pos.x, tetherZ - bot.pos.z);
-                  
-                  if (distToPlayer > 14) {
-                     // Hard Catch-up
-                     if (world.offshore) {
-                       const waypoint = world.getNavigationTarget?.(bot.pos, player.pos) ?? player.pos;
-                       const length = Math.hypot(waypoint.x - bot.pos.x, waypoint.z - bot.pos.z) || 1;
-                       moveX = (waypoint.x - bot.pos.x) / length * 2;
-                       moveZ = (waypoint.z - bot.pos.z) / length * 2;
-                     } else {
-                       bot.pos.x = tetherX;
-                       bot.pos.z = tetherZ;
-                     }
-                  } else if (distToPlayer > 7.5) {
-                     // Outer Sprint
-                     moveX = ((tetherX - bot.pos.x) / dToSlot) * 2.0;
-                     moveZ = ((tetherZ - bot.pos.z) / dToSlot) * 2.0;
-                  } else if (distToPlayer > 3) {
-                     // Inner Jog
-                     moveX = ((tetherX - bot.pos.x) / dToSlot) * 1.3;
-                     moveZ = ((tetherZ - bot.pos.z) / dToSlot) * 1.3;
-                  } else {
-                     // In formation
-                     if (dToSlot > 1.5) {
-                       moveX = (tetherX - bot.pos.x) * 0.8;
-                       moveZ = (tetherZ - bot.pos.z) * 0.8;
-                     }
-                  }
-                } else if (directive === 'hold_position') {
-                  moveX *= 0.1;
-                  moveZ *= 0.1; // Stay put
-                } else if (directive === 'push_objective') {
-                  // Push ahead of player (sector progression)
-                  tetherZ = world.offshore ? 0 : player.pos.z + 15;
-                  const dToSlot = Math.hypot(tetherX - bot.pos.x, tetherZ - bot.pos.z);
-                  if (dToSlot > 2) {
-                    moveX = ((tetherX - bot.pos.x) / dToSlot) * 1.5;
-                    moveZ = ((tetherZ - bot.pos.z) / dToSlot) * 1.5;
-                  }
-                }
-
-                // Elite Melee Combat Routine
-                if (bot.meleeCooldown > 0) {
-                  bot.meleeCooldown -= dt;
-                } else if (dist <= 2.4) {
-                  bot.meleeCooldown = 0.85;
-                  if (bot.armRPivot) bot.armRPivot.rotation.x = -1.9;
-                  if (targetObj && targetObj !== 'player' && targetObj.alive) {
-                    damageBot(targetObj, bot.meleeDmg, false, bot);
-                    flashHit(targetObj);
-                    AUDIO.bulletHit.play(0.85);
-                  }
-                }
-
-                // Elite Archetype Special Abilities
-                if (bot.eliteRole === 'support') {
-                  bot.fireTimer -= dt * 0.35;
-                } else if (bot.eliteRole === 'medic') {
-                  bot.regenAuraTimer = (bot.regenAuraTimer || 0) + dt;
-                  if (bot.regenAuraTimer >= 1.0) {
-                    bot.regenAuraTimer = 0;
-                    if (player.alive && distToPlayer < 7.0 && player.health < player.maxHealth) {
-                      player.health = Math.min(player.maxHealth, player.health + 8);
-                    }
-                    for (const ally of bots) {
-                      if (ally.alive && ally.team === 'blue' && ally !== bot && bot.pos.distanceTo(ally.pos) < 7.0) {
-                        ally.health = Math.min(ally.maxHealth, ally.health + 8);
-                      }
-                    }
-                  }
-                } else if (bot.eliteRole === 'recon') {
-                  bot.reconPingTimer = (bot.reconPingTimer || 0) + dt;
-                  if (bot.reconPingTimer >= 3.5) {
-                    bot.reconPingTimer = 0;
-                    const now = performance.now();
-                    for (const hostile of bots) {
-                      if (hostile.alive && (hostile.isZombie || hostile.team !== 'blue') && bot.pos.distanceTo(hostile.pos) <= 55) {
-                        radarPingsRef.current.push({
-                          x: hostile.pos.x,
-                          z: hostile.pos.z,
-                          timestamp: now,
-                          duration: 2.2,
-                          type: 'zombie'
-                        });
-                      }
-                    }
-                  }
-                } else if (bot.eliteRole === 'engineer') {
-                  if (bot.deployedCoverCooldown && bot.deployedCoverCooldown > 0) {
-                    bot.deployedCoverCooldown -= dt;
-                  } else if (dist <= 18) {
-                    bot.deployedCoverCooldown = 25.0;
-                    world.spawnDeployableCover(bot.pos, bot.facing);
-                    pushKillFeed('WRENCH-5: DEPLOYED FORTIFIED COVER!');
-                    AUDIO.sniperReload.play(0.65);
-                  }
-                }
-              }
-
-              // Non-sniper bot engagement range restricted to 45 units (90 for snipers)
-              const maxEngageRange = bot.weaponType === 'sniper' ? 90 : 45;
-              if (dist > maxEngageRange) {
-                // Out of range: sprint/advance forward into tactical engagement range
-                moveX = ndx * 1.2;
-                moveZ = ndz * 1.2;
-              } else {
-                if (dist > bot.preferredRange + 2) { moveX += ndx; moveZ += ndz; }
-                else if (dist < bot.preferredRange - 2) { moveX -= ndx; moveZ -= ndz; }
-              }
-
-              const vx = moveX * bot.speed * 0.65;
-              const vz = moveZ * bot.speed * 0.65;
-              bot.vel.x += (vx - bot.vel.x) * Math.min(1, dt * 6);
-              bot.vel.z += (vz - bot.vel.z) * Math.min(1, dt * 6);
-              world.moveEntityWithCollision(bot.pos, bot.vel, 0.38, bot.pos.y, bot.pos.y + 1.8, dt);
-              bot.pos.y = world.getHighestSurface(bot.pos.x, bot.pos.z, bot.pos.y);
-              bot.group.position.copy(bot.pos);
-              bot.group.rotation.y = Math.atan2(dx, dz);
-
-              if (dist <= maxEngageRange && !isHealing) {
-                bot.fireTimer -= dt;
-                if (bot.fireTimer <= 0) {
-                const origin = bot.pos.clone().add(new THREE.Vector3(0, 1.5, 0));
-                const tgtPos = targetPos || camera.position;
-                const dir = new THREE.Vector3().subVectors(tgtPos, origin).normalize();
-                const rc = new THREE.Raycaster(origin, dir, 0.1, 80);
-                const hits = rc.intersectObjects(world.hittableObjects, false);
-                let hasLoS = true;
-                if (hits.length > 0) {
-                  const wallDist = hits[0].distance;
-                  const tgtDist = origin.distanceTo(tgtPos);
-                  if (wallDist < tgtDist - 1.0) hasLoS = false;
-                }
-
-                if (hasLoS) {
-                  const bDist = bot.pos.distanceTo(camera.position);
-                  if (bDist <= 50) {
-                    radarPingsRef.current.push({
-                      x: bot.pos.x,
-                      z: bot.pos.z,
-                      timestamp: performance.now(),
-                      duration: 1.2,
-                      type: 'gunfire'
-                    });
-                  }
-
-                  bot.fireTimer = (
-                    bot.weaponType === 'smg' ? 0.35 :
-                    bot.weaponType === 'lmg' ? 0.55 :
-                    bot.weaponType === 'br' ? 0.8 :
-                    bot.weaponType === 'pistol' ? 0.7 :
-                    bot.weaponType === 'shotgun' ? 1.4 : 1.0
-                  ) * currentDifficulty.botFireRateMult;
-                  const launcher=bot.weaponType==='rocket'||bot.weaponType==='grenade_launcher';
-                  if(launcher){
-                    const fired=fireBotLauncher(scene,bot,tgtPos,currentDifficulty.botDamageMult);
-                    bot.fireTimer=(WEAPONS.find(w=>w.id===bot.weaponType)?.fireRate??1)*currentDifficulty.botFireRateMult;
-                    if(!fired)bot.fireTimer=.25;
-                  } else bot.weaponEffects?.trigger();
-                  bot.muzzleFlashT = 0.07;
-                  const shotVol = getSpatialVolume(camera.position, bot.pos);
-                  if (bot.weaponType === 'pistol') AUDIO.pistolShot.play(shotVol);
-                  else if (bot.weaponType === 'smg') AUDIO.smgFire.play(shotVol);
-                  else if (bot.weaponType === 'lmg') AUDIO.lmgFire.play(shotVol);
-                  else if (bot.weaponType === 'br') AUDIO.brBurst.play(shotVol);
-                  else if (bot.weaponType === 'ar') AUDIO.arSingle.play(shotVol);
-                  else if (bot.weaponType === 'shotgun') AUDIO.shotgunShot.play(shotVol);
-                  else if (bot.weaponType === 'sniper') AUDIO.sniperShot.play(shotVol);
-
-                  if (!launcher && Math.random() < currentDifficulty.botAccuracy) {
-                    let hitDmg = 12;
-                    if (bot.weaponType === 'pistol') hitDmg = 14;
-                    else if (bot.weaponType === 'smg') hitDmg = 10;
-                    else if (bot.weaponType === 'lmg') hitDmg = 16;
-                    else if (bot.weaponType === 'br') hitDmg = 18;
-                    else if (bot.weaponType === 'shotgun') hitDmg = 18;
-                    else if (bot.weaponType === 'sniper') hitDmg = 34;
-
-                    const distToTgt = targetPos ? bot.pos.distanceTo(targetPos) : 20;
-                    const falloff = getDamageRangeFalloff(bot.weaponType, distToTgt);
-                    hitDmg *= falloff;
-
-                    if (targetObj === 'player') applyDamageToPlayer(hitDmg * currentDifficulty.botDamageMult, false, false, bot);
-                    else if (targetObj && targetObj.alive) {
-                      damageBot(targetObj, hitDmg * currentDifficulty.botDamageMult, false, bot);
-                      flashHit(targetObj);
-                    }
-                  }
-                } else {
-                  // No LOS, try again shortly and keep moving
-                  bot.fireTimer = 0.25;
-                }
-              }
-            }
-          }
+          updateClassCombatBot(bot,dt,getCombatContext(),{accuracy:currentDifficulty.botAccuracy,damageMultiplier:currentDifficulty.botDamageMult,fireRateMultiplier:currentDifficulty.botFireRateMult});
 
           // Health bar in screen space
           const eyePos = bot.pos.clone().add(new THREE.Vector3(0, bot.zType === 'tank' ? 2.4 : 1.8, 0)).project(camera);
@@ -4102,13 +3712,8 @@ export default function App() {
           }
         }
 
-        const combatContext: CombatSystemsContext = {
-          scene,camera,world,bots,damageBot,pushKillFeed,
-          squadDirective:squadDirectiveRef.current,focusTargetId:focusTargetIDRef.current,
-          player:{pos:player.pos,yaw:player.yaw,pitch:player.pitch,health:player.health,maxHealth:player.maxHealth,alive:player.alive,team:player.team,
-            applyDamage:applyDamageToPlayer,heal:amount=>{player.health=Math.min(player.maxHealth,player.health+amount);}},
-          onExplosionHit:(target,amount)=>{if(target!== 'player'&&amount>0){showHitmarker(false);}}
-        };
+        const combatContext = getCombatContext();
+        updateTripods(dt,combatContext);
         updateProjectiles(dt,combatContext);
 
         // Zombie wave intermission
@@ -4270,14 +3875,14 @@ export default function App() {
           if (matchConfig.mode === 'extraction') {
             let blueAlive = 0;
             for (let i = 0; i < bots.length; i++) {
-              if (bots[i].alive && bots[i].team === 'blue') blueAlive++;
+              if ((bots[i].alive || bots[i].downed) && bots[i].team === 'blue') blueAlive++;
             }
             if (blueAlive < matchConfig.friendlyCount) makeBot('blue');
             // Hostile mutants are spawned exclusively by ExtractionGameLoop AI Director
           } else if (false) {
             let redAlive = 0;
             for (let i = 0; i < bots.length; i++) {
-              if (bots[i].alive && bots[i].team === 'red') redAlive++;
+              if ((bots[i].alive || bots[i].downed) && bots[i].team === 'red') redAlive++;
             }
             if (redAlive < matchConfig.enemyCount) makeBot('red');
           } else if (false) {
@@ -4772,8 +4377,10 @@ export default function App() {
         </div>
       </div>
 
+      {gameState === 'DEATH_SCREEN' && !endResult.victory && <PostDeathMenu title={endResult.title} subtitle={endResult.sub} kills={stats.kills} onPlayAgain={()=>restartHandlerRef.current?.()} onLobby={()=>lobbyHandlerRef.current?.()}/>}
+
       {/* Subterranean Extraction Dedicated Debrief / End Screen */}
-      {gameState === 'DEATH_SCREEN' && matchMode === 'extraction' && extractionState && (
+      {gameState === 'DEATH_SCREEN' && endResult.victory && matchMode === 'extraction' && extractionState && (
         <ExtractionEndScreen
           isVictory={endResult.victory}
           state={extractionState}
@@ -4787,7 +4394,7 @@ export default function App() {
       )}
 
       {/* Match Result Post-Scoreboard Matrix Screen with Interactive Faction Career Rewards Ledger */}
-      <div className={`overlay ${(gameState === 'DEATH_SCREEN' && matchMode !== 'extraction') ? '' : 'hidden'}`}>
+      <div className={`overlay ${(gameState === 'DEATH_SCREEN' && endResult.victory && matchMode !== 'extraction') ? '' : 'hidden'}`}>
         <div className="overlay-box panel" style={{ width: '560px', maxWidth: '95vw', maxHeight: '92vh', overflowY: 'auto' }}>
           <div className={`overlay-title text-center text-3xl font-bold tracking-wider ${endResult.victory ? 'text-[#57d1c9]' : 'text-[#e0473f]'}`}>
             {endResult.title}

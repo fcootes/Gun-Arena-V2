@@ -1,3 +1,6 @@
+import { WEAPONS } from './weapons';
+import { advanceWeaponReload, beginWeaponReload, interruptShellReload } from './weaponReload';
+import { traversalBlocked } from './tacticalNavigation';
 import * as THREE from 'three';
 import { WorldManager } from './world';
 import { buildTripodMachineGun, buildRegenFieldMesh, buildTelemetryMarker, disposeBotVisuals } from './botBuilder';
@@ -1381,7 +1384,7 @@ export function updateBioMutantAI(bot: Bot, dt: number, ctx: BioMutantAIContext)
   if (mType !== 'BANSHEE') {
     const floorY = ctx.world.getHighestSurface(bot.pos.x, bot.pos.z, bot.pos.y);
     bot.pos.y = floorY;
-    ctx.world.moveEntityWithCollision(bot.pos, bot.vel, colRadius, bot.pos.y, bot.pos.y + colHeight, dt);
+    ctx.world.moveEntityWithCollision(bot.pos, bot.vel, colRadius, bot.pos.y, bot.pos.y + colHeight, dt, bot.team);
     const postFloorY = ctx.world.getHighestSurface(bot.pos.x, bot.pos.z, bot.pos.y);
     bot.pos.y = postFloorY;
   } else {
@@ -1449,6 +1452,8 @@ export interface CombatSystemsContext {
   focusTargetId: number | null;
   radarPing?: (x: number, z: number, type: 'gunfire' | 'zombie') => void;
   /** Called whenever a splash/penetrator kill should pay out. */
+  needsAmmo?: () => boolean;
+  onBotShot?: (bot: Bot, weapon: WeaponDef) => void;
   onExplosionHit?: (target: Bot | 'player', damage: number) => void;
 }
 
@@ -1888,7 +1893,7 @@ export function updateTacticalCombatEngine(dt: number, ctx: CombatSystemsContext
     bot.vel.x += (vx - bot.vel.x) * Math.min(1, dt * 6);
     bot.vel.z += (vz - bot.vel.z) * Math.min(1, dt * 6);
 
-    ctx.world.moveEntityWithCollision(bot.pos, bot.vel, 0.38, bot.pos.y, bot.pos.y + 1.8, dt);
+    ctx.world.moveEntityWithCollision(bot.pos, bot.vel, 0.38, bot.pos.y, bot.pos.y + 1.8, dt, bot.team);
     bot.pos.y = ctx.world.getHighestSurface(bot.pos.x, bot.pos.z, bot.pos.y);
     bot.group.position.copy(bot.pos);
 
@@ -2393,7 +2398,7 @@ export function deployTripod(
     minZ: built.group.position.z - 0.6,
     maxZ: built.group.position.z + 0.6,
     active: true,
-    isTripod: true
+    isTripod: true, passThroughTeam: ctx.bots.find(b => b.id === builtByBotId)?.team ?? ctx.player.team
   };
   ctx.world.worldColliders.push(collider);
 
@@ -2556,7 +2561,7 @@ function fireTripodAtTarget(tripod: DeployedTripod, target: Bot | 'player', ctx:
   if (target === 'player') {
     if (ctx.player.alive) ctx.player.applyDamage(TRIPOD_DAMAGE * 0.55, false, false, null);
   } else {
-    ctx.damageBot(target, TRIPOD_DAMAGE, false, 'player');
+    ctx.damageBot(target, TRIPOD_DAMAGE, false, ctx.bots.find(b => b.id === tripod.builtByBotId) ?? 'turret');
   }
   if (ctx.radarPing) ctx.radarPing(tripod.pos.x, tripod.pos.z, 'gunfire');
 }
@@ -2629,6 +2634,15 @@ export function updateTripods(dt: number, ctx: CombatSystemsContext): void {
         gunner.vel.set(0, 0, 0);
       }
     } else {
+      const builder = ctx.bots.find(b => b.id === tripod.builtByBotId);
+      if (builder?.alive && (builder.classId ?? builder.eliteRole) === 'engineer') {
+        const threat = nearestHostileToBot(builder, ctx, TRIPOD_RANGE);
+        if (threat) {
+          const yaw = Math.atan2(threat.pos.x-tripod.pos.x,threat.pos.z-tripod.pos.z)-tripod.facing;
+          tripod.currentYaw = clampTraverse(tripod.currentYaw, yaw, TRIPOD_TRAVERSE_LIMIT);
+          if (Math.abs(tripod.currentYaw-yaw)<.12 && !tripod.overheated && tripod.fireCooldown<=0 && classLineOfSight({...builder,pos:tripod.pos},threat.pos,ctx)) fireTripodAtTarget(tripod,threat.target,ctx);
+        }
+      } else {
       // Unmanned: slow idle sweep so the deployable reads as active.
       tripod.currentYaw = Math.sin(tripod.lifetime * 0.5) * 0.35;
       tripod.currentPitch = 0;
@@ -2647,6 +2661,7 @@ export function updateTripods(dt: number, ctx: CombatSystemsContext): void {
       }
     }
 
+      }
     tripod.barrelPivot.rotation.y = tripod.currentYaw;
     tripod.barrelPivot.rotation.x = -tripod.currentPitch;
   }
@@ -2984,4 +2999,203 @@ export function clearCombatSystems(scene: THREE.Scene, world: WorldManager): voi
     scene.remove(ring.mesh);
   }
   activeDistortionRings.length = 0;
+}
+
+/* ------------------------ CLASS BEHAVIOR SELECTOR ------------------------ */
+export interface ClassAIState {
+  mode: 'formation' | 'push' | 'cover' | 'revive' | 'heal' | 'suppress' | 'overwatch' | 'defend';
+  thinkTimer: number;
+  pathTimer: number;
+  destination?: THREE.Vector3;
+  waypoint?: THREE.Vector3;
+  targetId?: number;
+  reviveProgress: number;
+  grenades: number;
+  grenadeCooldown: number;
+  supplies: number;
+  supplyCooldown: number;
+  healCooldown: number;
+  weaponState?: WeaponSlotState;
+}
+export function createClassAIState(): ClassAIState {
+  return { mode: 'formation', thinkTimer: 0, pathTimer: 0, reviveProgress: 0, grenades: 2, grenadeCooldown: 0, supplies: 2, supplyCooldown: 0, healCooldown: 0 };
+}
+
+export function reviveDownedBot(bot: Bot): boolean {
+  if (!bot.downed || bot.deathT <= 0) return false;
+  bot.downed = false; bot.alive = true; bot.health = bot.maxHealth * .5; bot.deathT = 0;
+  bot.revivesUsed = (bot.revivesUsed ?? 0) + 1; bot.downedAttacker = undefined;
+  bot.group.rotation.x = bot.group.rotation.z = 0; bot.group.visible = true;
+  bot.slideVel?.set(0, 0, 0); bot.vel.set(0, 0, 0); bot.fireTimer = 1;
+  return true;
+}
+
+const aiOrigin = new THREE.Vector3(), aiAim = new THREE.Vector3(), aiDirection = new THREE.Vector3();
+const aiRay = new THREE.Raycaster();
+function classLineOfSight(bot: Bot, point: THREE.Vector3, ctx: CombatSystemsContext): boolean {
+  aiOrigin.copy(bot.pos).y += 1.5; aiAim.copy(point).y += 1.1;
+  const distance = aiDirection.subVectors(aiAim, aiOrigin).length();
+  if (distance < .1) return true;
+  aiRay.set(aiOrigin, aiDirection.normalize()); aiRay.near = .1; aiRay.far = distance - .5;
+  return !aiRay.intersectObjects(ctx.world.hittableObjects, false).some(hit => {
+    const owner = hit.object.userData.ref as Bot | undefined;
+    return owner ? owner !== bot && owner.alive : true;
+  });
+}
+function coveredPosition(bot: Bot, anchor: THREE.Vector3, threat: THREE.Vector3 | undefined, ctx: CombatSystemsContext): THREE.Vector3 {
+  let best = anchor.clone(), score = Infinity;
+  for (const c of ctx.world.worldColliders) {
+    if (c.active === false || c.isDoor || c.isRamp || c.isStair || c.maxY - c.minY < .7 || c.maxY - c.minY > 5) continue;
+    const center = new THREE.Vector3((c.minX+c.maxX)/2, bot.pos.y, (c.minZ+c.maxZ)/2);
+    if (center.distanceTo(anchor) > 12) continue;
+    const away = center.clone().sub(threat ?? anchor).setY(0).normalize();
+    const p = center.addScaledVector(away, Math.max(c.maxX-c.minX, c.maxZ-c.minZ)/2 + .9);
+    p.y = ctx.world.getHighestSurface(p.x, p.z, bot.pos.y);
+    const cost = p.distanceTo(anchor) + p.distanceTo(bot.pos)*.15 + (threat && classLineOfSight({ ...bot, pos: p }, threat, ctx) ? 15 : 0);
+    if (cost < score) { best = p; score = cost; }
+  }
+  return best;
+}
+
+/** Priority order: rescue, heal, class duty, then formation. No teleporting catch-up. */
+export function updateClassCombatBot(bot: Bot, dt: number, ctx: CombatSystemsContext, tuning: { accuracy: number; damageMultiplier: number; fireRateMultiplier: number }): void {
+  if (!bot.alive || bot.isZombie || dt <= 0 || !Number.isFinite(dt) || bot.mountedTripodId) return;
+  const role = bot.classId ?? bot.eliteRole ?? 'assault';
+  const state = bot.classAI ??= createClassAIState();
+  const def = WEAPONS.find(w => w.id === bot.weaponType) ?? WEAPONS[0];
+  const ws = state.weaponState ??= { ammo: def.mag, reserve: def.reserve };
+  advanceWeaponReload(def, ws, dt);
+  state.thinkTimer -= dt; state.pathTimer -= dt; state.healCooldown -= dt; state.supplyCooldown -= dt; state.grenadeCooldown -= dt;
+  bot.suppression = Math.max(0, (bot.suppression ?? 0) - dt * .18);
+  const alliedPlayer = bot.team === ctx.player.team && ctx.player.alive;
+  const focus = alliedPlayer && ctx.focusTargetId !== null ? ctx.bots.find(b => b.id === ctx.focusTargetId && b.alive && b.team !== bot.team) : undefined;
+  const threat = focus ? { target: focus, pos: focus.pos } : nearestHostileToBot(bot, ctx, role === 'recon' ? 100 : 70);
+  const allies = ctx.bots.filter(b => b !== bot && b.team === bot.team && !b.isZombie);
+  const patient = role === 'medic' ? allies.filter(b => b.downed && b.deathT > 0).sort((a,b) => bot.pos.distanceToSquared(a.pos)-bot.pos.distanceToSquared(b.pos))[0] : undefined;
+  if (patient) {
+    if (state.targetId !== patient.id) state.reviveProgress = 0;
+    state.targetId = patient.id;
+    state.mode = 'revive'; state.destination = patient.pos.clone();
+    if (bot.pos.distanceTo(patient.pos) < 2 && classLineOfSight(bot, patient.pos, ctx)) {
+      state.reviveProgress += dt; bot.vel.multiplyScalar(Math.max(0, 1-dt*10));
+      if (state.reviveProgress >= 3 && reviveDownedBot(patient)) { state.reviveProgress = 0; ctx.pushKillFeed(`${bot.callsign ?? 'MEDIC'}: ALLY REVIVED`, true); }
+    } else state.reviveProgress = 0;
+  } else if (state.thinkTimer <= 0) {
+    state.thinkTimer = .4; state.reviveProgress = 0; state.targetId = undefined;
+    let anchor = alliedPlayer ? ctx.player.pos.clone().setY(bot.pos.y) : bot.pos.clone();
+    if (alliedPlayer) {
+      // Point leads; medics/recon form the rear; everyone has a stable lateral slot.
+      const lead = role === 'assault' ? -5 : role === 'medic' ? 4 : role === 'recon' ? 6 : 1;
+      const lateral = ((bot.eliteSlot ?? bot.id) % 2 ? -1 : 1) * 2.6;
+      anchor.x += Math.sin(ctx.player.yaw) * lead + Math.cos(ctx.player.yaw) * lateral;
+      anchor.z += Math.cos(ctx.player.yaw) * lead - Math.sin(ctx.player.yaw) * lateral;
+    }
+    if (ctx.squadDirective === 'hold_position' && alliedPlayer) anchor.copy(bot.anchoredPos ??= bot.pos.clone());
+    else bot.anchoredPos = null;
+    state.mode = 'formation'; state.destination = anchor;
+    if (role === 'medic') {
+      const hurt = allies.filter(b => b.alive && b.health < b.maxHealth*.8).sort((a,b) => a.health/a.maxHealth-b.health/b.maxHealth)[0];
+      const playerHurt = alliedPlayer && ctx.player.health < ctx.player.maxHealth*.8;
+      if (hurt || playerHurt) { state.mode = 'heal'; state.destination = coveredPosition(bot, hurt?.pos ?? ctx.player.pos, threat?.pos, ctx); }
+      else { state.mode = 'cover'; state.destination = coveredPosition(bot, anchor, threat?.pos, ctx); }
+    } else if (role === 'support') {
+      const guard = allies.filter(b => b.alive).sort((a,b) => Number(!!b.isVIP)-Number(!!a.isVIP) || (b.armor ?? 0)-(a.armor ?? 0))[0];
+      if (guard) state.destination = guard.pos.clone().add(new THREE.Vector3(2,0,1));
+      state.mode = 'suppress';
+    } else if (role === 'recon') {
+      state.mode = 'overwatch';
+      const points = ctx.world.navigationPoints ?? [anchor];
+      let bestScore = -Infinity;
+      for (const p of points) {
+        if (p.distanceTo(anchor) > 45 || (threat && p.distanceTo(threat.pos) < 15)) continue;
+        const baseScore = p.y*12 - p.distanceTo(anchor)*.2;
+        // Only raycast candidates that can improve the current sightline.
+        if (baseScore + 8 <= bestScore) continue;
+        const score = baseScore + (threat && classLineOfSight({...bot,pos:p},threat.pos,ctx) ? 8 : 0);
+        if (score > bestScore) { bestScore = score; state.destination = p.clone(); }
+      }
+    } else if (role === 'engineer') {
+      state.mode = 'defend';
+      const choke = Object.values(ctx.world.sectorCenters).sort((a,b) => a.distanceTo(anchor)-b.distanceTo(anchor))[0];
+      if (choke && choke.distanceTo(anchor) < 18) state.destination = coveredPosition(bot, choke, threat?.pos, ctx);
+    } else if (threat && (!alliedPlayer || ctx.squadDirective !== 'hold_position')) {
+      state.mode = 'push';
+      const dist = bot.pos.distanceTo(threat.pos), range = Math.min(12, bot.preferredRange);
+      state.destination = threat.pos.clone().addScaledVector(bot.pos.clone().sub(threat.pos).setY(0).normalize(), range);
+      if (dist < 5) state.destination = bot.pos.clone();
+    }
+    // Squad leash overrides offensive duty, but never interrupts a medic rescue.
+    if (alliedPlayer && bot.pos.distanceTo(ctx.player.pos) > 32) state.destination = anchor;
+  }
+  if (!patient && role === 'medic' && state.healCooldown <= 0) {
+    state.healCooldown = 1;
+    if (alliedPlayer && bot.pos.distanceTo(ctx.player.pos) <= 6) ctx.player.heal(8);
+    for (const ally of allies) if (ally.alive && bot.pos.distanceTo(ally.pos) <= 6) ally.health = Math.min(ally.maxHealth, ally.health + 8);
+    bot.health = Math.min(bot.maxHealth, bot.health + 4);
+  }
+  if (role === 'support' && state.supplies > 0 && state.supplyCooldown <= 0) {
+    const lowAmmo = (alliedPlayer && bot.pos.distanceTo(ctx.player.pos) < 8 && (ctx.needsAmmo?.() ?? false)) || allies.some(a => a.alive && bot.pos.distanceTo(a.pos) < 8 && (a.classAI?.weaponState?.reserve ?? 999) < 20);
+    if (lowAmmo) {
+      state.supplies--; state.supplyCooldown = 20;
+      const pack = ctx.world.createGroundPickup(bot.pos.x, bot.pos.z, bot.weaponTypeIndex, 45); pack.group.userData.ammoPack = true; pack.label='SUPPORT AMMO PACK';
+      for (const ally of allies) if (ally.alive && ally.classAI?.weaponState && bot.pos.distanceTo(ally.pos) < 8) ally.classAI.weaponState.reserve = Math.min(Math.max(180,ally.classAI.weaponState.reserve??0), (ally.classAI.weaponState.reserve ?? 0) + 30);
+      ctx.pushKillFeed(`${bot.callsign ?? 'SUPPORT'}: AMMO PACK DROPPED`, true);
+    }
+  }
+  if (role === 'engineer' && (bot.tripodBuildCooldown ?? 0) <= 0 && activeTripods.length < TRIPOD_MAX_ACTIVE) {
+    const axis = threat?.pos ?? ctx.world.getSpawnPoints('team')[0]?.position;
+    const yaw = axis ? Math.atan2(axis.x-bot.pos.x,axis.z-bot.pos.z) : bot.facing;
+    const emplacement = bot.pos.clone().add(new THREE.Vector3(Math.cos(yaw)*2,0,-Math.sin(yaw)*2));
+    if (!traversalBlocked(bot.pos, emplacement, ctx.world.worldColliders, bot.team)) {
+      deployTripod(ctx, emplacement, yaw, bot.id); bot.tripodBuildCooldown = 30;
+      ctx.world.spawnDeployableCover(bot.pos.clone().add(new THREE.Vector3(-Math.cos(yaw)*2,0,Math.sin(yaw)*2)), yaw, bot.team);
+    }
+  }
+  bot.tripodBuildCooldown = Math.max(0, (bot.tripodBuildCooldown ?? 0)-dt);
+  const target = state.destination ?? bot.pos;
+  if (state.pathTimer <= 0) { state.pathTimer = .35; state.waypoint = (ctx.world.getNavigationTarget?.(bot.pos, target, bot.team) ?? target).clone(); }
+  const waypoint = state.waypoint ?? target, dx = waypoint.x-bot.pos.x, dz = waypoint.z-bot.pos.z, d = Math.hypot(dx,dz);
+  const canMove = !(patient && bot.pos.distanceTo(patient.pos) < 2);
+  const speed = d > .65 && canMove ? bot.speed * (state.mode === 'push' || state.mode === 'revive' ? 1 : .7) : 0;
+  bot.vel.x = THREE.MathUtils.damp(bot.vel.x, dx/(d||1)*speed, 8, dt); bot.vel.z = THREE.MathUtils.damp(bot.vel.z,dz/(d||1)*speed,8,dt);
+  ctx.world.moveEntityWithCollision(bot.pos,bot.vel,.38,bot.pos.y,bot.pos.y+1.8,dt,bot.team);
+  bot.pos.y = ctx.world.getHighestSurface(bot.pos.x,bot.pos.z,bot.pos.y); bot.group.position.copy(bot.pos);
+  const face = threat?.pos ?? target; bot.facing = Math.atan2(face.x-bot.pos.x,face.z-bot.pos.z); bot.group.rotation.y = bot.facing;
+  bot.fireTimer -= dt;
+  if (patient || !threat || state.mode === 'heal' || bot.isVIP || !classLineOfSight(bot,threat.pos,ctx)) return;
+  const distance = bot.pos.distanceTo(threat.pos), range = role === 'recon' ? Math.min(100,def.range ?? 100) : Math.min(55,def.range ?? 55);
+  if (role === 'recon' && distance < 12) { state.destination = bot.pos.clone().addScaledVector(bot.pos.clone().sub(threat.pos).setY(0).normalize(), 8); return; }
+  if (distance > range) return;
+  if (distance < 2.4 && bot.meleeCooldown <= 0) {
+    bot.meleeCooldown = 1.2; bot.fireTimer = .5;
+    bot.armRPivot.rotation.x = -1.7;
+    if (threat.target === 'player') ctx.player.applyDamage(25*tuning.damageMultiplier,false,false,bot);
+    else ctx.damageBot(threat.target,25*tuning.damageMultiplier,false,bot);
+    return;
+  }
+  if (role === 'assault' && state.grenades > 0 && state.grenadeCooldown <= 0 && distance > 9 && distance < 25 && !allies.some(a => (a.alive||a.downed)&&a.pos.distanceTo(threat.pos)<7) && !(alliedPlayer && ctx.player.pos.distanceTo(threat.pos)<7)) {
+    aiOrigin.copy(bot.pos).y += 1.4; aiDirection.subVectors(threat.pos,aiOrigin).normalize(); aiDirection.y += .3;
+    const grenade = spawnProjectile(ctx.scene,'M32_GRENADE',aiOrigin,aiDirection.normalize(),bot.team,false,bot.id);
+    if (grenade) { grenade.ownerBotRef = bot; state.grenades--; state.grenadeCooldown = 15; }
+  }
+  if (bot.fireTimer > 0 || (ws.boltCycleT ?? 0) > 0) return;
+  if (def.arsenalId) {
+    const fired = fireBotLauncher(ctx.scene,bot,threat.pos.clone().add(new THREE.Vector3(0,1,0)),tuning.damageMultiplier);
+    bot.fireTimer = fired ? (def.fireRate ?? 1)*tuning.fireRateMultiplier : .25; return;
+  }
+  if (ws.reloading) { if (def.id !== 'shotgun' || !interruptShellReload(def,ws)) return; }
+  if ((ws.boltCycleT ?? 0) > 0) return;
+  ws.pendingReloadShot = false;
+  if ((ws.ammo ?? 0) <= 0) { beginWeaponReload(def,ws); return; }
+  ws.ammo = (ws.ammo ?? 0) - 1;
+  if(def.id==='laser'||def.id==='minigun'){ws.heat=Math.min(100,(ws.heat??0)+(def.id==='laser'?2:3));if(ws.heat>=100)beginWeaponReload(def,ws);}
+  if (def.id === 'sniper') ws.boltCycleT = .85;
+  bot.fireTimer = (def.id==='smg'?.35:def.id==='lmg'?.55:def.id==='pistol'?.7:def.id==='shotgun'?1.4:def.id==='sniper'?1.6:def.id==='br'?.8:def.id==='laser'?.3:def.id==='minigun'?.15:def.id==='railgun'?2:1)*tuning.fireRateMultiplier*(role==='support'?.65:1);
+  bot.weaponEffects?.trigger(); ctx.onBotShot?.(bot,def);
+  if (role === 'support' && threat.target !== 'player') threat.target.suppression = Math.min(1,(threat.target.suppression ?? 0)+.15);
+  if (Math.random() < tuning.accuracy*(1-(bot.suppression ?? 0)*.6)) {
+    const damage = (def.id==='sniper'?34:def.id==='shotgun'?18:def.id==='lmg'?16:def.id==='br'?18:def.id==='pistol'?14:def.id==='smg'?10:def.id==='railgun'?34:12) * tuning.damageMultiplier * (distance <= range*.6 ? 1 : .65);
+    if (threat.target === 'player') ctx.player.applyDamage(damage,false,false,bot);
+    else ctx.damageBot(threat.target,damage,false,bot);
+  }
 }

@@ -55,6 +55,10 @@ export interface WeaponSlotState {
   reloadT?: number;
   totalReloadT?: number;
   isTacticalReload?: boolean;
+  reloadSequence?: import('./weaponReload').ReloadSequence;
+  boltCycleT?: number;
+  needsChamber?: boolean;
+  pendingReloadShot?: boolean;
   lastFired?: number;
   count?: number;
   using?: boolean;
@@ -81,6 +85,7 @@ export interface ToxicPuddle {
 }
 
 export interface WorldCollider {
+  passThroughTeam?: string;
   minX: number;
   maxX: number;
   minY: number;
@@ -1400,6 +1405,10 @@ export interface Bot {
   regenAuraTimer?: number;
   reconPingTimer?: number;
   classId?: ClassId;
+  classAI?: import('./gameLoop').ClassAIState;
+  downed?: boolean;
+  revivesUsed?: number;
+  downedAttacker?: Bot | 'player';
 
   /* --- Advanced tactical AI --- */
   tactical?: TacticalAIState;

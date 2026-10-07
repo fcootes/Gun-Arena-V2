@@ -149,6 +149,7 @@ export interface BotVisualBuildResult {
   healthMultiplier: number;
   armorMultiplier: number;
   tactical: TacticalAIState;
+  classId: import('./types').ClassId;
 }
 
 export interface BotBuildOptions {
@@ -1734,6 +1735,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     speedMultiplier,
     healthMultiplier,
     armorMultiplier,
+    classId: eliteRole ?? (/medic|corpsman/.test(subClass) ? 'medic' : /engineer/.test(subClass) ? 'engineer' : /heavy|juggernaut/.test(subClass) ? 'support' : /recon|sniper|scout/.test(subClass) || weaponType === 'sniper' ? 'recon' : 'assault'),
     tactical: createTacticalState(-1)
   };
 }

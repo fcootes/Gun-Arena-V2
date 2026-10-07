@@ -1,3 +1,4 @@
+import { createTacticalNavigation } from './tacticalNavigation';
 import * as THREE from 'three';
 import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
 import type { WorldCollider, Door, GroundPickup, GameMode, WorldMapId, Bot } from './types';
@@ -71,7 +72,8 @@ export interface WorldManager {
   getSpawnPoints: (mode: GameMode) => SpawnPoint[];
   getExtractionZones: () => ExtractionZones | null;
   removeGroundPickup: (item: GroundPickup) => void;
-  getNavigationTarget?: (from: THREE.Vector3, target: THREE.Vector3) => THREE.Vector3;
+  getNavigationTarget?: (from: THREE.Vector3, target: THREE.Vector3, team?: string) => THREE.Vector3;
+  navigationPoints?: readonly THREE.Vector3[];
   offshore?: OffshoreState;
   lobbyGroup?: THREE.Group;
   terrainMesh: THREE.Mesh;
@@ -100,10 +102,11 @@ export interface WorldManager {
   createGroundPickup: (x: number, z: number, weaponTypeIndex: number, ammoAmount: number) => GroundPickup;
   collectPickup: (item: GroundPickup, onAcquire: (msg: string) => void, weaponStates: { count?: number; reserve?: number }[]) => void;
   updateDoors: (dt: number) => void;
-  moveEntityWithCollision: (pos: THREE.Vector3, vel: THREE.Vector3, radius: number, footY: number, headY: number, dt: number) => void;
+  moveEntityWithCollision: (pos: THREE.Vector3, vel: THREE.Vector3, radius: number, footY: number, headY: number, dt: number, team?: string) => void;
   getHighestSurface: (x: number, z: number, footY: number) => number;
   spawnObjectiveProp: (faction: 'usmc' | 'apex', customPos?: THREE.Vector3) => ObjectivePropInstance;
-  spawnDeployableCover: (pos: THREE.Vector3, rotY: number) => THREE.Group;
+  clearDeployableCover?: () => void;
+  spawnDeployableCover: (pos: THREE.Vector3, rotY: number, team?: string) => THREE.Group;
   hangarCorridorNodes: { mainframe: THREE.Vector3; cryo: THREE.Vector3; evac: THREE.Vector3; center: THREE.Vector3 };
   dispose: () => void;
 }
@@ -1441,7 +1444,8 @@ function createLegacyWorld(scene: THREE.Scene, mapId: 'training' | 'hangar'): Wo
     radius: number,
     footY: number,
     headY: number,
-    dt: number
+    dt: number,
+    team?: string
   ): void {
     const desiredDx = vel.x * dt;
     const desiredDz = vel.z * dt;
@@ -1459,7 +1463,7 @@ function createLegacyWorld(scene: THREE.Scene, mapId: 'training' | 'hangar'): Wo
       let blocked = false;
       for (let j = 0; j < worldColliders.length; j++) {
         const c = worldColliders[j];
-        if (c.active === false) continue;
+        if (c.active === false || (team && c.passThroughTeam === team)) continue;
         // Low-slope stair and ramp traversal: bypass horizontal collision block if stepping onto stair/ramp or low step
         if (c.isStair || c.isRamp || c.maxY <= footY + 0.45) continue;
         if (headY <= c.minY || footY >= c.maxY - 0.1) continue;
@@ -1562,7 +1566,20 @@ function createLegacyWorld(scene: THREE.Scene, mapId: 'training' | 'hangar'): Wo
     }
   }
 
-  function spawnDeployableCover(pos: THREE.Vector3, rotY: number): THREE.Group {
+  const deployedCovers: {group:THREE.Group;collider:WorldCollider}[] = [];
+  function removeDeployableCover({ group, collider }: { group: THREE.Group; collider: WorldCollider }) {
+    group.traverse(node => { if (node instanceof THREE.Mesh) unregisterHittable(node); });
+    const index = worldColliders.indexOf(collider);
+    if (index >= 0) worldColliders.splice(index, 1);
+    group.removeFromParent();
+    resources.release(group);
+  }
+  function clearDeployableCover() {
+    deployedCovers.forEach(removeDeployableCover);
+    deployedCovers.length = 0;
+  }
+  function spawnDeployableCover(pos: THREE.Vector3, rotY: number, team = 'blue'): THREE.Group {
+    if (deployedCovers.length >= 12) removeDeployableCover(deployedCovers.shift()!);
     const coverGroup = new THREE.Group();
     coverGroup.position.copy(pos);
     coverGroup.rotation.y = rotY;
@@ -1593,8 +1610,9 @@ function createLegacyWorld(scene: THREE.Scene, mapId: 'training' | 'hangar'): Wo
       maxY: pos.y + 1.25,
       minZ: pos.z - effD / 2,
       maxZ: pos.z + effD / 2,
-      active: true
+      active: true, passThroughTeam: team
     });
+    deployedCovers.push({group:coverGroup,collider:worldColliders[worldColliders.length-1]});
     return coverGroup;
   }
 
@@ -1614,6 +1632,7 @@ function createLegacyWorld(scene: THREE.Scene, mapId: 'training' | 'hangar'): Wo
   }
   resources.track(worldGroup);
 
+  const navigation = createTacticalNavigation(mapId, worldColliders, getHighestSurface);
   return {
     mapId,
     updateWorld: (delta) => { if (!disposed) { updateDoors(delta); updateDebris(delta); } },
@@ -1649,8 +1668,9 @@ function createLegacyWorld(scene: THREE.Scene, mapId: 'training' | 'hangar'): Wo
     moveEntityWithCollision,
     getHighestSurface,
     spawnObjectiveProp,
-    spawnDeployableCover,
+    spawnDeployableCover, clearDeployableCover,
     hangarCorridorNodes,
+    getNavigationTarget: navigation.target, navigationPoints: navigation.points,
     dispose
   };
 }
@@ -2353,13 +2373,13 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
     }
     return height;
   }
-  function moveEntityWithCollision(pos: THREE.Vector3, velocity: THREE.Vector3, radius: number, footY: number, headY: number, delta: number): void {
+  function moveEntityWithCollision(pos: THREE.Vector3, velocity: THREE.Vector3, radius: number, footY: number, headY: number, delta: number, team?: string): void {
     const dt = Math.max(0, Math.min(delta, 0.1)); const subdivisions = Math.max(1, Math.ceil(Math.hypot(velocity.x, velocity.z) * dt / Math.max(0.1, radius * 0.5)));
     for (let step = 0; step < subdivisions; step++) for (const axis of ['x', 'z'] as const) {
       const x = pos.x + (axis === 'x' ? velocity.x * dt / subdivisions : 0); const z = pos.z + (axis === 'z' ? velocity.z * dt / subdivisions : 0);
       let blocked = false;
       for (const collider of worldColliders) {
-        if (!collider.active || collider.isRamp || collider.isStair || collider.maxY <= footY + 0.45 || headY <= collider.minY || footY >= collider.maxY - 0.04) continue;
+        if (!collider.active || (team && collider.passThroughTeam === team) || collider.isRamp || collider.isStair || collider.maxY <= footY + 0.45 || headY <= collider.minY || footY >= collider.maxY - 0.04) continue;
         if (x + radius > collider.minX && x - radius < collider.maxX && z + radius > collider.minZ && z - radius < collider.maxZ) { blocked = true; break; }
       }
       if (blocked) velocity[axis] = 0; else pos[axis] = axis === 'x' ? x : z;
@@ -2410,10 +2430,23 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
     const mesh = box(0.5, 0.8, 0.5, 0, 0.4, 0, new THREE.MeshStandardMaterial({ color: 0x37baa7, emissive: 0x134b43 }), false, group); root.add(group); resources.track(group); registerHittable(mesh);
     return { group, interactNode: group.position.clone(), type: faction === 'usmc' ? 'bio_cylinder' : 'mainframe', boundingMesh: mesh, dispose() { unregisterHittable(mesh); group.removeFromParent(); resources.release(group); } };
   }
-  function spawnDeployableCover(position: THREE.Vector3, yaw: number): THREE.Group {
+  const deployedCovers: {group:THREE.Group;collider:WorldCollider}[] = [];
+  function removeDeployableCover({ group, collider }: { group: THREE.Group; collider: WorldCollider }) {
+    group.traverse(node => { if (node instanceof THREE.Mesh) unregisterHittable(node); });
+    const index = worldColliders.indexOf(collider);
+    if (index >= 0) worldColliders.splice(index, 1);
+    group.removeFromParent();
+    resources.release(group);
+  }
+  function clearDeployableCover() {
+    deployedCovers.forEach(removeDeployableCover);
+    deployedCovers.length = 0;
+  }
+  function spawnDeployableCover(position: THREE.Vector3, yaw: number, team = 'blue'): THREE.Group {
+    if (deployedCovers.length >= 12) removeDeployableCover(deployedCovers.shift()!);
     const group = new THREE.Group(); group.position.copy(position); group.rotation.y = yaw;
     box(2.8, 1.25, 0.35, 0, 0.625, 0, new THREE.MeshStandardMaterial({ color: 0x38454a, metalness: 0.7, roughness: 0.6 }), false, group); root.add(group); group.updateWorldMatrix(true, true); group.traverse((node) => { if (node instanceof THREE.Mesh) registerHittable(node); });
-    addCollider(new THREE.Box3().setFromObject(group)); resources.track(group); return group;
+    const collider = addCollider(new THREE.Box3().setFromObject(group)); collider.passThroughTeam = team; resources.track(group); deployedCovers.push({group,collider}); return group;
   }
   const navigationScratch = new THREE.Vector3();
   const navigationNodes = [
@@ -2590,7 +2623,7 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
     hangarCorridorNodes: { mainframe: new THREE.Vector3(8, 8, 34), cryo: new THREE.Vector3(34, 11, 16), evac: new THREE.Vector3(0, 14, 0), center: new THREE.Vector3(0, 14, 0) },
     getSpawnPoints: (mode) => SHATTERED_WALL_SPAWNS[mode].map(({ position, rotation }) => ({ position: position.clone(), rotation: rotation.clone() })),
     getExtractionZones: () => zones, updateWorld, updateDoors, registerHittable, unregisterHittable, removeGroundPickup, createGroundPickup, collectPickup,
-    getHighestSurface, moveEntityWithCollision, damageEnvironmentalBlock, updateDebris, spawnObjectiveProp, spawnDeployableCover, getNavigationTarget, dispose,
+    getHighestSurface, moveEntityWithCollision, damageEnvironmentalBlock, updateDebris, spawnObjectiveProp, spawnDeployableCover, clearDeployableCover, getNavigationTarget, navigationPoints: navigationNodes, dispose,
   };
 }
 

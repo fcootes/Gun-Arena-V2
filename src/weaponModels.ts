@@ -655,6 +655,10 @@ export function createWeaponAssembly(id: string): WeaponAssembly {
       id === 'br' ? 0.045 : 0.038,
     );
     stock(id === 'br', long);
+    if (id === 'ar') {
+      optic();
+      body.userData.arOptic = 'ACOG';
+    }
     if (long) {
       optic(true);
       for (let i = 0; i < 8; i++) {
@@ -1170,6 +1174,21 @@ export function createWeaponAssembly(id: string): WeaponAssembly {
     backblast.position.set(0, -0.005, 0.18);
   }
 
+  if (id === 'railgun') {
+    const cell = group('magazine', 0, -.055, .14);
+    box('Removable capacitor bank', .07, .055, .11, 0, 0, 0, dark, cell);
+    box('Capacitor charge contacts', .075, .01, .07, 0, .028, 0, glow, cell);
+  }
+  if (id === 'laser' || id === 'railgun' || id === 'minigun') {
+    const vent = group('vent', .052, .03, .02);
+    box('Articulated coolant vent', .009, .037, .095, 0, 0, 0, steel, vent);
+  }
+  if (id === 'shotgun' || id === 'rocket') {
+    const round = group('reloadRound', 0, -.07, id === 'rocket' ? -.55 : .04);
+    const shell = tube(id === 'rocket' ? 'Tube-loaded rocket' : 'Inserted shotgun shell', id === 'rocket' ? .036 : .012, id === 'rocket' ? .25 : .05, 0, 0, 0, id === 'rocket' ? dark : purple, round);
+    shell.rotation.x = id === 'shotgun' ? Math.PI / 2 : 0;
+    round.visible = false;
+  }
   // Bake static components by material within each moving assembly. Rails/fasteners
   // become a handful of draw calls, while magazine/slide/pump/rotor remain independent.
   function bake(parent: THREE.Object3D) {
