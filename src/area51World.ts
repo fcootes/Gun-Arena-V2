@@ -86,6 +86,19 @@ export const AREA51_SPAWNS: readonly SpawnPoint[] = [
   spawn(12, 15, -176),
   spawn(0, 15, -192),
 ];
+export function getArea51SpawnPoints(mode: GameMode): SpawnPoint[] {
+      const points =
+        mode === "extraction"
+          ? AREA51_SPAWNS.slice(0, 4)
+          : mode === "team"
+            ? [...AREA51_SPAWNS.slice(0, 4), ...AREA51_SPAWNS.slice(11, 15)]
+            : AREA51_SPAWNS;
+      return points.map((p) => ({
+        position: p.position.clone(),
+        rotation: p.rotation.clone(),
+      }));
+}
+
 export function area51TerrainHeight(_x: number, z: number): number {
   return z <= -140 ? 15 : 0;
 }
@@ -1331,7 +1344,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     if (scene.background === background) scene.background = previousBackground;
   }
   return {
-    mapId: "hangar",
+    mapId: "area51",
     facility,
     terrainMesh,
     worldColliders,
@@ -1345,7 +1358,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
       3: new THREE.Vector3(15, 0, -115),
       4: new THREE.Vector3(0, 15, -170),
     },
-    hangarCorridorNodes: {
+    facilityCorridorNodes: {
       center: new THREE.Vector3(0, 0, -20),
       mainframe: facility.objectivePosition,
       cryo: new THREE.Vector3(27.5, 0, -68),
@@ -1354,18 +1367,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     bioCylinderGroup: vialGroup,
     mainframeConsoleGroup: serverGroup,
     getExtractionZones: () => zones,
-    getSpawnPoints: (mode) => {
-      const points =
-        mode === "extraction"
-          ? AREA51_SPAWNS.slice(0, 4)
-          : mode === "team"
-            ? [...AREA51_SPAWNS.slice(0, 4), ...AREA51_SPAWNS.slice(11, 15)]
-            : AREA51_SPAWNS;
-      return points.map((p) => ({
-        position: p.position.clone(),
-        rotation: p.rotation.clone(),
-      }));
-    },
+    getSpawnPoints: getArea51SpawnPoints,
     updateWorld,
     updateDoors: () => {},
     moveEntityWithCollision,

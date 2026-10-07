@@ -1,5 +1,6 @@
+import { resolveMapId } from './mapRegistry';
 import { WorldResources } from './worldResources';
-import { createArea51World, area51TerrainHeight, AREA51_SPAWNS } from './area51World';
+import { createArea51World, area51TerrainHeight, AREA51_SPAWNS, getArea51SpawnPoints } from './area51World';
 import { createTacticalNavigation } from './tacticalNavigation';
 import * as THREE from 'three';
 import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
@@ -8,11 +9,11 @@ export type { WorldMapId } from './types';
 import { WEAPONS } from './weapons';
 
 export const MAP_HALF = 100;
-export let currentWorldMapId: WorldMapId = 'training';
+export let currentWorldMapId: WorldMapId = 'area51';
 
 export function terrainHeight(x: number, z: number): number {
   if (currentWorldMapId === 'shattered_wall') return offshoreTerrainHeight(x, z);
-  if (currentWorldMapId === 'hangar') return area51TerrainHeight(x, z);
+  if (currentWorldMapId === 'area51') return area51TerrainHeight(x, z);
   return (
     Math.sin(x * 0.024) * 3.8 +
     Math.cos(z * 0.026) * 3.4 +
@@ -27,7 +28,7 @@ export function randomMapPoint(minDistFromCenter = 0): { x: number; z: number } 
     const point = nodes[Math.floor(Math.random() * nodes.length)].position;
     return { x: point.x, z: point.z };
   }
-  if (currentWorldMapId === 'hangar') {
+  if (currentWorldMapId === 'area51') {
     const p = AREA51_SPAWNS[Math.floor(Math.random() * AREA51_SPAWNS.length)].position;
     return { x: p.x, z: p.z };
   }
@@ -96,11 +97,11 @@ export interface WorldManager {
   spawnObjectiveProp: (faction: 'usmc' | 'apex', customPos?: THREE.Vector3) => ObjectivePropInstance;
   clearDeployableCover?: () => void;
   spawnDeployableCover: (pos: THREE.Vector3, rotY: number, team?: string) => THREE.Group;
-  hangarCorridorNodes: { mainframe: THREE.Vector3; cryo: THREE.Vector3; evac: THREE.Vector3; center: THREE.Vector3 };
+  facilityCorridorNodes: { mainframe: THREE.Vector3; cryo: THREE.Vector3; evac: THREE.Vector3; center: THREE.Vector3 };
   dispose: () => void;
 }
 
-function createLegacyWorld(scene: THREE.Scene, mapId: 'training'): WorldManager {
+function createTrainingWorld(scene: THREE.Scene, mapId: 'training'): WorldManager {
   currentWorldMapId = mapId;
   const worldGroup = new THREE.Group();
   scene.add(worldGroup);
@@ -819,7 +820,7 @@ function createLegacyWorld(scene: THREE.Scene, mapId: 'training'): WorldManager 
     return topY;
   }
 
-  const hangarCorridorNodes = {
+  const facilityCorridorNodes = {
     mainframe: new THREE.Vector3(0, 0, -120),
     cryo: new THREE.Vector3(0, 0, -80),
     evac: new THREE.Vector3(0, 0, -170),
@@ -827,7 +828,7 @@ function createLegacyWorld(scene: THREE.Scene, mapId: 'training'): WorldManager 
   };
 
   function spawnObjectiveProp(faction: 'usmc' | 'apex', customPos?: THREE.Vector3): ObjectivePropInstance {
-    const defaultPos = faction === 'apex' ? hangarCorridorNodes.mainframe : hangarCorridorNodes.cryo;
+    const defaultPos = faction === 'apex' ? facilityCorridorNodes.mainframe : facilityCorridorNodes.cryo;
     const spawnPos = customPos ? customPos.clone() : defaultPos.clone();
     const propGroup = new THREE.Group();
     propGroup.position.copy(spawnPos);
@@ -985,7 +986,7 @@ function createLegacyWorld(scene: THREE.Scene, mapId: 'training'): WorldManager 
     getHighestSurface,
     spawnObjectiveProp,
     spawnDeployableCover, clearDeployableCover,
-    hangarCorridorNodes,
+    facilityCorridorNodes,
     getNavigationTarget: navigation.target, navigationPoints: navigation.points,
     dispose
   };
@@ -1860,25 +1861,25 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
   return {
     mapId: 'shattered_wall', updateHeliDefenses, terrainMesh, worldColliders, doors, hittableObjects, groundPickups, structures, offshore, lobbyGroup,
     sectorCenters: { 1: new THREE.Vector3(8, 8, 34), 2: new THREE.Vector3(0, 14, 0), 3: new THREE.Vector3(34, 11, 16), 4: new THREE.Vector3(0, 14, 0), 5: new THREE.Vector3(0, 14.5, 0) },
-    hangarCorridorNodes: { mainframe: new THREE.Vector3(8, 8, 34), cryo: new THREE.Vector3(34, 11, 16), evac: new THREE.Vector3(0, 14, 0), center: new THREE.Vector3(0, 14, 0) },
+    facilityCorridorNodes: { mainframe: new THREE.Vector3(8, 8, 34), cryo: new THREE.Vector3(34, 11, 16), evac: new THREE.Vector3(0, 14, 0), center: new THREE.Vector3(0, 14, 0) },
     getSpawnPoints: (mode) => SHATTERED_WALL_SPAWNS[mode].map(({ position, rotation }) => ({ position: position.clone(), rotation: rotation.clone() })),
     getExtractionZones: () => zones, updateWorld, updateDoors, registerHittable, unregisterHittable, removeGroundPickup, createGroundPickup, collectPickup,
     getHighestSurface, moveEntityWithCollision, damageEnvironmentalBlock, updateDebris, spawnObjectiveProp, spawnDeployableCover, clearDeployableCover, getNavigationTarget, navigationPoints: navigationNodes, dispose,
   };
 }
 
-export function tuneLegacyAtmosphere(scene: THREE.Scene, manager: WorldManager): void {
+export function tuneTrainingAtmosphere(scene: THREE.Scene, manager: WorldManager): void {
   const previousFog = scene.fog;
-  const fog = new THREE.FogExp2(manager.mapId === 'hangar' ? 0x141c22 : 0x9eb8bd, manager.mapId === 'hangar' ? .014 : .0038);
+  const fog = new THREE.FogExp2(0x9eb8bd, .0038);
   const floor = manager.terrainMesh.material;
-  if (floor instanceof THREE.MeshStandardMaterial) { floor.roughness = manager.mapId === 'hangar' ? .28 : .68; floor.metalness = manager.mapId === 'hangar' ? .72 : .16; }
-  const geometry = new THREE.PlaneGeometry(manager.mapId === 'hangar' ? 58 : 5, manager.mapId === 'hangar' ? 208 : 5);
-  const reflection = new Reflector(geometry, { textureWidth: 512, textureHeight: 512, clipBias: .003, color: manager.mapId === 'hangar' ? 0x697c87 : 0x869ba1, multisample: 0 });
-  reflection.name = 'Legacy_WetFloorReflection';
+  if (floor instanceof THREE.MeshStandardMaterial) { floor.roughness = .68; floor.metalness = .16; }
+  const geometry = new THREE.PlaneGeometry(5, 5);
+  const reflection = new Reflector(geometry, { textureWidth: 512, textureHeight: 512, clipBias: .003, color: 0x869ba1, multisample: 0 });
+  reflection.name = 'Training_WetFloorReflection';
   reflection.rotation.x = -Math.PI / 2;
-  reflection.position.set(0, manager.mapId === 'hangar' ? .012 : terrainHeight(0, 0) + .015, manager.mapId === 'hangar' ? -85 : 0);
+  reflection.position.set(0, terrainHeight(0, 0) + .015, 0);
   const material = reflection.material as THREE.ShaderMaterial;
-  material.uniforms.reflectionOpacity = { value: manager.mapId === 'hangar' ? .23 : .12 };
+  material.uniforms.reflectionOpacity = { value: .12 };
   material.fragmentShader = material.fragmentShader.replace('uniform vec3 color;', 'uniform vec3 color;\nuniform float reflectionOpacity;').replace('vec4( blendOverlay( base.rgb, color ), 1.0 )', 'vec4( blendOverlay( base.rgb, color ), reflectionOpacity )');
   material.transparent = true; material.depthWrite = false;
   reflection.renderOrder = 1; reflection.visible = false; scene.add(reflection);
@@ -1892,10 +1893,11 @@ let activeWorld: WorldManager | null = null;
 let activeScene: THREE.Scene | null = null;
 
 /** Compatibility factory used by the existing App.tsx engine. */
-export function createWorld(scene: THREE.Scene, mapId: WorldMapId = 'training'): WorldManager {
+export function createWorld(scene: THREE.Scene, mapId: WorldMapId = 'area51'): WorldManager {
+  mapId = resolveMapId(mapId);
   currentWorldMapId = mapId;
-  const manager = mapId === 'shattered_wall' ? createOffshoreWorld(scene) : mapId === 'hangar' ? createArea51World(scene) : createLegacyWorld(scene, mapId);
-  if (mapId === 'training') tuneLegacyAtmosphere(scene, manager);
+  const manager = mapId === 'shattered_wall' ? createOffshoreWorld(scene) : mapId === 'area51' ? createArea51World(scene) : createTrainingWorld(scene, mapId);
+  if (mapId === 'training') tuneTrainingAtmosphere(scene, manager);
   activeWorld = manager; activeScene = scene;
   const disposeManager = manager.dispose;
   manager.dispose = () => { disposeManager(); if (activeWorld === manager) { activeWorld = null; activeScene = null; } };
@@ -1917,7 +1919,7 @@ export function updateWorld(delta: number, time: number, currentMode: GameMode):
 }
 
 export function getSpawnPoints(mode: GameMode): SpawnPoint[] {
-  return activeWorld ? activeWorld.getSpawnPoints(mode) : SHATTERED_WALL_SPAWNS[mode].map(({ position, rotation }) => ({ position: position.clone(), rotation: rotation.clone() }));
+  return activeWorld ? activeWorld.getSpawnPoints(mode) : getArea51SpawnPoints(mode);
 }
 
 export function getExtractionZones(): ExtractionZones | null {

@@ -41,9 +41,9 @@ export function modeSceneDescription(
   const apex = faction === "apex",
     storm = map === "shattered_wall";
   if (mode === "team")
-    return `${apex ? "APEX spearhead" : "USMC fireteam"}: desert-camo marines clash with red-and-grey mercenaries across ${storm ? "a storm-lashed offshore deck" : map === "hangar" ? "the Area 51 staging bay" : "an urban training arena"}.`;
+    return `${apex ? "APEX spearhead" : "USMC fireteam"}: desert-camo marines clash with red-and-grey mercenaries across ${storm ? "a storm-lashed offshore deck" : map === "area51" ? "the Area 51 staging bay" : "an urban training arena"}.`;
   if (mode === "ffa")
-    return `${apex ? "APEX" : "USMC"} solo operatives caught in a 360-degree urban crossfire. ${storm ? "Rain sweeps the coastal industrial blocks." : map === "hangar" ? "Alarm lights wash the underground combat district." : "Dust and ricochets fill the streets."}`;
+    return `${apex ? "APEX" : "USMC"} solo operatives caught in a 360-degree urban crossfire. ${storm ? "Rain sweeps the coastal industrial blocks." : map === "area51" ? "Alarm lights wash the underground combat district." : "Dust and ricochets fill the streets."}`;
   if (mode === "zombie")
     return apex
       ? `APEX energy gunners and plasma shields hold back the infected ${storm ? "on a rain-soaked helipad" : "inside the containment facility"}.`
@@ -371,7 +371,7 @@ function Theater({
             opacity=".5"
           />
         </>
-      ) : map === "hangar" ? (
+      ) : map === "area51" ? (
         <>
           <path
             d="M0 60 95 151h210l95-91v369H0Z"
@@ -449,7 +449,7 @@ function Theater({
                 <path
                   key={row}
                   d={`M${b.x + 12} ${370 - b.h + row * 28}h12m8 0h12`}
-                  stroke={map === "hangar" ? "#e88a73" : "#99afb0"}
+                  stroke={map === "area51" ? "#e88a73" : "#99afb0"}
                   strokeWidth="8"
                   opacity=".4"
                 />
@@ -523,7 +523,7 @@ const SceneArtwork = memo(function SceneArtwork({
         <linearGradient id={`${id}-sky`} x2="0" y2="1">
           <stop
             stopColor={
-              storm ? "#12273e" : map === "hangar" ? "#321f2d" : "#4d5042"
+              storm ? "#12273e" : map === "area51" ? "#321f2d" : "#4d5042"
             }
           />
           <stop offset=".55" stopColor="#1b303d" />
@@ -884,7 +884,7 @@ export function ModePosters({
   const theater =
     map === "shattered_wall"
       ? "SHATTERED WALL"
-      : map === "hangar"
+      : map === "area51"
         ? "AREA 51 FACILITY"
         : "TRAINING FIELD";
   return (

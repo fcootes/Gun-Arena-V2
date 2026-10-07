@@ -1,6 +1,7 @@
 import { ModePosters } from './ModePosters';
 import { ClassIcon, TacticalSquad } from './TacticalSquad';
 import React, { useState, useEffect, useRef } from 'react';
+import { OPERATIONAL_MAPS, mapForMode } from './mapRegistry';
 import { WorldMapId, GameMode, ClassId, DeploymentProtocol, EliteCompanionConfig, DEFAULT_ELITE_SQUAD } from './types';
 import { CLASSES } from './classes';
 import { VisorType, FactionType } from './lobbyAvatar';
@@ -63,6 +64,8 @@ export interface LobbyTerminalProps {
   setDifficultyKey: (d: string) => void;
   selectedMapState: WorldMapId;
   setSelectedMapState: (m: WorldMapId) => void;
+  inspectorMode: boolean;
+  setInspectorMode: (enabled: boolean) => void;
   isDevMode: boolean;
   setIsDevMode: (b: boolean) => void;
   deploymentProtocol?: DeploymentProtocol;
@@ -363,6 +366,8 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
   setDifficultyKey,
   selectedMapState,
   setSelectedMapState,
+  inspectorMode,
+  setInspectorMode,
   isDevMode,
   setIsDevMode,
   deploymentProtocol = 'elite' as DeploymentProtocol,
@@ -449,11 +454,10 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
     });
   }, [activeTab]);
 
-  // Strict Map Rules State Guardrail: Horde Mode strictly enforces Subterranean Hangar map
+  // Strict Map Rules State Guardrail: Horde Mode strictly enforces Area 51 facility
   useEffect(() => {
-    if ((matchMode === 'zombie' || matchMode === 'extraction') && selectedMapState === 'training') {
-      setSelectedMapState('hangar');
-    }
+    const allowed = mapForMode(selectedMapState, matchMode);
+    if (selectedMapState !== allowed) setSelectedMapState(allowed);
   }, [matchMode, selectedMapState, setSelectedMapState]);
 
   const handleUnlockAndEquip = (
@@ -768,8 +772,8 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
               </button>
             </div>
 
-<TacticalSquad squad={eliteSquad} setSquad={setEliteSquad} leader={selectedClassId} protocol={deploymentProtocol} setProtocol={setDeploymentProtocol} preset={deploymentPreset} setPreset={setDeploymentPreset} friendlyCount={friendlyCount} setFriendlyCount={setFriendlyCount} compact />
-<div className="grid grid-cols-3 gap-1 text-[9px]">{(['shattered_wall', 'hangar', 'training'] as WorldMapId[]).map(map => <button type="button" key={map} aria-pressed={selectedMapState === map} onClick={() => setSelectedMapState(map)} className={`border p-2 ${selectedMapState === map ? 'border-cyan-300 text-cyan-200' : 'border-white/20 text-slate-400'}`}>{map === 'shattered_wall' ? 'SHATTERED WALL' : map === 'hangar' ? 'AREA 51 FACILITY' : 'TRAINING FIELD'}</button>)}</div>
+<TacticalSquad squad={eliteSquad} setSquad={setEliteSquad} leader={selectedClassId} protocol={deploymentProtocol} setProtocol={setDeploymentProtocol} preset={deploymentPreset} setPreset={setDeploymentPreset} friendlyCount={inspectorMode ? 0 : friendlyCount} setFriendlyCount={setFriendlyCount} compact />
+<div className="grid grid-cols-3 gap-1 text-[9px]">{OPERATIONAL_MAPS.map(({ id: map, label }) => <button type="button" key={map} aria-pressed={selectedMapState === map} onClick={() => setSelectedMapState(map)} className={`border p-2 ${selectedMapState === map ? 'border-cyan-300 text-cyan-200' : 'border-white/20 text-slate-400'}`}>{label}</button>)}</div>
             {/* Top Split Section: Left Stacked Telemetry Labels + Right Micro-Grid Canvas */}
             <div className="flex items-start justify-between gap-2">
               {/* Left Column: Telemetry category tags */}
@@ -972,7 +976,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
               </div>
             </div>
 
-<TacticalSquad squad={eliteSquad} setSquad={setEliteSquad} leader={selectedClassId} protocol={deploymentProtocol} setProtocol={setDeploymentProtocol} preset={deploymentPreset} setPreset={setDeploymentPreset} friendlyCount={friendlyCount} setFriendlyCount={setFriendlyCount} />
+<TacticalSquad squad={eliteSquad} setSquad={setEliteSquad} leader={selectedClassId} protocol={deploymentProtocol} setProtocol={setDeploymentProtocol} preset={deploymentPreset} setPreset={setDeploymentPreset} friendlyCount={inspectorMode ? 0 : friendlyCount} setFriendlyCount={setFriendlyCount} />
             {/* Faction Allegiance Selection Matrix */}
             <div className="flex flex-col gap-3 mt-2">
               <div className="flex items-center justify-between text-xs font-bold text-[#8b98a1] tracking-widest px-1">
@@ -1253,7 +1257,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
             </div>
           </div>
 
-          {/* CENTER GAP IS OPEN FOR 3D AVATAR ROTATION IN AREA 51 FACILITY */}
+          {/* CENTER GAP IS OPEN FOR 3D AVATAR ROTATION IN AREA 51 SUBTERRANEAN FACILITY */}
 
           {/* RIGHT PANEL: EQUIPPED GEAR TELEMETRY & CONFIRM */}
           <div className="w-80 max-w-[38vw] bg-[#0c1015]/90 border border-white/15 backdrop-blur-md p-4 rounded-sm shadow-2xl flex flex-col gap-3 pointer-events-auto max-h-[calc(100vh-6.5rem)] overflow-y-auto custom-scroll pb-2">
@@ -1358,7 +1362,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
                 {(['usmc', 'apex'] as const).map(faction => <button key={faction} type="button" aria-pressed={factionAlignment === faction} onClick={() => setFactionAlignment(faction)} className={`px-3 py-2 border text-[10px] font-bold tracking-wider focus-visible:outline focus-visible:outline-white ${factionAlignment === faction ? faction === 'apex' ? 'border-[#ee6e7a] bg-[#ee6e7a]/15 text-[#ff969e]' : 'border-[#a6cab7] bg-[#a6cab7]/15 text-[#c1e4d0]' : 'border-white/15 bg-black/30 text-slate-400 hover:text-white'}`}>{faction === 'apex' ? 'APEX MERCENARIES' : 'USMC'}</button>)}
               </div>
             </div>
-            <ModePosters mode={matchMode} map={selectedMapState} faction={factionAlignment} onSelect={mode => { setMatchMode(mode); if ((mode === 'zombie' || mode === 'extraction') && selectedMapState === 'training') setSelectedMapState('hangar'); }} />
+            <ModePosters mode={matchMode} map={selectedMapState} faction={factionAlignment} onSelect={mode => { setMatchMode(mode); if ((mode === 'zombie' || mode === 'extraction') && selectedMapState === 'training') setSelectedMapState('area51'); }} />
             {/* Scenario Configuration: Map & Rules */}
             <div className="flex flex-col md:flex-row gap-3">
               {/* Map Selection Toggle Grid */}
@@ -1401,16 +1405,16 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSelectedMapState('hangar')}
+                    onClick={() => setSelectedMapState('area51')}
                     className={`h-20 flex flex-col justify-end p-2 border cursor-pointer transition-all rounded-xs relative overflow-hidden text-left ${
-                      selectedMapState === 'hangar'
+                      selectedMapState === 'area51'
                         ? 'border-[#ff4444] shadow-[0_0_12px_rgba(255,68,68,0.3)] bg-gradient-to-t from-[#ff4444]/20 to-transparent'
                         : 'border-white/10 opacity-70 hover:opacity-100 bg-black/60'
                     }`}
                   >
                     <div className="absolute top-2 right-2 text-xs opacity-50">🏢</div>
                     <div className="text-[9px] font-bold text-[#8b98a1]">SUBTERRANEAN</div>
-                    <div className="text-xs font-black text-white">AREA 51 FACILITY</div>
+                    <div className="text-xs font-black text-white">AREA 51 SUBTERRANEAN FACILITY</div>
                     {(matchMode === 'zombie' || matchMode === 'extraction') && (
                       <div className="absolute top-2 left-2 text-[8px] font-black text-[#ff4444] bg-[#ff4444]/25 px-1.5 py-0.5 rounded-xs border border-[#ff4444]/40">
                         FACILITY THEATER
@@ -1653,6 +1657,10 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
       {/* BOTTOM FOOTER BAR */}
       <div className="w-full bg-[#0b0e12]/90 border-t border-white/10 px-6 py-2 flex items-center justify-between pointer-events-auto text-[9px] text-[#8b98a1]">
         <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 cursor-pointer hover:text-white" title="Solo god mode: 99,999 HP and hit damage; normal faction enemies and objectives remain active.">
+            <input type="checkbox" checked={inspectorMode} onChange={event => setInspectorMode(event.target.checked)} className="w-3 h-3 accent-cyan-300" />
+            <b className={inspectorMode ? 'text-cyan-200' : ''}>[ DEV / INSPECTOR MODE ]</b>
+          </label>
           <label className="flex items-center gap-2 cursor-pointer hover:text-white transition-colors">
             <input
               type="checkbox"

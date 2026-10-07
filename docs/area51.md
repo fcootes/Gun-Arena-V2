@@ -1,6 +1,6 @@
 # Area 51 Facility
 
-The saved map key remains `hangar`. Its previous five-sector geometry is removed; the map selector now displays **AREA 51 FACILITY**. Training Field and Shattered Wall retain their own world implementations.
+The facility now uses the explicit `area51` map key and is the default operational map. The retired bunker key is no longer registered. Its previous five-sector geometry is removed; the map selector now displays **AREA 51 FACILITY**. Training Field and Shattered Wall retain their own world implementations.
 
 | Zone | Layout | Gameplay |
 | --- | --- | --- |
@@ -25,4 +25,10 @@ Walk into the open helicopter cabin after the doors finish sliding. All living s
 
 ## Validation
 
-Run `npm run lint`, `npm run build`, and each `test:*` script in `package.json`. `test:area51` verifies finite vehicle transforms, all-mode spawn clearance, the actual collision/navigation route, floor transitions, darkness and alarms, one-time disposal, entity identities, MP texture teardown, both faction objectives, the all-boss gate, squad boarding and one-time helicopter victory. The earlier batch-2 reflection test now applies to Training Field; Area 51 has its own scene lifecycle tests.
+Run `npm run test:runtime` for map registration, actual damage/transition handlers and transient resource teardown. Run `npm run lint`, `npm run build`, and each `test:*` script in `package.json`. `test:area51` verifies finite vehicle transforms, all-mode spawn clearance, the actual collision/navigation route, floor transitions, darkness and alarms, one-time disposal, entity identities, MP texture teardown, both faction objectives, the all-boss gate, squad boarding and one-time helicopter victory. The earlier batch-2 reflection test now applies to Training Field; Area 51 has its own scene lifecycle tests.
+
+## Inspector and match lifecycle
+
+Enable **[ DEV / INSPECTOR MODE ]** in the terminal before deploying. This setting is independent of asset unlocks. It gives 99,999 HP, ignores incoming damage, spawns zero allies under either deployment doctrine and applies 99,999 damage through the central player-hit dispatcher (including body shots, melee and projectiles). Normal enemies, faction objectives, lift gates and boss introductions remain active. Turning it off and redeploying restores normal class stats and squad settings. A fall outside Area 51 returns the inspector to Zone 1.
+
+**Play Again** clears input, combat entities/effects, all match counters and the old world, then creates a fresh mission at the authored spawn. **Return to Lobby** unmounts the engine effect: it cancels RAF, removes event listeners and health overlays, disposes world/actor/particle resources and postprocessing targets, destroys the WebGL context and removes its canvas. The new lobby-only engine allocates no operational map until deployment. Shattered Wall/Pacific Rim and Training Grounds remain available.

@@ -169,7 +169,7 @@ export interface ArmoryOption {
   slotNum: string;
 }
 
-export type WorldMapId = 'training' | 'hangar' | 'shattered_wall';
+export type WorldMapId = 'training' | 'area51' | 'shattered_wall';
 
 export type GameMode = 'ffa' | 'team' | 'zombie' | 'extraction';
 
@@ -180,6 +180,7 @@ export interface MatchConfig {
   enemyCount: number;
   targetScore: number;
   startingWave: number;
+  inspectorMode?: boolean;
   deploymentProtocol?: DeploymentProtocol;
   eliteSquad?: EliteCompanionConfig[];
 }

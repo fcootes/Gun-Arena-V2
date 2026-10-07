@@ -285,10 +285,10 @@ export class Area51ExtractionGameLoop extends ExtractionGameLoop {
     if (this.bosses.length && this.bosses.every((b) => !b.alive))
       this.unlockEvac();
   }
-  recordMutantKill() {
+  recordMutantKill(_bot?: Bot) {
     this.state.mutantsKilled++;
   }
-  canOpenDoor() {
+  canOpenDoor(_position?: THREE.Vector3): { allowed: boolean; reason?: string } {
     return { allowed: this.state.bossDefeated };
   }
 }

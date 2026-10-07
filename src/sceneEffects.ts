@@ -14,7 +14,7 @@ export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.S
   let disposed = false;
   return {
     resize(width: number, height: number) { if (!disposed) { composer.setPixelRatio(Math.min(renderer.getPixelRatio(), 1.5)); composer.setSize(width, height); } },
-    render(delta: number, map: WorldMapId) { if (!disposed) { bloom.strength = map === 'hangar' ? 0.35 : map === 'shattered_wall' ? 0.4 : 0.22; composer.render(delta); } },
+    render(delta: number, map: WorldMapId) { if (!disposed) { bloom.strength = map === 'area51' ? 0.35 : map === 'shattered_wall' ? 0.4 : 0.22; composer.render(delta); } },
     dispose() { if (disposed) return; disposed = true; bloom.dispose(); output.dispose(); renderPass.dispose(); composer.dispose(); }
   };
 }
