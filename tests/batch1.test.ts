@@ -121,7 +121,7 @@ console.log('PASS: keyboard slots 1–4, wheel wrap in both directions and pause
 const kitPlayer = { health: 100, maxHealth: 100, shield: 100, maxShield: 100, isDrinking: false, drinkTimer: 0 };
 const kitState = { count: 0 };
 const useKit = vm.runInNewContext(ts.transpile(`(${handlers.get('fireWeapon')})`), {
- player: kitPlayer, currentSlot: () => loadout[3], currentSlotState: () => kitState,
+ world: {}, player: kitPlayer, currentSlot: () => loadout[3], currentSlotState: () => kitState,
  AUDIO: { miniDrink: { play() {} } }, pushKillFeed() {}
 });
 useKit(); assert.equal(kitPlayer.isDrinking, false, 'Empty kit cannot be used');

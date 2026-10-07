@@ -651,7 +651,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-[#cbd5e1] tracking-wide">GAME MODE</span>
                     <span className="text-[9px] text-[#8b98a1]">
-                      {matchMode === 'zombie' ? 'ZOMBIE WAVE SURVIVAL' : 'TACTICAL DEATHMATCH'}
+                      {matchMode === 'zombie' ? 'HORDE SURVIVAL' : matchMode === 'extraction' ? 'EXTRACTION CAMPAIGN' : matchMode === 'ffa' ? 'FREE FOR ALL' : 'TACTICAL DEATHMATCH'}
                     </span>
                   </div>
                   <ToggleSwitch
@@ -769,7 +769,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
             </div>
 
 <TacticalSquad squad={eliteSquad} setSquad={setEliteSquad} leader={selectedClassId} protocol={deploymentProtocol} setProtocol={setDeploymentProtocol} preset={deploymentPreset} setPreset={setDeploymentPreset} friendlyCount={friendlyCount} setFriendlyCount={setFriendlyCount} compact />
-<div className="grid grid-cols-3 gap-1 text-[9px]">{(['shattered_wall', 'hangar', 'training'] as WorldMapId[]).map(map => <button type="button" key={map} aria-pressed={selectedMapState === map} onClick={() => setSelectedMapState(map)} className={`border p-2 ${selectedMapState === map ? 'border-cyan-300 text-cyan-200' : 'border-white/20 text-slate-400'}`}>{map === 'shattered_wall' ? 'SHATTERED WALL' : map === 'hangar' ? 'BUNKER HANGAR' : 'TRAINING FIELD'}</button>)}</div>
+<div className="grid grid-cols-3 gap-1 text-[9px]">{(['shattered_wall', 'hangar', 'training'] as WorldMapId[]).map(map => <button type="button" key={map} aria-pressed={selectedMapState === map} onClick={() => setSelectedMapState(map)} className={`border p-2 ${selectedMapState === map ? 'border-cyan-300 text-cyan-200' : 'border-white/20 text-slate-400'}`}>{map === 'shattered_wall' ? 'SHATTERED WALL' : map === 'hangar' ? 'AREA 51 FACILITY' : 'TRAINING FIELD'}</button>)}</div>
             {/* Top Split Section: Left Stacked Telemetry Labels + Right Micro-Grid Canvas */}
             <div className="flex items-start justify-between gap-2">
               {/* Left Column: Telemetry category tags */}
@@ -1253,7 +1253,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
             </div>
           </div>
 
-          {/* CENTER GAP IS OPEN FOR 3D AVATAR ROTATION IN BUNKER HANGAR */}
+          {/* CENTER GAP IS OPEN FOR 3D AVATAR ROTATION IN AREA 51 FACILITY */}
 
           {/* RIGHT PANEL: EQUIPPED GEAR TELEMETRY & CONFIRM */}
           <div className="w-80 max-w-[38vw] bg-[#0c1015]/90 border border-white/15 backdrop-blur-md p-4 rounded-sm shadow-2xl flex flex-col gap-3 pointer-events-auto max-h-[calc(100vh-6.5rem)] overflow-y-auto custom-scroll pb-2">
@@ -1410,7 +1410,7 @@ export const LobbyTerminal: React.FC<LobbyTerminalProps> = ({
                   >
                     <div className="absolute top-2 right-2 text-xs opacity-50">🏢</div>
                     <div className="text-[9px] font-bold text-[#8b98a1]">SUBTERRANEAN</div>
-                    <div className="text-xs font-black text-white">BUNKER HANGAR</div>
+                    <div className="text-xs font-black text-white">AREA 51 FACILITY</div>
                     {(matchMode === 'zombie' || matchMode === 'extraction') && (
                       <div className="absolute top-2 left-2 text-[8px] font-black text-[#ff4444] bg-[#ff4444]/25 px-1.5 py-0.5 rounded-xs border border-[#ff4444]/40">
                         FACILITY THEATER

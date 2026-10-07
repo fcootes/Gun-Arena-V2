@@ -1,3 +1,5 @@
+import { WorldResources } from './worldResources';
+import { createArea51World, area51TerrainHeight, AREA51_SPAWNS } from './area51World';
 import { createTacticalNavigation } from './tacticalNavigation';
 import * as THREE from 'three';
 import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
@@ -10,7 +12,7 @@ export let currentWorldMapId: WorldMapId = 'training';
 
 export function terrainHeight(x: number, z: number): number {
   if (currentWorldMapId === 'shattered_wall') return offshoreTerrainHeight(x, z);
-  if (currentWorldMapId === 'hangar') return 0;
+  if (currentWorldMapId === 'hangar') return area51TerrainHeight(x, z);
   return (
     Math.sin(x * 0.024) * 3.8 +
     Math.cos(z * 0.026) * 3.4 +
@@ -26,22 +28,8 @@ export function randomMapPoint(minDistFromCenter = 0): { x: number; z: number } 
     return { x: point.x, z: point.z };
   }
   if (currentWorldMapId === 'hangar') {
-    // 5 Sequential Linear Sectors along -Z
-    const sectors = [
-      { minX: -5, maxX: 5, minZ: -8, maxZ: 8 },         // Sector 1: Ingress (Z ~ 0)
-      { minX: -8, maxX: 8, minZ: -48, maxZ: -32 },     // Sector 2: Virology (Z ~ -40)
-      { minX: -10, maxX: 10, minZ: -88, maxZ: -72 },   // Sector 3: Reactor & Armory (Z ~ -80)
-      { minX: -10, maxX: 10, minZ: -128, maxZ: -112 }, // Sector 4: Mainframe (Z ~ -120)
-      { minX: -12, maxX: 12, minZ: -168, maxZ: -152 }, // Sector 5: Evac Vault (Z ~ -160)
-      { minX: -1.2, maxX: 1.2, minZ: -28, maxZ: -12 }, // Corridor 1-2
-      { minX: -1.2, maxX: 1.2, minZ: -68, maxZ: -52 }, // Corridor 2-3
-      { minX: -1.2, maxX: 1.2, minZ: -108, maxZ: -92 }, // Corridor 3-4
-      { minX: -1.2, maxX: 1.2, minZ: -148, maxZ: -132 }, // Corridor 4-5
-    ];
-    const s = sectors[Math.floor(Math.random() * sectors.length)];
-    const x = s.minX + Math.random() * (s.maxX - s.minX);
-    const z = s.minZ + Math.random() * (s.maxZ - s.minZ);
-    return { x, z };
+    const p = AREA51_SPAWNS[Math.floor(Math.random() * AREA51_SPAWNS.length)].position;
+    return { x: p.x, z: p.z };
   }
 
   let x: number, z: number, d: number;
@@ -75,6 +63,7 @@ export interface WorldManager {
   getNavigationTarget?: (from: THREE.Vector3, target: THREE.Vector3, team?: string) => THREE.Vector3;
   navigationPoints?: readonly THREE.Vector3[];
   offshore?: OffshoreState;
+  facility?: import('./area51World').Area51Facility;
   lobbyGroup?: THREE.Group;
   terrainMesh: THREE.Mesh;
   worldColliders: WorldCollider[];
@@ -111,7 +100,7 @@ export interface WorldManager {
   dispose: () => void;
 }
 
-function createLegacyWorld(scene: THREE.Scene, mapId: 'training' | 'hangar'): WorldManager {
+function createLegacyWorld(scene: THREE.Scene, mapId: 'training'): WorldManager {
   currentWorldMapId = mapId;
   const worldGroup = new THREE.Group();
   scene.add(worldGroup);
@@ -622,666 +611,6 @@ function createLegacyWorld(scene: THREE.Scene, mapId: 'training' | 'hangar'): Wo
     ];
     obstacleSpawns.forEach(o => addTacticalObstacleCluster(o.x, o.z));
 
-  } else {
-    // =========================================================================
-    // SUBTERRANEAN EXTRACTION: 5-SECTOR LINEAR GAUNTLET
-    // Sector 1: Ingress Airlock (Z = 0)
-    // Sector 2: Virology Labs (Z = -40)
-    // Sector 3: Bio-Reactor Core, Bio-Cylinder & Security Armory (Z = -80)
-    // Sector 4: Cryo Mainframe Terminal & Dual Circuit Breakers (Z = -120)
-    // Sector 5: Evac Vault, Volatile Receptacle, Boss Arena & Evac Pad (Z = -160)
-    // =========================================================================
-
-    const defaultCeilH = 2.8;
-
-    // Continuous Subterranean Floor with Wet Specular Sheen (Z = +15 down to -185)
-    const floorGeo = new THREE.PlaneGeometry(60, 210, 1, 1);
-    floorGeo.rotateX(-Math.PI / 2);
-    const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x15181e,
-      roughness: 0.18,
-      metalness: 0.82
-    });
-    terrainMesh = new THREE.Mesh(floorGeo, floorMat);
-    terrainMesh.position.set(0, 0, -85);
-    terrainMesh.receiveShadow = true;
-    terrainMesh.userData = { type: 'terrain' };
-    worldGroup.add(terrainMesh);
-    registerHittable(terrainMesh);
-
-    // Floor Runway Safety Decal Lane
-    const gridMat = new THREE.MeshBasicMaterial({ color: 0x242e38, transparent: true, opacity: 0.35 });
-    const gridMesh = new THREE.Mesh(new THREE.PlaneGeometry(4, 200), gridMat);
-    gridMesh.rotation.x = -Math.PI / 2;
-    gridMesh.position.set(0, 0.02, -85);
-    worldGroup.add(gridMesh);
-
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x222730, roughness: 0.85, metalness: 0.25 });
-    const capMat = new THREE.MeshStandardMaterial({ color: 0x11151b, roughness: 0.4, metalness: 0.8 });
-    const ceilingMat = new THREE.MeshStandardMaterial({ color: 0x14181f, roughness: 0.95 });
-    const hazardMat = new THREE.MeshStandardMaterial({ color: 0xf5a623, emissive: 0x3d2000, roughness: 0.5 });
-    const barrelYellowMat = new THREE.MeshStandardMaterial({ color: 0xdfa012, roughness: 0.6, metalness: 0.4 });
-    const barrelGreenMat = new THREE.MeshStandardMaterial({ color: 0x31462a, roughness: 0.7, metalness: 0.3 });
-    const bioPuddleMat = new THREE.MeshStandardMaterial({
-      color: 0x11ff44,
-      emissive: 0x00cc33,
-      emissiveIntensity: 1.4,
-      roughness: 0.2,
-      metalness: 0.1
-    });
-
-    const addWall = (x: number, z: number, w: number, d: number, h: number = defaultCeilH, stripe = false) => {
-      const g = new THREE.Group();
-      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
-      m.position.y = h / 2;
-      m.receiveShadow = true;
-      m.castShadow = true;
-      g.add(m);
-
-      const cap = new THREE.Mesh(new THREE.BoxGeometry(w + 0.05, 0.15, d + 0.05), capMat);
-      cap.position.y = h + 0.075;
-      g.add(cap);
-
-      if (stripe) {
-        const sw = w >= d ? Math.min(w * 0.8, 6.0) : 0.4;
-        const sd = w >= d ? 0.4 : Math.min(d * 0.8, 6.0);
-        const sm = new THREE.Mesh(new THREE.BoxGeometry(sw, 0.3, sd), hazardMat);
-        sm.position.y = 1.1;
-        g.add(sm);
-      }
-
-      g.position.set(x, 0, z);
-      worldGroup.add(g);
-      registerHittable(m);
-
-      worldColliders.push({
-        minX: x - w / 2,
-        maxX: x + w / 2,
-        minY: 0,
-        maxY: h,
-        minZ: z - d / 2,
-        maxZ: z + d / 2,
-        active: true
-      });
-    };
-
-    const addCeiling = (x: number, z: number, w: number, d: number, h: number = defaultCeilH) => {
-      const cMesh = new THREE.Mesh(new THREE.PlaneGeometry(w, d), ceilingMat);
-      cMesh.rotation.x = Math.PI / 2;
-      cMesh.position.set(x, h, z);
-      worldGroup.add(cMesh);
-    };
-
-    const addLight = (x: number, y: number, z: number, color: number, intensity: number, distance: number) => {
-      const pl = new THREE.PointLight(color, intensity, distance, 1.4);
-      pl.position.set(x, y, z);
-      worldGroup.add(pl);
-
-      const fixture = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.3, 0.4, 0.15, 8),
-        new THREE.MeshStandardMaterial({ color: 0x11151b, emissive: color, emissiveIntensity: 0.6 })
-      );
-      fixture.position.set(x, y + 0.05, z);
-      worldGroup.add(fixture);
-    };
-
-    // =========================================================================
-    // PROCEDURAL ENVIRONMENTAL DRESSING BUILDERS
-    // =========================================================================
-    const addGurney = (gx: number, gz: number, rotY: number, isOverturned: boolean) => {
-      const gGroup = new THREE.Group();
-      const frameMat = new THREE.MeshStandardMaterial({ color: 0x8892a0, metalness: 0.8, roughness: 0.3 });
-      const padMat = new THREE.MeshStandardMaterial({ color: 0x2b3846, roughness: 0.9 });
-
-      const pad = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.15, 0.8), padMat);
-      pad.position.y = 0.85;
-      gGroup.add(pad);
-
-      for (const lx of [-0.85, 0.85]) {
-        for (const lz of [-0.32, 0.32]) {
-          const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.8, 8), frameMat);
-          leg.position.set(lx, 0.4, lz);
-          gGroup.add(leg);
-
-          const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.04, 8), frameMat);
-          wheel.rotation.z = Math.PI / 2;
-          wheel.position.set(lx, 0.08, lz);
-          gGroup.add(wheel);
-        }
-      }
-
-      const ivPole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.4, 8), frameMat);
-      ivPole.position.set(-0.95, 1.4, 0.35);
-      gGroup.add(ivPole);
-
-      if (isOverturned) {
-        gGroup.rotation.z = Math.PI / 3.2;
-        gGroup.position.set(gx, -0.15, gz);
-      } else {
-        gGroup.position.set(gx, 0, gz);
-      }
-      gGroup.rotation.y = rotY;
-
-      worldGroup.add(gGroup);
-      registerHittable(pad);
-      worldColliders.push({
-        minX: gx - 0.9,
-        maxX: gx + 0.9,
-        minY: 0,
-        maxY: 1.1,
-        minZ: gz - 0.6,
-        maxZ: gz + 0.6,
-        active: true
-      });
-    };
-
-    const addBioSpecimenTank = (tx: number, tz: number) => {
-      const tankGroup = new THREE.Group();
-      const rimMat = new THREE.MeshStandardMaterial({ color: 0x161a22, metalness: 0.85, roughness: 0.25 });
-
-      const baseCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.78, 0.45, 16), rimMat);
-      baseCollar.position.y = 0.225;
-      tankGroup.add(baseCollar);
-
-      const fluidMat = new THREE.MeshStandardMaterial({
-        color: 0x00ff77,
-        emissive: 0x00e666,
-        emissiveIntensity: 1.7,
-        transparent: true,
-        opacity: 0.85,
-        roughness: 0.1
-      });
-      const fluid = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 2.1, 16), fluidMat);
-      fluid.position.y = 1.45;
-      tankGroup.add(fluid);
-
-      const specMat = new THREE.MeshBasicMaterial({ color: 0x0a1a0f });
-      const specMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 1.4, 8), specMat);
-      specMesh.position.y = 1.4;
-      tankGroup.add(specMesh);
-
-      const glassMat = new THREE.MeshStandardMaterial({
-        color: 0x44ffaa,
-        transparent: true,
-        opacity: 0.35,
-        metalness: 0.9,
-        roughness: 0.05,
-        depthWrite: false
-      });
-      const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.64, 0.64, 2.2, 16), glassMat);
-      glass.position.y = 1.45;
-      tankGroup.add(glass);
-
-      const topCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.72, 0.68, 0.4, 16), rimMat);
-      topCollar.position.y = 2.65;
-      tankGroup.add(topCollar);
-
-      tankGroup.position.set(tx, 0, tz);
-      worldGroup.add(tankGroup);
-      registerHittable(baseCollar);
-      worldColliders.push({
-        minX: tx - 0.7,
-        maxX: tx + 0.7,
-        minY: 0,
-        maxY: 2.8,
-        minZ: tz - 0.7,
-        maxZ: tz + 0.7,
-        active: true
-      });
-    };
-
-    const addHazardBarrelCluster = (bx: number, bz: number, hasPuddle = true) => {
-      const bGroup = new THREE.Group();
-      const b1 = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.15, 12), barrelYellowMat);
-      b1.position.set(-0.35, 0.575, -0.2);
-      bGroup.add(b1);
-
-      const b2 = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.15, 12), barrelGreenMat);
-      b2.position.set(0.4, 0.575, 0.25);
-      bGroup.add(b2);
-
-      const b3 = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.15, 12), barrelYellowMat);
-      b3.rotation.x = Math.PI / 2;
-      b3.rotation.z = Math.PI / 4;
-      b3.position.set(0.1, 0.42, -0.65);
-      bGroup.add(b3);
-
-      if (hasPuddle) {
-        const puddle = new THREE.Mesh(new THREE.CircleGeometry(1.2, 16), bioPuddleMat);
-        puddle.rotation.x = -Math.PI / 2;
-        puddle.position.set(0.3, 0.02, -0.7);
-        bGroup.add(puddle);
-      }
-
-      bGroup.position.set(bx, 0, bz);
-      worldGroup.add(bGroup);
-      registerHittable(b1);
-      worldColliders.push({
-        minX: bx - 0.9,
-        maxX: bx + 0.9,
-        minY: 0,
-        maxY: 1.25,
-        minZ: bz - 0.9,
-        maxZ: bz + 0.9,
-        active: true
-      });
-    };
-
-    const addWallTerminal = (wx: number, wy: number, wz: number, rotY: number) => {
-      const termGroup = new THREE.Group();
-      const box = new THREE.Mesh(
-        new THREE.BoxGeometry(0.85, 1.1, 0.3),
-        new THREE.MeshStandardMaterial({ color: 0x1b2029, metalness: 0.7, roughness: 0.4 })
-      );
-      const screen = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.65, 0.45),
-        new THREE.MeshStandardMaterial({ color: 0x0a1c22, emissive: 0x2de2e6, emissiveIntensity: 0.85 })
-      );
-      screen.position.set(0, 0.18, 0.16);
-      termGroup.add(box, screen);
-      termGroup.position.set(wx, wy, wz);
-      termGroup.rotation.y = rotY;
-      worldGroup.add(termGroup);
-    };
-
-    const addExitSign = (sx: number, sy: number, sz: number, rotY: number) => {
-      const signGroup = new THREE.Group();
-      const housing = new THREE.Mesh(
-        new THREE.BoxGeometry(0.9, 0.35, 0.15),
-        new THREE.MeshStandardMaterial({ color: 0x22262d })
-      );
-      const face = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.8, 0.25),
-        new THREE.MeshStandardMaterial({ color: 0x00ff44, emissive: 0x00dd33, emissiveIntensity: 1.3 })
-      );
-      face.position.z = 0.08;
-      signGroup.add(housing, face);
-      signGroup.position.set(sx, sy, sz);
-      signGroup.rotation.y = rotY;
-      worldGroup.add(signGroup);
-    };
-
-    const addCableTray = (x1: number, z1: number, x2: number, z2: number, cy = 2.6) => {
-      const len = Math.hypot(x2 - x1, z2 - z1);
-      const angle = Math.atan2(x2 - x1, z2 - z1);
-      const tray = new THREE.Mesh(
-        new THREE.BoxGeometry(0.6, 0.1, len),
-        new THREE.MeshStandardMaterial({ color: 0x181c24, metalness: 0.75, roughness: 0.4 })
-      );
-      tray.position.set((x1 + x2) / 2, cy, (z1 + z2) / 2);
-      tray.rotation.y = angle;
-      worldGroup.add(tray);
-    };
-
-    const addFluorescentBar = (fx: number, fz: number, fy = 2.65, rotY = 0) => {
-      const fixtureGroup = new THREE.Group();
-      const body = new THREE.Mesh(
-        new THREE.BoxGeometry(2.0, 0.12, 0.4),
-        new THREE.MeshStandardMaterial({ color: 0x1f242d, metalness: 0.6 })
-      );
-      const tube1 = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.03, 0.03, 1.8, 8),
-        new THREE.MeshStandardMaterial({ color: 0xdff5ff, emissive: 0xcbeeff, emissiveIntensity: 1.2 })
-      );
-      tube1.rotation.z = Math.PI / 2;
-      tube1.position.set(0, -0.06, -0.09);
-      const tube2 = tube1.clone();
-      tube2.position.z = 0.09;
-      fixtureGroup.add(body, tube1, tube2);
-      fixtureGroup.position.set(fx, fy, fz);
-      fixtureGroup.rotation.y = rotY;
-      worldGroup.add(fixtureGroup);
-    };
-
-    const ambient = new THREE.AmbientLight(0x202832, 1.6);
-    worldGroup.add(ambient);
-
-    // =========================================================================
-    // 1. SECTOR 1: INGRESS AIRLOCK (Z ~ 0, X in [-7, 7], Z in [-10, 10])
-    // =========================================================================
-    structures.push({ center: sectorCenters[1] });
-    addCeiling(0, 0, 14, 20, defaultCeilH);
-    addWall(0, 10, 14, 1.2, defaultCeilH, true);
-    addWall(-7, 0, 1.2, 20, defaultCeilH);
-    addWall(7, 0, 1.2, 20, defaultCeilH);
-    addWall(-4.3, -10, 5.4, 1.2, defaultCeilH);
-    addWall(4.3, -10, 5.4, 1.2, defaultCeilH);
-    addLight(0, defaultCeilH - 0.2, 0, 0xffaa44, 3.5, 16);
-
-    addGurney(3.2, 2.0, 0.2, true);
-    addHazardBarrelCluster(-4.5, -4.0, true);
-    addExitSign(0, defaultCeilH - 0.4, -9.8, 0);
-
-    // Corridor 1 -> 2 (Z: -10 to -30, Width 3.2m: X in [-1.6, 1.6])
-    addWall(-2.2, -20, 1.2, 20, defaultCeilH);
-    addWall(2.2, -20, 1.2, 20, defaultCeilH);
-    addCeiling(0, -20, 3.2, 20, defaultCeilH);
-    addLight(0, defaultCeilH - 0.2, -20, 0xff7722, 2.8, 12);
-    addCableTray(0, -10, 0, -30, defaultCeilH - 0.15);
-    addFluorescentBar(0, -20, defaultCeilH - 0.12, 0);
-    createDoor(0, 0, -20, 3.2, defaultCeilH, 0.25, worldGroup, 'x');
-
-    // =========================================================================
-    // 2. SECTOR 2: VIROLOGY LABS (Z ~ -40, X in [-10, 10], Z in [-50, -30])
-    // =========================================================================
-    structures.push({ center: sectorCenters[2] });
-    addCeiling(0, -40, 20, 20, defaultCeilH);
-    addWall(-5.8, -30, 8.4, 1.2, defaultCeilH);
-    addWall(5.8, -30, 8.4, 1.2, defaultCeilH);
-    addWall(-10, -40, 1.2, 20, defaultCeilH);
-    addWall(10, -40, 1.2, 20, defaultCeilH);
-    addWall(-5.8, -50, 8.4, 1.2, defaultCeilH);
-    addWall(5.8, -50, 8.4, 1.2, defaultCeilH);
-    addLight(0, defaultCeilH - 0.2, -40, 0x44ddff, 4.5, 22);
-    addLight(-6, defaultCeilH - 0.2, -40, 0x22aacc, 2.5, 14);
-    addLight(6, defaultCeilH - 0.2, -40, 0x22aacc, 2.5, 14);
-
-    const labBenchMat = new THREE.MeshStandardMaterial({ color: 0x334455, roughness: 0.5, metalness: 0.6 });
-    const b1 = new THREE.Mesh(new THREE.BoxGeometry(4, 1.0, 1.5), labBenchMat);
-    b1.position.set(-5, 0.5, -38);
-    worldGroup.add(b1);
-    worldColliders.push({ minX: -7, maxX: -3, minY: 0, maxY: 1.0, minZ: -38.75, maxZ: -37.25, active: true });
-
-    const b2 = new THREE.Mesh(new THREE.BoxGeometry(4, 1.0, 1.5), labBenchMat);
-    b2.position.set(5, 0.5, -42);
-    worldGroup.add(b2);
-    worldColliders.push({ minX: 3, maxX: 7, minY: 0, maxY: 1.0, minZ: -42.75, maxZ: -41.25, active: true });
-
-    addBioSpecimenTank(-8.4, -36);
-    addBioSpecimenTank(-8.4, -44);
-    addBioSpecimenTank(8.4, -36);
-    addGurney(-2.4, -46, 0.8, false);
-    addWallTerminal(-9.3, 1.3, -40, Math.PI / 2);
-
-    // Corridor 2 -> 3 (Z: -50 to -70, Width 3.2m)
-    addWall(-2.2, -60, 1.2, 20, defaultCeilH);
-    addWall(2.2, -60, 1.2, 20, defaultCeilH);
-    addCeiling(0, -60, 3.2, 20, defaultCeilH);
-    addLight(0, defaultCeilH - 0.2, -60, 0x22ff88, 2.5, 12);
-    addCableTray(0, -50, 0, -70, defaultCeilH - 0.15);
-    addFluorescentBar(0, -60, defaultCeilH - 0.12, 0);
-    createDoor(0, 0, -60, 3.2, defaultCeilH, 0.25, worldGroup, 'x');
-
-    // =========================================================================
-    // 3. SECTOR 3: BIO-REACTOR, BIO-CYLINDER & ARMORY (Z ~ -80, X in [-12, 12])
-    // =========================================================================
-    const reactorCeilH = 3.4;
-    structures.push({ center: sectorCenters[3] });
-    addCeiling(0, -80, 24, 20, reactorCeilH);
-    addWall(-6.8, -70, 10.4, 1.2, reactorCeilH);
-    addWall(6.8, -70, 10.4, 1.2, reactorCeilH);
-    addWall(-12, -80, 1.2, 20, reactorCeilH);
-    addWall(12, -74.25, 1.2, 8.5, reactorCeilH);
-    addWall(12, -85.75, 1.2, 8.5, reactorCeilH);
-    addWall(-6.8, -90, 10.4, 1.2, reactorCeilH);
-    addWall(6.8, -90, 10.4, 1.2, reactorCeilH);
-    addLight(0, reactorCeilH - 0.2, -80, 0x00ff66, 5.5, 26);
-
-    // LOCKED ARMORY (X in [12, 18], Z in [-83, -77])
-    addCeiling(15, -80, 6, 6, reactorCeilH);
-    const armoryFloorGeo = new THREE.PlaneGeometry(6, 6);
-    armoryFloorGeo.rotateX(-Math.PI / 2);
-    const armoryFloorMesh = new THREE.Mesh(
-      armoryFloorGeo,
-      new THREE.MeshStandardMaterial({ color: 0x161d26, roughness: 0.7, metalness: 0.4 })
-    );
-    armoryFloorMesh.position.set(15, 0.01, -80);
-    worldGroup.add(armoryFloorMesh);
-
-    addWall(15, -77, 6, 1.2, reactorCeilH);
-    addWall(15, -83, 6, 1.2, reactorCeilH);
-    addWall(18, -80, 1.2, 6, reactorCeilH);
-    addWall(12, -77.75, 1.2, 1.5, reactorCeilH);
-    addWall(12, -82.25, 1.2, 1.5, reactorCeilH);
-    addLight(15, reactorCeilH - 0.2, -80, 0xff9900, 4.2, 15);
-    addLight(13, 1.8, -80, 0xff6600, 2.8, 8);
-
-    const keypadG = new THREE.Group();
-    keypadG.position.set(11.85, 1.3, -78.3);
-    const keypadBox = new THREE.Mesh(
-      new THREE.BoxGeometry(0.12, 0.35, 0.25),
-      new THREE.MeshStandardMaterial({ color: 0x0f141c, metalness: 0.8, roughness: 0.3 })
-    );
-    keypadG.add(keypadBox);
-    const keypadScreen = new THREE.Mesh(
-      new THREE.BoxGeometry(0.13, 0.14, 0.18),
-      new THREE.MeshStandardMaterial({ color: 0x220000, emissive: 0xff1111, emissiveIntensity: 1.4 })
-    );
-    keypadScreen.position.y = 0.05;
-    keypadG.add(keypadScreen);
-    worldGroup.add(keypadG);
-    armoryKeypadMesh = keypadScreen;
-
-    armoryDoor = createDoor(12, 0, -80, 3.0, reactorCeilH, 0.25, worldGroup, 'z', true);
-
-    const crateG = new THREE.Group();
-    crateG.position.set(16.2, 0, -80);
-    const crateBody = new THREE.Mesh(
-      new THREE.BoxGeometry(1.6, 0.8, 1.0),
-      new THREE.MeshStandardMaterial({ color: 0x1f3022, roughness: 0.5, metalness: 0.6 })
-    );
-    crateBody.position.y = 0.4;
-    crateG.add(crateBody);
-    const crateLid = new THREE.Mesh(
-      new THREE.BoxGeometry(1.65, 0.15, 1.05),
-      new THREE.MeshStandardMaterial({ color: 0x2d4632, roughness: 0.4, metalness: 0.7 })
-    );
-    crateLid.position.y = 0.85;
-    crateG.add(crateLid);
-    const crateLockGlow = new THREE.PointLight(0x00e5ff, 2.5, 6, 1.5);
-    crateLockGlow.position.set(0, 0.9, 0);
-    crateG.add(crateLockGlow);
-    worldGroup.add(crateG);
-    worldColliders.push({ minX: 15.3, maxX: 17.1, minY: 0, maxY: 1.2, minZ: -80.6, maxZ: -79.4, active: true });
-    armoryCrateGroup = crateG;
-
-    // Central Reactor Pedestal
-    const pedGeo = new THREE.CylinderGeometry(1.4, 1.7, 0.8, 16);
-    const pedMat = new THREE.MeshStandardMaterial({ color: 0x1b2028, metalness: 0.8, roughness: 0.3 });
-    const pedMesh = new THREE.Mesh(pedGeo, pedMat);
-    pedMesh.position.set(0, 0.4, -80);
-    worldGroup.add(pedMesh);
-    worldColliders.push({ minX: -1.5, maxX: 1.5, minY: 0, maxY: 0.8, minZ: -81.5, maxZ: -78.5, active: true });
-
-    // Prototype Bio-Cylinder Asset
-    const cylinderG = new THREE.Group();
-    cylinderG.position.set(0, 1.2, -80);
-    const glassGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.65, 16);
-    const glassMat = new THREE.MeshStandardMaterial({
-      color: 0x00ff66,
-      emissive: 0x00ff66,
-      emissiveIntensity: 0.85,
-      transparent: true,
-      opacity: 0.85,
-      roughness: 0.1,
-      metalness: 0.2
-    });
-    const canister = new THREE.Mesh(glassGeo, glassMat);
-    cylinderG.add(canister);
-    const capGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.08, 16);
-    const capMat2 = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.9, roughness: 0.2 });
-    const topCap = new THREE.Mesh(capGeo, capMat2);
-    topCap.position.y = 0.33;
-    const botCap = new THREE.Mesh(capGeo, capMat2);
-    botCap.position.y = -0.33;
-    cylinderG.add(topCap, botCap);
-    const cylLight = new THREE.PointLight(0x00ff66, 3.0, 6, 1.5);
-    cylinderG.add(cylLight);
-    worldGroup.add(cylinderG);
-    bioCylinderGroup = cylinderG;
-
-    addHazardBarrelCluster(-9.5, -74, true);
-    addHazardBarrelCluster(-9.5, -86, false);
-    addWallTerminal(-11.4, 1.4, -80, Math.PI / 2);
-
-    // Corridor 3 -> 4 (Z: -90 to -110, Width 3.2m)
-    addWall(-2.2, -100, 1.2, 20, defaultCeilH);
-    addWall(2.2, -100, 1.2, 20, defaultCeilH);
-    addCeiling(0, -100, 3.2, 20, defaultCeilH);
-    addLight(0, defaultCeilH - 0.2, -100, 0x33bbff, 2.5, 12);
-    addCableTray(0, -90, 0, -110, defaultCeilH - 0.15);
-    addFluorescentBar(0, -100, defaultCeilH - 0.12, 0);
-    createDoor(0, 0, -100, 3.2, defaultCeilH, 0.25, worldGroup, 'x');
-
-    // =========================================================================
-    // 4. SECTOR 4: CRYO MAINFRAME (Z ~ -120, X in [-12, 12])
-    // =========================================================================
-    structures.push({ center: sectorCenters[4] });
-    addCeiling(0, -120, 24, 20, defaultCeilH);
-    addWall(-6.8, -110, 10.4, 1.2, defaultCeilH);
-    addWall(6.8, -110, 10.4, 1.2, defaultCeilH);
-    addWall(-12, -120, 1.2, 20, defaultCeilH);
-    addWall(12, -120, 1.2, 20, defaultCeilH);
-    addWall(-6.8, -130, 10.4, 1.2, defaultCeilH);
-    addWall(6.8, -130, 10.4, 1.2, defaultCeilH);
-    addLight(0, defaultCeilH - 0.2, -120, 0x0099ff, 4.8, 24);
-
-    const podGeo = new THREE.BoxGeometry(1.2, 2.2, 1.0);
-    const podMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, emissive: 0x0088cc, emissiveIntensity: 0.35 });
-    for (let zOffset = -126; zOffset <= -114; zOffset += 4) {
-      const pLeft = new THREE.Mesh(podGeo, podMat);
-      pLeft.position.set(-10.5, 1.1, zOffset);
-      worldGroup.add(pLeft);
-      worldColliders.push({ minX: -11.2, maxX: -9.8, minY: 0, maxY: 2.2, minZ: zOffset - 0.6, maxZ: zOffset + 0.6, active: true });
-
-      const pRight = new THREE.Mesh(podGeo, podMat);
-      pRight.position.set(10.5, 1.1, zOffset);
-      worldGroup.add(pRight);
-      worldColliders.push({ minX: 9.8, maxX: 11.2, minY: 0, maxY: 2.2, minZ: zOffset - 0.6, maxZ: zOffset + 0.6, active: true });
-    }
-
-    const consoleG = new THREE.Group();
-    consoleG.position.set(0, 0, -120);
-    const sBase = new THREE.Mesh(
-      new THREE.BoxGeometry(2.4, 1.6, 1.4),
-      new THREE.MeshStandardMaterial({ color: 0x161a22, roughness: 0.6, metalness: 0.8 })
-    );
-    sBase.position.y = 0.8;
-    consoleG.add(sBase);
-    const screenMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(1.8, 0.9, 0.08),
-      new THREE.MeshStandardMaterial({
-        color: 0x0a141e,
-        emissive: 0x2de2e6,
-        emissiveIntensity: 0.9,
-        roughness: 0.1
-      })
-    );
-    screenMesh.position.set(0, 1.7, 0.5);
-    screenMesh.rotation.x = -0.2;
-    consoleG.add(screenMesh);
-    const termLight = new THREE.PointLight(0x2de2e6, 3.2, 8, 1.4);
-    termLight.position.set(0, 2.0, 0.4);
-    consoleG.add(termLight);
-    worldGroup.add(consoleG);
-    worldColliders.push({ minX: -1.3, maxX: 1.3, minY: 0, maxY: 2.2, minZ: -121, maxZ: -119, active: true });
-    mainframeConsoleGroup = consoleG;
-
-    // Circuit Breaker Alpha on West Wall
-    const bAlphaG = new THREE.Group();
-    bAlphaG.position.set(-11.35, 1.3, -115);
-    const bPanelA = new THREE.Mesh(
-      new THREE.BoxGeometry(0.18, 0.8, 0.5),
-      new THREE.MeshStandardMaterial({ color: 0x181e26, metalness: 0.8, roughness: 0.3 })
-    );
-    bAlphaG.add(bPanelA);
-    const bLightA = new THREE.PointLight(0xff2222, 2.5, 5, 1.5);
-    bLightA.position.set(0.18, 0.22, 0);
-    bAlphaG.add(bLightA);
-    worldGroup.add(bAlphaG);
-    breakerAlphaGroup = bAlphaG;
-    breakerAlphaLight = bLightA;
-
-    // Circuit Breaker Beta on East Wall
-    const bBetaG = new THREE.Group();
-    bBetaG.position.set(11.35, 1.3, -125);
-    const bPanelB = new THREE.Mesh(
-      new THREE.BoxGeometry(0.18, 0.8, 0.5),
-      new THREE.MeshStandardMaterial({ color: 0x181e26, metalness: 0.8, roughness: 0.3 })
-    );
-    bBetaG.add(bPanelB);
-    const bLightB = new THREE.PointLight(0xff2222, 2.5, 5, 1.5);
-    bLightB.position.set(-0.18, 0.22, 0);
-    bBetaG.add(bLightB);
-    worldGroup.add(bBetaG);
-    breakerBetaGroup = bBetaG;
-    breakerBetaLight = bLightB;
-
-    // Corridor 4 -> 5 (Z: -130 to -150, Width 3.2m)
-    addWall(-2.2, -140, 1.2, 20, defaultCeilH);
-    addWall(2.2, -140, 1.2, 20, defaultCeilH);
-    addCeiling(0, -140, 3.2, 20, defaultCeilH);
-    addLight(0, defaultCeilH - 0.2, -140, 0xff3333, 3.0, 14);
-    addCableTray(0, -130, 0, -150, defaultCeilH - 0.15);
-    createDoor(0, 0, -140, 3.2, defaultCeilH, 0.25, worldGroup, 'x');
-
-    // =========================================================================
-    // 5. SECTOR 5: EVAC VAULT & BOSS ARENA (Z ~ -160, X in [-15, 15])
-    // =========================================================================
-    const arenaCeilH = 3.6;
-    structures.push({ center: sectorCenters[5] });
-    addCeiling(0, -162.5, 30, 25, arenaCeilH);
-    addWall(-8.3, -150, 13.4, 1.2, arenaCeilH);
-    addWall(8.3, -150, 13.4, 1.2, arenaCeilH);
-    addWall(-15, -162.5, 1.2, 25, arenaCeilH);
-    addWall(15, -162.5, 1.2, 25, arenaCeilH);
-    addWall(0, -175, 30, 1.2, arenaCeilH, true);
-    addLight(0, arenaCeilH - 0.3, -160, 0xff2222, 5.0, 30);
-    addLight(-10, arenaCeilH - 0.3, -160, 0xff5533, 3.5, 20);
-    addLight(10, arenaCeilH - 0.3, -160, 0xff5533, 3.5, 20);
-
-    // Decontamination Receptacle Vault
-    const recepG = new THREE.Group();
-    recepG.position.set(0, 0, -155);
-    const recepBase = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.8, 1.0, 0.9, 16),
-      new THREE.MeshStandardMaterial({ color: 0x1f2e24, metalness: 0.85, roughness: 0.25 })
-    );
-    recepBase.position.y = 0.45;
-    recepG.add(recepBase);
-    const recepGlass = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.5, 0.5, 0.8, 16),
-      new THREE.MeshStandardMaterial({ color: 0x00ff88, emissive: 0x004422, transparent: true, opacity: 0.75, roughness: 0.1 })
-    );
-    recepGlass.position.y = 1.3;
-    recepG.add(recepGlass);
-    const recepLight = new THREE.PointLight(0xffbb00, 3.0, 7, 1.4);
-    recepLight.position.set(0, 1.4, 0);
-    recepG.add(recepLight);
-    worldGroup.add(recepG);
-    worldColliders.push({ minX: -0.9, maxX: 0.9, minY: 0, maxY: 1.8, minZ: -155.9, maxZ: -154.1, active: true });
-    volatileReceptacleGroup = recepG;
-    volatileReceptacleLight = recepLight;
-
-    // Evac Landing Pad
-    const padGeo = new THREE.BoxGeometry(5.0, 0.1, 5.0);
-    const padMat = new THREE.MeshStandardMaterial({
-      color: 0x052e16,
-      emissive: 0x00ff66,
-      emissiveIntensity: 0.6,
-      roughness: 0.3,
-      metalness: 0.8
-    });
-    const evacPad = new THREE.Mesh(padGeo, padMat);
-    evacPad.position.set(0, 0.05, -170);
-    worldGroup.add(evacPad);
-
-    const padBorderGeo = new THREE.BoxGeometry(5.4, 0.12, 5.4);
-    const padBorderMat = new THREE.MeshStandardMaterial({ color: 0xf5a623, roughness: 0.5 });
-    const padBorder = new THREE.Mesh(padBorderGeo, padBorderMat);
-    padBorder.position.set(0, 0.04, -170);
-    worldGroup.add(padBorder);
-
-    const evacLight = new THREE.PointLight(0x00ff66, 6.0, 15, 1.2);
-    evacLight.position.set(0, arenaCeilH - 0.2, -170);
-    worldGroup.add(evacLight);
-    evacPadMesh = evacPad;
-
-    addHazardBarrelCluster(-12, -156, true);
-    addHazardBarrelCluster(12, -156, true);
-    addHazardBarrelCluster(-12, -172, true);
-    addGurney(-6.0, -164, 0.4, true);
-    addGurney(6.0, -164, -0.4, false);
   }
 
   // =========================================================================
@@ -1399,19 +728,7 @@ function createLegacyWorld(scene: THREE.Scene, mapId: 'training' | 'hangar'): Wo
     removeGroundPickup(item);
   }
 
-  if (mapId === 'hangar') {
-    createGroundPickup(-3, 2, 0, 60);   // Sector 1: AR ammo
-    createGroundPickup(3, -2, 9, 2);    // Sector 1: Shields
-    createGroundPickup(-5, -35, 1, 16);  // Sector 2: Shotgun ammo
-    createGroundPickup(5, -45, 8, 3);    // Sector 2: Grenades
-    createGroundPickup(-6, -75, 5, 100); // Sector 3: LMG ammo
-    createGroundPickup(6, -85, 9, 2);    // Sector 3: Shield
-    createGroundPickup(-6, -115, 6, 40); // Sector 4: Battle Rifle ammo
-    createGroundPickup(6, -125, 9, 2);   // Sector 4: Shield
-    createGroundPickup(-8, -155, 7, 60); // Sector 5: Rail/Plasma
-    createGroundPickup(8, -155, 8, 4);   // Sector 5: Grenades
-  } else {
-    structures.forEach((st, idx) => {
+  structures.forEach((st, idx) => {
       if (st.center && idx % 2 === 0) {
         const wType = idx % WEAPONS.length;
         const targetW = WEAPONS[wType];
@@ -1419,7 +736,6 @@ function createLegacyWorld(scene: THREE.Scene, mapId: 'training' | 'hangar'): Wo
         createGroundPickup(st.center.x + (Math.random() * 2 - 1), st.center.z + (Math.random() * 2 - 1), wType, ammo);
       }
     });
-  }
 
   function removeGroundPickup(item: GroundPickup): void {
     item.group.removeFromParent();
@@ -1736,83 +1052,6 @@ export interface OffshoreState {
   tryBoard: (position: THREE.Vector3) => boolean;
 }
 
-/** Counts shared ownership, including textures; detached runtime objects remain owned. */
-class WorldResources {
-  private nodes = new Set<THREE.Object3D>();
-  private geometries = new Map<THREE.BufferGeometry, number>();
-  private materials = new Map<THREE.Material, number>();
-  private textures = new Map<THREE.Texture, number>();
-  private materialTextures = new Map<THREE.Material, Set<THREE.Texture>>();
-  private lights = new Set<THREE.Light>();
-
-  track(root: THREE.Object3D): void {
-    root.traverse((node) => {
-      if (this.nodes.has(node)) return;
-      this.nodes.add(node);
-      const drawable = node as THREE.Mesh;
-      if (drawable.geometry) this.geometries.set(drawable.geometry, (this.geometries.get(drawable.geometry) ?? 0) + 1);
-      if (drawable.material) {
-        for (const material of Array.isArray(drawable.material) ? drawable.material : [drawable.material]) {
-          if (!this.materials.has(material)) {
-            const textures = new Set<THREE.Texture>();
-            for (const value of Object.values(material)) if (value instanceof THREE.Texture) textures.add(value);
-            if (material instanceof THREE.ShaderMaterial) {
-              for (const uniform of Object.values(material.uniforms)) {
-                const values: unknown[] = Array.isArray(uniform.value) ? uniform.value : [uniform.value];
-                for (const value of values) if (value instanceof THREE.Texture) textures.add(value);
-              }
-            }
-            this.materialTextures.set(material, textures);
-            textures.forEach((texture) => this.textures.set(texture, (this.textures.get(texture) ?? 0) + 1));
-          }
-          this.materials.set(material, (this.materials.get(material) ?? 0) + 1);
-        }
-      }
-      if (node instanceof THREE.Light) this.lights.add(node);
-    });
-  }
-
-  release(root: THREE.Object3D): void {
-    root.traverse((node) => {
-      if (!this.nodes.delete(node)) return;
-      const drawable = node as THREE.Mesh;
-      if (drawable.geometry) {
-        const count = (this.geometries.get(drawable.geometry) ?? 1) - 1;
-        if (count > 0) this.geometries.set(drawable.geometry, count);
-        else { drawable.geometry.dispose(); this.geometries.delete(drawable.geometry); }
-      }
-      if (drawable.material) {
-        for (const material of Array.isArray(drawable.material) ? drawable.material : [drawable.material]) {
-          const count = (this.materials.get(material) ?? 1) - 1;
-          if (count > 0) { this.materials.set(material, count); continue; }
-          this.materialTextures.get(material)?.forEach((texture) => {
-            const textureCount = (this.textures.get(texture) ?? 1) - 1;
-            if (textureCount > 0) this.textures.set(texture, textureCount);
-            else { texture.dispose(); this.textures.delete(texture); }
-          });
-          material.dispose();
-          this.materials.delete(material);
-          this.materialTextures.delete(material);
-        }
-      }
-      if (node instanceof THREE.Light && this.lights.delete(node)) node.dispose();
-    });
-  }
-
-  dispose(): void {
-    this.geometries.forEach((_, geometry) => geometry.dispose());
-    this.materials.forEach((_, material) => material.dispose());
-    this.textures.forEach((_, texture) => texture.dispose());
-    this.lights.forEach((light) => light.dispose());
-    this.geometries.clear();
-    this.materials.clear();
-    this.textures.clear();
-    this.materialTextures.clear();
-    this.lights.clear();
-    this.nodes.clear();
-  }
-}
-
 export const SHATTERED_WALL_LAYOUT = Object.freeze({
   seaY: 0,
   helipadY: 14,
@@ -1941,7 +1180,7 @@ export function buildHelicopterMesh(): HelicopterMesh {
   const hull = new THREE.MeshStandardMaterial({ color: 0x313d35, metalness: 0.65, roughness: 0.48 });
   const trim = new THREE.MeshStandardMaterial({ color: 0x111b1c, metalness: 0.8, roughness: 0.33 });
   const bladeMat = new THREE.MeshStandardMaterial({ color: 0x141c1b, metalness: 0.45, roughness: 0.6 });
-  const glass = new THREE.MeshPhysicalMaterial({ color: 0x17343b, metalness: 0.2, roughness: 0.14, transparent: true, opacity: 0.72, clearcoat: 1, side: THREE.DoubleSide });
+  const glass = new THREE.MeshPhysicalMaterial({ color: 0x17343b, metalness: 0.2, roughness: 0.14, transparent: true, opacity: 0.72, clearcoat: 1, depthWrite: false, side: THREE.FrontSide });
   const stencil = new THREE.MeshStandardMaterial({ color: 0xbdc9b1, roughness: 0.8 });
   const box = (w: number, h: number, d: number, x: number, y: number, z: number, material: THREE.Material, parent = group) => {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material); mesh.position.set(x, y, z); mesh.castShadow = true; mesh.receiveShadow = true; parent.add(mesh); return mesh;
@@ -2021,6 +1260,7 @@ export function buildHelicopterMesh(): HelicopterMesh {
   const tracerGeometry = new THREE.BufferGeometry(); tracerGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
   const defenseTracer = new THREE.Line(tracerGeometry, new THREE.LineBasicMaterial({ color: 0xffca79, transparent: true, opacity: .8, depthWrite: false }));
   defenseTracer.frustumCulled = false; defenseTracer.visible = false; group.add(defenseTracer);
+  group.updateMatrixWorld(true);
   resources.track(group);
   let disposed = false; let doorOpening = 0;
   const result: HelicopterMesh = {
@@ -2653,8 +1893,9 @@ let activeScene: THREE.Scene | null = null;
 
 /** Compatibility factory used by the existing App.tsx engine. */
 export function createWorld(scene: THREE.Scene, mapId: WorldMapId = 'training'): WorldManager {
-  const manager = mapId === 'shattered_wall' ? createOffshoreWorld(scene) : createLegacyWorld(scene, mapId);
-  if (mapId !== 'shattered_wall') tuneLegacyAtmosphere(scene, manager);
+  currentWorldMapId = mapId;
+  const manager = mapId === 'shattered_wall' ? createOffshoreWorld(scene) : mapId === 'hangar' ? createArea51World(scene) : createLegacyWorld(scene, mapId);
+  if (mapId === 'training') tuneLegacyAtmosphere(scene, manager);
   activeWorld = manager; activeScene = scene;
   const disposeManager = manager.dispose;
   manager.dispose = () => { disposeManager(); if (activeWorld === manager) { activeWorld = null; activeScene = null; } };

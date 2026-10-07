@@ -697,14 +697,16 @@ export const ExtractionObjectiveHUD: React.FC<ExtractionObjectiveHUDProps> = (pr
         <div className="rounded border border-cyan-400/30 bg-slate-950/70 backdrop-blur-sm px-4 py-2.5">
           <div className="flex items-center justify-between gap-3">
             <span className="font-mono text-[10px] tracking-[0.25em] text-cyan-400/70">
-              SECTOR {currentSector} · {stage}
+              {s?.campaign === 'area51' ? 'ZONE' : 'SECTOR'} {currentSector} · {stage}
             </span>
-            <span className="font-mono text-[10px] text-slate-500 tabular-nums">{mutantsKilled} purged</span>
+            <span className="font-mono text-[10px] text-slate-500 tabular-nums">{mutantsKilled} eliminated</span>
           </div>
 
           <div className="font-mono text-sm text-cyan-200 mt-1 leading-snug">{objectiveTitle}</div>
           <div className="text-[11px] text-slate-400 mt-0.5 leading-snug">{objectiveDetail}</div>
 
+          {s?.campaign === 'area51' && s.isHacking && <div className="h-1.5 mt-2 rounded bg-slate-800 overflow-hidden" role="progressbar" aria-label="Server purge" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(s.hackProgress/s.hackDuration*100)}><div className="h-full bg-cyan-400" style={{width:`${s.hackProgress/s.hackDuration*100}%`}} /></div>}
+          {s?.campaign === 'area51' && s.hasBioCylinder && <StatChip label="Bio vial secured" tone="good" />}
           {holdTheLineActive && (
             <div className="mt-2">
               <div className="h-1.5 rounded bg-slate-800 overflow-hidden">
@@ -731,7 +733,7 @@ export const ExtractionObjectiveHUD: React.FC<ExtractionObjectiveHUDProps> = (pr
                 <StatChip label={breakerBetaPulled ? 'Beta online' : 'Beta offline'} tone={breakerBetaPulled ? 'good' : 'bad'} />
               </>
             )}
-            {bossSpawned && !bossDefeated && <StatChip label="Specimen Zero active" tone="bad" />}
+            {bossSpawned && !bossDefeated && <StatChip label={s?.campaign === 'area51' && s?.faction === 'apex' ? 'Spartan Squad active' : 'Abomination active'} tone="bad" />}
             {evacReady && <StatChip label="Evac online" tone="good" />}
           </div>
         </div>
@@ -760,6 +762,8 @@ export const ExtractionObjectiveHUD: React.FC<ExtractionObjectiveHUDProps> = (pr
  * ===========================================================================*/
 
 export interface ExtractionEndScreenProps {
+  campaign?: 'area51';
+  faction?: 'usmc' | 'apex';
   victory: boolean;
   mutantsKilled: number;
   missionDuration: number;
@@ -772,6 +776,8 @@ export interface ExtractionEndScreenProps {
 }
 
 export const ExtractionEndScreen: React.FC<ExtractionEndScreenProps> = ({
+  campaign,
+  faction,
   victory,
   mutantsKilled,
   missionDuration,
@@ -796,13 +802,13 @@ export const ExtractionEndScreen: React.FC<ExtractionEndScreenProps> = ({
         </div>
         <p className="text-sm text-slate-400 mt-2 leading-snug">
           {victory
-            ? 'Evac elevator sealed with you inside. Samples are on their way to Command.'
+            ? (campaign === 'area51' ? faction === 'apex' ? 'Helicopter extraction confirmed. The USMC mainframe is purged and the squad is clear.' : 'Helicopter extraction confirmed. The biological vial is secure and the squad is clear.' : 'Helicopter extraction confirmed. The squad is clear of the combat zone.')
             : 'The squad lost contact in Sector ' + sectorReached + '. Recovery was not possible.'}
         </p>
 
         <div className="grid grid-cols-3 gap-4 mt-6 font-mono">
           <div>
-            <div className="text-[11px] text-slate-500">Anomalies purged</div>
+            <div className="text-[11px] text-slate-500">Hostiles eliminated</div>
             <div className="text-xl text-slate-100 tabular-nums">{mutantsKilled}</div>
           </div>
           <div>
@@ -812,7 +818,7 @@ export const ExtractionEndScreen: React.FC<ExtractionEndScreenProps> = ({
             </div>
           </div>
           <div>
-            <div className="text-[11px] text-slate-500">Deepest sector</div>
+            <div className="text-[11px] text-slate-500">{campaign === 'area51' ? 'Deepest zone' : 'Deepest sector'}</div>
             <div className="text-xl text-slate-100 tabular-nums">{sectorReached}</div>
           </div>
         </div>

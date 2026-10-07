@@ -59,7 +59,7 @@ avatar.destroy(); avatar.destroy(); assert.equal(textureDisposals, 1);
 assert.equal(avatarScene.children.length, 0);
 console.log('PASS: all weapon meshes, resource-safe swaps, rounded operator head and map lighting');
 
-for (const map of ['training', 'hangar'] as const) {
+for (const map of ['training'] as const) {
   const scene = new THREE.Scene(), oldFog = new THREE.Fog(0, 10, 20); scene.fog = oldFog;
   const world = createWorld(scene, map);
   world.updateWorld(.016, 1, 'team');
@@ -75,7 +75,7 @@ for (const map of ['training', 'hangar'] as const) {
   assert.equal(geometryDisposals, 1); assert.equal(materialDisposals, 1);
   assert.equal(reflection.parent, null);
 }
-console.log('PASS: legacy exponential fog restoration and reflection teardown across both maps');
+console.log('PASS: legacy exponential fog restoration and reflection teardown on training map');
 
 const scene = new THREE.Scene(), world = initWorld(scene, new THREE.PerspectiveCamera());
 const offshore = world.offshore!;

@@ -238,6 +238,7 @@ export type ExtractionStage =
   | 'COMPLETED';
 
 export interface ExtractionState {
+  campaign?: 'area51';
   faction: ExtractionFaction;
   currentSector: 1 | 2 | 3 | 4 | 5;
   stage: ExtractionStage;
@@ -284,7 +285,7 @@ export interface ExtractionManagerConfig {
   };
   world: WorldManager;
   scene: THREE.Scene;
-  makeBot: (team: 'blue' | 'red' | 'zombie' | null, zType?: string, isVIP?: boolean, elite?: any) => any;
+  makeBot: (team: 'blue' | 'red' | 'zombie' | null, zType?: string, isVIP?: boolean, elite?: any, campaignEntity?: import('./types').CampaignEntity) => any;
   bots: any[];
   pushKillFeed: (msg: string, isPriority?: boolean) => void;
   onVictory: () => void;
@@ -1033,7 +1034,7 @@ export interface BioMutantAIContext {
   scene: THREE.Scene;
   camera: THREE.Camera;
   pushKillFeed: (msg: string, isPriority?: boolean) => void;
-  makeBot: (team: 'blue' | 'red' | 'zombie' | null, zType?: string, isVIP?: boolean, elite?: any) => any;
+  makeBot: (team: 'blue' | 'red' | 'zombie' | null, zType?: string, isVIP?: boolean, elite?: any, campaignEntity?: import('./types').CampaignEntity) => any;
   damageBot: (bot: Bot, amount: number, isHeadshot: boolean, attacker: any, dir?: THREE.Vector3) => void;
   focusTargetId: number | null;
   scrambleRadar: (duration: number) => void;
@@ -1058,6 +1059,7 @@ function isUnderPlayerReticle(bot: Bot, ctx: BioMutantAIContext): boolean {
 }
 
 export function updateBioMutantAI(bot: Bot, dt: number, ctx: BioMutantAIContext): void {
+  if (ctx.world.facility?.controlsLocked || bot.userData?.entranceActive) return;
   if (!bot.alive) return;
 
   const mType: MutantType =
@@ -1154,7 +1156,7 @@ export function updateBioMutantAI(bot: Bot, dt: number, ctx: BioMutantAIContext)
   const navigationDistance = Math.hypot(dx, dz);
   const targetHeight = targetPos.y - (targetIsPlayer ? 1.65 : 0);
   const dist = Math.hypot(targetPos.x - bot.pos.x, targetPos.z - bot.pos.z,
-    ctx.world.offshore ? targetHeight - bot.pos.y : 0);
+    ctx.world.offshore || ctx.world.facility ? targetHeight - bot.pos.y : 0);
   const ndx = navigationDistance > 0.001 ? dx / navigationDistance : 0;
   const ndz = navigationDistance > 0.001 ? dz / navigationDistance : 1;
 
@@ -1185,7 +1187,7 @@ export function updateBioMutantAI(bot: Bot, dt: number, ctx: BioMutantAIContext)
       let steerX = ndx;
       let steerZ = ndz;
 
-      if (targetIsPlayer && (!ctx.world.offshore || Math.abs(targetPos.y - bot.pos.y) < 3)) {
+      if (targetIsPlayer && (!ctx.world.offshore && !ctx.world.facility || Math.abs(targetPos.y - bot.pos.y) < 3) && (!ctx.world.facility || !sightlineBlocked(bot.pos, targetPos, ctx.world.worldColliders))) {
         const pYaw = ctx.player.yaw;
         const forwardX = Math.sin(pYaw);
         const forwardZ = Math.cos(pYaw);
@@ -3059,6 +3061,7 @@ function coveredPosition(bot: Bot, anchor: THREE.Vector3, threat: THREE.Vector3 
 
 /** Priority order: rescue, heal, class duty, then formation. No teleporting catch-up. */
 export function updateClassCombatBot(bot: Bot, dt: number, ctx: CombatSystemsContext, tuning: { accuracy: number; damageMultiplier: number; fireRateMultiplier: number }): void {
+  if (ctx.world.facility?.controlsLocked || bot.userData?.boarded || bot.userData?.entranceActive) return;
   if (!bot.alive || bot.isZombie || dt <= 0 || !Number.isFinite(dt) || bot.mountedTripodId) return;
   const role = bot.classId ?? bot.eliteRole ?? 'assault';
   const state = bot.classAI ??= createClassAIState();
@@ -3082,7 +3085,7 @@ export function updateClassCombatBot(bot: Bot, dt: number, ctx: CombatSystemsCon
     } else state.reviveProgress = 0;
   } else if (state.thinkTimer <= 0) {
     state.thinkTimer = .4; state.reviveProgress = 0; state.targetId = undefined;
-    let anchor = alliedPlayer ? ctx.player.pos.clone().setY(bot.pos.y) : bot.pos.clone();
+    let anchor = alliedPlayer ? ctx.player.pos.clone().setY(ctx.world.facility ? (ctx.player.pos.y > 10 ? 15 : 0) : bot.pos.y) : bot.pos.clone();
     if (alliedPlayer) {
       // Point leads; medics/recon form the rear; everyone has a stable lateral slot.
       const lead = role === 'assault' ? -5 : role === 'medic' ? 4 : role === 'recon' ? 6 : 1;
@@ -3124,6 +3127,14 @@ export function updateClassCombatBot(bot: Bot, dt: number, ctx: CombatSystemsCon
       state.destination = threat.pos.clone().addScaledVector(bot.pos.clone().sub(threat.pos).setY(0).normalize(), range);
       if (dist < 5) state.destination = bot.pos.clone();
     }
+    if (bot.campaignEntity === 'security') {
+      state.grenades = 0;
+      if (!threat) { const anchor=bot.patrolAnchor ??= bot.pos.clone();const phase=(performance.now()/4000+bot.id)%4;state.mode='formation';state.destination=anchor.clone().add(new THREE.Vector3(Math.cos(phase*Math.PI/2)*3,0,Math.sin(phase*Math.PI/2)*3)); }
+    } else if (bot.campaignEntity === 'spartan' && threat) {
+      const angle=Math.atan2(bot.pos.z-threat.pos.z,bot.pos.x-threat.pos.x)+(bot.id%2?1:-1)*1.1;
+      state.mode='push';state.destination=threat.pos.clone().setY(bot.pos.y).add(new THREE.Vector3(Math.cos(angle)*10,0,Math.sin(angle)*10));
+    }
+    if(alliedPlayer && ctx.world.facility && Math.abs(bot.pos.y-anchor.y)>8 && ctx.squadDirective!=='hold_position')state.destination=anchor;
     // Squad leash overrides offensive duty, but never interrupts a medic rescue.
     if (alliedPlayer && bot.pos.distanceTo(ctx.player.pos) > 32) state.destination = anchor;
   }
