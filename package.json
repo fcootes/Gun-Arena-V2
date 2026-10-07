@@ -14,7 +14,8 @@
     "test:weapons": "node --import tsx tests/weapons.test.ts",
     "test:scenes": "node --import tsx tests/scenes.test.ts",
     "test:tactical": "node --import tsx tests/tactical.test.ts",
-    "test:area51": "node --import tsx tests/area51.test.ts"
+    "test:area51": "node --import tsx tests/area51.test.ts",
+    "test:runtime": "node --import tsx tests/runtime.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

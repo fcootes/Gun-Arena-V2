@@ -1,3 +1,6 @@
+import { DEFAULT_OPERATIONAL_MAP, mapForMode } from './mapRegistry';
+import { INSPECTOR_HEALTH, INSPECTOR_DAMAGE } from './inspectorMode';
+import { WorldResources } from './worldResources';
 import { Area51ExtractionGameLoop } from './area51Campaign';
 import { audioManager } from './campaignAudio';
 import { PostDeathMenu } from './PostDeathMenu';
@@ -51,7 +54,6 @@ import { HelmetHUD, RadarPing } from './HelmetHUD';
 import { LobbyTerminal, LobbyTab } from './LobbyTerminal';
 import { useFaction } from './FactionContext';
 import {
-  ExtractionGameLoop,
   ShatteredWallExtractionGameLoop,
   updateSonicDistortionRings,
   clearCombatSystems,
@@ -242,8 +244,12 @@ export default function App() {
   const [selectedPrimary, setSelectedPrimary] = useState<string>('ar');
   const [selectedSecondary, setSelectedSecondary] = useState<string>('pistol');
   
-  const [selectedMapState, setSelectedMapState] = useState<WorldMapId>('shattered_wall');
+  const [selectedMapState, setSelectedMapState] = useState<WorldMapId>(DEFAULT_OPERATIONAL_MAP);
   const [isDevMode, setIsDevMode] = useState(false);
+  const [inspectorMode, setInspectorMode] = useState(false);
+  const inspectorModeRef = useRef(inspectorMode);
+  inspectorModeRef.current = inspectorMode;
+  const [engineGeneration, setEngineGeneration] = useState(0);
   
   // Update window global for non-React contexts
   useEffect(() => {
@@ -272,11 +278,10 @@ export default function App() {
   const selectedMapStateRef = useRef(selectedMapState);
   selectedMapStateRef.current = selectedMapState;
 
-  // Strict Map Rules State Guardrail: Horde Mode strictly enforces Subterranean Hangar map
+  // Use the shared map registry for deployment restrictions.
   useEffect(() => {
-    if (matchMode === 'zombie' && selectedMapState === 'training') {
-      setSelectedMapState('hangar');
-    }
+    const allowed = mapForMode(selectedMapState, matchMode);
+    if (selectedMapState !== allowed) setSelectedMapState(allowed);
   }, [matchMode, selectedMapState]);
 
   const gameStateRef = useRef(gameState);
@@ -412,9 +417,9 @@ export default function App() {
     const combatLightGroup = new THREE.Group();
     scene.add(combatLightGroup);
 
-    const isHangar = selectedMapStateRef.current === 'hangar';
-    const hemiLightIntensity = isHangar ? 0.05 : 0.65;
-    const sunLightIntensity = isHangar ? 0.0 : 1.05;
+    const isFacility = selectedMapStateRef.current === 'area51';
+    const hemiLightIntensity = isFacility ? 0.05 : 0.65;
+    const sunLightIntensity = isFacility ? 0.0 : 1.05;
 
     const hemiLight = new THREE.HemisphereLight(0xbfd9ff, 0x3a3226, hemiLightIntensity);
     combatLightGroup.add(hemiLight);
@@ -447,22 +452,22 @@ export default function App() {
     const skyMesh = new THREE.Mesh(skyGeo, skyMat);
     combatLightGroup.add(skyMesh);
 
-    // Subterranean Concrete Hangar Bunker Environment & Armory (Lobby Scene)
+    // Facility Operator Preview Environment & Armory (Lobby Scene)
     const lobbyBackground = new THREE.Color(0x0a0d12);
-    const hangarBackground = new THREE.Color(0x14181f);
+    const facilityBackground = new THREE.Color(0x14181f);
     const lobbyFog = new THREE.Fog(0x0a0d12, 10, 32);
-    let hangarGroup: THREE.Group | null = null;
+    let lobbyPreviewGroup: THREE.Group | null = null;
     let lobbyAvatar: LobbyAvatarController | null = null;
 
     function setupLobbyScene() {
-      if (hangarGroup || lobbyAvatar) {
+      if (lobbyPreviewGroup || lobbyAvatar) {
         teardownLobbyScene();
       }
 
       previousLobbyMap = null; previousLobbyFaction = null;
-      hangarGroup = new THREE.Group();
-      hangarGroup.position.set(0, 1000, 0);
-      scene.add(hangarGroup);
+      lobbyPreviewGroup = new THREE.Group();
+      lobbyPreviewGroup.position.set(0, 1000, 0);
+      scene.add(lobbyPreviewGroup);
       
       // 1. Concrete Floor with Polished Surface & Tactical Markings
       const floorGeo = new THREE.PlaneGeometry(36, 50);
@@ -474,9 +479,9 @@ export default function App() {
       const floorMesh = new THREE.Mesh(floorGeo, floorMat);
       floorMesh.rotation.x = -Math.PI / 2;
       floorMesh.receiveShadow = true;
-      hangarGroup.add(floorMesh);
+      lobbyPreviewGroup.add(floorMesh);
 
-      // Hazard Border Lines along hangar edges (X = -4.2 and +4.2)
+      // Hazard Border Lines along preview edges (X = -4.2 and +4.2)
       const hazardMat = new THREE.MeshBasicMaterial({ color: 0xd49b28 });
       const hazardL = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 45), hazardMat);
       hazardL.rotation.x = -Math.PI / 2;
@@ -484,9 +489,9 @@ export default function App() {
       const hazardR = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 45), hazardMat);
       hazardR.rotation.x = -Math.PI / 2;
       hazardR.position.set(4.2, 0.005, -5);
-      hangarGroup.add(hazardL, hazardR);
+      lobbyPreviewGroup.add(hazardL, hazardR);
 
-      // 2. Vaulted Arch Concrete Ceiling / Bunker Tunnel
+      // 2. Vaulted concrete operator preview
       const archMat = new THREE.MeshStandardMaterial({
         color: 0x181c22,
         roughness: 0.88,
@@ -497,17 +502,17 @@ export default function App() {
       const archMesh = new THREE.Mesh(archGeo, archMat);
       archMesh.rotation.z = Math.PI / 2;
       archMesh.position.set(0, 0, -5);
-      hangarGroup.add(archMesh);
+      lobbyPreviewGroup.add(archMesh);
 
       // Reinforced Concrete Support Rib Arches along Z
       const ribMat = new THREE.MeshStandardMaterial({ color: 0x111418, roughness: 0.8 });
       [-20, -14, -8, -2, 4, 10].forEach((rz) => {
         const rib = new THREE.Mesh(new THREE.TorusGeometry(8.46, 0.28, 12, 36, Math.PI), ribMat);
         rib.position.set(0, 0, rz);
-        hangarGroup!.add(rib);
+        lobbyPreviewGroup!.add(rib);
       });
 
-      // 3. Overhead Recessed Industrial Bunker Ceiling Lamps & Spotlights
+      // 3. Recessed industrial preview lamps
       const lampHousingMat = new THREE.MeshStandardMaterial({ color: 0x121519, roughness: 0.4 });
       const lampLensMat = new THREE.MeshBasicMaterial({ color: 0xd8efff });
       [-18, -12, -6, 0, 6].forEach((lz) => {
@@ -516,21 +521,21 @@ export default function App() {
         const lampLens = new THREE.Mesh(new THREE.CircleGeometry(0.32, 16), lampLensMat);
         lampLens.rotation.x = Math.PI / 2;
         lampLens.position.set(0, 8.27, lz);
-        hangarGroup!.add(lampHousing, lampLens);
+        lobbyPreviewGroup!.add(lampHousing, lampLens);
 
         // Downward pool of light on the tunnel floor
         const tunnelSpot = new THREE.SpotLight(0xd8efff, 2.5, 16, Math.PI / 4.5, 0.6, 1.2);
         tunnelSpot.position.set(0, 8.2, lz);
         tunnelSpot.target.position.set(0, 0, lz);
-        hangarGroup!.add(tunnelSpot);
-        hangarGroup!.add(tunnelSpot.target);
+        lobbyPreviewGroup!.add(tunnelSpot);
+        lobbyPreviewGroup!.add(tunnelSpot.target);
       });
 
-      // 4. Subterranean Bunker Blast Door / Bulkhead at far end (Z = -22)
+      // 4. Preview bulkhead at the far end (Z = -22)
       const bulkheadMat = new THREE.MeshStandardMaterial({ color: 0x15191e, roughness: 0.7, metalness: 0.3 });
       const bulkheadWall = new THREE.Mesh(new THREE.PlaneGeometry(24, 14), bulkheadMat);
       bulkheadWall.position.set(0, 7, -22.5);
-      hangarGroup.add(bulkheadWall);
+      lobbyPreviewGroup.add(bulkheadWall);
 
       const doorFrame = new THREE.Mesh(
         new THREE.BoxGeometry(4.2, 5.8, 0.3),
@@ -542,7 +547,7 @@ export default function App() {
         new THREE.MeshStandardMaterial({ color: 0x1b2027, roughness: 0.4, metalness: 0.5 })
       );
       doorPanel.position.set(0, 2.9, -22.25);
-      hangarGroup.add(doorFrame, doorPanel);
+      lobbyPreviewGroup.add(doorFrame, doorPanel);
 
       // 5. Server Racks and Tactical Storage Equipment along walls
       const rackMat = new THREE.MeshStandardMaterial({ color: 0x121417, roughness: 0.6, metalness: 0.4 });
@@ -552,7 +557,7 @@ export default function App() {
       [-14, -10, -6, -2].forEach((sz) => {
         const rack = new THREE.Mesh(new THREE.BoxGeometry(1.2, 3.8, 0.9), rackMat);
         rack.position.set(-5.6, 1.9, sz);
-        hangarGroup!.add(rack);
+        lobbyPreviewGroup!.add(rack);
 
         const ledMat = new THREE.MeshBasicMaterial({ 
           color: sz % 4 === 0 ? 0x2de2e6 : (sz % 3 === 0 ? 0x22c55e : 0xf5a623) 
@@ -560,7 +565,7 @@ export default function App() {
         const ledStrip = new THREE.Mesh(new THREE.PlaneGeometry(0.04, 2.8), ledMat);
         ledStrip.rotation.y = Math.PI / 2;
         ledStrip.position.set(-4.99, 1.9, sz);
-        hangarGroup!.add(ledStrip);
+        lobbyPreviewGroup!.add(ledStrip);
       });
 
       [-12, -7, -3].forEach((cz) => {
@@ -568,7 +573,7 @@ export default function App() {
         crate1.position.set(5.5, 0.4, cz);
         const crate2 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.7, 0.8), hardCaseMat);
         crate2.position.set(5.5, 1.15, cz + 0.1);
-        hangarGroup!.add(crate1, crate2);
+        lobbyPreviewGroup!.add(crate1, crate2);
       });
 
       // 6. Background Tactical Guard Silhouettes (matching reference image)
@@ -585,8 +590,8 @@ export default function App() {
         gGroup.add(gLegs, gTorso, gHead);
         return gGroup;
       };
-      hangarGroup.add(createGuardFigure(-4.2, -16));
-      hangarGroup.add(createGuardFigure(4.4, -14));
+      lobbyPreviewGroup.add(createGuardFigure(-4.2, -16));
+      lobbyPreviewGroup.add(createGuardFigure(4.4, -14));
 
       // 7. Cinematic Downward Directional Spotlights directly casting onto Operator (Requirement 1)
       const operatorKeySpot = new THREE.SpotLight(0xeef6ff, 7.5, 18, Math.PI / 5.2, 0.45, 1.2);
@@ -595,17 +600,17 @@ export default function App() {
       operatorKeySpot.castShadow = true;
       operatorKeySpot.shadow.bias = -0.0005;
       operatorKeySpot.shadow.mapSize.set(2048, 2048);
-      hangarGroup.add(operatorKeySpot);
-      hangarGroup.add(operatorKeySpot.target);
+      lobbyPreviewGroup.add(operatorKeySpot);
+      lobbyPreviewGroup.add(operatorKeySpot.target);
 
       const operatorTopSpot = new THREE.SpotLight(0xffffff, 4.2, 14, Math.PI / 6, 0.5, 1.2);
       operatorTopSpot.position.set(0, 5.8, -0.1);
       operatorTopSpot.target.position.set(0, 1.2, 0);
-      hangarGroup.add(operatorTopSpot);
-      hangarGroup.add(operatorTopSpot.target);
+      lobbyPreviewGroup.add(operatorTopSpot);
+      lobbyPreviewGroup.add(operatorTopSpot.target);
 
-      const hangarAmbient = new THREE.AmbientLight(0x0e131a, 0.45);
-      hangarGroup.add(hangarAmbient);
+      const lobbyAmbient = new THREE.AmbientLight(0x0e131a, 0.45);
+      lobbyPreviewGroup.add(lobbyAmbient);
 
       // 3D Humanoid Lobby Avatar Showcase
       lobbyAvatar = createLobbyAvatar(scene, new THREE.Vector3(0, 1000, 0));
@@ -613,59 +618,27 @@ export default function App() {
     }
 
     function teardownLobbyScene() {
-      // 1. Purge, dispose, and remove Lobby Avatar meshes
-      if (lobbyAvatar) {
-        try {
-          lobbyAvatar.destroy();
-          lobbyAvatar.group.traverse((obj) => {
-            if ((obj as THREE.Mesh).isMesh) {
-              const m = obj as THREE.Mesh;
-              if (m.geometry) m.geometry.dispose();
-              if (Array.isArray(m.material)) {
-                m.material.forEach(mat => mat.dispose());
-              } else if (m.material) {
-                m.material.dispose();
-              }
-            }
-          });
-          scene.remove(lobbyAvatar.group);
-        } catch (e) {
-          console.warn('Lobby avatar teardown exception:', e);
-        }
-        lobbyAvatar = null;
-        (window as any).__lobbyAvatar = null;
-      }
-
-      // 2. Completely tear down, purge, and dispose of Lobby Operator's turntable meshes and light variables
-      if (hangarGroup) {
-        try {
-          hangarGroup.traverse((obj) => {
-            if ((obj as THREE.Light).isLight) {
-              const l = obj as THREE.Light;
-              if (l.dispose) l.dispose();
-            }
-            if ((obj as THREE.Mesh).isMesh) {
-              const m = obj as THREE.Mesh;
-              if (m.geometry) m.geometry.dispose();
-              if (Array.isArray(m.material)) {
-                m.material.forEach(mat => mat.dispose());
-              } else if (m.material) {
-                m.material.dispose();
-              }
-            }
-          });
-          scene.remove(hangarGroup);
-          hangarGroup.clear();
-        } catch (e) {
-          console.warn('Hangar group teardown exception:', e);
-        }
-        hangarGroup = null;
+      lobbyAvatar?.destroy();
+      lobbyAvatar = null;
+      (window as any).__lobbyAvatar = null;
+      if (lobbyPreviewGroup) {
+        const owner = new WorldResources();
+        owner.track(lobbyPreviewGroup); owner.dispose();
+        lobbyPreviewGroup.removeFromParent(); lobbyPreviewGroup.clear();
+        lobbyPreviewGroup = null;
       }
     }
 
+    const runtimeTimeouts = new Set<ReturnType<typeof setTimeout>>();
+    function scheduleRuntimeTimeout(callback: () => void, delay: number) {
+      const timer = setTimeout(() => { runtimeTimeouts.delete(timer); callback(); }, delay);
+      runtimeTimeouts.add(timer);
+      return timer;
+    }
+
     // Initialize lobby turntable scene
-    // World is initialized before the first lobby render.
-    let world = initWorld(scene, camera);
+    // The operational world is allocated only on deployment.
+    let world: ReturnType<typeof createWorld>;
     setupLobbyScene();
 
     function triggerPlayerFlash() {
@@ -844,7 +817,7 @@ export default function App() {
     let intermissionTimer = 0;
     
     // EXTRACTION MECHANICS
-    let extractionDirector: ExtractionGameLoop | null = null;
+    let extractionDirector: Area51ExtractionGameLoop | ShatteredWallExtractionGameLoop | null = null;
     let extractionPhase = false;
     let extractionState = 'none'; // 'mainframe_search' | 'hacking' | 'evac' | 'cryo_search' | 'carrying' | 'defend'
     let extractionTimer = 0;
@@ -899,7 +872,11 @@ export default function App() {
       const mesh = part as THREE.Mesh;
       if (!mesh.geometry || !mesh.material) return;
       
-      const newLimb = new THREE.Mesh(mesh.geometry, mesh.material);
+      const copyMaterial = (material: THREE.Material) => {
+        const copy = material.clone(); copy.userData.ownedTextures = [];
+        return copy;
+      };
+      const newLimb = new THREE.Mesh(mesh.geometry.clone(), Array.isArray(mesh.material) ? mesh.material.map(copyMaterial) : copyMaterial(mesh.material));
       part.getWorldPosition(newLimb.position);
       part.getWorldQuaternion(newLimb.quaternion);
       
@@ -1036,9 +1013,9 @@ export default function App() {
       el.className = isPriority ? 'kill-msg font-bold text-amber-400' : 'kill-msg';
       el.textContent = msg;
       feed.appendChild(el);
-      setTimeout(() => {
+      scheduleRuntimeTimeout(() => {
         el.style.opacity = '0';
-        setTimeout(() => el.remove(), 300);
+        scheduleRuntimeTimeout(() => el.remove(), 300);
       }, isPriority ? 3600 : 2400);
     }
 
@@ -1048,14 +1025,14 @@ export default function App() {
       if (!el) return;
       el.classList.toggle('headshot', !!isHeadshot);
       el.classList.add('show');
-      setTimeout(() => el.classList.remove('show'), 50);
+      scheduleRuntimeTimeout(() => el.classList.remove('show'), 50);
     }
 
     function flashVignette() {
       const v = containerRef.current?.querySelector('#vignette');
       if (!v) return;
       v.classList.add('hit');
-      setTimeout(() => v.classList.remove('hit'), 90);
+      scheduleRuntimeTimeout(() => v.classList.remove('hit'), 90);
     }
 
     function showBloodSplatter() {
@@ -1078,10 +1055,10 @@ export default function App() {
         drop.style.setProperty('--drip-len', `${dripLen}px`);
         overlay.appendChild(drop);
       }
-      setTimeout(() => {
+      scheduleRuntimeTimeout(() => {
         if (overlay) overlay.style.opacity = '0';
       }, 1100);
-      setTimeout(() => {
+      scheduleRuntimeTimeout(() => {
         if (overlay) overlay.innerHTML = '';
       }, 1550);
     }
@@ -1260,7 +1237,7 @@ export default function App() {
     }
 
     function applyDamageToPlayer(amount: number, ignoreShield: boolean, skipFlash: boolean, attackerBot: Bot | null) {
-      if (!player.alive) return;
+      if (!player.alive || matchConfig.inspectorMode) return;
       if (world.facility?.controlsLocked || world.offshore?.phase === 'DEPARTING' || world.offshore?.phase === 'COMPLETE') return;
       if (!ignoreShield && player.shield > 0) {
         const absorbed = Math.min(player.shield, amount);
@@ -1356,11 +1333,14 @@ export default function App() {
       }
 
       if(bot.campaignEntity === 'spartan' && !isHeadshot && (bot.armor ?? 0)>0){const absorbed=Math.min(bot.armor!,amount*.65);bot.armor!-=absorbed;amount-=absorbed;}
+      // Central damage dispatch covers every firearm, melee and player projectile.
+      const inspectorHit = matchConfig.inspectorMode && attacker === 'player';
+      if (inspectorHit) amount = INSPECTOR_DAMAGE;
       bot.health -= amount;
       if (attacker === 'player') {
         player.damageDealt += Math.round(amount);
       }
-      if (bot.health <= 0 && !bot.isZombie && !bot.isVIP && !bot.downed && (bot.revivesUsed ?? 0) === 0 && bots.some(ally=>ally.alive&&ally.team===bot.team&&(ally.classId??ally.eliteRole)==='medic')) {
+      if (!inspectorHit && bot.health <= 0 && !bot.isZombie && !bot.isVIP && !bot.downed && (bot.revivesUsed ?? 0) === 0 && bots.some(ally=>ally.alive&&ally.team===bot.team&&(ally.classId??ally.eliteRole)==='medic')) {
         bot.health=0;bot.alive=false;bot.downed=true;bot.deathT=20;bot.downedAttacker=attacker;bot.vel.set(0,0,0);
         bot.group.rotation.x=-1.2;bot.healthEl.style.display='none';pushKillFeed(`${bot.callsign??'OPERATOR'} DOWNED — MEDIC REQUIRED`);return;
       }
@@ -1897,10 +1877,16 @@ export default function App() {
     }
 
     function clearMatchEntities() {
+      for (const timer of runtimeTimeouts) clearTimeout(timer);
+      runtimeTimeouts.clear();
+      const feed = containerRef.current?.querySelector('#killfeed');
+      if (feed) feed.replaceChildren();
       audioManager.stop();
-      clearCombatSystems(scene, world);
-      world.clearDeployableCover?.();
-      for(const pack of [...world.groundPickups])if(pack.group.userData.ammoPack)world.removeGroundPickup(pack);
+      if (world) {
+        clearCombatSystems(scene, world);
+        world.clearDeployableCover?.();
+        for (const pack of [...world.groundPickups]) if (pack.group.userData.ammoPack) world.removeGroundPickup(pack);
+      }
       vmManager.resetEffects();
       if(thirdPersonActor)disposeBotVisuals(thirdPersonActor.rootGroup);thirdPersonActor=null;carriedWeapon=null;carriedId='';
       extractionDirector = null;
@@ -1908,19 +1894,28 @@ export default function App() {
       extractionState = 'none';
       extractionTimer = 0;
       if (extractionTargetObj && extractionTargetObj instanceof THREE.Object3D) {
-         scene.remove(extractionTargetObj);
+         disposeBotVisuals(extractionTargetObj);
       }
       extractionTargetObj = null;
       extractionTankBossSpawned = false;
 
       for (const b of [...bots]) removeBot(b);
-      for (const g of activeGrenades) scene.remove(g.group);
+      for (const g of activeGrenades) disposeBotVisuals(g.group);
       activeGrenades.length = 0;
       for (const fx of explosionEffects) {
-        scene.remove(fx.mesh);
-        if (fx.light) scene.remove(fx.light);
+        disposeBotVisuals(fx.mesh);
+        if (fx.light) disposeBotVisuals(fx.light);
       }
       explosionEffects.length = 0;
+      for (const s of sparkPool) disposeBotVisuals(s.mesh);
+      sparkPool.length = 0;
+      // Smoke shares one session geometry; detached limbs own their geometry copies.
+      for (const smoke of smokePool) { smoke.mesh.removeFromParent(); (smoke.mesh.material as THREE.Material).dispose(); }
+      smokePool.length = 0;
+      for (const limb of limbPool) disposeBotVisuals(limb.mesh);
+      limbPool.length = 0;
+      for (const projectile of railgunProjectiles) disposeBotVisuals(projectile.group);
+      railgunProjectiles.length = 0;
       const banner = containerRef.current?.querySelector('#wave-banner') as HTMLElement | null;
       if (banner) banner.style.display = 'none';
     }
@@ -1934,7 +1929,7 @@ export default function App() {
         banner.style.display = 'block';
         bannerTitle.textContent = `WAVE ${currentWave}`;
         bannerSub.textContent = `SURVIVE THE HORDE`;
-        setTimeout(() => { if (!waveIntermission) banner.style.display = 'none'; }, 2400);
+        scheduleRuntimeTimeout(() => { if (!waveIntermission) banner.style.display = 'none'; }, 2400);
       }
 
       const count = Math.floor(matchConfig.enemyCount * Math.pow(1.25, currentWave - 1) + currentWave * 2);
@@ -1957,30 +1952,24 @@ export default function App() {
         waveCount: 0
       };
       
-      // Guardrail: If matchMode is zombie or extraction, strictly enforce Subterranean Hangar map
-      const isFacilityMode = (
-        matchConfig.mode === 'zombie' ||
-        matchConfig.mode === 'extraction' ||
-        matchModeRef.current === 'zombie' ||
-        matchModeRef.current === 'extraction'
-      );
-      const activeMap = isFacilityMode && selectedMapStateRef.current === 'training' ? 'hangar' : selectedMapStateRef.current;
+      const activeMap = mapForMode(selectedMapStateRef.current, matchConfig.mode);
       selectedMapStateRef.current = activeMap;
+      setSelectedMapState(activeMap);
 
-      world.dispose();
+      world?.dispose();
       world = activeMap === 'shattered_wall' ? initWorld(scene, camera) : createWorld(scene, activeMap);
       
-      const isHangar = activeMap === 'hangar';
+      const isFacility = activeMap === 'area51';
       combatLightGroup.visible = !world.offshore && !world.facility;
       if (world.lobbyGroup) world.lobbyGroup.visible = false;
       storm.mesh.visible = !world.offshore && !world.facility && matchConfig.mode !== 'extraction';
-      hemiLight.intensity = isHangar ? 0.55 : 0.65;
-      sunLight.intensity = isHangar ? 0.75 : 1.05;
+      hemiLight.intensity = isFacility ? 0.55 : 0.65;
+      sunLight.intensity = isFacility ? 0.75 : 1.05;
       
       if (world.offshore) {
          skyMesh.visible = false;
-      } else if (isHangar) {
-         scene.background = hangarBackground;
+      } else if (isFacility) {
+         scene.background = facilityBackground;
          // Gameplay fog is owned and restored by world.updateWorld().
          skyMesh.visible = false;
       } else {
@@ -1992,7 +1981,19 @@ export default function App() {
       teamScoreBlue = 0;
       teamScoreRed = 0;
       player.kills = 0;
+      player.shotsFired = player.shotsHit = player.headshots = player.damageDealt = 0;
+      player.isMeleeing = false; player.meleeTimer = 0; player.drinkTimer = 0;
+      player.crouching = player.sprinting = player.onGround = false;
+      player.continuousShots = 0;
       playerPoints = 0;
+      botIdCounter = 0; zombieTypeIndex = 0;
+      currentWave = 1; zombiesRemaining = 0; waveIntermission = false; intermissionTimer = 0;
+      recoilPitch = recoilKick = bobPhase = 0; lastGrenadeThrow = -1;
+      isMouseDown = false;
+      for (const key of Object.keys(keys)) keys[key] = false;
+      radarPingsRef.current.length = 0; focusTargetIDRef.current = null;
+      setTargetingPhase(false); setSquadDirectiveBanner(null); setMatchRewards(null);
+      setEndResult({ victory: false, title: 'DEFEAT', sub: '' });
 
       // Apply selected Battlefront-style class configuration and stat overrides
       const activeClass = CLASSES[selectedClassIdRef.current] || CLASSES.assault;
@@ -2013,6 +2014,11 @@ export default function App() {
           // Stalker: +10% base movement speed
           player.classSpeedMultiplier *= 1.10;
         }
+      }
+
+      if (matchConfig.inspectorMode) {
+        player.health = player.maxHealth = INSPECTOR_HEALTH;
+        player.shield = player.maxShield = 0;
       }
 
       if (world.offshore || world.facility) {
@@ -2037,7 +2043,7 @@ export default function App() {
       player.team = matchConfig.mode === 'ffa' ? 'player' : 'blue';
 
       if (matchConfig.mode === 'extraction') {
-        const Director = world.offshore ? ShatteredWallExtractionGameLoop : world.facility ? Area51ExtractionGameLoop : ExtractionGameLoop;
+        const Director = world.offshore ? ShatteredWallExtractionGameLoop : Area51ExtractionGameLoop;
         extractionDirector = new Director({
           faction: factionAlignmentRef.current,
           player,
@@ -2072,7 +2078,7 @@ export default function App() {
       storm.finished = false;
 
       if (matchConfig.mode === 'zombie') {
-        const isElite = deploymentProtocolRef.current === 'elite';
+        const isElite = !matchConfig.inspectorMode && deploymentProtocolRef.current === 'elite';
         if (isElite) {
           const squad = eliteSquadRef.current || DEFAULT_ELITE_SQUAD;
           const formationOffsets = [
@@ -2102,7 +2108,7 @@ export default function App() {
         currentWave = matchConfig.startingWave || 1;
         startNextZombieWave(currentWave);
       } else if (matchConfig.mode === 'extraction') {
-        const isElite = deploymentProtocolRef.current === 'elite';
+        const isElite = !matchConfig.inspectorMode && deploymentProtocolRef.current === 'elite';
         if (isElite) {
           const squad = eliteSquadRef.current || DEFAULT_ELITE_SQUAD;
           const formationOffsets = [
@@ -2130,7 +2136,7 @@ export default function App() {
         }
         // AI Director will handle hostile spawns in EXTRACTION.
       } else if (matchConfig.mode === 'team') {
-        const isElite = deploymentProtocolRef.current === 'elite';
+        const isElite = !matchConfig.inspectorMode && deploymentProtocolRef.current === 'elite';
         if (isElite) {
           const squad = eliteSquadRef.current || DEFAULT_ELITE_SQUAD;
           squad.forEach((companion) => makeBot('blue', null, false, companion));
@@ -2827,21 +2833,18 @@ export default function App() {
 
     // Global action triggers from UI buttons
     const deployHandler = () => {
+      if (gameStateRef.current !== 'start') return;
       unlockAudioEngine();
       setupPlayerLoadout();
       matchConfig.mode = matchModeRef.current;
       matchConfig.faction = factionAlignmentRef.current;
-      matchConfig.friendlyCount = friendlyCountRef.current;
+      matchConfig.inspectorMode = inspectorModeRef.current;
+      matchConfig.friendlyCount = matchConfig.inspectorMode ? 0 : friendlyCountRef.current;
       matchConfig.enemyCount = enemyCountRef.current;
       matchConfig.targetScore = targetScoreRef.current;
       currentDifficulty = DIFFICULTIES[difficultyKeyRef.current] || DIFFICULTIES.medium;
       mouseSensitivity = (sensitivityValRef.current || 11) / 5000;
 
-      // Map Rules State Guardrail: Horde and Extraction Modes strictly enforce Subterranean Hangar map
-      if ((matchConfig.mode === 'zombie' || matchConfig.mode === 'extraction') && selectedMapStateRef.current === 'training') {
-        selectedMapStateRef.current = 'hangar';
-        setSelectedMapState('hangar');
-      }
 
       initMatch();
       switchSlot(player.slotIndex);
@@ -2872,15 +2875,8 @@ export default function App() {
     };
 
     const restartHandler = () => {
-      if (selectedMapStateRef.current === 'training' && (
-        matchConfig.mode === 'zombie' ||
-        matchConfig.mode === 'extraction' ||
-        matchModeRef.current === 'zombie' ||
-        matchModeRef.current === 'extraction'
-      )) {
-        selectedMapStateRef.current = 'hangar';
-        setSelectedMapState('hangar');
-      }
+      if (gameStateRef.current !== 'DEATH_SCREEN' && gameStateRef.current !== 'paused') return;
+      stopMatchInput();
       initMatch();
       switchSlot(player.slotIndex);
       gameStateRef.current = 'playing';
@@ -2901,27 +2897,28 @@ export default function App() {
       requestGamePointerLock();
     };
 
-    const lobbyHandler = () => {
-      gameStateRef.current = 'start';
-      player.fireHeld=false;player.aiming=false;for(const key of Object.keys(keys))keys[key]=false;
-      AUDIO.laserBeam.stop();AUDIO.minigunFire.stop();updateMinigunSpinAudio(false,0);
-      setActiveTab('play');
-      AUDIO.arSpray.stop();
-      if (document.pointerLockElement) {
-        try { document.exitPointerLock?.(); } catch {}
-      }
-      clearMatchEntities();
-      setupLobbyScene();
-      gameStateRef.current = 'start';
-      setGameState('start');
+    function stopMatchInput() {
+      player.fireHeld = player.aiming = false;
+      player.vel.set(0, 0, 0);
+      isMouseDown = false;
+      for (const key of Object.keys(keys)) keys[key] = false;
+      for (const sound of Object.values(AUDIO)) sound.stop();
+      updateMinigunSpinAudio(false, 0); updateRailgunChargeAudio(false, 0);
+      updateAdrenalineHeartbeat(false); audioManager.stop();
+      laserBeamMesh.visible = railgunAimLaserMesh.visible = false;
+      if (document.pointerLockElement) { try { document.exitPointerLock?.(); } catch {} }
+    }
 
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.fov = HIP_FOV;
-      camera.updateProjectionMatrix();
-      camera.position.set(0, 1000 + 1.25, 2.65);
-      camera.lookAt(0, 1000 + 1.10, 0);
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.render(scene, camera);
+    const lobbyHandler = () => {
+      if (gameStateRef.current === 'start') return;
+      stopMatchInput();
+      gameStateRef.current = 'start';
+      setGameState('start'); setActiveTab('play');
+      setExtractionState(null); setMatchRewards(null); setTargetingPhase(false);
+      setSquadDirectiveBanner(null); radarPingsRef.current.length = 0;
+      // Unmount this engine's effect, including RAF, canvas, world, input and GPU resources.
+      // A fresh lobby-only instance restores the terminal without a browser refresh.
+      setEngineGeneration(generation => generation + 1);
     };
 
     deployHandlerRef.current = deployHandler;
@@ -2929,17 +2926,7 @@ export default function App() {
     restartHandlerRef.current = restartHandler;
     lobbyHandlerRef.current = lobbyHandler;
 
-    const deployBtn = containerRef.current?.querySelector('#btn-deploy');
-    const resumeBtn = containerRef.current?.querySelector('#btn-resume');
-    const restartBtn = containerRef.current?.querySelector('#btn-restart-end');
-    const toLobbyPauseBtn = containerRef.current?.querySelector('#btn-to-lobby-pause');
-    const toLobbyEndBtn = containerRef.current?.querySelector('#btn-to-lobby-end');
-
-    deployBtn?.addEventListener('click', deployHandler);
-    resumeBtn?.addEventListener('click', resumeHandler);
-    restartBtn?.addEventListener('click', restartHandler);
-    toLobbyPauseBtn?.addEventListener('click', lobbyHandler);
-    toLobbyEndBtn?.addEventListener('click', lobbyHandler);
+    // React owns button events. Do not attach a second native listener to the same buttons.
 
     // Main Game Loop
     const clock = new THREE.Clock();
@@ -2951,7 +2938,7 @@ export default function App() {
 
       if (gameStateRef.current === 'playing') {
         operatorControls.enabled = false; previousOperatorZoom = '';
-        if (hangarGroup) hangarGroup.visible = false;
+        if (lobbyPreviewGroup) lobbyPreviewGroup.visible = false;
         if (lobbyAvatar) lobbyAvatar.group.visible = false;
         combatLightGroup.visible = !world.offshore && !world.facility;
         if (world.lobbyGroup) world.lobbyGroup.visible = false;
@@ -2959,8 +2946,8 @@ export default function App() {
         if(world.facility?.controlsLocked){player.fireHeld=false;player.vel.set(0,0,0);player.aiming=false;}
         if (matchConfig.mode === 'extraction') for (const hit of updateHeliDefenses(dt, bots)) damageBot(hit.bot, hit.damage, false, 'player');
         
-        if (!world.offshore && !world.facility && selectedMapStateRef.current === 'hangar') {
-           scene.background = hangarBackground;
+        if (!world.offshore && !world.facility && selectedMapStateRef.current === 'area51') {
+           scene.background = facilityBackground;
            // Gameplay fog is owned and restored by world.updateWorld().
         } else if (!world.offshore && !world.facility) {
            scene.background = null;
@@ -3054,7 +3041,10 @@ export default function App() {
             }
           }
 
-          if(world.facility && player.pos.y < -5)applyDamageToPlayer(player.maxHealth+player.maxShield,true,true,null);
+          if(world.facility && player.pos.y < -5) {
+            if (matchConfig.inspectorMode) { player.pos.copy(world.getSpawnPoints('extraction')[0].position); player.pos.y += PLAYER_EYE; player.vel.set(0,0,0); }
+            else applyDamageToPlayer(player.maxHealth+player.maxShield,true,true,null);
+          }
           if (world.offshore && player.pos.y < 1.1) applyDamageToPlayer(player.maxHealth + player.maxShield, true, true, null);
 
           // Storm damage applies to the arena modes.
@@ -3484,7 +3474,7 @@ export default function App() {
 
           if (isHighImpact || (g.timeAlive >= g.maxFuse && g.hasHitGround)) {
             detonateGrenade(g.pos, g.ownerTeam);
-            scene.remove(g.group);
+            disposeBotVisuals(g.group);
             activeGrenades.splice(i, 1);
           }
         }
@@ -3498,8 +3488,8 @@ export default function App() {
           (fx.mesh.material as THREE.MeshBasicMaterial).opacity = Math.max(0, fx.life / 0.32);
           if (fx.light) fx.light.intensity = (fx.life / 0.32) * 4.5;
           if (fx.life <= 0) {
-            scene.remove(fx.mesh);
-            if (fx.light) scene.remove(fx.light);
+            disposeBotVisuals(fx.mesh);
+            if (fx.light) disposeBotVisuals(fx.light);
             explosionEffects.splice(i, 1);
           }
         }
@@ -3515,7 +3505,7 @@ export default function App() {
             s.mesh.scale.multiplyScalar(1 + dt * 4);
           }
           if (s.life <= 0) {
-            scene.remove(s.mesh);
+            disposeBotVisuals(s.mesh);
             sparkPool.splice(i, 1);
           }
         }
@@ -3536,7 +3526,7 @@ export default function App() {
           
           l.life -= dt;
           if (l.life <= 0) {
-            scene.remove(l.mesh);
+            disposeBotVisuals(l.mesh);
             limbPool.splice(i, 1);
           }
         }
@@ -3550,7 +3540,7 @@ export default function App() {
           sm.mesh.scale.set(s, s, s);
           (sm.mesh.material as THREE.MeshBasicMaterial).opacity = Math.max(0, (sm.life / sm.maxLife) * 0.75);
           if (sm.life <= 0) {
-            scene.remove(sm.mesh);
+            sm.mesh.removeFromParent(); (sm.mesh.material as THREE.Material).dispose();
             smokePool.splice(i, 1);
           }
         }
@@ -3574,7 +3564,7 @@ export default function App() {
           rp.trailMesh.scale.set(trailScale, trailScale, 1);
 
           if (rp.life <= 0) {
-            scene.remove(rp.group);
+            disposeBotVisuals(rp.group);
             railgunProjectiles.splice(i, 1);
           }
         }
@@ -4077,12 +4067,12 @@ export default function App() {
           });
         }
       } else if (gameStateRef.current === 'start') {
-        if (!hangarGroup || !lobbyAvatar) {
+        if (!lobbyPreviewGroup || !lobbyAvatar) {
           setupLobbyScene();
         }
         combatLightGroup.visible = false;
-        if (hangarGroup) hangarGroup.visible = !world.lobbyGroup;
-        if (world.lobbyGroup) world.lobbyGroup.visible = true;
+        if (lobbyPreviewGroup) lobbyPreviewGroup.visible = !world?.lobbyGroup;
+        if (world?.lobbyGroup) world.lobbyGroup.visible = true;
         scene.background = lobbyBackground;
         scene.fog = lobbyFog;
 
@@ -4110,8 +4100,8 @@ export default function App() {
           const faction = factionAlignmentRef.current;
           if (previousLobbyMap !== map || previousLobbyFaction !== faction) {
             lobbyAvatar.setEnvironment(map, faction);
-            const warm = map === 'hangar';
-            hangarGroup?.traverse(object => { if (object instanceof THREE.SpotLight || object instanceof THREE.AmbientLight) object.color.setHex(warm ? 0xffd0a0 : map === 'shattered_wall' ? 0x81baff : 0xd3e6ff); });
+            const warm = map === 'area51';
+            lobbyPreviewGroup?.traverse(object => { if (object instanceof THREE.SpotLight || object instanceof THREE.AmbientLight) object.color.setHex(warm ? 0xffd0a0 : map === 'shattered_wall' ? 0x81baff : 0xd3e6ff); });
             previousLobbyMap = map; previousLobbyFaction = faction;
           }
           const locker = activeTabRef.current === 'locker';
@@ -4139,7 +4129,7 @@ export default function App() {
 
       if(gameStateRef.current==='playing')updateThirdPerson(dt);
       else if(gameStateRef.current==='start'&&thirdPersonActor)thirdPersonActor.rootGroup.visible=false;
-      if (world.offshore?.phase === 'DEPARTING') camera.position.copy(player.pos);
+      if (world?.offshore?.phase === 'DEPARTING') camera.position.copy(player.pos);
       if(gameStateRef.current==='playing' && world.facility?.controlsLocked){world.facility.updateCamera(camera,player);vmManager.root.visible=false;if(thirdPersonActor)thirdPersonActor.rootGroup.visible=false;}
       // These tabs own opaque UI environments; skip the lobby/storm and bloom passes.
       if(gameStateRef.current==='start'&&(activeTabRef.current==='loadout'||activeTabRef.current==='gamemode'))renderer.clear();
@@ -4164,6 +4154,8 @@ export default function App() {
 
     return () => {
       cancelAnimationFrame(animId);
+      stopMatchInput();
+      deployHandlerRef.current = resumeHandlerRef.current = restartHandlerRef.current = lobbyHandlerRef.current = undefined;
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       renderer.domElement.removeEventListener('mousedown', onMouseDown);
@@ -4180,16 +4172,19 @@ export default function App() {
       if(thirdPersonActor)disposeBotVisuals(thirdPersonActor.rootGroup);
       disposeBotVisuals(vmManager.root);
       disposeBotTextureCache();
-      world.dispose();
+      world?.dispose();
       cleanupWorld(scene);
       audioManager.dispose();
       disposeBotVisuals(combatLightGroup);
       botHealthLayer?.remove();
       operatorControls.dispose();
       effects.dispose();
-      renderer?.dispose();
+      smokeGeo.dispose(); smokeMat.dispose();
+      const remainingResources = new WorldResources();
+      remainingResources.track(scene); remainingResources.dispose(); scene.clear();
+      renderer.dispose(); renderer.forceContextLoss(); renderer.domElement.remove();
     };
-  }, []);
+  }, [engineGeneration]);
 
   return (
     <div ref={containerRef} className="relative w-full h-screen max-h-screen select-none overflow-hidden font-mono bg-black text-[#e8edf0]">
@@ -4219,8 +4214,10 @@ export default function App() {
             </button>
           </div>
 
+          {inspectorMode && <div className="absolute top-14 left-6 z-40 rounded border border-amber-400/60 bg-black/80 px-3 py-2 text-xs text-amber-200 pointer-events-none">DEV / INSPECTOR · SOLO · GOD · 99,999 DAMAGE</div>}
+
           {/* Dynamic Squad Command Visor HUD & Companion Matrix */}
-          {(matchMode === 'extraction' || matchMode === 'zombie') && (
+          {!inspectorMode && (matchMode === 'extraction' || matchMode === 'zombie') && (
             <div className="absolute top-14 left-6 z-40 pointer-events-none flex flex-col gap-1.5 font-mono">
               <div className="flex flex-col gap-1 px-3 py-1.5 bg-black/80 border border-[#2de2e6]/50 backdrop-blur-md rounded-xs shadow-[0_0_12px_rgba(45,226,230,0.25)]">
                 <div className="flex items-center gap-2">
@@ -4365,6 +4362,8 @@ export default function App() {
           setDifficultyKey={setDifficultyKey}
           selectedMapState={selectedMapState}
           setSelectedMapState={setSelectedMapState}
+          inspectorMode={inspectorMode}
+          setInspectorMode={setInspectorMode}
           isDevMode={isDevMode}
           setIsDevMode={setIsDevMode}
           deploymentProtocol={deploymentProtocol}

@@ -37,7 +37,7 @@ for (const kind of ["humvee", "abrams"] as const) {
   owner.dispose();
 }
 const scene = new THREE.Scene(),
-  world = createWorld(scene, "hangar"),
+  world = createWorld(scene, "area51"),
   facility = world.facility!;
 assert.equal(terrainHeight(0, -170), 15);
 assert.equal(terrainHeight(0, -20), 0);
@@ -153,7 +153,7 @@ for (const entity of ["security", "marine", "spartan"] as const) {
 }
 for (const faction of ["usmc", "apex"] as const) {
   const scene = new THREE.Scene(),
-    world = createWorld(scene, "hangar"),
+    world = createWorld(scene, "area51"),
     facility = world.facility!,
     bots: Bot[] = [];
   const player = {

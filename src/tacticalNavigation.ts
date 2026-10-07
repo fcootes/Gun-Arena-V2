@@ -16,10 +16,10 @@ export function traversalBlocked(from: THREE.Vector3, to: THREE.Vector3, collide
   return false;
 }
 
-/** Sampled walkable graph for legacy maps; offshore keeps its authored stair graph. */
-export function createTacticalNavigation(map: 'training' | 'hangar', colliders: WorldCollider[], height: (x: number, z: number, foot: number) => number) {
-  const step = map === 'hangar' ? 2 : 4, points: THREE.Vector3[] = [], cells = new Map<string, number>();
-  const minX = map === 'hangar' ? -14 : -92, maxX = -minX, minZ = map === 'hangar' ? -176 : -92, maxZ = map === 'hangar' ? 8 : 92;
+/** Sampled Training Grounds graph; Area 51 and Pacific Rim own their authored graphs. */
+export function createTacticalNavigation(_map: 'training', colliders: WorldCollider[], height: (x: number, z: number, foot: number) => number) {
+  const step = 4, points: THREE.Vector3[] = [], cells = new Map<string, number>();
+  const minX = -92, maxX = 92, minZ = -92, maxZ = 92;
   for (let x = minX; x <= maxX; x += step) for (let z = minZ; z <= maxZ; z += step) {
     const p = new THREE.Vector3(x, height(x, z, 0), z);
     if (colliders.some(c => !c.isDoor && !c.passThroughTeam && c.active !== false && !c.isRamp && !c.isStair && c.maxY > p.y + .6 && c.minY < p.y + 1.8 && x > c.minX - .4 && x < c.maxX + .4 && z > c.minZ - .4 && z < c.maxZ + .4)) continue;

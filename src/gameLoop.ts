@@ -851,8 +851,8 @@ export class ShatteredWallExtractionGameLoop extends ExtractionGameLoop {
     return { interactionPrompt, isPromptObjective: interactionPrompt !== null };
   }
 
-  public override canOpenDoor(): { allowed: boolean; reason?: string } { return { allowed: true }; }
-  public override recordMutantKill(): void { this.state.mutantsKilled++; }
+  public override canOpenDoor(_position?: THREE.Vector3): { allowed: boolean; reason?: string } { return { allowed: true }; }
+  public override recordMutantKill(_bot?: Bot): void { this.state.mutantsKilled++; }
   public override recordBossDefeated(): void { this.state.bossDefeated = true; }
 }
 
@@ -2993,12 +2993,12 @@ export function clearCombatSystems(scene: THREE.Scene, world: WorldManager): voi
   clearTripods({ scene, world });
 
   for (const puddle of activeToxicPuddles) {
-    scene.remove(puddle.mesh);
+    disposeBotVisuals(puddle.mesh);
   }
   activeToxicPuddles.length = 0;
 
   for (const ring of activeDistortionRings) {
-    scene.remove(ring.mesh);
+    disposeBotVisuals(ring.mesh);
   }
   activeDistortionRings.length = 0;
 }

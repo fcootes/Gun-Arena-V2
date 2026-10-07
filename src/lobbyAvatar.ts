@@ -614,7 +614,7 @@ export function createLobbyAvatar(scene: THREE.Scene, basePos: THREE.Vector3): L
   return {
     group: root,
     setEnvironment: (map, faction) => {
-      const warm = map === 'hangar';
+      const warm = map === 'area51';
       spotLight.color.setHex(warm ? 0xffd3a0 : map === 'shattered_wall' ? 0x93c9ff : 0xe5f4ff);
       topSpot.color.copy(spotLight.color);
       tacticalFill.color.setHex(warm ? 0x69432a : 0x294865);

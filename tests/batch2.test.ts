@@ -49,7 +49,7 @@ let roundedHead = false;
 avatar.group.traverse((o: any) => { if (o.geometry instanceof THREE.SphereGeometry && o.geometry.parameters.radius === .13) roundedHead = true; });
 assert.ok(roundedHead);
 const spot = avatar.group.children.find(o => o instanceof THREE.SpotLight) as THREE.SpotLight;
-avatar.setEnvironment('hangar', 'usmc'); const warm = spot.color.getHex();
+avatar.setEnvironment('area51', 'usmc'); const warm = spot.color.getHex();
 avatar.setEnvironment('shattered_wall', 'usmc'); assert.notEqual(spot.color.getHex(), warm);
 let avatarTexture: THREE.Texture | undefined;
 avatar.group.traverse((o: any) => { if (o.material?.map) avatarTexture = o.material.map; });
@@ -64,7 +64,7 @@ for (const map of ['training'] as const) {
   const world = createWorld(scene, map);
   world.updateWorld(.016, 1, 'team');
   const fog = scene.fog; assert.ok(fog instanceof THREE.FogExp2);
-  const reflection = scene.getObjectByName('Legacy_WetFloorReflection') as THREE.Mesh;
+  const reflection = scene.getObjectByName('Training_WetFloorReflection') as THREE.Mesh;
   assert.ok(reflection?.visible);
   assert.ok((reflection.material as THREE.ShaderMaterial).uniforms.reflectionOpacity.value > 0);
   let geometryDisposals = 0, materialDisposals = 0;

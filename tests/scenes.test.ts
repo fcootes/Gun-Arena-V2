@@ -140,7 +140,7 @@ console.log(
 );
 
 const scenes = new Set<string>();
-for (const map of ["training", "hangar", "shattered_wall"] as const) {
+for (const map of ["training", "area51", "shattered_wall"] as const) {
   for (const faction of ["usmc", "apex"] as const) {
     const markup = renderToStaticMarkup(
       React.createElement(ModePosters, {
