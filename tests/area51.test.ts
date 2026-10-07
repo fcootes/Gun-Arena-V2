@@ -87,9 +87,31 @@ walk(new THREE.Vector3(27.5, 0, -65), new THREE.Vector3(18, 0, -112));
 walk(new THREE.Vector3(18, 0, -112), AREA51_LAYOUT.liftBottom);
 walk(AREA51_LAYOUT.liftTop, new THREE.Vector3(0, 15, -170));
 const p = AREA51_LAYOUT.liftBottom.clone();
+const liftLight = scene.getObjectByName("Area51_ElevatorInteriorLight") as THREE.PointLight;
+assert.equal(liftLight.intensity, 2);
+assert.ok(scene.getObjectByName("Area51_LiftCallConsole"));
+assert.ok(facility.isNearLift(new THREE.Vector3(-9.35, 1.65, -132.8)));
+assert.ok(!facility.transferLift(new THREE.Vector3(0, 0, 0), 15));
 assert.ok(facility.transferLift(p, 15));
+assert.equal(p.y, 0, "ride does not teleport to upper floor");
+assert.ok(facility.controlsLocked);
+assert.ok(!facility.transferLift(p, 15), "repeated interaction cannot restart ride");
+for (let i = 0; i < 6; i++) world.updateWorld(0.1, i * 0.1, "extraction");
+const door = scene.getObjectByName("Area51_LowerLiftDoors")!.children[0];
+assert.ok(Math.abs(Math.abs(door.position.x) - 1.35) < 0.001, "doors close before travel");
+for (let i = 0; i < 15; i++) world.updateWorld(0.1, i * 0.1, "extraction");
+assert.ok(p.y > 6 && p.y < 9, "smooth mid-ride height");
+for (let i = 0; i < 22; i++) world.updateWorld(0.1, i * 0.1, "extraction");
+assert.ok(!facility.controlsLocked);
+assert.ok(Math.abs(Math.abs(door.position.x) - 4.05) < 0.001);
 assert.equal(p.y, 15);
 assert.ok(p.z <= -140);
+p.copy(AREA51_LAYOUT.liftTop).y += 1.05;
+assert.ok(facility.transferLift(p, 0, 1.05));
+for (let i = 0; i < 43; i++) world.updateWorld(0.1, i * 0.1, "extraction");
+assert.equal(p.y, 1.05, "return preserves crouched eye height");
+assert.equal(p.z, -131);
+assert.ok(!facility.liftMoving);
 const lightIntensities = () => {
   const result: number[] = [];
   scene.traverse((o) => {
@@ -221,7 +243,14 @@ for (const faction of ["usmc", "apex"] as const) {
   } else assert.equal(director.state.hasBioCylinder, true);
   assert.ok(facility.objectiveComplete);
   player.pos.copy(facility.liftBottom).y += 1.65;
+  const liftPrompt = director.update(0.1, {});
+  assert.equal(liftPrompt.interactionPrompt, "[ E ] - ENTER ELEVATOR (LEVEL 4 WAREHOUSE)");
   director.update(0.1, { KeyE: true });
+  assert.equal(player.pos.y, 1.65);
+  for (let i = 0; i < 43; i++) {
+    world.updateWorld(0.1, i * 0.1, "extraction");
+    director.update(0.1, {});
+  }
   assert.equal(player.pos.y, 16.65);
   assert.equal(facility.phase, "ARRIVAL");
   player.pos.copy(facility.consolePosition);

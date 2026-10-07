@@ -183,8 +183,7 @@ export class Area51ExtractionGameLoop extends ExtractionGameLoop {
       }
     } else this.state.isHacking = false;
     if (
-      Math.abs(player.pos.x - facility.liftBottom.x) < 2.6 &&
-      Math.abs(player.pos.z - facility.liftBottom.z) < 3.6
+      !facility.controlsLocked && facility.isNearLift(player.pos)
     ) {
       const upper = player.pos.y > 10;
       interactionPrompt =
@@ -192,14 +191,13 @@ export class Area51ExtractionGameLoop extends ExtractionGameLoop {
           ? "LIFT LOCKED: COMPLETE THE BIO-LAB OBJECTIVE"
           : upper
             ? "[E] RETURN TO BIO-LAB"
-            : "[E] ASCEND TO LEVEL 4";
+            : "[ E ] - ENTER ELEVATOR (LEVEL 4 WAREHOUSE)";
       if (
         (upper || facility.objectiveComplete) &&
         pressed() &&
         facility.transferLift(player.pos, upper ? 0 : 15, this.eyeOffset)
       ) {
-        if (!upper && facility.phase === "INFILTRATE")
-          facility.phase = "ARRIVAL";
+        interactionPrompt = "ELEVATOR IN TRANSIT";
       }
     }
     if (

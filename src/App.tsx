@@ -3343,8 +3343,8 @@ export default function App() {
         }
         
         if(world.facility && !world.facility.controlsLocked && !extPromptResult.interactionPrompt){
-          if(matchConfig.mode !== 'extraction' && Math.abs(player.pos.x+12)<2.6 && Math.abs(player.pos.z+136)<3.6){
-            extPromptResult={interactionPrompt:player.pos.y>10?'[E] LIFT TO BIO-LAB':'[E] LIFT TO LEVEL 4',isPromptObjective:false};
+          if(matchConfig.mode !== 'extraction' && world.facility.isNearLift(player.pos)){
+            extPromptResult={interactionPrompt:player.pos.y>10?'[E] LIFT TO BIO-LAB':'[ E ] - ENTER ELEVATOR (LEVEL 4 WAREHOUSE)',isPromptObjective:false};
             if(keys.KeyE){keys.KeyE=false;world.facility.transferLift(player.pos,player.pos.y>10?0:15,player.crouching?PLAYER_EYE_CROUCH:PLAYER_EYE);}
           } else {
             let supply:import('./area51World').FacilityInteraction|undefined,closest=2.4;
@@ -3390,6 +3390,7 @@ export default function App() {
             promptEl.style.display = 'block';
             promptEl.textContent = extPromptResult.interactionPrompt;
             promptEl.style.color = extPromptResult.isPromptObjective ? '#2de2e6' : 'white';
+            promptEl.style.textShadow = '0 0 10px currentColor';
           } else if (nearestDoor) {
             let canOpen = true;
             let doorReason = '';

@@ -11,6 +11,7 @@ import { WorldResources } from "./worldResources";
 import { buildArea51Vehicle } from "./area51Assets";
 import { createWeaponAssembly } from "./weaponModels";
 import { WEAPONS } from "./weapons";
+import { audioManager } from "./campaignAudio";
 import { traversalBlocked } from "./tacticalNavigation";
 
 export const AREA51_LAYOUT = Object.freeze({
@@ -56,7 +57,10 @@ export interface Area51Facility {
     position: THREE.Vector3,
     destinationFloor: number,
     eyeOffset?: number,
+    animate?: boolean,
   ): boolean;
+  isNearLift(position: THREE.Vector3): boolean;
+  readonly liftMoving: boolean;
   getZone(position: THREE.Vector3): 1 | 2 | 3 | 4;
   updateCamera(
     camera: THREE.Camera,
@@ -696,8 +700,46 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
   floor(6, 8, -12, 15, -138); // upper landing overlaps the shaft, selected by foot height
   batch(0.12, 14, 0.12, -14.7, 7, -136, amber);
   batch(0.12, 14, 0.12, -9.3, 7, -136, amber);
-  sign("E // LIFT TO LEVEL 4", -12, 2, -138.6, 4, 0.55);
-  sign("E // RETURN TO LAB", -12, 17, -132.4, 4, 0.55, Math.PI);
+  const liftCabin = new THREE.Group();
+  liftCabin.name = "Area51_ElevatorCabin";
+  liftCabin.position.copy(AREA51_LAYOUT.liftBottom);
+  root.add(liftCabin);
+  box(5.4, 0.12, 5.6, 0, -0.06, 0, steel, false, liftCabin);
+  box(5.4, 0.18, 5.6, 0, 3.4, 0, sterile, false, liftCabin);
+  for (const x of [-2.6, 2.6])
+    box(0.12, 3.3, 5.6, x, 1.65, 0, sterile, false, liftCabin);
+  box(2.4, 0.05, 0.8, 0, 3.28, 0, amber, false, liftCabin);
+  const liftLight = new THREE.PointLight(0xffedc9, 2.0, 5.5, 0);
+  liftLight.name = "Area51_ElevatorInteriorLight";
+  liftLight.position.set(0, 3.1, 0);
+  liftCabin.add(liftLight);
+  const liftDoors: THREE.Mesh[][] = [];
+  for (const [y, z, rotation] of [[0, -133, 0], [15, -139, Math.PI]]) {
+    const landing = new THREE.Group();
+    landing.name = y === 0 ? "Area51_LowerLiftDoors" : "Area51_UpperLiftDoors";
+    landing.position.set(-12, y, z);
+    root.add(landing);
+    const panels = [-1, 1].map(side => {
+      const panel = box(2.7, 3.2, 0.16, side * 4.05, 1.6, 0, steel, false, landing);
+      panel.userData.side = side;
+      return panel;
+    });
+    liftDoors.push(panels);
+    const console = new THREE.Group();
+    console.name = y === 0 ? "Area51_LiftCallConsole" : "Area51_LiftReturnConsole";
+    console.position.set(-9.35, y + 1.35, z + (y === 0 ? 0.2 : -0.2));
+    console.rotation.y = rotation;
+    root.add(console);
+    box(0.55, 0.8, 0.18, 0, 0, 0, black, false, console);
+    box(0.44, 0.3, 0.02, 0, 0.17, 0.1, cyan, false, console);
+    for (let row = 0; row < 3; row++) for (let col = 0; col < 3; col++)
+      box(0.08, 0.06, 0.025, (col - 1) * 0.12, -0.08 - row * 0.1, 0.11, amber, false, console);
+    const callLight = new THREE.PointLight(0x47d1de, 2, 3, 0);
+    callLight.position.set(0, 0.2, 0.3);
+    console.add(callLight);
+    sign(y === 0 ? "E // LEVEL 4 WAREHOUSE" : "E // BIO-LAB", -12, y + 3.65, z, 4, 0.55, rotation);
+  }
+  let liftRide: { position: THREE.Vector3; eye: number; from: number; to: number; elapsed: number } | null = null;
   // ZONE 4 — lightless warehouse until evac; combat modes enable safety lighting.
   floor(40, 60, 0, 15, -170);
   walls(40, 60, 0, 15, -170, 12, concrete, {
@@ -962,17 +1004,30 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
       helicopter.state = "OUTBOUND_DEPART";
       return true;
     },
-    transferLift(position, destinationFloor, eyeOffset = 0) {
-      if (
-        disposed ||
-        Math.abs(position.x + 12) > 2.5 ||
-        Math.abs(position.z + 136) > 3 ||
-        Math.abs(position.y - eyeOffset - (destinationFloor === 15 ? 0 : 15)) >
-          1.5
-      )
+    isNearLift(position) {
+      const floor = position.y > 10 ? 15 : 0;
+      const entranceZ = floor === 0 ? -133 : -139;
+      return Math.abs(position.x + 12) < 3.4 &&
+        Math.abs(position.z - entranceZ) < 4.5 &&
+        Math.abs(position.y - floor) < 3;
+    },
+    get liftMoving() { return liftRide !== null; },
+    transferLift(position, destinationFloor, eyeOffset = 0, animate = true) {
+      if (disposed || liftRide || facility.controlsLocked ||
+          (destinationFloor !== 0 && destinationFloor !== 15) ||
+          !facility.isNearLift(position) ||
+          Math.abs(position.y - eyeOffset - (destinationFloor === 15 ? 0 : 15)) > 1.5)
         return false;
-      position.y = destinationFloor + eyeOffset;
-      position.z = destinationFloor === 15 ? -143 : -133;
+      // AI retains its authored floor portal; only the player's ride locks input/camera.
+      if (!animate) {
+        position.y = destinationFloor + eyeOffset;
+        position.z = destinationFloor === 15 ? -143 : -131;
+        return true;
+      }
+      liftRide = { position, eye: eyeOffset, from: destinationFloor === 15 ? 0 : 15, to: destinationFloor, elapsed: 0 };
+      position.set(-12, liftRide.from + eyeOffset, -136);
+      liftCabin.position.y = liftRide.from;
+      audioManager.play("elevator_hum");
       return true;
     },
     getZone(p) {
@@ -981,13 +1036,17 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     },
     get controlsLocked() {
       return (
+        liftRide !== null ||
         facility.phase === "INTRO" ||
         facility.phase === "DEPARTING" ||
         facility.phase === "COMPLETE"
       );
     },
     updateCamera(camera, player) {
-      if (facility.phase === "INTRO") {
+      if (liftRide) {
+        camera.position.copy(player.pos);
+        camera.rotation.set(player.pitch ?? 0, player.yaw, 0, "YXZ");
+      } else if (facility.phase === "INTRO") {
         const t = THREE.MathUtils.smoothstep(facility.introElapsed / 3, 0, 1);
         camera.position.set(-12 + 5 * t, 16.65, -146 - 3 * t);
         camera.lookAt(0, 18, -170);
@@ -1093,7 +1152,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
         ? facility.liftBottom
         : facility.liftTop
       : target;
-    if (differentFloor && facility.transferLift(from, from.y < 10 ? 15 : 0))
+    if (differentFloor && facility.transferLift(from, from.y < 10 ? 15 : 0, 0, false))
       return target;
     if (
       !traversalBlocked(from, dest, worldColliders, team) &&
@@ -1246,6 +1305,25 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     scene.fog = fog;
     scene.background = background;
     const dt = Math.min(0.1, Math.max(0, delta));
+    if (liftRide) {
+      const ride = liftRide;
+      ride.elapsed = Math.min(4.2, ride.elapsed + dt);
+      const travel = THREE.MathUtils.smoothstep((ride.elapsed - 0.6) / 3, 0, 1);
+      const y = THREE.MathUtils.lerp(ride.from, ride.to, travel);
+      ride.position.set(-12, y + ride.eye, -136);
+      liftCabin.position.y = y;
+      const openness = ride.elapsed < 0.6 ? 1 - ride.elapsed / 0.6 :
+        ride.elapsed > 3.6 ? (ride.elapsed - 3.6) / 0.6 : 0;
+      for (const panels of liftDoors) for (const panel of panels)
+        panel.position.x = panel.userData.side * (1.35 + 2.7 * openness);
+      if (ride.elapsed >= 4.2) {
+        ride.position.set(-12, ride.to + ride.eye, ride.to === 15 ? -143 : -131);
+        if (mode === "extraction" && ride.to === 15 && facility.phase === "INFILTRATE")
+          facility.phase = "ARRIVAL";
+        liftRide = null;
+      }
+    }
+
     flickerLights.forEach((l, i) => {
       l.intensity = Math.sin(time * 11 + i * 7) > 0.92 ? 5 : 65;
     });
@@ -1331,6 +1409,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
   function dispose() {
     if (disposed) return;
     disposed = true;
+    liftRide = null;
     helicopter.dispose();
     resources.dispose();
     root.removeFromParent();
