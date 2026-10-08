@@ -176,6 +176,24 @@ export const FIRST_BATCH_AUDIO_URLS = {
   sniperReloadEmpty: new URL('./assets/audio/weapons/batch1/sniper_reload_empty.wav', import.meta.url).href,
 };
 
+export const SECOND_BATCH_AUDIO_URLS = {
+  smgReloadEmpty: new URL('./assets/audio/weapons/batch2/smg_reload_empty.wav', import.meta.url).href,
+  smgReloadTactical: new URL('./assets/audio/weapons/batch2/smg_reload_tactical.wav', import.meta.url).href,
+  lmgFire: new URL('./assets/audio/weapons/batch2/lmg_fire_single.wav', import.meta.url).href,
+  lmgAuto: new URL('./assets/audio/weapons/batch2/lmg_fire_auto_loop.wav', import.meta.url).href,
+  lmgReloadTactical: new URL('./assets/audio/weapons/batch2/lmg_reload_tactical.wav', import.meta.url).href,
+  lmgReloadEmpty: new URL('./assets/audio/weapons/batch2/lmg_reload_empty.wav', import.meta.url).href,
+  brSingle: new URL('./assets/audio/weapons/batch2/br_fire_single.wav', import.meta.url).href,
+  brBurst: new URL('./assets/audio/weapons/batch2/br_fire_burst_3.wav', import.meta.url).href,
+  brReloadEmpty: new URL('./assets/audio/weapons/batch2/br_reload_empty.wav', import.meta.url).href,
+  brReloadTactical: new URL('./assets/audio/weapons/batch2/br_reload_tactical.wav', import.meta.url).href,
+  minigunWindup: new URL('./assets/audio/weapons/batch2/minigun_warmup.wav', import.meta.url).href,
+  minigunFire: new URL('./assets/audio/weapons/batch2/minigun_fire_auto_loop.wav', import.meta.url).href,
+  minigunSpinDown: new URL('./assets/audio/weapons/batch2/minigun_spin_down.wav', import.meta.url).href,
+  minigunCooling: new URL('./assets/audio/weapons/batch2/minigun_cooling_hiss.wav', import.meta.url).href,
+  minigunOverheat: new URL('./assets/audio/weapons/batch2/minigun_overheat.wav', import.meta.url).href,
+};
+
 // Standard relative local filenames mapped for direct desktop synchronization
 export const PISTOL_AUDIO_FILENAMES = {
   shot: [
@@ -235,17 +253,28 @@ export const AUDIO = {
   // Full Armory New Weapon Clean Local Placeholders
   smgFire:       new SoundTrack(['smg_fire.mp3', 'smg_fire'], 6),
   smgReload:     new SoundTrack(['smg_reload.mp3', 'smg_reload'], 2),
-  lmgFire:       new SoundTrack(['lmg_fire.mp3', 'lmg_fire'], 6),
+  lmgFire: new SoundTrack(SECOND_BATCH_AUDIO_URLS.lmgFire, 6),
   lmgReload:     new SoundTrack(['lmg_reload.mp3', 'lmg_reload'], 2),
-  brBurst:       new SoundTrack(['br_burst.mp3', 'br_burst'], 6),
+  brBurst: new SoundTrack(SECOND_BATCH_AUDIO_URLS.brBurst, 6),
   brReload:      new SoundTrack(['br_reload.mp3', 'br_reload'], 2),
   laserBeam:     new SoundTrack(['laser_beam.mp3', 'laser_beam'], 2, true),
   laserVent:     new SoundTrack(['laser_vent.mp3', 'laser_vent'], 2),
 
+  smgReloadEmpty: new SoundTrack(SECOND_BATCH_AUDIO_URLS.smgReloadEmpty, 2),
+  smgReloadTactical: new SoundTrack(SECOND_BATCH_AUDIO_URLS.smgReloadTactical, 2),
+  lmgAuto: new SoundTrack(SECOND_BATCH_AUDIO_URLS.lmgAuto, 1, true),
+  lmgReloadTactical: new SoundTrack(SECOND_BATCH_AUDIO_URLS.lmgReloadTactical, 2),
+  lmgReloadEmpty: new SoundTrack(SECOND_BATCH_AUDIO_URLS.lmgReloadEmpty, 2),
+  brSingle: new SoundTrack(SECOND_BATCH_AUDIO_URLS.brSingle, 6),
+  brReloadEmpty: new SoundTrack(SECOND_BATCH_AUDIO_URLS.brReloadEmpty, 2),
+  brReloadTactical: new SoundTrack(SECOND_BATCH_AUDIO_URLS.brReloadTactical, 2),
+  minigunSpinDown: new SoundTrack(SECOND_BATCH_AUDIO_URLS.minigunSpinDown, 1),
+  minigunCooling: new SoundTrack(SECOND_BATCH_AUDIO_URLS.minigunCooling, 1),
+
   // Advanced Weapon Audio: Minigun & Railgun
-  minigunWindup:   new SoundTrack(['minigun_windup.mp3', 'minigun_windup', 'minigun_spin.mp3'], 2),
-  minigunFire:     new SoundTrack(['minigun_fire.mp3', 'minigun_fire', 'gatling_fire.mp3'], 2, true),
-  minigunOverheat: new SoundTrack(['minigun_overheat.mp3', 'minigun_overheat', 'steam_vent.mp3'], 2),
+  minigunWindup: new SoundTrack(SECOND_BATCH_AUDIO_URLS.minigunWindup, 1),
+  minigunFire: new SoundTrack(SECOND_BATCH_AUDIO_URLS.minigunFire, 1, true),
+  minigunOverheat: new SoundTrack(SECOND_BATCH_AUDIO_URLS.minigunOverheat, 1),
   railgunCharge:   new SoundTrack(['railgun_charge.mp3', 'railgun_charge', 'railgun_hum.mp3'], 2),
   railgunFire:     new SoundTrack(['railgun_fire.mp3', 'railgun_fire', 'railgun_blast.mp3'], 4)
 };

@@ -1,0 +1,554 @@
+{
+  "sample_rate": 48000,
+  "baseline_class_reload_multiplier": 1,
+  "code_reference": {
+    "repo": "fcootes/Gun-Arena-V2",
+    "branch": "main",
+    "reload_sha": "e33a5fad317e9421253fe703f40ef92e8413b7e7",
+    "weapons_sha": "f702f26f54062d3143894c2e995780d7fe3390fa",
+    "app_sha": "9bab75988f85c7cb2ba15be84dd19ee5e27cddbc"
+  },
+  "clips": [
+    {
+      "filename": "smg_reload_empty.wav",
+      "weapon": "SMG",
+      "state": "Empty reload",
+      "sample_rate": 48000,
+      "samples": 95040,
+      "duration_seconds": 1.98,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 3,
+          "filename": "freesound_community-machine-gun-reload-81593.mp3",
+          "start_seconds": 0.075,
+          "end_seconds": 0.29,
+          "audio_start_seconds": 0.166,
+          "tempo_factor": 1.0
+        },
+        {
+          "attachment": 3,
+          "filename": "freesound_community-machine-gun-reload-81593.mp3",
+          "start_seconds": 0.78,
+          "end_seconds": 1.11,
+          "audio_start_seconds": 0.942,
+          "tempo_factor": 1.0
+        },
+        {
+          "attachment": 3,
+          "filename": "freesound_community-machine-gun-reload-81593.mp3",
+          "start_seconds": 1.535,
+          "end_seconds": 1.865,
+          "audio_start_seconds": 1.338,
+          "tempo_factor": 1.0
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Baseline class multiplier 1. Actions fitted to phase windows, with silence between mechanics and pitch preserved when compressed.",
+      "phases": [
+        {
+          "phase": "eject",
+          "start_seconds": 0,
+          "duration_seconds": 0.396,
+          "audio_start_seconds": 0.166
+        },
+        {
+          "phase": "insert",
+          "start_seconds": 0.396,
+          "duration_seconds": 0.891,
+          "audio_start_seconds": 0.942
+        },
+        {
+          "phase": "chamber",
+          "start_seconds": 1.287,
+          "duration_seconds": 0.396,
+          "audio_start_seconds": 1.338
+        },
+        {
+          "phase": "close",
+          "start_seconds": 1.6829999999999998,
+          "duration_seconds": 0.297
+        }
+      ]
+    },
+    {
+      "filename": "smg_reload_tactical.wav",
+      "weapon": "SMG",
+      "state": "Tactical reload",
+      "sample_rate": 48000,
+      "samples": 53914,
+      "duration_seconds": 1.1232083333333334,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 4,
+          "filename": "dragon-studio-gun-reload-2-511308 (2).mp3",
+          "start_seconds": 0.025,
+          "end_seconds": 0.41,
+          "audio_start_seconds": 0.0,
+          "tempo_factor": 1.4485029001410878
+        },
+        {
+          "attachment": 4,
+          "filename": "dragon-studio-gun-reload-2-511308 (2).mp3",
+          "start_seconds": 0.875,
+          "end_seconds": 1.245,
+          "audio_start_seconds": 0.5276041666666667,
+          "tempo_factor": 1.0
+        }
+      ],
+      "gain_db": -1.414131734890839,
+      "notes": "Baseline class multiplier 1. Actions fitted to phase windows, with silence between mechanics and pitch preserved when compressed.",
+      "phases": [
+        {
+          "phase": "eject",
+          "start_seconds": 0,
+          "duration_seconds": 0.2808,
+          "audio_start_seconds": 0.0
+        },
+        {
+          "phase": "insert",
+          "start_seconds": 0.2808,
+          "duration_seconds": 0.6318,
+          "audio_start_seconds": 0.5276041666666667
+        },
+        {
+          "phase": "close",
+          "start_seconds": 0.9126000000000001,
+          "duration_seconds": 0.2106
+        }
+      ]
+    },
+    {
+      "filename": "lmg_fire_single.wav",
+      "weapon": "LMG",
+      "state": "Single shot",
+      "sample_rate": 48000,
+      "samples": 3840,
+      "duration_seconds": 0.08,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 5,
+          "filename": "dennish18-machine-gun-129929.mp3",
+          "start_seconds": 0.024,
+          "end_seconds": 0.104
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "One report extracted from auto recording; tail ends before next report. Trigger interval 0.115 s; no isolated long decay exists in this source."
+    },
+    {
+      "filename": "lmg_fire_auto_loop.wav",
+      "weapon": "LMG",
+      "state": "Auto loop",
+      "sample_rate": 48000,
+      "samples": 27600,
+      "duration_seconds": 0.575,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 5,
+          "filename": "dennish18-machine-gun-129929.mp3",
+          "start_seconds": 0.024,
+          "end_seconds": 0.449
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Five-report section retimed to 5 x 0.115 seconds, pitch preserved, with 6 ms seam crossfade."
+    },
+    {
+      "filename": "lmg_reload_tactical.wav",
+      "weapon": "LMG",
+      "state": "Tactical reload",
+      "sample_rate": 48000,
+      "samples": 157248,
+      "duration_seconds": 3.276,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 6,
+          "filename": "freesound_community-machine-gun-reload-81593 (1).mp3",
+          "start_seconds": 0.075,
+          "end_seconds": 0.29,
+          "audio_start_seconds": 0.9166041666666667,
+          "tempo_factor": 1.0
+        },
+        {
+          "attachment": 6,
+          "filename": "freesound_community-machine-gun-reload-81593 (1).mp3",
+          "start_seconds": 0.78,
+          "end_seconds": 1.11,
+          "audio_start_seconds": 2.2757916666666667,
+          "tempo_factor": 1.0
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Baseline class multiplier 1. Actions fitted to phase windows, with silence between mechanics and pitch preserved when compressed.",
+      "phases": [
+        {
+          "phase": "open",
+          "start_seconds": 0,
+          "duration_seconds": 0.4914
+        },
+        {
+          "phase": "eject",
+          "start_seconds": 0.4914,
+          "duration_seconds": 0.6552,
+          "audio_start_seconds": 0.9166041666666667
+        },
+        {
+          "phase": "insert",
+          "start_seconds": 1.1466,
+          "duration_seconds": 1.4742,
+          "audio_start_seconds": 2.2757916666666667
+        },
+        {
+          "phase": "close",
+          "start_seconds": 2.6208,
+          "duration_seconds": 0.6552
+        }
+      ]
+    },
+    {
+      "filename": "lmg_reload_empty.wav",
+      "weapon": "LMG",
+      "state": "Empty reload (derived)",
+      "sample_rate": 48000,
+      "samples": 266112,
+      "duration_seconds": 5.544,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 6,
+          "filename": "freesound_community-machine-gun-reload-81593 (1).mp3",
+          "start_seconds": 0.075,
+          "end_seconds": 0.29,
+          "audio_start_seconds": 1.387,
+          "tempo_factor": 1.0
+        },
+        {
+          "attachment": 6,
+          "filename": "freesound_community-machine-gun-reload-81593 (1).mp3",
+          "start_seconds": 0.78,
+          "end_seconds": 1.11,
+          "audio_start_seconds": 3.351,
+          "tempo_factor": 1.0
+        },
+        {
+          "attachment": 6,
+          "filename": "freesound_community-machine-gun-reload-81593 (1).mp3",
+          "start_seconds": 1.535,
+          "end_seconds": 1.865,
+          "audio_start_seconds": 4.275,
+          "tempo_factor": 1.0
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Baseline class multiplier 1. Actions fitted to phase windows, with silence between mechanics and pitch preserved when compressed.",
+      "phases": [
+        {
+          "phase": "open",
+          "start_seconds": 0,
+          "duration_seconds": 0.693
+        },
+        {
+          "phase": "eject",
+          "start_seconds": 0.693,
+          "duration_seconds": 0.924,
+          "audio_start_seconds": 1.387
+        },
+        {
+          "phase": "insert",
+          "start_seconds": 1.617,
+          "duration_seconds": 2.079,
+          "audio_start_seconds": 3.351
+        },
+        {
+          "phase": "chamber",
+          "start_seconds": 3.696,
+          "duration_seconds": 0.924,
+          "audio_start_seconds": 4.275
+        },
+        {
+          "phase": "close",
+          "start_seconds": 4.62,
+          "duration_seconds": 0.924
+        }
+      ]
+    },
+    {
+      "filename": "br_fire_single.wav",
+      "weapon": "Battle rifle",
+      "state": "Single report for per-bullet hook",
+      "sample_rate": 48000,
+      "samples": 39360,
+      "duration_seconds": 0.82,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 7,
+          "filename": "712577__areniporgen__heckler-koch-g3.wav",
+          "start_seconds": 0,
+          "end_seconds": 0.82
+        }
+      ],
+      "gain_db": -0.44552789422304506,
+      "notes": "Use with existing brBurst hook, which currently triggers once per bullet."
+    },
+    {
+      "filename": "br_fire_burst_3.wav",
+      "weapon": "Battle rifle",
+      "state": "Layered three-shot burst",
+      "sample_rate": 48000,
+      "samples": 46560,
+      "duration_seconds": 0.97,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 7,
+          "filename": "712577__areniporgen__heckler-koch-g3.wav",
+          "start_seconds": 0,
+          "end_seconds": 0.82
+        }
+      ],
+      "gain_db": -5.21768298206276,
+      "notes": "Three G3 reports layered at exactly 0, 75 and 150 ms. Play once per burst; current code must stop replaying this composite on each bullet.",
+      "shot_onsets_seconds": [
+        0,
+        0.075,
+        0.15
+      ]
+    },
+    {
+      "filename": "br_reload_empty.wav",
+      "weapon": "Battle rifle",
+      "state": "Empty reload (AR mechanics)",
+      "sample_rate": 48000,
+      "samples": 63360,
+      "duration_seconds": 1.32,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "filename": "sovetsky_rastov72-ak-47-sound-effect-267042.mp3",
+          "batch": 1,
+          "denoised": true,
+          "start_seconds": 8.08,
+          "end_seconds": 8.425,
+          "audio_start_seconds": 0.0,
+          "tempo_factor": 1.3855421686746987
+        },
+        {
+          "filename": "sovetsky_rastov72-ak-47-sound-effect-267042.mp3",
+          "batch": 1,
+          "denoised": true,
+          "start_seconds": 8.59,
+          "end_seconds": 9.14,
+          "audio_start_seconds": 0.293,
+          "tempo_factor": 1.0
+        },
+        {
+          "filename": "sovetsky_rastov72-ak-47-sound-effect-267042.mp3",
+          "batch": 1,
+          "denoised": true,
+          "start_seconds": 9.42,
+          "end_seconds": 9.85,
+          "audio_start_seconds": 0.858,
+          "tempo_factor": 1.7269076305220883
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Baseline class multiplier 1. Actions fitted to phase windows, with silence between mechanics and pitch preserved when compressed.",
+      "phases": [
+        {
+          "phase": "eject",
+          "start_seconds": 0,
+          "duration_seconds": 0.264,
+          "audio_start_seconds": 0.0
+        },
+        {
+          "phase": "insert",
+          "start_seconds": 0.264,
+          "duration_seconds": 0.594,
+          "audio_start_seconds": 0.293
+        },
+        {
+          "phase": "chamber",
+          "start_seconds": 0.858,
+          "duration_seconds": 0.264,
+          "audio_start_seconds": 0.858
+        },
+        {
+          "phase": "close",
+          "start_seconds": 1.1219999999999999,
+          "duration_seconds": 0.198
+        }
+      ]
+    },
+    {
+      "filename": "br_reload_tactical.wav",
+      "weapon": "Battle rifle",
+      "state": "Tactical reload (AR mechanics)",
+      "sample_rate": 48000,
+      "samples": 35942,
+      "duration_seconds": 0.7487916666666666,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "filename": "dragon-studio-gun-reload-2-511308.mp3",
+          "batch": 1,
+          "start_seconds": 0.025,
+          "end_seconds": 0.41,
+          "audio_start_seconds": 0.0,
+          "tempo_factor": 2.2356641664650376
+        },
+        {
+          "filename": "dragon-studio-gun-reload-2-511308.mp3",
+          "batch": 1,
+          "start_seconds": 0.875,
+          "end_seconds": 1.245,
+          "audio_start_seconds": 0.22339583333333332,
+          "tempo_factor": 1.0
+        }
+      ],
+      "gain_db": -1.1364357067147817,
+      "notes": "Baseline class multiplier 1. Actions fitted to phase windows, with silence between mechanics and pitch preserved when compressed.",
+      "phases": [
+        {
+          "phase": "eject",
+          "start_seconds": 0,
+          "duration_seconds": 0.1872,
+          "audio_start_seconds": 0.0
+        },
+        {
+          "phase": "insert",
+          "start_seconds": 0.1872,
+          "duration_seconds": 0.4212,
+          "audio_start_seconds": 0.22339583333333332
+        },
+        {
+          "phase": "close",
+          "start_seconds": 0.6084,
+          "duration_seconds": 0.1404
+        }
+      ]
+    },
+    {
+      "filename": "minigun_warmup.wav",
+      "weapon": "Minigun",
+      "state": "Spin-up warmup",
+      "sample_rate": 48000,
+      "samples": 24000,
+      "duration_seconds": 0.5,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 11,
+          "filename": "424917__scorepion__minigun.mp3",
+          "start_seconds": 0.045,
+          "end_seconds": 1.78
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Motor-only beginning compressed without pitch shift to current 0.500 s warmup; excludes first firing onset at about 1.79 s."
+    },
+    {
+      "filename": "minigun_fire_auto_loop.wav",
+      "weapon": "Minigun",
+      "state": "Auto fire loop",
+      "sample_rate": 48000,
+      "samples": 86400,
+      "duration_seconds": 1.8,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 12,
+          "filename": "153492__steelskull__minigun-shooting-awesome-sound.wav",
+          "start_seconds": 2.25,
+          "end_seconds": 4.065
+        }
+      ],
+      "gain_db": -0.45810247462660336,
+      "notes": "Stable firing section with 15 ms loop crossfade. 1.800 s equals 40 current 45 ms firing intervals; continuous source is not individually layered per bullet."
+    },
+    {
+      "filename": "minigun_spin_down.wav",
+      "weapon": "Minigun",
+      "state": "Spin-down on release",
+      "sample_rate": 48000,
+      "samples": 67200,
+      "duration_seconds": 1.4,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 11,
+          "filename": "424917__scorepion__minigun.mp3",
+          "start_seconds": 5.05,
+          "end_seconds": 8.45
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Motor coast-down from warmup source; firing section excluded. 1.400 s matches normal barrel-speed decay from 28 at 20 units per second. Emergency overheat decay differs."
+    },
+    {
+      "filename": "minigun_cooling_hiss.wav",
+      "weapon": "Minigun",
+      "state": "Cooling hiss",
+      "sample_rate": 48000,
+      "samples": 96000,
+      "duration_seconds": 2.0,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 9,
+          "filename": "269667__jaimage__steamhissairhydraulic.wav",
+          "start_seconds": 0.1,
+          "end_seconds": 2.1
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Same plasma steam release, fitted to current 2.000 s minigun vent timer."
+    },
+    {
+      "filename": "minigun_overheat.wav",
+      "weapon": "Minigun",
+      "state": "Spin-down + cooling hiss composite",
+      "sample_rate": 48000,
+      "samples": 96000,
+      "duration_seconds": 2.0,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 11,
+          "filename": "424917__scorepion__minigun.mp3",
+          "start_seconds": 5.05,
+          "end_seconds": 8.45
+        },
+        {
+          "attachment": 9,
+          "filename": "269667__jaimage__steamhissairhydraulic.wav",
+          "start_seconds": 0.1,
+          "end_seconds": 2.3
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Optional single-hook overheat composite: motor from 0 to 1.4 s, hiss from 1.0 to 2.0 s. Do not also play separate spin/hiss. Fits vent timer; emergency mesh spin decay is 1.8667 s and needs matching during integration."
+    }
+  ],
+  "integration_base_commit": "7be940dd544814bce88ce5722dcfd0365c07cec6"
+}

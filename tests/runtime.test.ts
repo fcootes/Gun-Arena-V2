@@ -32,15 +32,29 @@ function handler(name: string, context: object): (...args: any[]) => any {
   return vm.runInNewContext(ts.transpile(`(${functions.get(name)})`), context);
 }
 const sound = { stop() {}, play() {} };
+for (const id of ['smg', 'lmg', 'br']) {
+  for (const tactical of [false, true]) {
+    const w = WEAPONS.find(w => w.id === id)!, ws = { isTacticalReload: tactical };
+    let selected = 0, generic = 0;
+    const reload = handler('reloadWeapon', {
+      currentSlot: () => w, currentSlotState: () => ws,
+      beginWeaponReload: () => true, player: { classReloadMultiplier: .75, aiming: true, continuousShots: 5 },
+      AUDIO: { arSpray: sound, lmgAuto: sound, laserBeam: sound, minigunFire: sound, reloadTactical: { play() { generic++; } }, reloadEmpty: { play() { generic++; } } },
+      laserBeamMesh: { visible: true }, playWeaponReloadAudio(weapon: unknown, state: unknown) { assert.equal(weapon, w); assert.equal(state, ws); selected++; return true; },
+    });
+    reload(); assert.equal(selected, 1); assert.equal(generic, 0);
+  }
+}
+console.log('PASS: actual SMG/LMG/BR reload handlers select dedicated audio once without generic doubling');
 for (const inspectorMode of [false, true]) {
   const player = { alive: true, health: inspectorMode ? INSPECTOR_HEALTH : 100, shield: 50 };
   let deaths = 0, audioStops = 0;
-  const apply = handler('applyDamageToPlayer', { player, world: {}, matchConfig: { inspectorMode, mode: 'extraction' }, AUDIO: { arSpray: sound, bulletHit: sound }, stopFirstBatchWeaponAudio() { audioStops++; }, flashVignette() {}, pushKillFeed() {}, triggerGameOver() { deaths++; } });
+  const apply = handler('applyDamageToPlayer', { player, world: {}, matchConfig: { inspectorMode, mode: 'extraction' }, AUDIO: { arSpray: sound, bulletHit: sound }, stopWeaponAudio() { audioStops++; }, flashVignette() {}, pushKillFeed() {}, triggerGameOver() { deaths++; } });
   apply(1_000_000, true, false, null);
   assert.equal(player.health, inspectorMode ? INSPECTOR_HEALTH : 0);
   assert.equal(player.alive, inspectorMode);
   assert.equal(deaths, inspectorMode ? 0 : 1);
-  assert.equal(audioStops, inspectorMode ? 0 : 1, 'Actual death stops first-batch audio; inspector immunity does not');
+  assert.equal(audioStops, inspectorMode ? 0 : 1, 'Actual death stops integrated weapon audio; inspector immunity does not');
 }
 function actor(health: number) {
   return { alive: true, downed: false, health, pos: new THREE.Vector3(), group: new THREE.Group(), team: 'red', campaignEntity: 'spartan', armor: 140, hitParts: [], isZombie: false, healthEl: { style: {} }, weaponTypeIndex: 0 };

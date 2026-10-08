@@ -5,7 +5,7 @@ import { Area51ExtractionGameLoop } from './area51Campaign';
 import { audioManager } from './campaignAudio';
 import { PostDeathMenu } from './PostDeathMenu';
 import { beginWeaponReload, advanceWeaponReload, cancelWeaponReload, interruptShellReload } from './weaponReload';
-import { playFirstBatchReload, playShotgunReloadPhase, stopFirstBatchReloadAudio, stopFirstBatchWeaponAudio, pauseFirstBatchWeaponAudio, resumeFirstBatchWeaponAudio } from './weaponAudio';
+import { playWeaponReloadAudio, playShotgunReloadPhase, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio } from './weaponAudio';
 import './ModePosters.css';
 import { createWeaponAssembly, disposeWeaponObject } from './weaponModels';
 import { useEffect, useRef, useState } from 'react';
@@ -42,9 +42,6 @@ import {
   PISTOL_AUDIO_FILENAMES,
   updateRailgunChargeAudio,
   playRailgunSlugBlast,
-  updateMinigunSpinAudio,
-  playMinigunFireShot,
-  playMinigunVentHiss,
   updateAdrenalineHeartbeat,
   playKnifeSlashWhoosh
 } from './audio';
@@ -288,9 +285,9 @@ export default function App() {
   const gameStateRef = useRef(gameState);
   gameStateRef.current = gameState;
   useEffect(() => {
-    if (gameState === 'playing') resumeFirstBatchWeaponAudio();
-    else if (gameState === 'paused') pauseFirstBatchWeaponAudio();
-    else stopFirstBatchWeaponAudio();
+    if (gameState === 'playing') resumeWeaponAudio();
+    else if (gameState === 'paused') pauseWeaponAudio();
+    else stopWeaponAudio();
   }, [gameState]);
 
   const matchModeRef = useRef(matchMode);
@@ -1258,7 +1255,7 @@ export default function App() {
       if (player.health <= 0) {
         player.health = 0;
         player.alive = false;
-        stopFirstBatchWeaponAudio();
+        stopWeaponAudio();
 
         if (matchConfig.mode === 'extraction') {
           pushKillFeed('MISSION FAILED: OPERATOR KILLED');
@@ -1288,7 +1285,7 @@ export default function App() {
           player:{pos:player.pos,yaw:player.yaw,pitch:player.pitch,health:player.health,maxHealth:player.maxHealth,alive:player.alive,team:player.team,
             applyDamage:applyDamageToPlayer,heal:amount=>{player.health=Math.min(player.maxHealth,player.health+amount);}},
           needsAmmo:()=>playerWeaponState.slice(0,2).some(ws=>(ws.reserve??0)<30),
-          onBotShot:(bot,weapon)=>{radarPingsRef.current.push({x:bot.pos.x,z:bot.pos.z,timestamp:performance.now(),duration:1.5,type:'gunfire'});const audio=weapon.id==='sniper'?AUDIO.sniperShotWithBolt:weapon.id==='pistol'?AUDIO.pistolShot:weapon.id==='shotgun'?AUDIO.shotgunShot:AUDIO.arSingle;audio.play(getSpatialVolume(camera.position,bot.pos));},
+          onBotShot:(bot,weapon)=>{radarPingsRef.current.push({x:bot.pos.x,z:bot.pos.z,timestamp:performance.now(),duration:1.5,type:'gunfire'});const audio=weapon.id==='sniper'?AUDIO.sniperShotWithBolt:weapon.id==='pistol'?AUDIO.pistolShot:weapon.id==='shotgun'?AUDIO.shotgunShot:weapon.id==='lmg'?AUDIO.lmgFire:weapon.id==='br'?AUDIO.brSingle:AUDIO.arSingle;audio.play(getSpatialVolume(camera.position,bot.pos));},
           onExplosionHit:(target,amount)=>{if(target!== 'player'&&amount>0){showHitmarker(false);}}
       };
     }
@@ -1510,9 +1507,9 @@ export default function App() {
     function triggerGameOver(victory: boolean, winningBot: Bot | null = null) {
       if (gameStateRef.current === 'DEATH_SCREEN') return;
       gameStateRef.current = 'DEATH_SCREEN';
-      stopFirstBatchWeaponAudio();
+      stopWeaponAudio();
       player.fireHeld = false; player.aiming = false; for(const key of Object.keys(keys))keys[key]=false;
-      AUDIO.laserBeam.stop(); AUDIO.minigunFire.stop(); updateMinigunSpinAudio(false,0);
+      AUDIO.laserBeam.stop(); AUDIO.minigunFire.stop();
       AUDIO.arSpray.stop();
       updateAdrenalineHeartbeat(false);
       const adrenalineEl = containerRef.current?.querySelector('#adrenaline-overlay') as HTMLElement | null;
@@ -1947,7 +1944,7 @@ export default function App() {
     }
 
     function initMatch() {
-      stopFirstBatchWeaponAudio();
+      stopWeaponAudio();
       // 1. Completely tear down, purge, and dispose of the Lobby Operator's Three.js turntable meshes and light variables before instantiating the match arena.
       teardownLobbyScene();
 
@@ -2215,7 +2212,7 @@ export default function App() {
 
       const ws = currentSlotState();
       if (interruptShellReload(w, ws)) {
-        stopFirstBatchReloadAudio();
+        stopWeaponReloadAudio();
         AUDIO.shotgunPump.stop();
         if (ws.pendingReloadShot) AUDIO.shotgunPump.play(1, true);
       }
@@ -2255,11 +2252,11 @@ export default function App() {
       } else if (w.id === 'lmg') {
         // Heavy LMG: high recoil + heavy shot sound
         vmManager.addRecoil(0.052, 0.062);
-        AUDIO.lmgFire.play(1.0, true);
+        playLmgFire(player.continuousShots, (ws.ammo ?? 0) === 0);
       } else if (w.id === 'br') {
         // Battle Rifle: tight burst recoil + burst sound
         vmManager.addRecoil(0.038, 0.044);
-        AUDIO.brBurst.play(1.0, true);
+        playBattleRifleFire(ws, true);
         ws.burstRemaining = (w.burstCount ?? 3) - 1;
         ws.burstTimer = w.burstRate ?? 0.075;
       } else if (w.id === 'laser') {
@@ -2390,9 +2387,6 @@ export default function App() {
       recoilPitch += (Math.random() - 0.48) * 0.006 + 0.006;
       triggerPlayerFlash();
 
-      playMinigunFireShot(1.0);
-      AUDIO.minigunFire.playContinuous(1.0);
-
       const spread = player.aiming ? (w.adsSpread ?? 0.024) : (w.spread ?? 0.034);
       const ndcX = (Math.random() - 0.5) * spread * 2;
       const ndcY = (Math.random() - 0.5) * spread * 2;
@@ -2520,19 +2514,17 @@ export default function App() {
         ws.spinWarmup = 0;
         ws.spinSpeed = 0;
         AUDIO.minigunFire.stop();
-        updateMinigunSpinAudio(false, 0);
-        playMinigunVentHiss();
-        AUDIO.minigunOverheat.play(1.0);
+        playMinigunCoolingAudio(Math.min(ws.ventTimer, ws.totalReloadT ?? ws.ventTimer));
         pushKillFeed('MANUAL VENTING MINIGUN CORES...');
         return;
       }
 
       if (!beginWeaponReload(w, ws, player.classReloadMultiplier)) return;
       player.aiming = false;
-      AUDIO.arSpray.stop(); AUDIO.laserBeam.stop(); AUDIO.minigunFire.stop();
+      AUDIO.arSpray.stop(); AUDIO.lmgAuto.stop(); AUDIO.laserBeam.stop(); AUDIO.minigunFire.stop();
       laserBeamMesh.visible = false; player.continuousShots = 0;
       if (w.id === 'laser') AUDIO.laserVent.play(1.0);
-      else if (!playFirstBatchReload(w, ws)) {
+      else if (!playWeaponReloadAudio(w, ws)) {
         if (ws.isTacticalReload) AUDIO.reloadTactical.play(1.0);
         else AUDIO.reloadEmpty.play(1.0);
       }
@@ -2546,13 +2538,12 @@ export default function App() {
 
       if (!Number.isInteger(index) || index < 0 || index >= playerLoadout.length) return;
       if (player.slotIndex !== index) {
-        stopFirstBatchWeaponAudio();
+        stopWeaponAudio();
         AUDIO.arSpray.stop();
         AUDIO.laserBeam.stop();
         AUDIO.minigunFire.stop();
         AUDIO.minigunWindup.stop();
         AUDIO.railgunCharge.stop();
-        updateMinigunSpinAudio(false, 0);
         updateRailgunChargeAudio(false, 0);
         laserBeamMesh.visible = false;
         railgunAimLaserMesh.visible = false;
@@ -2758,12 +2749,13 @@ export default function App() {
       isMouseDown = false;
       if (e.button === 0) {
         player.fireHeld = false;
+        if (currentSlot().id === 'minigun') releaseMinigunAudio(currentSlotState().spinSpeed ?? 0);
+        AUDIO.lmgAuto.stop();
         AUDIO.arSpray.stop();
         AUDIO.laserBeam.stop();
         AUDIO.minigunFire.stop();
         AUDIO.minigunWindup.stop();
         AUDIO.railgunCharge.stop();
-        updateMinigunSpinAudio(false, 0);
         updateRailgunChargeAudio(false, 0);
         laserBeamMesh.visible = false;
         railgunAimLaserMesh.visible = false;
@@ -2918,7 +2910,7 @@ export default function App() {
       isMouseDown = false;
       for (const key of Object.keys(keys)) keys[key] = false;
       for (const sound of Object.values(AUDIO)) sound.stop();
-      updateMinigunSpinAudio(false, 0); updateRailgunChargeAudio(false, 0);
+      stopWeaponAudio(); updateRailgunChargeAudio(false, 0);
       updateAdrenalineHeartbeat(false); audioManager.stop();
       laserBeamMesh.visible = railgunAimLaserMesh.visible = false;
       if (document.pointerLockElement) { try { document.exitPointerLock?.(); } catch {} }
@@ -3090,7 +3082,7 @@ export default function App() {
           }
           const wasReloading = ws.reloading;
           advanceWeaponReload(w, ws, dt, player.slotIndex === i && w.id === 'shotgun' ? playShotgunReloadPhase : undefined);
-          if (wasReloading && !ws.reloading && player.slotIndex === i) stopFirstBatchReloadAudio();
+          if (wasReloading && !ws.reloading && player.slotIndex === i) stopWeaponReloadAudio();
         });
 
         const curW = currentSlot();
@@ -3100,13 +3092,14 @@ export default function App() {
           fireWeapon();
         }
 
+        if (curW.id !== 'lmg' || !player.fireHeld || !player.alive || curWs.reloading || (curWs.ammo ?? 0) <= 0) AUDIO.lmgAuto.stop();
+
         // Minigun update logic: spin warmup, hyper-auto fire, 4s overheat, 2s vent
         if (curW.id === 'minigun') {
           if (curWs.overheated) {
             curWs.ventTimer = (curWs.ventTimer ?? 2) - dt;
             curWs.spinWarmup = Math.max(0, (curWs.spinWarmup ?? 0) - dt * 2);
             curWs.spinSpeed = Math.max(0, (curWs.spinSpeed ?? 0) - dt * 15);
-            updateMinigunSpinAudio(false, 0);
 
             // Vent yellow particle smoke from Minigun vents
             const origin = camera.position.clone();
@@ -3130,7 +3123,7 @@ export default function App() {
             curWs.spinWarmup = Math.min(0.5, (curWs.spinWarmup ?? 0) + dt);
             const spinProgress = (curWs.spinWarmup ?? 0) / 0.5;
             curWs.spinSpeed = spinProgress * 28.0;
-            updateMinigunSpinAudio(true, spinProgress);
+            updateMinigunWeaponAudio(curWs.spinWarmup ?? 0);
 
             // If 0.5s spin warmup complete, fire hyper-auto bullets
             if ((curWs.spinWarmup ?? 0) >= 0.5) {
@@ -3143,17 +3136,15 @@ export default function App() {
                 curWs.overheated = true;
                 curWs.ventTimer = 2.0;
                 AUDIO.minigunFire.stop();
-                updateMinigunSpinAudio(false, 0);
-                playMinigunVentHiss();
-                AUDIO.minigunOverheat.play(1.0);
+                playMinigunCoolingAudio(Math.min(curWs.ventTimer, curWs.totalReloadT ?? curWs.ventTimer), Math.min((curWs.spinSpeed ?? 0) / 15, curWs.totalReloadT ?? curWs.ventTimer));
                 pushKillFeed('MINIGUN OVERHEATED! 2s EMERGENCY VENT...');
               }
             }
           } else {
             // Spool down and cool down
+            releaseMinigunAudio(curWs.spinSpeed ?? 0);
             curWs.spinWarmup = Math.max(0, (curWs.spinWarmup ?? 0) - dt * 1.5);
             curWs.spinSpeed = Math.max(0, (curWs.spinSpeed ?? 0) - dt * 20);
-            updateMinigunSpinAudio(false, (curWs.spinWarmup ?? 0) / 0.5);
             AUDIO.minigunFire.stop();
             // Cool down: ~22% per sec
             curWs.heat = Math.max(0, (curWs.heat ?? 0) - dt * 22);
@@ -3161,7 +3152,6 @@ export default function App() {
 
           vmManager.setMinigunSpin((curWs.spinSpeed ?? 0) * dt, !!curWs.overheated);
         } else {
-          updateMinigunSpinAudio(false, 0);
           AUDIO.minigunFire.stop();
         }
 
@@ -3207,7 +3197,7 @@ export default function App() {
             if ((curWs.ammo ?? 0) > 0) {
               curWs.ammo = (curWs.ammo ?? 1) - 1;
               vmManager.addRecoil(0.035, 0.040);
-              AUDIO.brBurst.play(1.0, true);
+              playBattleRifleFire(curWs, false);
               triggerPlayerFlash();
 
               const spread = player.aiming ? (curW.adsSpread ?? 0.008) : (curW.spread ?? 0.018);
@@ -3371,8 +3361,8 @@ export default function App() {
             if(supply){
               extPromptResult={interactionPrompt:supply.kind==='ammo'?'[E] REFILL LOADOUT AMMO':`[E] EQUIP ${WEAPONS[supply.weaponIndex!].name}`,isPromptObjective:false};
               if(keys.KeyE){keys.KeyE=false;
-                if(supply.kind==='ammo'){playerLoadout.forEach((w,i)=>{if(w.type==='weapon'){cancelWeaponReload(playerWeaponState[i]);if(i===player.slotIndex)stopFirstBatchWeaponAudio();playerWeaponState[i].ammo=w.mag;playerWeaponState[i].reserve=w.reserve;playerWeaponState[i].needsChamber=false;playerWeaponState[i].pendingReloadShot=false;playerWeaponState[i].boltCycleT=0;}});pushKillFeed('FIELD AMMO REFILLED');}
-                else{stopFirstBatchWeaponAudio();cancelWeaponReload(playerWeaponState[0]);const w=WEAPONS[supply.weaponIndex!];playerLoadout[0]=w;playerWeaponState[0]={ammo:w.mag,reserve:w.reserve};switchSlot(0);pushKillFeed(`FIELD ARMORY: ${w.name}`);}
+                if(supply.kind==='ammo'){playerLoadout.forEach((w,i)=>{if(w.type==='weapon'){cancelWeaponReload(playerWeaponState[i]);if(i===player.slotIndex)stopWeaponAudio();playerWeaponState[i].ammo=w.mag;playerWeaponState[i].reserve=w.reserve;playerWeaponState[i].needsChamber=false;playerWeaponState[i].pendingReloadShot=false;playerWeaponState[i].boltCycleT=0;}});pushKillFeed('FIELD AMMO REFILLED');}
+                else{stopWeaponAudio();cancelWeaponReload(playerWeaponState[0]);const w=WEAPONS[supply.weaponIndex!];playerLoadout[0]=w;playerWeaponState[0]={ammo:w.mag,reserve:w.reserve};switchSlot(0);pushKillFeed(`FIELD ARMORY: ${w.name}`);}
               }
             }
           }
@@ -4173,7 +4163,7 @@ export default function App() {
     }
 
     return () => {
-      stopFirstBatchWeaponAudio();
+      stopWeaponAudio();
       cancelAnimationFrame(animId);
       stopMatchInput();
       deployHandlerRef.current = resumeHandlerRef.current = restartHandlerRef.current = lobbyHandlerRef.current = undefined;
