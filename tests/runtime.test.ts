@@ -34,12 +34,13 @@ function handler(name: string, context: object): (...args: any[]) => any {
 const sound = { stop() {}, play() {} };
 for (const inspectorMode of [false, true]) {
   const player = { alive: true, health: inspectorMode ? INSPECTOR_HEALTH : 100, shield: 50 };
-  let deaths = 0;
-  const apply = handler('applyDamageToPlayer', { player, world: {}, matchConfig: { inspectorMode, mode: 'extraction' }, AUDIO: { arSpray: sound, bulletHit: sound }, flashVignette() {}, pushKillFeed() {}, triggerGameOver() { deaths++; } });
+  let deaths = 0, audioStops = 0;
+  const apply = handler('applyDamageToPlayer', { player, world: {}, matchConfig: { inspectorMode, mode: 'extraction' }, AUDIO: { arSpray: sound, bulletHit: sound }, stopFirstBatchWeaponAudio() { audioStops++; }, flashVignette() {}, pushKillFeed() {}, triggerGameOver() { deaths++; } });
   apply(1_000_000, true, false, null);
   assert.equal(player.health, inspectorMode ? INSPECTOR_HEALTH : 0);
   assert.equal(player.alive, inspectorMode);
   assert.equal(deaths, inspectorMode ? 0 : 1);
+  assert.equal(audioStops, inspectorMode ? 0 : 1, 'Actual death stops first-batch audio; inspector immunity does not');
 }
 function actor(health: number) {
   return { alive: true, downed: false, health, pos: new THREE.Vector3(), group: new THREE.Group(), team: 'red', campaignEntity: 'spartan', armor: 140, hitParts: [], isZombie: false, healthEl: { style: {} }, weaponTypeIndex: 0 };

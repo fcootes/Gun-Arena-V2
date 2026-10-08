@@ -555,7 +555,7 @@ export function createViewmodelManager(): ViewmodelManager {
       const opened = phase.phase === 'open' ? p : phase.phase === 'close' ? 1 - p : 1;
       if (parts.feedTray) { reloadRotation.setFromEuler(reloadEuler.set(-.9, 0, 0)); parts.feedTray.quaternion.slerp(reloadRotation, opened); }
       if (parts.vent) { reloadRotation.setFromEuler(reloadEuler.set(0, 0, -.95)); parts.vent.quaternion.slerp(reloadRotation, phase.phase === 'close' ? 1-p : opened); }
-      if (phase.phase === 'chamber' && sequence.empty) {
+      if ((phase.phase === 'chamber' && sequence.empty) || (w.id === 'shotgun' && phase.phase === 'close' && !sequence.empty)) {
         const pull = Math.sin(p * Math.PI);
         if (parts.bolt) parts.bolt.position.z += pull * (w.id === 'br' ? .07 : .045);
         if (parts.slide) parts.slide.position.z += pull * .048;

@@ -5,6 +5,7 @@ import { Area51ExtractionGameLoop } from './area51Campaign';
 import { audioManager } from './campaignAudio';
 import { PostDeathMenu } from './PostDeathMenu';
 import { beginWeaponReload, advanceWeaponReload, cancelWeaponReload, interruptShellReload } from './weaponReload';
+import { playFirstBatchReload, playShotgunReloadPhase, stopFirstBatchReloadAudio, stopFirstBatchWeaponAudio, pauseFirstBatchWeaponAudio, resumeFirstBatchWeaponAudio } from './weaponAudio';
 import './ModePosters.css';
 import { createWeaponAssembly, disposeWeaponObject } from './weaponModels';
 import { useEffect, useRef, useState } from 'react';
@@ -286,6 +287,11 @@ export default function App() {
 
   const gameStateRef = useRef(gameState);
   gameStateRef.current = gameState;
+  useEffect(() => {
+    if (gameState === 'playing') resumeFirstBatchWeaponAudio();
+    else if (gameState === 'paused') pauseFirstBatchWeaponAudio();
+    else stopFirstBatchWeaponAudio();
+  }, [gameState]);
 
   const matchModeRef = useRef(matchMode);
   matchModeRef.current = matchMode;
@@ -1252,7 +1258,7 @@ export default function App() {
       if (player.health <= 0) {
         player.health = 0;
         player.alive = false;
-        AUDIO.arSpray.stop();
+        stopFirstBatchWeaponAudio();
 
         if (matchConfig.mode === 'extraction') {
           pushKillFeed('MISSION FAILED: OPERATOR KILLED');
@@ -1282,7 +1288,7 @@ export default function App() {
           player:{pos:player.pos,yaw:player.yaw,pitch:player.pitch,health:player.health,maxHealth:player.maxHealth,alive:player.alive,team:player.team,
             applyDamage:applyDamageToPlayer,heal:amount=>{player.health=Math.min(player.maxHealth,player.health+amount);}},
           needsAmmo:()=>playerWeaponState.slice(0,2).some(ws=>(ws.reserve??0)<30),
-          onBotShot:(bot,weapon)=>{radarPingsRef.current.push({x:bot.pos.x,z:bot.pos.z,timestamp:performance.now(),duration:1.5,type:'gunfire'});const audio=weapon.id==='sniper'?AUDIO.sniperShot:weapon.id==='pistol'?AUDIO.pistolShot:weapon.id==='shotgun'?AUDIO.shotgunShot:AUDIO.arSingle;audio.play(getSpatialVolume(camera.position,bot.pos));},
+          onBotShot:(bot,weapon)=>{radarPingsRef.current.push({x:bot.pos.x,z:bot.pos.z,timestamp:performance.now(),duration:1.5,type:'gunfire'});const audio=weapon.id==='sniper'?AUDIO.sniperShotWithBolt:weapon.id==='pistol'?AUDIO.pistolShot:weapon.id==='shotgun'?AUDIO.shotgunShot:AUDIO.arSingle;audio.play(getSpatialVolume(camera.position,bot.pos));},
           onExplosionHit:(target,amount)=>{if(target!== 'player'&&amount>0){showHitmarker(false);}}
       };
     }
@@ -1504,6 +1510,7 @@ export default function App() {
     function triggerGameOver(victory: boolean, winningBot: Bot | null = null) {
       if (gameStateRef.current === 'DEATH_SCREEN') return;
       gameStateRef.current = 'DEATH_SCREEN';
+      stopFirstBatchWeaponAudio();
       player.fireHeld = false; player.aiming = false; for(const key of Object.keys(keys))keys[key]=false;
       AUDIO.laserBeam.stop(); AUDIO.minigunFire.stop(); updateMinigunSpinAudio(false,0);
       AUDIO.arSpray.stop();
@@ -1940,6 +1947,7 @@ export default function App() {
     }
 
     function initMatch() {
+      stopFirstBatchWeaponAudio();
       // 1. Completely tear down, purge, and dispose of the Lobby Operator's Three.js turntable meshes and light variables before instantiating the match arena.
       teardownLobbyScene();
 
@@ -2206,7 +2214,11 @@ export default function App() {
       }
 
       const ws = currentSlotState();
-      interruptShellReload(w, ws);
+      if (interruptShellReload(w, ws)) {
+        stopFirstBatchReloadAudio();
+        AUDIO.shotgunPump.stop();
+        if (ws.pendingReloadShot) AUDIO.shotgunPump.play(1, true);
+      }
       if (ws.reloading || (ws.boltCycleT ?? 0) > 0) return;
       if (ws.needsChamber) { reloadWeapon(); return; }
 
@@ -2267,11 +2279,13 @@ export default function App() {
         ws.boltCycleT = .85;
         vmManager.addRecoil(0.09, 0.12);
         AUDIO.sniperShot.play(1.0, true);
+        AUDIO.sniperBolt.play(1.0, true);
 
       } else if (w.id === 'shotgun') {
         vmManager.addRecoil(0.075, 0.095);
         vmManager.triggerShotgunPump();
         AUDIO.shotgunShot.play(1.0, true);
+        AUDIO.shotgunPump.play(1.0, true);
       } else {
         vmManager.addRecoil(0.038, 0.045);
         if (player.continuousShots <= 1) AUDIO.arSingle.play(1.0, true);
@@ -2518,10 +2532,10 @@ export default function App() {
       AUDIO.arSpray.stop(); AUDIO.laserBeam.stop(); AUDIO.minigunFire.stop();
       laserBeamMesh.visible = false; player.continuousShots = 0;
       if (w.id === 'laser') AUDIO.laserVent.play(1.0);
-      else if (w.id === 'shotgun') AUDIO.shotgunReload.play(1.0);
-      else if (w.id === 'sniper') AUDIO.sniperReload.play(1.0);
-      else if (ws.isTacticalReload) AUDIO.reloadTactical.play(1.0);
-      else AUDIO.reloadEmpty.play(1.0);
+      else if (!playFirstBatchReload(w, ws)) {
+        if (ws.isTacticalReload) AUDIO.reloadTactical.play(1.0);
+        else AUDIO.reloadEmpty.play(1.0);
+      }
     }
 
     function switchSlot(index: number) {
@@ -2532,6 +2546,7 @@ export default function App() {
 
       if (!Number.isInteger(index) || index < 0 || index >= playerLoadout.length) return;
       if (player.slotIndex !== index) {
+        stopFirstBatchWeaponAudio();
         AUDIO.arSpray.stop();
         AUDIO.laserBeam.stop();
         AUDIO.minigunFire.stop();
@@ -3073,8 +3088,9 @@ export default function App() {
               }
             }
           }
-          const inserted = advanceWeaponReload(w, ws, dt);
-          if (inserted > 0 && player.slotIndex === i) AUDIO.shotgunReload.play(.85);
+          const wasReloading = ws.reloading;
+          advanceWeaponReload(w, ws, dt, player.slotIndex === i && w.id === 'shotgun' ? playShotgunReloadPhase : undefined);
+          if (wasReloading && !ws.reloading && player.slotIndex === i) stopFirstBatchReloadAudio();
         });
 
         const curW = currentSlot();
@@ -3355,8 +3371,8 @@ export default function App() {
             if(supply){
               extPromptResult={interactionPrompt:supply.kind==='ammo'?'[E] REFILL LOADOUT AMMO':`[E] EQUIP ${WEAPONS[supply.weaponIndex!].name}`,isPromptObjective:false};
               if(keys.KeyE){keys.KeyE=false;
-                if(supply.kind==='ammo'){playerLoadout.forEach((w,i)=>{if(w.type==='weapon'){cancelWeaponReload(playerWeaponState[i]);playerWeaponState[i].ammo=w.mag;playerWeaponState[i].reserve=w.reserve;playerWeaponState[i].needsChamber=false;playerWeaponState[i].pendingReloadShot=false;playerWeaponState[i].boltCycleT=0;}});pushKillFeed('FIELD AMMO REFILLED');}
-                else{cancelWeaponReload(playerWeaponState[0]);const w=WEAPONS[supply.weaponIndex!];playerLoadout[0]=w;playerWeaponState[0]={ammo:w.mag,reserve:w.reserve};switchSlot(0);pushKillFeed(`FIELD ARMORY: ${w.name}`);}
+                if(supply.kind==='ammo'){playerLoadout.forEach((w,i)=>{if(w.type==='weapon'){cancelWeaponReload(playerWeaponState[i]);if(i===player.slotIndex)stopFirstBatchWeaponAudio();playerWeaponState[i].ammo=w.mag;playerWeaponState[i].reserve=w.reserve;playerWeaponState[i].needsChamber=false;playerWeaponState[i].pendingReloadShot=false;playerWeaponState[i].boltCycleT=0;}});pushKillFeed('FIELD AMMO REFILLED');}
+                else{stopFirstBatchWeaponAudio();cancelWeaponReload(playerWeaponState[0]);const w=WEAPONS[supply.weaponIndex!];playerLoadout[0]=w;playerWeaponState[0]={ammo:w.mag,reserve:w.reserve};switchSlot(0);pushKillFeed(`FIELD ARMORY: ${w.name}`);}
               }
             }
           }
@@ -4157,6 +4173,7 @@ export default function App() {
     }
 
     return () => {
+      stopFirstBatchWeaponAudio();
       cancelAnimationFrame(animId);
       stopMatchInput();
       deployHandlerRef.current = resumeHandlerRef.current = restartHandlerRef.current = lobbyHandlerRef.current = undefined;

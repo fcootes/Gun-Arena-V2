@@ -9,6 +9,7 @@ export class SoundTrack {
   confirmedSrc: string | null;
   duration: number;
   private _vol: number;
+  private pausedForResume = new Set<HTMLAudioElement>();
 
   constructor(
     filenames: string | string[],
@@ -87,7 +88,7 @@ export class SoundTrack {
     probeNext();
   }
 
-  play(volume: number | null = null, restart = true): void {
+  play(volume: number | null = null, restart = true, playbackRate = 1, offsetSeconds = 0): void {
     const targetVol = (volume !== null && volume !== undefined) ? volume : this._vol;
     if (targetVol <= 0.005) return;
     const clamped = Math.max(0, Math.min(1, targetVol));
@@ -99,7 +100,10 @@ export class SoundTrack {
     this.index = (this.index + 1) % this.poolSize;
 
     audio.volume = clamped;
-    if (restart) audio.currentTime = 0;
+    this.pausedForResume.delete(audio);
+    audio.playbackRate = Number.isFinite(playbackRate) ? Math.max(.0625, Math.min(16, playbackRate)) : 1;
+    audio.preservesPitch = true;
+    if (restart) audio.currentTime = Number.isFinite(offsetSeconds) ? Math.max(0, offsetSeconds) : 0;
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise.catch(() => {});
@@ -112,6 +116,8 @@ export class SoundTrack {
     if (!this.confirmedSrc) return;
 
     const audio = this.pool[0];
+    this.pausedForResume.delete(audio);
+    audio.playbackRate = 1;
     audio.volume = clamped;
     if (audio.paused) {
       audio.currentTime = 0;
@@ -120,7 +126,22 @@ export class SoundTrack {
     }
   }
 
+  pause(): void {
+    this.pool.forEach(audio => {
+      if (!audio.paused && !audio.ended) {
+        this.pausedForResume.add(audio);
+        audio.pause();
+      }
+    });
+  }
+
+  resume(): void {
+    this.pausedForResume.forEach(audio => { audio.play()?.catch(() => {}); });
+    this.pausedForResume.clear();
+  }
+
   stop(): void {
+    this.pausedForResume.clear();
     this.pool.forEach(a => {
       try {
         a.pause();
@@ -134,6 +155,26 @@ export class SoundTrack {
 
 export const grenadeThrowSound = new SoundTrack(['bamboo whoosh', 'bamboo whoosh.mp3', 'bamboo whoosh.wav', 'bamboo whoosh.ogg', 'bamboo whoosh.m4a'], 4);
 export const grenadeExplosionSound = new SoundTrack(['medium explosion whoosh', 'medium explosion whoosh.mp3', 'medium explosion whoosh.wav', 'medium explosion whoosh.ogg', 'medium explosion whoosh.m4a'], 4);
+
+// Static URLs let Vite package the WAVs and preserve deployment base paths.
+export const FIRST_BATCH_AUDIO_URLS = {
+  arSingle: new URL('./assets/audio/weapons/batch1/ar_fire_single.wav', import.meta.url).href,
+  arSpray: new URL('./assets/audio/weapons/batch1/ar_fire_auto_loop.wav', import.meta.url).href,
+  arReloadTactical: new URL('./assets/audio/weapons/batch1/ar_reload_tactical.wav', import.meta.url).href,
+  arReloadEmpty: new URL('./assets/audio/weapons/batch1/ar_reload_empty.wav', import.meta.url).href,
+  shotgunShot: new URL('./assets/audio/weapons/batch1/shotgun_fire_single.wav', import.meta.url).href,
+  shotgunPump: new URL('./assets/audio/weapons/batch1/shotgun_pump.wav', import.meta.url).href,
+  shotgunReload: new URL('./assets/audio/weapons/batch1/shotgun_reload_shell_insert.wav', import.meta.url).href,
+  shotgunReloadEmpty: new URL('./assets/audio/weapons/batch1/shotgun_reload_shell_insert_empty.wav', import.meta.url).href,
+  pistolShot: new URL('./assets/audio/weapons/batch1/pistol_fire_single.wav', import.meta.url).href,
+  pistolReloadTactical: new URL('./assets/audio/weapons/batch1/pistol_reload_tactical.wav', import.meta.url).href,
+  pistolReloadEmpty: new URL('./assets/audio/weapons/batch1/pistol_reload_empty.wav', import.meta.url).href,
+  sniperShot: new URL('./assets/audio/weapons/batch1/sniper_fire_single.wav', import.meta.url).href,
+  sniperShotWithBolt: new URL('./assets/audio/weapons/batch1/sniper_fire_with_bolt.wav', import.meta.url).href,
+  sniperBolt: new URL('./assets/audio/weapons/batch1/sniper_bolt_cycle.wav', import.meta.url).href,
+  sniperReloadTactical: new URL('./assets/audio/weapons/batch1/sniper_reload_tactical.wav', import.meta.url).href,
+  sniperReloadEmpty: new URL('./assets/audio/weapons/batch1/sniper_reload_empty.wav', import.meta.url).href,
+};
 
 // Standard relative local filenames mapped for direct desktop synchronization
 export const PISTOL_AUDIO_FILENAMES = {
@@ -162,12 +203,20 @@ export const PISTOL_AUDIO_FILENAMES = {
 
 export const AUDIO = {
   // Existing Arsenal Sounds
-  arSingle:      new SoundTrack(['AK-47 single shot.m4a', 'AK-47 single shot'], 6),
-  arSpray:       new SoundTrack(['AK-47 multi shpot.m4a', 'AK-47 multi shpot'], 2, true),
+  arSingle:      new SoundTrack(FIRST_BATCH_AUDIO_URLS.arSingle, 6),
+  arSpray:       new SoundTrack(FIRST_BATCH_AUDIO_URLS.arSpray, 2, true),
+  arReloadTactical: new SoundTrack(FIRST_BATCH_AUDIO_URLS.arReloadTactical, 2),
+  arReloadEmpty: new SoundTrack(FIRST_BATCH_AUDIO_URLS.arReloadEmpty, 2),
   arReload:      new SoundTrack(['squarebun-m4a1-reload-sound-316890.mp4', 'squarebun-m4a1-reload-sound-316890'], 2),
-  shotgunShot:   new SoundTrack(['universfield-shotgun-blast-352038', 'universfield-shotgun-blast-352038.mp3', 'universfield-shotgun-blast-352038.wav'], 6),
-  shotgunReload: new SoundTrack(['u_6y9n97bgg6-caulking-gun-back-381411', 'u_6y9n97bgg6-caulking-gun-back-381411.mp3'], 3),
-  sniperShot:    new SoundTrack(['sniper shot(updated)', 'sniper shot(updated).mp3', 'sniper shot(updated).wav'], 6),
+  shotgunShot:   new SoundTrack(FIRST_BATCH_AUDIO_URLS.shotgunShot, 6),
+  shotgunPump:   new SoundTrack(FIRST_BATCH_AUDIO_URLS.shotgunPump, 3),
+  shotgunReload: new SoundTrack(FIRST_BATCH_AUDIO_URLS.shotgunReload, 3),
+  shotgunReloadEmpty: new SoundTrack(FIRST_BATCH_AUDIO_URLS.shotgunReloadEmpty, 3),
+  sniperShot:    new SoundTrack(FIRST_BATCH_AUDIO_URLS.sniperShot, 6),
+  sniperShotWithBolt: new SoundTrack(FIRST_BATCH_AUDIO_URLS.sniperShotWithBolt, 6),
+  sniperBolt: new SoundTrack(FIRST_BATCH_AUDIO_URLS.sniperBolt, 6),
+  sniperReloadTactical: new SoundTrack(FIRST_BATCH_AUDIO_URLS.sniperReloadTactical, 2),
+  sniperReloadEmpty: new SoundTrack(FIRST_BATCH_AUDIO_URLS.sniperReloadEmpty, 2),
   // Sniper reload locked to 'dragon-studio-gun-reload-2-511308.mp3'
   sniperReload:  new SoundTrack(['dragon-studio-gun-reload-2-511308.mp3', 'dragon-studio-gun-reload-2-511308', 'freesound_community-machine-gun-reload-6302'], 2),
   miniDrink:     new SoundTrack(['freesound_community-glug-glug-glug-39140', 'freesound_community-glug-glug-glug-39140.mp3', 'freesound_community-glug-glug-glug-39140.wav'], 3),
@@ -178,7 +227,9 @@ export const AUDIO = {
   reloadEmpty:    new SoundTrack(['weapon_reload_empty.mp3', 'weapon_reload_empty'], 2),
 
   // Pistol Sounds
-  pistolShot:    new SoundTrack(PISTOL_AUDIO_FILENAMES.shot, 6),
+  pistolShot:    new SoundTrack(FIRST_BATCH_AUDIO_URLS.pistolShot, 6),
+  pistolReloadTactical: new SoundTrack(FIRST_BATCH_AUDIO_URLS.pistolReloadTactical, 2),
+  pistolReloadEmpty: new SoundTrack(FIRST_BATCH_AUDIO_URLS.pistolReloadEmpty, 2),
   pistolReload:  new SoundTrack(PISTOL_AUDIO_FILENAMES.reload, 2),
 
   // Full Armory New Weapon Clean Local Placeholders

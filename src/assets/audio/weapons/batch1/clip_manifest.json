@@ -1,0 +1,564 @@
+{
+  "sample_rate": 48000,
+  "baseline_reload_multiplier": 1,
+  "code_reference": {
+    "repo": "fcootes/Gun-Arena-V2",
+    "branch": "main",
+    "reload_sha": "e33a5fad317e9421253fe703f40ef92e8413b7e7",
+    "weapons_sha": "f702f26f54062d3143894c2e995780d7fe3390fa"
+  },
+  "clips": [
+    {
+      "filename": "ar_fire_single.wav",
+      "weapon": "AR",
+      "state": "Single shot",
+      "sample_rate": 48000,
+      "samples": 42720,
+      "duration_seconds": 0.89,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 1,
+          "start": 0.399,
+          "end": 1.289
+        }
+      ],
+      "gain_db": -3.1147170660094137,
+      "notes": "Natural report and decay; subsequent shots may overlap the tail. Fire interval 0.11 s."
+    },
+    {
+      "filename": "ar_fire_auto_loop.wav",
+      "weapon": "AR",
+      "state": "Automatic fire loop",
+      "sample_rate": 48000,
+      "samples": 126720,
+      "duration_seconds": 2.64,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 1,
+          "start": 4.47,
+          "end": 7.12
+        }
+      ],
+      "gain_db": -1.4553229015504603,
+      "notes": "24 firing cycles at mean 0.110 s; 10 ms seam crossfade; loop with no fade or pause."
+    },
+    {
+      "filename": "ar_reload_empty.wav",
+      "weapon": "AR",
+      "state": "Empty reload",
+      "sample_rate": 48000,
+      "samples": 163680,
+      "duration_seconds": 3.41,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 1,
+          "filename": "sovetsky_rastov72-ak-47-sound-effect-267042.mp3",
+          "start": 8.08,
+          "end": 8.425,
+          "placed_at_seconds": 0.312,
+          "tempo_factor": 1.0
+        },
+        {
+          "attachment": 1,
+          "filename": "sovetsky_rastov72-ak-47-sound-effect-267042.mp3",
+          "start": 8.59,
+          "end": 9.14,
+          "placed_at_seconds": 1.6415,
+          "tempo_factor": 1.0
+        },
+        {
+          "attachment": 1,
+          "filename": "sovetsky_rastov72-ak-47-sound-effect-267042.mp3",
+          "start": 9.42,
+          "end": 9.85,
+          "placed_at_seconds": 2.4435,
+          "tempo_factor": 1.0
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Background air reduced with quiet-gap spectral noise profile and 110 Hz high-pass; original event placements and 3.410000 s timing retained.",
+      "phases": [
+        {
+          "phase": "eject",
+          "start_seconds": 0,
+          "duration_seconds": 0.682,
+          "audio_start_seconds": 0.312
+        },
+        {
+          "phase": "insert",
+          "start_seconds": 0.682,
+          "duration_seconds": 1.5345,
+          "audio_start_seconds": 1.6415
+        },
+        {
+          "phase": "chamber",
+          "start_seconds": 2.2165,
+          "duration_seconds": 0.682,
+          "audio_start_seconds": 2.4435
+        },
+        {
+          "phase": "close",
+          "start_seconds": 2.8985,
+          "duration_seconds": 0.5115
+        }
+      ],
+      "noise_profile_measurements": [
+        {
+          "start": 8.405,
+          "end": 8.59,
+          "reduction_db": 9.04728187711821
+        },
+        {
+          "start": 9.155,
+          "end": 9.39,
+          "reduction_db": 14.882473548057341
+        },
+        {
+          "start": 9.9,
+          "end": 10.08,
+          "reduction_db": 19.68863243902085
+        }
+      ]
+    },
+    {
+      "filename": "ar_reload_tactical.wav",
+      "weapon": "AR",
+      "state": "Tactical reload",
+      "sample_rate": 48000,
+      "samples": 92851,
+      "duration_seconds": 1.9343958333333333,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 2,
+          "filename": "dragon-studio-gun-reload-2-511308.mp3",
+          "start": 0.025,
+          "end": 0.41,
+          "placed_at_seconds": 0.07360416666666666,
+          "tempo_factor": 1.0
+        },
+        {
+          "attachment": 2,
+          "filename": "dragon-studio-gun-reload-2-511308.mp3",
+          "start": 0.875,
+          "end": 1.245,
+          "placed_at_seconds": 1.1767083333333332,
+          "tempo_factor": 1.0
+        }
+      ],
+      "gain_db": -1.4193158552112408,
+      "notes": "Mechanical actions separated by silence to match reload phase lengths; pitch preserved where compression is required. Baseline reload multiplier 1.",
+      "phases": [
+        {
+          "phase": "eject",
+          "start_seconds": 0,
+          "duration_seconds": 0.4836,
+          "audio_start_seconds": 0.07360416666666666
+        },
+        {
+          "phase": "insert",
+          "start_seconds": 0.4836,
+          "duration_seconds": 1.0881,
+          "audio_start_seconds": 1.1767083333333332
+        },
+        {
+          "phase": "close",
+          "start_seconds": 1.5717,
+          "duration_seconds": 0.3627
+        }
+      ]
+    },
+    {
+      "filename": "shotgun_fire_single.wav",
+      "weapon": "Shotgun",
+      "state": "Single shot",
+      "sample_rate": 48000,
+      "samples": 90240,
+      "duration_seconds": 1.88,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 3,
+          "start": 0.315,
+          "end": 2.195
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "1.880 s includes decay; do not truncate to the 0.850 s firing interval."
+    },
+    {
+      "filename": "shotgun_pump.wav",
+      "weapon": "Shotgun",
+      "state": "Post-shot pump",
+      "sample_rate": 48000,
+      "samples": 20160,
+      "duration_seconds": 0.42,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 4,
+          "start": 0.132,
+          "end": 0.73
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Pitch-preserved compression to the 0.420 s pump animation. Also use after shell loading as requested; empty-reload chamber is 0.4158 s, so rate 1.010101 matches it."
+    },
+    {
+      "filename": "shotgun_reload_shell_insert.wav",
+      "weapon": "Shotgun",
+      "state": "One shell insert (tactical)",
+      "sample_rate": 48000,
+      "samples": 18870,
+      "duration_seconds": 0.393125,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 5,
+          "start": 1.28,
+          "end": 1.65
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "One insertion only; repeat N times. Use at INSERT phase start; current code fires insertion audio at completion and requires hook adjustment."
+    },
+    {
+      "filename": "shotgun_reload_shell_insert_empty.wav",
+      "weapon": "Shotgun",
+      "state": "One shell insert (empty)",
+      "sample_rate": 48000,
+      "samples": 26611,
+      "duration_seconds": 0.5543958333333333,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 5,
+          "start": 1.28,
+          "end": 1.65
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Same insertion with extra spacing for empty-reload phase. Choose this variant when ammo was zero; repeat N times."
+    },
+    {
+      "filename": "pistol_fire_single.wav",
+      "weapon": "Pistol",
+      "state": "Single shot",
+      "sample_rate": 48000,
+      "samples": 53760,
+      "duration_seconds": 1.12,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 6,
+          "start": 0.164,
+          "end": 1.284
+        }
+      ],
+      "gain_db": -1.051337043632041,
+      "notes": "Natural report/decay; preserve tail overlap at 0.220 s firing interval."
+    },
+    {
+      "filename": "pistol_reload_empty.wav",
+      "weapon": "Pistol",
+      "state": "Empty reload",
+      "sample_rate": 48000,
+      "samples": 100320,
+      "duration_seconds": 2.09,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 7,
+          "filename": "melbeebelbee-gun-full-reload-384507.mp3",
+          "start": 0.025,
+          "end": 0.335,
+          "placed_at_seconds": 0.083,
+          "tempo_factor": 1.0
+        },
+        {
+          "attachment": 7,
+          "filename": "melbeebelbee-gun-full-reload-384507.mp3",
+          "start": 0.385,
+          "end": 0.685,
+          "placed_at_seconds": 1.0335,
+          "tempo_factor": 1.0
+        },
+        {
+          "attachment": 7,
+          "filename": "melbeebelbee-gun-full-reload-384507.mp3",
+          "start": 0.715,
+          "end": 1.1,
+          "placed_at_seconds": 1.3665,
+          "tempo_factor": 1.0
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Mechanical actions separated by silence to match reload phase lengths; pitch preserved where compression is required. Baseline reload multiplier 1.",
+      "phases": [
+        {
+          "phase": "eject",
+          "start_seconds": 0,
+          "duration_seconds": 0.418,
+          "audio_start_seconds": 0.083
+        },
+        {
+          "phase": "insert",
+          "start_seconds": 0.418,
+          "duration_seconds": 0.9405,
+          "audio_start_seconds": 1.0335
+        },
+        {
+          "phase": "chamber",
+          "start_seconds": 1.3585,
+          "duration_seconds": 0.418,
+          "audio_start_seconds": 1.3665
+        },
+        {
+          "phase": "close",
+          "start_seconds": 1.7765,
+          "duration_seconds": 0.3135
+        }
+      ]
+    },
+    {
+      "filename": "pistol_reload_tactical.wav",
+      "weapon": "Pistol",
+      "state": "Tactical reload",
+      "sample_rate": 48000,
+      "samples": 56909,
+      "duration_seconds": 1.1856041666666666,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 8,
+          "filename": "dragon-studio-gun-reload-2-511308 (1).mp3",
+          "start": 0.025,
+          "end": 0.41,
+          "placed_at_seconds": 0.0,
+          "tempo_factor": 1.4185921547555078
+        },
+        {
+          "attachment": 8,
+          "filename": "dragon-studio-gun-reload-2-511308 (1).mp3",
+          "start": 0.875,
+          "end": 1.245,
+          "placed_at_seconds": 0.5682916666666666,
+          "tempo_factor": 1.0
+        }
+      ],
+      "gain_db": -1.4139316782523288,
+      "notes": "Mechanical actions separated by silence to match reload phase lengths; pitch preserved where compression is required. Baseline reload multiplier 1.",
+      "phases": [
+        {
+          "phase": "eject",
+          "start_seconds": 0,
+          "duration_seconds": 0.2964,
+          "audio_start_seconds": 0.0
+        },
+        {
+          "phase": "insert",
+          "start_seconds": 0.2964,
+          "duration_seconds": 0.6669,
+          "audio_start_seconds": 0.5682916666666666
+        },
+        {
+          "phase": "close",
+          "start_seconds": 0.9633,
+          "duration_seconds": 0.2223
+        }
+      ]
+    },
+    {
+      "filename": "sniper_fire_single.wav",
+      "weapon": "Sniper",
+      "state": "Single shot",
+      "sample_rate": 48000,
+      "samples": 37440,
+      "duration_seconds": 0.78,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 9,
+          "start": 0.04,
+          "end": 0.82
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Separated report and decay; bolt hardware excluded from 0.820 s onward."
+    },
+    {
+      "filename": "sniper_bolt_cycle.wav",
+      "weapon": "Sniper",
+      "state": "Post-shot bolt cycle",
+      "sample_rate": 48000,
+      "samples": 40800,
+      "duration_seconds": 0.85,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 9,
+          "start": 0.82,
+          "end": 1.555
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Pitch-preserved stretch to 0.850 s bolt animation; start with the shot, matching current animation start."
+    },
+    {
+      "filename": "sniper_fire_with_bolt.wav",
+      "weapon": "Sniper",
+      "state": "Combined shot + bolt (existing single hook)",
+      "sample_rate": 48000,
+      "samples": 40800,
+      "duration_seconds": 0.85,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 9,
+          "start": 0.04,
+          "end": 1.555
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Convenience variant for the current sniperShot audio hook, because it has no separate bolt audio trigger. Do not also play sniper_bolt_cycle with this variant."
+    },
+    {
+      "filename": "sniper_reload_empty.wav",
+      "weapon": "Sniper",
+      "state": "Empty reload",
+      "sample_rate": 48000,
+      "samples": 142560,
+      "duration_seconds": 2.97,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 10,
+          "filename": "squarebun-m4a1-reload-sound-316890.mp3",
+          "start": 0.14,
+          "end": 0.53,
+          "placed_at_seconds": 0.179,
+          "tempo_factor": 1.0
+        },
+        {
+          "attachment": 10,
+          "filename": "squarebun-m4a1-reload-sound-316890.mp3",
+          "start": 1.015,
+          "end": 1.645,
+          "placed_at_seconds": 1.2755,
+          "tempo_factor": 1.0
+        },
+        {
+          "attachment": 10,
+          "filename": "squarebun-m4a1-reload-sound-316890.mp3",
+          "start": 1.94,
+          "end": 2.435,
+          "placed_at_seconds": 2.0045,
+          "tempo_factor": 1.0
+        },
+        {
+          "attachment": 10,
+          "filename": "squarebun-m4a1-reload-sound-316890.mp3",
+          "start": 2.48,
+          "end": 2.78,
+          "placed_at_seconds": 2.645,
+          "tempo_factor": 1.0
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Mechanical actions separated by silence to match reload phase lengths; pitch preserved where compression is required. Baseline reload multiplier 1.",
+      "phases": [
+        {
+          "phase": "eject",
+          "start_seconds": 0,
+          "duration_seconds": 0.594,
+          "audio_start_seconds": 0.179
+        },
+        {
+          "phase": "insert",
+          "start_seconds": 0.594,
+          "duration_seconds": 1.3365,
+          "audio_start_seconds": 1.2755
+        },
+        {
+          "phase": "chamber",
+          "start_seconds": 1.9304999999999999,
+          "duration_seconds": 0.594,
+          "audio_start_seconds": 2.0045
+        },
+        {
+          "phase": "close",
+          "start_seconds": 2.5244999999999997,
+          "duration_seconds": 0.4455,
+          "audio_start_seconds": 2.645
+        }
+      ]
+    },
+    {
+      "filename": "sniper_reload_tactical.wav",
+      "weapon": "Sniper",
+      "state": "Tactical reload (derived)",
+      "sample_rate": 48000,
+      "samples": 80870,
+      "duration_seconds": 1.6847916666666667,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 10,
+          "filename": "squarebun-m4a1-reload-sound-316890.mp3",
+          "start": 0.14,
+          "end": 0.53,
+          "placed_at_seconds": 0.006208333333333333,
+          "tempo_factor": 1.0
+        },
+        {
+          "attachment": 10,
+          "filename": "squarebun-m4a1-reload-sound-316890.mp3",
+          "start": 1.015,
+          "end": 1.645,
+          "placed_at_seconds": 0.7138958333333333,
+          "tempo_factor": 1.0
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Mechanical actions separated by silence to match reload phase lengths; pitch preserved where compression is required. Baseline reload multiplier 1.",
+      "phases": [
+        {
+          "phase": "eject",
+          "start_seconds": 0,
+          "duration_seconds": 0.4212,
+          "audio_start_seconds": 0.006208333333333333
+        },
+        {
+          "phase": "insert",
+          "start_seconds": 0.4212,
+          "duration_seconds": 0.9477,
+          "audio_start_seconds": 0.7138958333333333
+        },
+        {
+          "phase": "close",
+          "start_seconds": 1.3689,
+          "duration_seconds": 0.3159
+        }
+      ]
+    }
+  ]
+}

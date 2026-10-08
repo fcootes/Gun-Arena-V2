@@ -1,6 +1,7 @@
 import type { WeaponDef, WeaponSlotState } from './types';
 
 export type ReloadPhase = 'open' | 'eject' | 'insert' | 'chamber' | 'close' | 'vent';
+export type ReloadPhaseListener = (phase: ReloadPhase, duration: number, empty: boolean) => void;
 export interface ReloadSequence {
   kind: 'magazine' | 'shell' | 'battery' | 'tube' | 'cylinder' | 'vent';
   phases: { phase: ReloadPhase; duration: number }[];
@@ -55,7 +56,7 @@ export function beginWeaponReload(weapon: WeaponDef, state: WeaponSlotState, mul
 }
 
 /** Advance through phase boundaries without losing shell events on slow frames. */
-export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, delta: number): number {
+export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, delta: number, onPhaseStart?: ReloadPhaseListener): number {
   if (!Number.isFinite(delta) || delta <= 0) return 0;
   state.boltCycleT = Math.max(0, (state.boltCycleT ?? 0) - delta);
   const sequence = state.reloadSequence;
@@ -72,7 +73,11 @@ export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, d
           state.ammo = (state.ammo ?? 0) + 1; state.reserve = (state.reserve ?? 0) - 1; sequence.inserted++; inserts++;
         }
         sequence.shellsRemaining--;
-        if (sequence.shellsRemaining > 0 && (state.reserve ?? 0) > 0) { sequence.elapsed = 0; continue; }
+        if (sequence.shellsRemaining > 0 && (state.reserve ?? 0) > 0) {
+          sequence.elapsed = 0;
+          onPhaseStart?.(stage.phase, stage.duration, sequence.empty);
+          continue;
+        }
       } else if (weapon.id === 'laser') { state.ammo = weapon.mag;
       } else {
         const take = Math.max(0, Math.min((weapon.mag ?? 0) - (state.ammo ?? 0), state.reserve ?? 0));
@@ -84,6 +89,9 @@ export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, d
     if (sequence.index === sequence.phases.length) {
       if (sequence.kind === 'battery' || sequence.kind === 'vent') { state.heat = 0; state.overheated = false; if(weapon.id==='minigun')state.ammo=weapon.mag; }
       cancelWeaponReload(state);
+    } else {
+      const next = sequence.phases[sequence.index];
+      onPhaseStart?.(next.phase, next.duration, sequence.empty);
     }
   }
   return inserts;
