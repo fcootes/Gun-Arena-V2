@@ -1,4 +1,4 @@
-import { AUDIO, SoundTrack, FIRST_BATCH_AUDIO_URLS, SECOND_BATCH_AUDIO_URLS } from './audio';
+import { AUDIO, SoundTrack, FIRST_BATCH_AUDIO_URLS, SECOND_BATCH_AUDIO_URLS, THIRD_BATCH_AUDIO_URLS } from './audio';
 import type { WeaponDef, WeaponSlotState } from './types';
 import type { ReloadPhase } from './weaponReload';
 
@@ -18,8 +18,11 @@ const reloadTracks = [
   AUDIO.pistolReloadTactical, AUDIO.pistolReloadEmpty,
   AUDIO.sniperReloadTactical, AUDIO.sniperReloadEmpty,
   AUDIO.shotgunReload, AUDIO.shotgunReloadEmpty,
+  AUDIO.laserVent, AUDIO.plasmaReloadEmpty, AUDIO.plasmaInsert,
 ];
-const weaponTracks = Object.keys({ ...FIRST_BATCH_AUDIO_URLS, ...SECOND_BATCH_AUDIO_URLS }).map(key => AUDIO[key as keyof typeof FIRST_BATCH_AUDIO_URLS | keyof typeof SECOND_BATCH_AUDIO_URLS]);
+const weaponUrls = { ...FIRST_BATCH_AUDIO_URLS, ...SECOND_BATCH_AUDIO_URLS, ...THIRD_BATCH_AUDIO_URLS };
+const weaponTracks = Object.keys(weaponUrls).map(key => AUDIO[key as keyof typeof weaponUrls]);
+let plasmaReloads = new WeakMap<WeaponSlotState, { sequence: NonNullable<WeaponSlotState['reloadSequence']>; inserted: boolean }>();
 
 function playFitted(track: SoundTrack, clipDuration: number, duration: number, volume = 1, offset = 0): void {
   if (!Number.isFinite(duration) || duration <= 0) return;
@@ -37,6 +40,16 @@ export function playShotgunReloadPhase(phase: ReloadPhase, duration: number, emp
 
 export function playWeaponReloadAudio(weapon: WeaponDef, state: WeaponSlotState): boolean {
   if (!state.reloading || !state.reloadSequence) return false;
+  if (weapon.id === 'laser') {
+    stopWeaponReloadAudio();
+    AUDIO.laserBeam.stop();
+    const empty = !!state.overheated || (state.heat ?? 0) >= 100;
+    const track = empty ? AUDIO.plasmaReloadEmpty : AUDIO.laserVent;
+    playFitted(track, track.duration || 2.2, state.totalReloadT ?? 0);
+    // Manual cooling still uses the game's existing battery insert animation.
+    if (!empty) plasmaReloads.set(state, { sequence: state.reloadSequence, inserted: false });
+    return true;
+  }
   if (weapon.id === 'shotgun') {
     stopWeaponReloadAudio();
     const phase = state.reloadSequence.phases[0];
@@ -46,6 +59,7 @@ export function playWeaponReloadAudio(weapon: WeaponDef, state: WeaponSlotState)
   const profile = reloadProfiles[weapon.id as keyof typeof reloadProfiles];
   if (!profile) return false;
   stopWeaponReloadAudio();
+  AUDIO.smgAuto.stop();
   AUDIO.lmgAuto.stop();
   AUDIO.brBurst.stop();
   const chamberOnly = state.reloadSequence.phases[0].phase === 'chamber';
@@ -59,12 +73,15 @@ export function playWeaponReloadAudio(weapon: WeaponDef, state: WeaponSlotState)
 
 export function stopWeaponReloadAudio(): void {
   reloadTracks.forEach(track => track.stop());
+  plasmaReloads = new WeakMap();
 }
 
 export function stopWeaponAudio(): void {
   weaponTracks.forEach(track => track.stop());
   minigunPhase = 'idle';
   partialBursts = new WeakSet<WeaponSlotState>();
+  plasmaReloads = new WeakMap();
+  railgunCharging = false;
 }
 
 export function pauseWeaponAudio(): void {
@@ -88,6 +105,45 @@ export function playBattleRifleFire(state: WeaponSlotState, start: boolean): voi
 export function playLmgFire(shotNumber: number, lastShot = false): void {
   if (shotNumber <= 1 || lastShot) { AUDIO.lmgAuto.stop(); AUDIO.lmgFire.play(); }
   else { AUDIO.lmgFire.stop(); AUDIO.lmgAuto.playContinuous(); }
+}
+
+export function playAutomaticWeaponFire(id: 'smg' | 'laser', shotNumber: number, lastShot = false): void {
+  const single = id === 'smg' ? AUDIO.smgFire : AUDIO.plasmaSingle;
+  const loop = id === 'smg' ? AUDIO.smgAuto : AUDIO.laserBeam;
+  if (shotNumber <= 1 || lastShot) { loop.stop(); single.play(); }
+  else { single.stop(); loop.playContinuous(); }
+}
+
+/** Follow simulation time so pause/cancellation cannot leave a delayed insert timer. */
+export function updatePlasmaReloadAudio(state: WeaponSlotState): void {
+  const pending = plasmaReloads.get(state);
+  if (!pending || pending.inserted) return;
+  const sequence = state.reloadSequence;
+  if (!state.reloading || sequence !== pending.sequence) { plasmaReloads.delete(state); return; }
+  const insertIndex = sequence.phases.findIndex(phase => phase.phase === 'insert');
+  if (insertIndex < 0) return;
+  const scale = (state.totalReloadT ?? 2.2) / 2.2;
+  const insertEnd = sequence.phases.slice(0, insertIndex + 1).reduce((sum, phase) => sum + phase.duration, 0);
+  const cue = insertEnd - .175 * scale;
+  const elapsed = (state.totalReloadT ?? 0) - (state.reloadT ?? 0);
+  if (elapsed < cue) return;
+  pending.inserted = true;
+  const offset = (elapsed - cue) / scale;
+  const clipDuration = AUDIO.plasmaInsert.duration || .16;
+  // A slow frame which skips the whole cue must not replay a stale mechanic.
+  if (offset < clipDuration) playFitted(AUDIO.plasmaInsert, clipDuration, clipDuration * scale, 1, offset);
+}
+
+let railgunCharging = false;
+export function updateRailgunWeaponAudio(charging: boolean, progress: number): void {
+  if (!charging) {
+    if (railgunCharging) AUDIO.railgunCharge.stop();
+    railgunCharging = false;
+    return;
+  }
+  if (railgunCharging || !AUDIO.railgunCharge.confirmedSrc) return;
+  railgunCharging = true;
+  AUDIO.railgunCharge.play(1, true, 1, Math.max(0, Math.min(1, progress)) * 1.2);
 }
 
 type MinigunAudioPhase = 'idle' | 'warming' | 'firing' | 'down' | 'cooling';

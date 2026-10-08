@@ -1,0 +1,230 @@
+{
+  "sample_rate": 48000,
+  "baseline_class_reload_multiplier": 1,
+  "code_reference": {
+    "repo": "fcootes/Gun-Arena-V2",
+    "branch": "main",
+    "reload_sha": "e33a5fad317e9421253fe703f40ef92e8413b7e7",
+    "weapons_sha": "f702f26f54062d3143894c2e995780d7fe3390fa",
+    "app_sha": "9bab75988f85c7cb2ba15be84dd19ee5e27cddbc"
+  },
+  "clips": [
+    {
+      "filename": "smg_fire_single.wav",
+      "weapon": "SMG",
+      "state": "Single shot",
+      "sample_rate": 48000,
+      "samples": 21120,
+      "duration_seconds": 0.44,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 2,
+          "filename": "freesound_community-080978_fully-automatic-pistol-uzi-39778.mp3",
+          "start_seconds": 0.06,
+          "end_seconds": 0.5
+        }
+      ],
+      "gain_db": -1.7924713319158727,
+      "notes": "Leading dead space removed; preserve decay overlap at 0.072 s firing interval."
+    },
+    {
+      "filename": "smg_fire_auto_loop.wav",
+      "weapon": "SMG",
+      "state": "Auto loop",
+      "sample_rate": 48000,
+      "samples": 82944,
+      "duration_seconds": 1.728,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 1,
+          "filename": "freesound_community-072778_fully-automatic-pistol-uzi-39776.mp3",
+          "start_seconds": 0.242,
+          "end_seconds": 2.218
+        }
+      ],
+      "gain_db": -0.9896762403015812,
+      "notes": "24-report section retimed to 24 x 0.072 seconds, pitch preserved; 8 ms seam crossfade. Use one loop for sustained fire."
+    },
+    {
+      "filename": "plasma_fire_single.wav",
+      "weapon": "Plasma rifle",
+      "state": "Short single shot",
+      "sample_rate": 48000,
+      "samples": 7920,
+      "duration_seconds": 0.165,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 8,
+          "filename": "soundreality-sci-fi-gun-shot-312659.mp3",
+          "start_seconds": 0.04,
+          "end_seconds": 0.26
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Pitch-preserved compression to 0.165 s. Tail spans three current 55 ms firing cycles; overlap is intentional."
+    },
+    {
+      "filename": "plasma_fire_auto_loop.wav",
+      "weapon": "Plasma rifle",
+      "state": "Layered automatic loop",
+      "sample_rate": 48000,
+      "samples": 52800,
+      "duration_seconds": 1.1,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 8,
+          "filename": "soundreality-sci-fi-gun-shot-312659.mp3",
+          "start_seconds": 0.04,
+          "end_seconds": 0.26
+        }
+      ],
+      "gain_db": -0.6725616002156088,
+      "notes": "20 shortened reports at 55 ms intervals over 1.100 s, tails wrapped across seam. Prepared for planned projectile-rifle change; loop cadence may be adjusted then.",
+      "fire_interval_seconds": 0.055,
+      "reports_per_loop": 20
+    },
+    {
+      "filename": "plasma_cooling_hiss.wav",
+      "weapon": "Plasma rifle",
+      "state": "Cooling/vent hiss",
+      "sample_rate": 48000,
+      "samples": 105600,
+      "duration_seconds": 2.2,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 9,
+          "filename": "269667__jaimage__steamhissairhydraulic.wav",
+          "start_seconds": 0.1,
+          "end_seconds": 2.3
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "First steam release only; later separate releases excluded. Raised level to peak 0.32, then gentle end fade. 2.200 s matches current full vent/battery reload."
+    },
+    {
+      "filename": "plasma_chamber_insert.wav",
+      "weapon": "Plasma rifle",
+      "state": "Chamber insert",
+      "sample_rate": 48000,
+      "samples": 7680,
+      "duration_seconds": 0.16,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 10,
+          "filename": "clipload2.wav",
+          "start_seconds": 0.055,
+          "end_seconds": 0.195
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Short supplied clipload2 mechanical input; place near end of insert phase."
+    },
+    {
+      "filename": "plasma_reload_empty.wav",
+      "weapon": "Plasma rifle",
+      "state": "Vent + chamber replacement",
+      "sample_rate": 48000,
+      "samples": 105600,
+      "duration_seconds": 2.2,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 9,
+          "filename": "269667__jaimage__steamhissairhydraulic.wav",
+          "start_seconds": 0.1,
+          "end_seconds": 2.3,
+          "audio_start_seconds": 0.0,
+          "tempo_factor": 1.02803738317757
+        },
+        {
+          "attachment": 10,
+          "filename": "clipload2.wav",
+          "start_seconds": 0.055,
+          "end_seconds": 0.195,
+          "audio_start_seconds": 1.585,
+          "tempo_factor": 1.0
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Baseline class multiplier 1. Actions fitted to phase windows, with silence between mechanics and pitch preserved when compressed.",
+      "phases": [
+        {
+          "phase": "vent",
+          "start_seconds": 0,
+          "duration_seconds": 0.55,
+          "audio_start_seconds": 0.0
+        },
+        {
+          "phase": "eject",
+          "start_seconds": 0.55,
+          "duration_seconds": 0.44
+        },
+        {
+          "phase": "insert",
+          "start_seconds": 0.99,
+          "duration_seconds": 0.77,
+          "audio_start_seconds": 1.585
+        },
+        {
+          "phase": "close",
+          "start_seconds": 1.76,
+          "duration_seconds": 0.44
+        }
+      ]
+    },
+    {
+      "filename": "railgun_charge.wav",
+      "weapon": "Railgun",
+      "state": "Charge warmup",
+      "sample_rate": 48000,
+      "samples": 57600,
+      "duration_seconds": 1.2,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 13,
+          "filename": "785400__baggonotes__railgun_chargeloop.wav",
+          "start_seconds": 0,
+          "end_seconds": 0.8317916666666667
+        }
+      ],
+      "gain_db": 0.0,
+      "notes": "Loop source extended pitch-preserving to 1.200 s with amplitude build. Cancel immediately if trigger released before charge completes; existing synthesized charge must be replaced/mixed deliberately."
+    },
+    {
+      "filename": "railgun_fire_single.wav",
+      "weapon": "Railgun",
+      "state": "Charged shot",
+      "sample_rate": 48000,
+      "samples": 115200,
+      "duration_seconds": 2.4,
+      "channels": 2,
+      "format": "PCM signed 16-bit WAV",
+      "source_cuts": [
+        {
+          "attachment": 14,
+          "filename": "767161__sabacky__scifi-futuristic-rail-gun-shot.wav",
+          "start_seconds": 0.054,
+          "end_seconds": 2.454
+        }
+      ],
+      "gain_db": -0.43682896063838955,
+      "notes": "Leading dead space and trailing silence removed; full report and decay retained. Stop charge at shot trigger. No railgun reload recording supplied in this batch."
+    }
+  ],
+  "integration_base_commit": "671bb852c485594baa33e1302706dc73725fa97c"
+}

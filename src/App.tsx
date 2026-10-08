@@ -5,7 +5,7 @@ import { Area51ExtractionGameLoop } from './area51Campaign';
 import { audioManager } from './campaignAudio';
 import { PostDeathMenu } from './PostDeathMenu';
 import { beginWeaponReload, advanceWeaponReload, cancelWeaponReload, interruptShellReload } from './weaponReload';
-import { playWeaponReloadAudio, playShotgunReloadPhase, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio } from './weaponAudio';
+import { playWeaponReloadAudio, playShotgunReloadPhase, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } from './weaponAudio';
 import './ModePosters.css';
 import { createWeaponAssembly, disposeWeaponObject } from './weaponModels';
 import { useEffect, useRef, useState } from 'react';
@@ -40,8 +40,6 @@ import {
   grenadeThrowSound,
   grenadeExplosionSound,
   PISTOL_AUDIO_FILENAMES,
-  updateRailgunChargeAudio,
-  playRailgunSlugBlast,
   updateAdrenalineHeartbeat,
   playKnifeSlashWhoosh
 } from './audio';
@@ -1285,7 +1283,7 @@ export default function App() {
           player:{pos:player.pos,yaw:player.yaw,pitch:player.pitch,health:player.health,maxHealth:player.maxHealth,alive:player.alive,team:player.team,
             applyDamage:applyDamageToPlayer,heal:amount=>{player.health=Math.min(player.maxHealth,player.health+amount);}},
           needsAmmo:()=>playerWeaponState.slice(0,2).some(ws=>(ws.reserve??0)<30),
-          onBotShot:(bot,weapon)=>{radarPingsRef.current.push({x:bot.pos.x,z:bot.pos.z,timestamp:performance.now(),duration:1.5,type:'gunfire'});const audio=weapon.id==='sniper'?AUDIO.sniperShotWithBolt:weapon.id==='pistol'?AUDIO.pistolShot:weapon.id==='shotgun'?AUDIO.shotgunShot:weapon.id==='lmg'?AUDIO.lmgFire:weapon.id==='br'?AUDIO.brSingle:AUDIO.arSingle;audio.play(getSpatialVolume(camera.position,bot.pos));},
+          onBotShot:(bot,weapon)=>{radarPingsRef.current.push({x:bot.pos.x,z:bot.pos.z,timestamp:performance.now(),duration:1.5,type:'gunfire'});const audio=weapon.id==='sniper'?AUDIO.sniperShotWithBolt:weapon.id==='pistol'?AUDIO.pistolShot:weapon.id==='shotgun'?AUDIO.shotgunShot:weapon.id==='lmg'?AUDIO.lmgFire:weapon.id==='br'?AUDIO.brSingle:weapon.id==='smg'?AUDIO.smgFire:weapon.id==='laser'?AUDIO.plasmaSingle:weapon.id==='railgun'?AUDIO.railgunFire:AUDIO.arSingle;audio.play(getSpatialVolume(camera.position,bot.pos));},
           onExplosionHit:(target,amount)=>{if(target!== 'player'&&amount>0){showHitmarker(false);}}
       };
     }
@@ -2248,7 +2246,7 @@ export default function App() {
         // SMG: rapid bolt cycle + smg fire sound
         vmManager.triggerSmgBoltFire();
         vmManager.addRecoil(0.038, 0.045);
-        AUDIO.smgFire.play(1.0, true);
+        playAutomaticWeaponFire('smg', player.continuousShots, (ws.ammo ?? 0) === 0);
       } else if (w.id === 'lmg') {
         // Heavy LMG: high recoil + heavy shot sound
         vmManager.addRecoil(0.052, 0.062);
@@ -2262,14 +2260,13 @@ export default function App() {
       } else if (w.id === 'laser') {
         // Covenant Laser Gun: plasma hum/beam + heat accumulation
         vmManager.addRecoil(0.016, 0.022);
-        AUDIO.laserBeam.playContinuous(1.0);
+        playAutomaticWeaponFire('laser', player.continuousShots, (ws.heat ?? 0) + 1.9 >= 100);
         ws.heat = Math.min(100, (ws.heat ?? 0) + 1.9);
         if (ws.heat >= 100) {
           ws.heat = 100;
           ws.overheated = true;
           AUDIO.laserBeam.stop();
           laserBeamMesh.visible = false;
-          AUDIO.laserVent.play(1.0);
           reloadWeapon();
         }
       } else if (w.id === 'sniper') {
@@ -2439,7 +2436,6 @@ export default function App() {
       recoilPitch += 0.055;
       triggerPlayerFlash();
 
-      playRailgunSlugBlast();
       AUDIO.railgunFire.play(1.0, true);
 
       const dir = new THREE.Vector3();
@@ -2521,10 +2517,9 @@ export default function App() {
 
       if (!beginWeaponReload(w, ws, player.classReloadMultiplier)) return;
       player.aiming = false;
-      AUDIO.arSpray.stop(); AUDIO.lmgAuto.stop(); AUDIO.laserBeam.stop(); AUDIO.minigunFire.stop();
+      AUDIO.arSpray.stop(); AUDIO.lmgAuto.stop(); AUDIO.smgAuto.stop(); AUDIO.laserBeam.stop(); AUDIO.minigunFire.stop();
       laserBeamMesh.visible = false; player.continuousShots = 0;
-      if (w.id === 'laser') AUDIO.laserVent.play(1.0);
-      else if (!playWeaponReloadAudio(w, ws)) {
+      if (!playWeaponReloadAudio(w, ws)) {
         if (ws.isTacticalReload) AUDIO.reloadTactical.play(1.0);
         else AUDIO.reloadEmpty.play(1.0);
       }
@@ -2544,7 +2539,7 @@ export default function App() {
         AUDIO.minigunFire.stop();
         AUDIO.minigunWindup.stop();
         AUDIO.railgunCharge.stop();
-        updateRailgunChargeAudio(false, 0);
+        updateRailgunWeaponAudio(false, 0);
         laserBeamMesh.visible = false;
         railgunAimLaserMesh.visible = false;
         player.continuousShots = 0;
@@ -2751,12 +2746,13 @@ export default function App() {
         player.fireHeld = false;
         if (currentSlot().id === 'minigun') releaseMinigunAudio(currentSlotState().spinSpeed ?? 0);
         AUDIO.lmgAuto.stop();
+        AUDIO.smgAuto.stop();
         AUDIO.arSpray.stop();
         AUDIO.laserBeam.stop();
         AUDIO.minigunFire.stop();
         AUDIO.minigunWindup.stop();
         AUDIO.railgunCharge.stop();
-        updateRailgunChargeAudio(false, 0);
+        updateRailgunWeaponAudio(false, 0);
         laserBeamMesh.visible = false;
         railgunAimLaserMesh.visible = false;
         player.continuousShots = 0;
@@ -2910,7 +2906,7 @@ export default function App() {
       isMouseDown = false;
       for (const key of Object.keys(keys)) keys[key] = false;
       for (const sound of Object.values(AUDIO)) sound.stop();
-      stopWeaponAudio(); updateRailgunChargeAudio(false, 0);
+      stopWeaponAudio(); updateRailgunWeaponAudio(false, 0);
       updateAdrenalineHeartbeat(false); audioManager.stop();
       laserBeamMesh.visible = railgunAimLaserMesh.visible = false;
       if (document.pointerLockElement) { try { document.exitPointerLock?.(); } catch {} }
@@ -3082,6 +3078,7 @@ export default function App() {
           }
           const wasReloading = ws.reloading;
           advanceWeaponReload(w, ws, dt, player.slotIndex === i && w.id === 'shotgun' ? playShotgunReloadPhase : undefined);
+          if (player.slotIndex === i && w.id === 'laser') updatePlasmaReloadAudio(ws);
           if (wasReloading && !ws.reloading && player.slotIndex === i) stopWeaponReloadAudio();
         });
 
@@ -3092,6 +3089,8 @@ export default function App() {
           fireWeapon();
         }
 
+        if (curW.id !== 'smg' || !player.fireHeld || !player.alive || curWs.reloading || (curWs.ammo ?? 0) <= 0) AUDIO.smgAuto.stop();
+        if (curW.id !== 'laser' || !player.fireHeld || !player.alive || curWs.reloading || curWs.overheated) AUDIO.laserBeam.stop();
         if (curW.id !== 'lmg' || !player.fireHeld || !player.alive || curWs.reloading || (curWs.ammo ?? 0) <= 0) AUDIO.lmgAuto.stop();
 
         // Minigun update logic: spin warmup, hyper-auto fire, 4s overheat, 2s vent
@@ -3161,7 +3160,7 @@ export default function App() {
             curWs.charging = true;
             curWs.chargeTimer = Math.min(1.2, (curWs.chargeTimer ?? 0) + dt);
             const prog = (curWs.chargeTimer ?? 0) / 1.2;
-            updateRailgunChargeAudio(true, prog);
+            updateRailgunWeaponAudio(true, prog);
             vmManager.setRailgunChargeProgress(prog);
 
             if ((curWs.chargeTimer ?? 0) >= 1.2) {
@@ -3169,7 +3168,7 @@ export default function App() {
               curWs.charging = false;
               curWs.chargeTimer = 0;
               curWs.ammo = (curWs.ammo ?? 1) - 1;
-              updateRailgunChargeAudio(false, 0);
+              updateRailgunWeaponAudio(false, 0);
               vmManager.setRailgunChargeProgress(0);
               fireRailgunSlug();
               if ((curWs.ammo ?? 0) <= 0) {
@@ -3180,12 +3179,12 @@ export default function App() {
             if (curWs.charging || (curWs.chargeTimer ?? 0) > 0) {
               curWs.charging = false;
               curWs.chargeTimer = 0;
-              updateRailgunChargeAudio(false, 0);
+              updateRailgunWeaponAudio(false, 0);
               vmManager.setRailgunChargeProgress(0);
             }
           }
         } else {
-          updateRailgunChargeAudio(false, 0);
+          updateRailgunWeaponAudio(false, 0);
         }
 
         // Battle Rifle 3-round burst continuation

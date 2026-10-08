@@ -32,20 +32,20 @@ function handler(name: string, context: object): (...args: any[]) => any {
   return vm.runInNewContext(ts.transpile(`(${functions.get(name)})`), context);
 }
 const sound = { stop() {}, play() {} };
-for (const id of ['smg', 'lmg', 'br']) {
+for (const id of ['smg', 'lmg', 'br', 'laser']) {
   for (const tactical of [false, true]) {
     const w = WEAPONS.find(w => w.id === id)!, ws = { isTacticalReload: tactical };
     let selected = 0, generic = 0;
     const reload = handler('reloadWeapon', {
       currentSlot: () => w, currentSlotState: () => ws,
       beginWeaponReload: () => true, player: { classReloadMultiplier: .75, aiming: true, continuousShots: 5 },
-      AUDIO: { arSpray: sound, lmgAuto: sound, laserBeam: sound, minigunFire: sound, reloadTactical: { play() { generic++; } }, reloadEmpty: { play() { generic++; } } },
+      AUDIO: { arSpray: sound, lmgAuto: sound, smgAuto: sound, laserBeam: sound, minigunFire: sound, reloadTactical: { play() { generic++; } }, reloadEmpty: { play() { generic++; } } },
       laserBeamMesh: { visible: true }, playWeaponReloadAudio(weapon: unknown, state: unknown) { assert.equal(weapon, w); assert.equal(state, ws); selected++; return true; },
     });
     reload(); assert.equal(selected, 1); assert.equal(generic, 0);
   }
 }
-console.log('PASS: actual SMG/LMG/BR reload handlers select dedicated audio once without generic doubling');
+console.log('PASS: actual SMG/LMG/BR/plasma reload handlers select dedicated audio once without generic doubling');
 for (const inspectorMode of [false, true]) {
   const player = { alive: true, health: inspectorMode ? INSPECTOR_HEALTH : 100, shield: 50 };
   let deaths = 0, audioStops = 0;

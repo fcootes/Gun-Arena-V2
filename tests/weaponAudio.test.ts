@@ -38,17 +38,18 @@ class MockAudio {
   pause() { this.paused = true; }
 }
 (globalThis as any).Audio = MockAudio;
-const { AUDIO, FIRST_BATCH_AUDIO_URLS, SECOND_BATCH_AUDIO_URLS } = await import('../src/audio');
-const { playWeaponReloadAudio, playShotgunReloadPhase, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio } = await import('../src/weaponAudio');
+const { AUDIO, FIRST_BATCH_AUDIO_URLS, SECOND_BATCH_AUDIO_URLS, THIRD_BATCH_AUDIO_URLS } = await import('../src/audio');
+const { playWeaponReloadAudio, playShotgunReloadPhase, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } = await import('../src/weaponAudio');
 const latest = (track: typeof AUDIO.arSingle) => track.pool[(track.index + track.poolSize - 1) % track.poolSize] as unknown as MockAudio;
 const plays = (track: typeof AUDIO.arSingle) => track.pool.reduce((n, audio) => n + (audio as unknown as MockAudio).plays, 0);
 const weapon = (id: string) => WEAPONS.find(w => w.id === id)!;
 
 assert.equal(Object.keys(FIRST_BATCH_AUDIO_URLS).length, 16);
 assert.equal(Object.keys(SECOND_BATCH_AUDIO_URLS).length, 15);
-for (const [key, url] of Object.entries({ ...FIRST_BATCH_AUDIO_URLS, ...SECOND_BATCH_AUDIO_URLS })) {
+assert.equal(Object.keys(THIRD_BATCH_AUDIO_URLS).length, 9);
+for (const [key, url] of Object.entries({ ...FIRST_BATCH_AUDIO_URLS, ...SECOND_BATCH_AUDIO_URLS, ...THIRD_BATCH_AUDIO_URLS })) {
   assert.ok(existsSync(fileURLToPath(url)), `${key}: bundled asset exists`);
-  const track = AUDIO[key as keyof typeof FIRST_BATCH_AUDIO_URLS | keyof typeof SECOND_BATCH_AUDIO_URLS];
+  const track = AUDIO[key as keyof typeof FIRST_BATCH_AUDIO_URLS | keyof typeof SECOND_BATCH_AUDIO_URLS | keyof typeof THIRD_BATCH_AUDIO_URLS];
   assert.equal(track.confirmedSrc, url); assert.equal(track.duration, wavDuration(url));
 }
 assert.equal(AUDIO.arSpray.loop, true);
@@ -57,7 +58,7 @@ AUDIO.arSpray.playContinuous(); const arLoop = AUDIO.arSpray.pool[0] as unknown 
 const startCount = arLoop.plays; arLoop.currentTime = .3; AUDIO.arSpray.playContinuous();
 assert.equal(arLoop.plays, startCount, 'Continuous firing does not restart its loop');
 AUDIO.arSpray.stop(); assert.equal(arLoop.paused, true); assert.equal(arLoop.currentTime, 0);
-console.log('PASS: all 31 real PCM assets, source selection and sustained AR loop without restart');
+console.log('PASS: all 40 real PCM assets, source selection and sustained AR loop without restart');
 
 for (const [id, tactical, empty] of [
   ['ar', AUDIO.arReloadTactical, AUDIO.arReloadEmpty],
@@ -199,3 +200,75 @@ assert.ok(!/updateMinigunSpinAudio|playMinigunFireShot|playMinigunVentHiss/.test
 assert.equal((app.match(/playBattleRifleFire\(ws, true\)/g) ?? []).length, 1);
 assert.equal((app.match(/playBattleRifleFire\(curWs, false\)/g) ?? []).length, 1);
 console.log('PASS: minigun transitions, shortened warmup, fitted spin/vent, no duplicate hiss, pause and cancellation');
+
+
+for (const [id, single, loop] of [
+  ['smg', AUDIO.smgFire, AUDIO.smgAuto], ['laser', AUDIO.plasmaSingle, AUDIO.laserBeam],
+] as const) {
+  const singleBefore = plays(single), loopBefore = plays(loop);
+  playAutomaticWeaponFire(id, 1);
+  assert.equal(plays(single), singleBefore + 1); assert.equal(plays(loop), loopBefore);
+  playAutomaticWeaponFire(id, 2); const cursor = loop.pool[0] as unknown as MockAudio; cursor.currentTime = .04;
+  playAutomaticWeaponFire(id, 3); playAutomaticWeaponFire(id, 4);
+  assert.equal(plays(loop), loopBefore + 1); assert.equal(cursor.currentTime, .04);
+  assert.ok(single.pool.every(a => a.paused));
+  playAutomaticWeaponFire(id, 5, true);
+  assert.equal(plays(single), singleBefore + 2); assert.ok(cursor.paused);
+  stopWeaponAudio();
+}
+console.log('PASS: SMG/plasma taps, sustained loops without restarting/layering, and final reports');
+
+for (const multiplier of [1, .75, .9]) for (const empty of [false, true]) {
+  const w = weapon('laser'), ws: WeaponSlotState = { ammo: 100, reserve: 100, heat: empty ? 100 : 40, overheated: empty };
+  const hissBefore = plays(AUDIO.laserVent), compositeBefore = plays(AUDIO.plasmaReloadEmpty), insertBefore = plays(AUDIO.plasmaInsert);
+  assert.ok(beginWeaponReload(w, ws, multiplier)); assert.ok(playWeaponReloadAudio(w, ws));
+  assert.equal(plays(AUDIO.laserVent) - hissBefore, empty ? 0 : 1);
+  assert.equal(plays(AUDIO.plasmaReloadEmpty) - compositeBefore, empty ? 1 : 0);
+  const selected = empty ? AUDIO.plasmaReloadEmpty : AUDIO.laserVent;
+  assert.ok(Math.abs(selected.duration / latest(selected).playbackRate - ws.totalReloadT!) < 1e-9);
+  // Sample 10 ms before and 10 ms after the authored insert cue, scaled by class.
+  advanceWeaponReload(w, ws, 1.575 * multiplier); updatePlasmaReloadAudio(ws);
+  assert.equal(plays(AUDIO.plasmaInsert), insertBefore);
+  const elapsedBeforePause = ws.reloadT;
+  pauseWeaponAudio(); assert.ok(selected.pool.every(a => a.paused));
+  resumeWeaponAudio(); assert.equal(ws.reloadT, elapsedBeforePause);
+  advanceWeaponReload(w, ws, .02 * multiplier); updatePlasmaReloadAudio(ws); updatePlasmaReloadAudio(ws);
+  assert.equal(plays(AUDIO.plasmaInsert) - insertBefore, empty ? 0 : 1, 'Composite has its own insert; manual cue plays once');
+  if (!empty) {
+    assert.ok(Math.abs(latest(AUDIO.plasmaInsert).currentTime - .01) < 1e-9);
+    assert.ok(Math.abs(latest(AUDIO.plasmaInsert).playbackRate - 1 / multiplier) < 1e-9);
+  }
+  advanceWeaponReload(w, ws, 10); updatePlasmaReloadAudio(ws); stopWeaponReloadAudio();
+  assert.equal(ws.heat, 0); assert.equal(ws.ammo, w.mag);
+  assert.ok(selected.pool.every(a => a.paused)); stopWeaponAudio();
+}
+for (const cancellation of ['switch', 'replace-sequence', 'skip-cue']) {
+  const ws: WeaponSlotState = { ammo: 100, reserve: 100, heat: 20 };
+  beginWeaponReload(weapon('laser'), ws); playWeaponReloadAudio(weapon('laser'), ws);
+  const before = plays(AUDIO.plasmaInsert);
+  if (cancellation === 'switch') stopWeaponAudio();
+  if (cancellation === 'replace-sequence') ws.reloadSequence = { ...ws.reloadSequence! };
+  advanceWeaponReload(weapon('laser'), ws, cancellation === 'skip-cue' ? 2 : 1.595);
+  updatePlasmaReloadAudio(ws);
+  assert.equal(plays(AUDIO.plasmaInsert), before, 'Cancelled/replaced/fully missed insert cue stays silent');
+  stopWeaponAudio();
+}
+console.log('PASS: class-fitted plasma cooling/composite selection, insert cue, no duplicate hiss, pause/cancellation');
+
+const chargeBefore = plays(AUDIO.railgunCharge), shotBefore = plays(AUDIO.railgunFire);
+updateRailgunWeaponAudio(true, .1); const charge = latest(AUDIO.railgunCharge);
+assert.equal(plays(AUDIO.railgunCharge), chargeBefore + 1); assert.equal(charge.currentTime, .12);
+charge.currentTime = .4; updateRailgunWeaponAudio(true, .5); assert.equal(charge.currentTime, .4);
+assert.equal(plays(AUDIO.railgunCharge), chargeBefore + 1);
+assert.equal(plays(AUDIO.railgunFire), shotBefore, 'Warmup never fires the slug early');
+pauseWeaponAudio(); assert.ok(charge.paused); resumeWeaponAudio(); assert.equal(charge.currentTime, .4);
+updateRailgunWeaponAudio(false, 0); assert.ok(charge.paused); assert.equal(charge.currentTime, 0);
+const cancelled = plays(AUDIO.railgunCharge); resumeWeaponAudio(); assert.equal(plays(AUDIO.railgunCharge), cancelled);
+updateRailgunWeaponAudio(true, 0); updateRailgunWeaponAudio(false, 0); AUDIO.railgunFire.play();
+assert.equal(plays(AUDIO.railgunFire), shotBefore + 1); assert.ok(charge.paused);
+assert.equal(AUDIO.railgunFire.duration, 2.4);
+stopWeaponAudio(); updateRailgunWeaponAudio(true, .2);
+assert.equal(latest(AUDIO.railgunCharge).currentTime, .24); stopWeaponAudio();
+assert.ok(!/updateRailgunChargeAudio|playRailgunSlugBlast/.test(app), 'Gameplay cannot double synthesized railgun tracks');
+assert.ok(!/AUDIO\.laserVent\.play\(/.test(app), 'Overheat dispatch cannot directly double the fitted reload hiss');
+console.log('PASS: one railgun charge, cursor preservation, early cancellation, slug transition and no synthetic doubling');

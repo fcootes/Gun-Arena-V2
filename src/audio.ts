@@ -194,6 +194,18 @@ export const SECOND_BATCH_AUDIO_URLS = {
   minigunOverheat: new URL('./assets/audio/weapons/batch2/minigun_overheat.wav', import.meta.url).href,
 };
 
+export const THIRD_BATCH_AUDIO_URLS = {
+  smgFire: new URL('./assets/audio/weapons/batch3/smg_fire_single.wav', import.meta.url).href,
+  smgAuto: new URL('./assets/audio/weapons/batch3/smg_fire_auto_loop.wav', import.meta.url).href,
+  plasmaSingle: new URL('./assets/audio/weapons/batch3/plasma_fire_single.wav', import.meta.url).href,
+  laserBeam: new URL('./assets/audio/weapons/batch3/plasma_fire_auto_loop.wav', import.meta.url).href,
+  laserVent: new URL('./assets/audio/weapons/batch3/plasma_cooling_hiss.wav', import.meta.url).href,
+  plasmaInsert: new URL('./assets/audio/weapons/batch3/plasma_chamber_insert.wav', import.meta.url).href,
+  plasmaReloadEmpty: new URL('./assets/audio/weapons/batch3/plasma_reload_empty.wav', import.meta.url).href,
+  railgunCharge: new URL('./assets/audio/weapons/batch3/railgun_charge.wav', import.meta.url).href,
+  railgunFire: new URL('./assets/audio/weapons/batch3/railgun_fire_single.wav', import.meta.url).href,
+};
+
 // Standard relative local filenames mapped for direct desktop synchronization
 export const PISTOL_AUDIO_FILENAMES = {
   shot: [
@@ -251,14 +263,14 @@ export const AUDIO = {
   pistolReload:  new SoundTrack(PISTOL_AUDIO_FILENAMES.reload, 2),
 
   // Full Armory New Weapon Clean Local Placeholders
-  smgFire:       new SoundTrack(['smg_fire.mp3', 'smg_fire'], 6),
+  smgFire: new SoundTrack(THIRD_BATCH_AUDIO_URLS.smgFire, 6),
   smgReload:     new SoundTrack(['smg_reload.mp3', 'smg_reload'], 2),
   lmgFire: new SoundTrack(SECOND_BATCH_AUDIO_URLS.lmgFire, 6),
   lmgReload:     new SoundTrack(['lmg_reload.mp3', 'lmg_reload'], 2),
   brBurst: new SoundTrack(SECOND_BATCH_AUDIO_URLS.brBurst, 6),
   brReload:      new SoundTrack(['br_reload.mp3', 'br_reload'], 2),
-  laserBeam:     new SoundTrack(['laser_beam.mp3', 'laser_beam'], 2, true),
-  laserVent:     new SoundTrack(['laser_vent.mp3', 'laser_vent'], 2),
+  laserBeam: new SoundTrack(THIRD_BATCH_AUDIO_URLS.laserBeam, 1, true),
+  laserVent: new SoundTrack(THIRD_BATCH_AUDIO_URLS.laserVent, 2),
 
   smgReloadEmpty: new SoundTrack(SECOND_BATCH_AUDIO_URLS.smgReloadEmpty, 2),
   smgReloadTactical: new SoundTrack(SECOND_BATCH_AUDIO_URLS.smgReloadTactical, 2),
@@ -271,12 +283,17 @@ export const AUDIO = {
   minigunSpinDown: new SoundTrack(SECOND_BATCH_AUDIO_URLS.minigunSpinDown, 1),
   minigunCooling: new SoundTrack(SECOND_BATCH_AUDIO_URLS.minigunCooling, 1),
 
+  smgAuto: new SoundTrack(THIRD_BATCH_AUDIO_URLS.smgAuto, 1, true),
+  plasmaSingle: new SoundTrack(THIRD_BATCH_AUDIO_URLS.plasmaSingle, 6),
+  plasmaInsert: new SoundTrack(THIRD_BATCH_AUDIO_URLS.plasmaInsert, 2),
+  plasmaReloadEmpty: new SoundTrack(THIRD_BATCH_AUDIO_URLS.plasmaReloadEmpty, 2),
+
   // Advanced Weapon Audio: Minigun & Railgun
   minigunWindup: new SoundTrack(SECOND_BATCH_AUDIO_URLS.minigunWindup, 1),
   minigunFire: new SoundTrack(SECOND_BATCH_AUDIO_URLS.minigunFire, 1, true),
   minigunOverheat: new SoundTrack(SECOND_BATCH_AUDIO_URLS.minigunOverheat, 1),
-  railgunCharge:   new SoundTrack(['railgun_charge.mp3', 'railgun_charge', 'railgun_hum.mp3'], 2),
-  railgunFire:     new SoundTrack(['railgun_fire.mp3', 'railgun_fire', 'railgun_blast.mp3'], 4)
+  railgunCharge: new SoundTrack(THIRD_BATCH_AUDIO_URLS.railgunCharge, 1),
+  railgunFire: new SoundTrack(THIRD_BATCH_AUDIO_URLS.railgunFire, 4)
 };
 
 // Web Audio Fallback Synthesizer for 100% Guaranteed Audible Feedback
