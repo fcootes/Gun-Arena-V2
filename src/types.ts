@@ -1377,6 +1377,16 @@ export type CampaignEntity = 'security' | 'marine' | 'spartan';
 
 export interface Bot {
   campaignEntity?: CampaignEntity;
+  spartanSlot?: number;
+  abomination?: {
+    action: 'hunt' | 'smash' | 'club' | 'charge';
+    elapsed: number;
+    cooldown: number;
+    chargeCooldown: number;
+    hit: boolean;
+    lastHealth: number;
+    attacks: number;
+  };
   id: number;
   team: string;
   isZombie: boolean;

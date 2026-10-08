@@ -3343,7 +3343,10 @@ export default function App() {
         }
         
         if(world.facility && !world.facility.controlsLocked && !extPromptResult.interactionPrompt){
-          if(matchConfig.mode !== 'extraction' && world.facility.isNearLift(player.pos)){
+          if(world.facility.isNearBulkhead(player.pos)){
+            extPromptResult={interactionPrompt:world.facility.bulkheadMoving?'DECONTAMINATION BULKHEAD: UNSEALING':'[ E ] - UNSEAL DECONTAMINATION BULKHEAD',isPromptObjective:false};
+            if(keys.KeyE){keys.KeyE=false;world.facility.openBulkhead();}
+          } else if(matchConfig.mode !== 'extraction' && world.facility.isNearLift(player.pos)){
             extPromptResult={interactionPrompt:player.pos.y>10?'[E] LIFT TO BIO-LAB':'[ E ] - ENTER ELEVATOR (LEVEL 4 WAREHOUSE)',isPromptObjective:false};
             if(keys.KeyE){keys.KeyE=false;world.facility.transferLift(player.pos,player.pos.y>10?0:15,player.crouching?PLAYER_EYE_CROUCH:PLAYER_EYE);}
           } else {

@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { ExtractionGameLoop } from "./gameLoop";
 import type { ExtractionManagerConfig } from "./gameLoop";
 import type { Bot, CampaignEntity } from "./types";
+import { animateFacilityBossIntro } from "./area51Bosses";
 import { audioManager } from "./campaignAudio";
 
 /** Faction-safe finite encounters with boss references retained through corpse cleanup. */
@@ -71,7 +72,8 @@ export class Area51ExtractionGameLoop extends ExtractionGameLoop {
         bot.pos.y = 24;
         bot.health = bot.maxHealth = 1600;
       } else {
-        bot.pos.set(index % 2 ? -16 : 16, 15, -190 + index * 6);
+        bot.pos.set(17.8, 15, -193 - index * 2.6);
+        bot.spartanSlot = index;
         bot.armor = bot.maxArmor = 140;
         bot.health = bot.maxHealth = Math.max(420, bot.health);
       }
@@ -210,20 +212,10 @@ export class Area51ExtractionGameLoop extends ExtractionGameLoop {
     }
     if (facility.phase === "INTRO") {
       interactionPrompt = "EVAC INBOUND // THREAT DETECTED";
-      const t = THREE.MathUtils.smoothstep(facility.introElapsed / 3, 0, 1);
-      this.bosses.forEach((bot, i) => {
-        const start = bot.userData!.entryStart as THREE.Vector3;
-        if (this.state.faction === "usmc") {
-          bot.pos.copy(start);
-          bot.pos.y = 15 + (1 - t) * 9;
-        } else bot.pos.set(start.x * (1 - 0.35 * t), 15, start.z + 8 * t);
-        bot.group.position.copy(bot.pos);
-        bot.fireTimer = 1;
-        bot.vel.set(0, 0, 0);
-      });
+      this.bosses.forEach((bot, i) => animateFacilityBossIntro(bot, facility.introElapsed, i, this.state.faction));
     } else if (facility.phase === "BOSS") {
       this.bosses.forEach((b) => {
-        if (b.userData) b.userData.entranceActive = false;
+        if (b.userData?.entranceActive) { animateFacilityBossIntro(b, 3, b.spartanSlot ?? 0, this.state.faction); b.userData.entranceActive = false; }
       });
       if (this.bosses.length && this.bosses.every((b) => !b.alive)) {
         this.unlockEvac();

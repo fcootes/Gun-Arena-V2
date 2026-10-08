@@ -1029,8 +1029,20 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         const slit=new THREE.Mesh(new THREE.BoxGeometry(.27,.04,.025),slitMat);slit.position.set(0,.14,.208);headGroup.add(slit);
         const mask=new THREE.Mesh(new THREE.BoxGeometry(.25,.19,.1),armor);mask.position.set(0,-.015,.16);headGroup.add(mask);hitParts.push(mask);headParts.add(mask);
         for(const side of [-1,1]){const plate=new THREE.Mesh(new THREE.BoxGeometry(.22,.25,.24),armor);plate.position.set(side*.32,1.35,0);torsoGroup.add(plate);hitParts.push(plate);}
+        // Angled brow, cheek plates and respirator vents broaden the heavy helm silhouette.
+        const brow = new THREE.Mesh(new THREE.BoxGeometry(.32,.075,.1), armor);
+        brow.position.set(0,.205,.19); brow.rotation.x = -.2; headGroup.add(brow); hitParts.push(brow); headParts.add(brow);
+        for (const side of [-1,1]) {
+          const cheek = new THREE.Mesh(new THREE.BoxGeometry(.065,.2,.17), armor);
+          cheek.position.set(side*.145,.005,.115); cheek.rotation.z = side*.17;
+          headGroup.add(cheek); hitParts.push(cheek); headParts.add(cheek);
+          for (let i = 0; i < 3; i++) {
+            const vent = new THREE.Mesh(new THREE.BoxGeometry(.025,.008,.015), matGun);
+            vent.position.set(side*.09,-.055+i*.028,.218); headGroup.add(vent);
+          }
+        }
         const chest=new THREE.Mesh(new THREE.BoxGeometry(.53,.5,.16),armor);chest.position.set(0,1.17,.2);torsoGroup.add(chest);hitParts.push(chest);
-        healthMultiplier=2.8;speedMultiplier=1.45;armorMultiplier=2;rootGroup.scale.setScalar(1.1);
+        healthMultiplier=2.8;speedMultiplier=1.45;armorMultiplier=2;rootGroup.scale.setScalar(1.3);
       } else if (hg === 'fast' || hg === 'FAST_HELMET') {
         // Half-sphere shell reads as a real dome rather than a cube.
         const helmetMesh = new THREE.Mesh(
@@ -1556,8 +1568,35 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     const talon2 = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.2, 4), matZombieClaw);
     talon2.position.set(0.11, -1.14, 0.12);
     talon2.rotation.x = Math.PI;
-    armRPivot.add(clawHand, talon1, talon2);
-    hitParts.push(clawHand);
+    if (zType === 'megaboss') {
+      armRForearm.scale.set(2.2, 1.15, 2.2);
+      const club = new THREE.Group();
+      club.name = 'Abomination_MutatedClub';
+      club.position.set(0.08, -0.95, 0.1);
+      armRPivot.add(club);
+      const clubHead = new THREE.Mesh(new THREE.IcosahedronGeometry(0.28, 1), matBoneCarapace);
+      clubHead.scale.set(1, 1.65, 1);
+      club.add(clubHead);
+      hitParts.push(clubHead);
+      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.18, 8), matGun);
+      collar.position.y = 0.05;
+      club.add(collar);
+      hitParts.push(collar);
+      for (let i = 0; i < 6; i++) {
+        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.22, 5), matBoneRibs);
+        const angle = i * Math.PI / 3;
+        spike.position.set(Math.cos(angle) * 0.28, -0.04, Math.sin(angle) * 0.28);
+        spike.rotation.z = -Math.cos(angle) * Math.PI / 2;
+        spike.rotation.x = Math.sin(angle) * Math.PI / 2;
+        club.add(spike);
+        hitParts.push(spike);
+      }
+      // Detached legacy talons are not owned by the visual tree.
+      for (const mesh of [clawHand, talon1, talon2]) mesh.geometry.dispose();
+    } else {
+      armRPivot.add(clawHand, talon1, talon2);
+      hitParts.push(clawHand);
+    }
   }
 
   /* ============================ 5. LEGS ============================ */
@@ -1735,7 +1774,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     else if (zType === 'brute') rootGroup.scale.set(1.222, 1.222, 1.222);
     else if (zType === 'bloater') rootGroup.scale.set(1.15, 0.944, 1.15);
     else if (zType === 'banshee') rootGroup.scale.set(0.85, 1.111, 0.85);
-    else if (zType === 'megaboss') rootGroup.scale.set(1.555, 1.555, 1.555);
+    else if (zType === 'megaboss') rootGroup.scale.setScalar(2.0);
     else if (zType === 'tank') rootGroup.scale.set(1.5, 1.5, 1.5);
   }
 

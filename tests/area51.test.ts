@@ -63,6 +63,16 @@ for (const mode of ["ffa", "team", "zombie", "extraction"] as const) {
     );
   }
 }
+facility.openBlastDoors();
+assert.equal(facility.phase, 'INFILTRATE', 'evac gate rejects early opening');
+assert.ok((scene.getObjectByName('Area51_WarehouseSafetyLight') as THREE.PointLight).intensity > 0);
+const shaftEdge = new THREE.Vector3(-12, 0, -137);
+for (let i = 0; i < 4; i++) world.moveEntityWithCollision(shaftEdge, new THREE.Vector3(0, 0, -40), .42, 0, 1.8, .1);
+assert.ok(shaftEdge.z > -139, 'lower shaft back wall seals the former void exit');
+assert.equal(world.getHighestSurface(shaftEdge.x, shaftEdge.z, 0), 0);
+const coverExit = new THREE.Vector3(-2, 16.6, -156);
+world.moveEntityWithCollision(coverExit, new THREE.Vector3(30, 0, 0), .42, 16.6, 18.4, .1);
+assert.ok(coverExit.x > 0, 'void guard preserves stepping/falling off cover');
 assert.ok(world.navigationPoints!.some((p) => p.y === 15));
 assert.ok(world.navigationPoints!.some((p) => p.x > 20 && p.z < -50));
 // Exercise movement using the actual graph and collision system, not just node membership.
@@ -81,6 +91,20 @@ function walk(from: THREE.Vector3, to: THREE.Vector3) {
     `route stalled ${from.toArray()} -> ${to.toArray()} at ${p.toArray()}`,
   );
 }
+// Closed vault blocks movement until latch and hinge both complete.
+const gateProbe = new THREE.Vector3(18.8, 0, -36);
+const gateVelocity = new THREE.Vector3(8, 0, 0);
+world.moveEntityWithCollision(gateProbe, gateVelocity, 0.42, 0, 1.8, 0.1);
+assert.ok(gateProbe.x < 19.4);
+assert.ok(facility.openBulkhead());
+assert.ok(!facility.openBulkhead(), 'duplicate E cannot restart animation');
+for (let i = 0; i < 9; i++) world.updateWorld(0.1, i * 0.1, 'extraction');
+const wheel = scene.getObjectByName('Area51_DeconLatchWheel')!;
+assert.ok(Math.abs(wheel.rotation.x - Math.PI * 2) < 0.001);
+assert.ok(!facility.bulkheadOpen, 'latch alone does not unlock path');
+for (let i = 0; i < 19; i++) world.updateWorld(0.1, 1 + i * 0.1, 'extraction');
+assert.ok(facility.bulkheadOpen);
+assert.ok(Math.abs(scene.getObjectByName('Area51_DeconBulkheadHinge')!.rotation.y + Math.PI / 2) < 0.001);
 const start = new THREE.Vector3(-8, 0, -7);
 walk(start, new THREE.Vector3(27.5, 0, -65));
 walk(new THREE.Vector3(27.5, 0, -65), new THREE.Vector3(18, 0, -112));
@@ -91,6 +115,12 @@ const liftLight = scene.getObjectByName("Area51_ElevatorInteriorLight") as THREE
 assert.equal(liftLight.intensity, 2);
 assert.ok(scene.getObjectByName("Area51_LiftCallConsole"));
 assert.ok(facility.isNearLift(new THREE.Vector3(-9.35, 1.65, -132.8)));
+for (const z of [-121, -127, -137]) {
+  const edge = new THREE.Vector3(-12, 0, z);
+  const velocity = new THREE.Vector3(-80, 0, 0);
+  world.moveEntityWithCollision(edge, velocity, 0.42, 0, 1.8, 0.1);
+  assert.ok(world.getHighestSurface(edge.x, edge.z, 0) > -1, 'hallway edge cannot leak into void');
+}
 assert.ok(!facility.transferLift(new THREE.Vector3(0, 0, 0), 15));
 assert.ok(facility.transferLift(p, 15));
 assert.equal(p.y, 0, "ride does not teleport to upper floor");
@@ -103,14 +133,21 @@ for (let i = 0; i < 15; i++) world.updateWorld(0.1, i * 0.1, "extraction");
 assert.ok(p.y > 6 && p.y < 9, "smooth mid-ride height");
 for (let i = 0; i < 22; i++) world.updateWorld(0.1, i * 0.1, "extraction");
 assert.ok(!facility.controlsLocked);
-assert.ok(Math.abs(Math.abs(door.position.x) - 4.05) < 0.001);
+assert.ok(Math.abs(Math.abs(door.position.x) - 1.35) < 0.001, 'lower landing stays sealed when cab is upstairs');
+assert.ok(Math.abs(Math.abs(scene.getObjectByName('Area51_UpperLiftDoors')!.children[0].position.x) - 4.05) < 0.001);
+assert.equal(scene.getObjectByName('Area51_ElevatorCabin')!.position.y, p.y);
+assert.equal(world.getHighestSurface(-12, -136, 15), 15, 'moving car supports rider');
 assert.equal(p.y, 15);
-assert.ok(p.z <= -140);
+walk(new THREE.Vector3(-12, 15, -136), new THREE.Vector3(-8, 15, -146));
+const lowerExitProbe = new THREE.Vector3(-12, 15, -136), lowerExitVelocity = new THREE.Vector3(0, 0, 10);
+world.moveEntityWithCollision(lowerExitProbe, lowerExitVelocity, .42, 15, 16.8, .1);
+assert.ok(lowerExitProbe.z < -133.4, 'upper cabin cannot exit through lower-facing shaft wall');
+assert.equal(p.z, -136, "rider remains inside cab until walking out");
 p.copy(AREA51_LAYOUT.liftTop).y += 1.05;
 assert.ok(facility.transferLift(p, 0, 1.05));
 for (let i = 0; i < 43; i++) world.updateWorld(0.1, i * 0.1, "extraction");
 assert.equal(p.y, 1.05, "return preserves crouched eye height");
-assert.equal(p.z, -131);
+assert.equal(p.z, -136);
 assert.ok(!facility.liftMoving);
 const lightIntensities = () => {
   const result: number[] = [];
@@ -158,6 +195,7 @@ for (const entity of ["security", "marine", "spartan"] as const) {
         : "rifleman",
   );
   if (entity === "spartan") {
+    assert.equal(actor.rootGroup.scale.y, 1.3);
     assert.ok(actor.healthMultiplier >= 2.5);
     assert.ok(actor.speedMultiplier > 1);
   }

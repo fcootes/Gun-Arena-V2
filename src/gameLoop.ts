@@ -1,3 +1,4 @@
+import { updateAbominationCombat, poseSpartan } from "./area51Bosses";
 import { WEAPONS } from './weapons';
 import { advanceWeaponReload, beginWeaponReload, interruptShellReload } from './weaponReload';
 import { traversalBlocked } from './tacticalNavigation';
@@ -1150,6 +1151,10 @@ export function updateBioMutantAI(bot: Bot, dt: number, ctx: BioMutantAIContext)
 
   if (!targetPos) return;
 
+  if (mType === 'MEGABOSS' && ctx.world.facility) {
+    updateAbominationCombat(bot, dt, ctx, targetPos);
+    return;
+  }
   const movementTarget = ctx.world.getNavigationTarget?.(bot.pos, targetPos) ?? targetPos;
   const dx = movementTarget.x - bot.pos.x;
   const dz = movementTarget.z - bot.pos.z;
@@ -3131,8 +3136,12 @@ export function updateClassCombatBot(bot: Bot, dt: number, ctx: CombatSystemsCon
       state.grenades = 0;
       if (!threat) { const anchor=bot.patrolAnchor ??= bot.pos.clone();const phase=(performance.now()/4000+bot.id)%4;state.mode='formation';state.destination=anchor.clone().add(new THREE.Vector3(Math.cos(phase*Math.PI/2)*3,0,Math.sin(phase*Math.PI/2)*3)); }
     } else if (bot.campaignEntity === 'spartan' && threat) {
-      const angle=Math.atan2(bot.pos.z-threat.pos.z,bot.pos.x-threat.pos.x)+(bot.id%2?1:-1)*1.1;
-      state.mode='push';state.destination=threat.pos.clone().setY(bot.pos.y).add(new THREE.Vector3(Math.cos(angle)*10,0,Math.sin(angle)*10));
+      // Leader pins the target; wings take opposite angles around the same target.
+      const slot = bot.spartanSlot ?? bot.id % 3;
+      const leader = ctx.bots.find(b => b.alive && b.campaignEntity === "spartan" && b.spartanSlot === 0) ?? bot;
+      const angle = Math.atan2(leader.pos.z-threat.pos.z, leader.pos.x-threat.pos.x) + (slot === 0 ? 0 : slot === 1 ? 1.15 : -1.15);
+      state.mode = 'push';
+      state.destination = threat.pos.clone().setY(bot.pos.y).add(new THREE.Vector3(Math.cos(angle) * (slot === 0 ? 14 : 10), 0, Math.sin(angle) * (slot === 0 ? 14 : 10)));
     }
     if(alliedPlayer && ctx.world.facility && Math.abs(bot.pos.y-anchor.y)>8 && ctx.squadDirective!=='hold_position')state.destination=anchor;
     // Squad leash overrides offensive duty, but never interrupts a medic rescue.
@@ -3167,11 +3176,13 @@ export function updateClassCombatBot(bot: Bot, dt: number, ctx: CombatSystemsCon
   if (state.pathTimer <= 0) { state.pathTimer = .35; state.waypoint = (ctx.world.getNavigationTarget?.(bot.pos, target, bot.team) ?? target).clone(); }
   const waypoint = state.waypoint ?? target, dx = waypoint.x-bot.pos.x, dz = waypoint.z-bot.pos.z, d = Math.hypot(dx,dz);
   const canMove = !(patient && bot.pos.distanceTo(patient.pos) < 2);
-  const speed = d > .65 && canMove ? bot.speed * (state.mode === 'push' || state.mode === 'revive' ? 1 : .7) : 0;
+  bot.isSprinting = bot.campaignEntity === 'spartan' && !!threat && target.distanceToSquared(bot.pos) > 16;
+  const speed = d > .65 && canMove ? bot.speed * (bot.isSprinting ? 1.35 : state.mode === 'push' || state.mode === 'revive' ? 1 : .7) : 0;
   bot.vel.x = THREE.MathUtils.damp(bot.vel.x, dx/(d||1)*speed, 8, dt); bot.vel.z = THREE.MathUtils.damp(bot.vel.z,dz/(d||1)*speed,8,dt);
   ctx.world.moveEntityWithCollision(bot.pos,bot.vel,.38,bot.pos.y,bot.pos.y+1.8,dt,bot.team);
   bot.pos.y = ctx.world.getHighestSurface(bot.pos.x,bot.pos.z,bot.pos.y); bot.group.position.copy(bot.pos);
   const face = threat?.pos ?? target; bot.facing = Math.atan2(face.x-bot.pos.x,face.z-bot.pos.z); bot.group.rotation.y = bot.facing;
+  if (bot.campaignEntity === 'spartan') poseSpartan(bot, threat ? 1 : 0.7, bot.isSprinting);
   bot.fireTimer -= dt;
   if (patient || !threat || state.mode === 'heal' || bot.isVIP || !classLineOfSight(bot,threat.pos,ctx)) return;
   const distance = bot.pos.distanceTo(threat.pos), range = role === 'recon' ? Math.min(100,def.range ?? 100) : Math.min(55,def.range ?? 55);

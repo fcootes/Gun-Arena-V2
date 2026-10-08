@@ -17,7 +17,7 @@ import { traversalBlocked } from "./tacticalNavigation";
 export const AREA51_LAYOUT = Object.freeze({
   objective: new THREE.Vector3(15, 1.2, -115),
   liftBottom: new THREE.Vector3(-12, 0, -136),
-  liftTop: new THREE.Vector3(-12, 15, -136),
+  liftTop: new THREE.Vector3(-12, 15, -141),
   console: new THREE.Vector3(-8, 16, -146),
   boss: new THREE.Vector3(0, 15, -170),
   helipad: new THREE.Vector3(0, 15, -219),
@@ -61,6 +61,10 @@ export interface Area51Facility {
   ): boolean;
   isNearLift(position: THREE.Vector3): boolean;
   readonly liftMoving: boolean;
+  readonly bulkheadOpen: boolean;
+  readonly bulkheadMoving: boolean;
+  isNearBulkhead(position: THREE.Vector3): boolean;
+  openBulkhead(): boolean;
   getZone(position: THREE.Vector3): 1 | 2 | 3 | 4;
   updateCamera(
     camera: THREE.Camera,
@@ -364,8 +368,8 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     ) {
       const ranges = gap
         ? [
-            [min, gap[0]],
-            [gap[1], max],
+            [min, Math.min(max, Math.max(min, gap[0]))],
+            [Math.min(max, Math.max(min, gap[1])), max],
           ]
         : [[min, max]];
       for (const [a, b] of ranges)
@@ -452,13 +456,48 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
   }
   lamp(-8, 7.5, -10, 0xffd19c, 260, 28);
   lamp(7, 7.5, -31, 0xffd19c, 300, 27);
-  // Right-turn connector through an open hydraulic door; no diagonal wall shortcut.
+  // Centered right-turn pressure bulkhead, with a latch-first hinge sequence.
   floor(10, 6, 22, 0, -36);
   walls(10, 6, 22, 0, -36, 6, steel, { west: [-39, -33], east: [-39, -33] });
-  batch(0.8, 6.7, 0.8, 20, 3.35, -32.8, steel, true);
-  batch(0.8, 6.7, 0.8, 20, 3.35, -39.2, steel, true);
-  batch(0.8, 0.7, 7.3, 20, 6.35, -36, steel);
-  sign("02 // DECONTAMINATION", 19.55, 4, -36, 4, 0.6, -Math.PI / 2);
+  for (const z of [-32.8, -39.2]) batch(0.45, 6, 0.5, 20, 3, z, steel, true);
+  batch(0.5, 0.5, 6.4, 20, 5.8, -36, steel);
+  const vaultFrame = new THREE.Mesh(new THREE.TorusGeometry(2.85, 0.2, 8, 32), steel);
+  vaultFrame.rotation.y = Math.PI / 2;
+  vaultFrame.position.set(20, 3, -36);
+  root.add(vaultFrame);
+  // The rectangular surround seals the corners outside the circular aperture.
+  for (const side of [-1, 1]) {
+    batch(0.5, 6, 0.3, 20, 3, -36 + side * 2.9, steel, true);
+    batch(0.5, 0.3, 6, 20, 3 + side * 2.85, -36, steel, side === 1);
+  }
+  const vaultHinge = new THREE.Group();
+  vaultHinge.name = "Area51_DeconBulkheadHinge";
+  vaultHinge.position.set(20, 0, -33.2);
+  root.add(vaultHinge);
+  const vaultPlate = new THREE.Mesh(new THREE.CylinderGeometry(2.65, 2.65, 0.36, 32), steel);
+  vaultPlate.name = "Area51_DeconBulkheadPlate";
+  vaultPlate.rotation.z = Math.PI / 2;
+  vaultPlate.position.set(0, 3, -2.8);
+  vaultHinge.add(vaultPlate);
+  for (const y of [1.1, 4.9]) box(0.6, 0.45, 0.6, 0, y, 0, black, false, vaultHinge);
+  const vaultWheel = new THREE.Group();
+  vaultWheel.name = "Area51_DeconLatchWheel";
+  vaultWheel.position.set(-0.37, 3, -2.8);
+  vaultHinge.add(vaultWheel);
+  const wheelRing = new THREE.Mesh(new THREE.TorusGeometry(0.63, 0.07, 6, 20), amber);
+  wheelRing.rotation.y = Math.PI / 2;
+  vaultWheel.add(wheelRing);
+  for (let i = 0; i < 4; i++) {
+    const spoke = box(0.08, 1.2, 0.08, 0, 0, 0, steel, false, vaultWheel);
+    spoke.rotation.x = i * Math.PI / 4;
+  }
+  const vaultCollider = collider(0.55, 5.6, 5.8, 20, 2.8, -36);
+  // Build the navigation graph through the aperture before enabling its runtime gate.
+  vaultCollider.active = false;
+  let vaultElapsed = -1;
+  let vaultOpened = false;
+  sign("E // UNSEAL DECONTAMINATION", 19.55, 5.3, -36, 5.6, 0.45, -Math.PI / 2);
+  lamp(18, 4.8, -36, 0xffcd83, 35, 9);
   // ZONE 2 — six-metre decon spine and lit observation rooms.
   floor(6, 64, 27.5, 0, -68);
   walls(6, 64, 27.5, 0, -68, 6, sterile, {
@@ -623,7 +662,10 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
   }
   batch(31, 0.35, 31, 15, 7.2, -115, black, true);
   // Connector from the decon spine into the octagonal entry.
-  floor(6, 8, 27.5, 0, -100); // bridges to diagonal opening near (27,-103)
+  floor(6, 10, 27.5, 0, -101); // sealed elbow into the diagonal lab aperture
+  batch(0.6, 6, 6.6, 30.5, 3, -103, sterile, true);
+  batch(0.6, 6, 0.8, 24.5, 3, -100.05, sterile, true);
+  batch(6.6, 0.3, 10, 27.5, 6.15, -101, black, true);
   cylinder(2.2, 0.45, 15, 0.225, -115, steel);
   collider(3.5, 0.45, 3.5, 15, 0.225, -115);
   const objectiveGroup = new THREE.Group();
@@ -695,11 +737,27 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
   // Lift approach outside the octagon, then an authored two-level shaft.
   floor(14, 6, -6, 0, -120);
   walls(14, 6, -6, 0, -120, 5, steel, { east: [-123, -117], north: [-15, -9] });
-  floor(6, 20, -12, 0, -129);
-  walls(6, 20, -12, 0, -129, 22, steel, { south: [-15, -9], north: [-15, -9] });
-  floor(6, 8, -12, 15, -138); // upper landing overlaps the shaft, selected by foot height
-  batch(0.12, 14, 0.12, -14.7, 7, -136, amber);
-  batch(0.12, 14, 0.12, -9.3, 7, -136, amber);
+  // The approach ends at the lower landing; the six-metre shaft has sealed side/back walls.
+  floor(6, 14, -12, 0, -126);
+  walls(6, 14, -12, 0, -126, 5, steel, { south: [-15, -9], north: [-15, -9], east: [-123, -119] });
+  floor(6, 6, -12, 0, -136);
+  for (const x of [-15, -9]) batch(0.6, 22, 6.6, x, 11, -136, steel, true);
+  batch(6.6, 15, 0.6, -12, 7.5, -139, steel, true);
+  batch(6.6, 11.5, 0.6, -12, 9.25, -133, steel, true);
+  batch(6.6, 3.5, 0.6, -12, 20.25, -139, steel, true);
+  batch(6.6, 7, 0.6, -12, 18.5, -133, steel, true);
+  batch(6.6, 0.3, 6.6, -12, 22, -136, black, true);
+  floor(6, 3.7, -12, 15, -140.55); // threshold lip overlaps the car floor by 0.1 m
+  for (const x of [-15, -9]) batch(0.6, 5, 3.4, x, 17.5, -140.7, steel, true);
+  for (const z of [-120, -127, -132]) lamp(-12, 4.6, z, 0xe4dbc1, 55, 12);
+  lamp(-5, 4.6, -120, 0xe4dbc1, 65, 14);
+  for (const y of [3, 8, 13, 18]) {
+    batch(0.07, 1.7, 0.1, -14.64, y, -136, cyan);
+    const guideLight = new THREE.PointLight(0x90bbc9, 8, 8, 1);
+    guideLight.position.set(-14.5, y, -136);
+    root.add(guideLight);
+  }
+  for (const x of [-14.7, -9.3]) batch(0.12, 22, 0.12, x, 11, -136, steel);
   const liftCabin = new THREE.Group();
   liftCabin.name = "Area51_ElevatorCabin";
   liftCabin.position.copy(AREA51_LAYOUT.liftBottom);
@@ -713,7 +771,19 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
   liftLight.name = "Area51_ElevatorInteriorLight";
   liftLight.position.set(0, 3.1, 0);
   liftCabin.add(liftLight);
+  const cabinDoors: THREE.Mesh[][] = [];
+  for (const z of [-2.82, 2.82]) {
+    const pair = [-1, 1].map(side => {
+      const panel = box(2.6, 3.2, 0.12, side * 3.9, 1.6, z, steel, false, liftCabin);
+      panel.userData.side = side;
+      return panel;
+    });
+    cabinDoors.push(pair);
+  }
+  const cabinSurface = { minX: -14.6, maxX: -9.4, minZ: -138.8, maxZ: -133.2, y: 0 };
+  surfaces.push(cabinSurface);
   const liftDoors: THREE.Mesh[][] = [];
+  const landingColliders: WorldCollider[] = [];
   for (const [y, z, rotation] of [[0, -133, 0], [15, -139, Math.PI]]) {
     const landing = new THREE.Group();
     landing.name = y === 0 ? "Area51_LowerLiftDoors" : "Area51_UpperLiftDoors";
@@ -725,6 +795,9 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
       return panel;
     });
     liftDoors.push(panels);
+    const gate = collider(5.4, 3.2, 0.2, -12, y + 1.6, z);
+    gate.active = false;
+    landingColliders.push(gate);
     const console = new THREE.Group();
     console.name = y === 0 ? "Area51_LiftCallConsole" : "Area51_LiftReturnConsole";
     console.position.set(-9.35, y + 1.35, z + (y === 0 ? 0.2 : -0.2));
@@ -740,7 +813,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     sign(y === 0 ? "E // LEVEL 4 WAREHOUSE" : "E // BIO-LAB", -12, y + 3.65, z, 4, 0.55, rotation);
   }
   let liftRide: { position: THREE.Vector3; eye: number; from: number; to: number; elapsed: number } | null = null;
-  // ZONE 4 — lightless warehouse until evac; combat modes enable safety lighting.
+  // ZONE 4 — low safety illumination, then brighter emergency light at evac.
   floor(40, 60, 0, 15, -170);
   walls(40, 60, 0, 15, -170, 12, concrete, {
     south: [-15, -9],
@@ -748,8 +821,20 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
   });
   sign("04 // EXTRACTION CONTROL", -8, 18, -140.35, 6, 0.6, Math.PI);
   const emergency: THREE.PointLight[] = [];
+  for (const [x, z] of [[-11, -151], [11, -172], [-11, -193]]) {
+    const safety = lamp(x, 24, z, 0xb2bec9, 45, 24);
+    safety.name = "Area51_WarehouseSafetyLight";
+  }
+  for (const x of [-19.4, 19.4]) {
+    batch(0.15, 0.15, 56, x, 19.8, -170, steel);
+    for (const z of [-151, -175, -193]) batch(0.15, 4.5, 0.15, x, 17.25, z, steel);
+  }
+  for (const x of [-17, 17]) {
+    batch(1.3, 3.2, 1.2, x, 16.6, -150, black, true);
+    for (let i = 0; i < 6; i++) batch(0.08, 0.07, 0.03, x + 0.4, 15.35 + i * 0.4, -149.38, cyan);
+  }
   for (const z of [-150, -174, -193])
-    emergency.push(lamp(0, 25.5, z, 0xff8c3b, 0, 27));
+    { const light = lamp(0, 25.5, z, 0xff8c3b, 0, 27); light.name = "Area51_EmergencyHighBay"; emergency.push(light); }
   for (const x of [-10, 10])
     for (const z of [-158, -181]) batch(0.8, 12, 0.8, x, 21, z, steel, true);
   for (const [x, z] of [
@@ -790,6 +875,10 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     );
     breachDoors.push(hinge);
   }
+  const spartanRim = new THREE.PointLight(0xa4bac8, 0, 16, 2);
+  spartanRim.name = "Area51_BossEntryRimLight";
+  spartanRim.position.set(15.5, 20, -187);
+  root.add(spartanRim);
   const consoleGroup = new THREE.Group();
   consoleGroup.position.set(-8, 15, -146);
   root.add(consoleGroup);
@@ -814,6 +903,13 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
   for (const x of [-19.7, 19.7])
     batch(0.3, 1.6, 36, x, 15.8, -218, steel, true);
   batch(40, 1.6, 0.3, 0, 15.8, -235.7, steel, true);
+  const padLights: THREE.PointLight[] = [];
+  for (const x of [-11, 11]) {
+    batch(0.2, 6, 0.2, x, 18, -215, steel, true);
+    const flood = lamp(x, 21, -215, 0xc5d9e6, 0, 34);
+    flood.name = "Area51_HelipadFloodlight";
+    padLights.push(flood);
+  }
   const padRing = new THREE.Mesh(new THREE.RingGeometry(8.5, 8.8, 48), amber);
   padRing.rotation.x = -Math.PI / 2;
   padRing.position.set(0, 15.015, -219);
@@ -887,7 +983,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     root.add(mesh);
   }
   staticBoxes.clear();
-  function getHighestSurface(x: number, z: number, foot: number): number {
+  function authoredSurfaceHeight(x: number, z: number, foot: number): number {
     let y = -20;
     for (const surface of surfaces)
       if (
@@ -899,6 +995,10 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
         (!surface.contains || surface.contains(x, z))
       )
         y = Math.max(y, surface.y);
+    return y;
+  }
+  function getHighestSurface(x: number, z: number, foot: number): number {
+    let y = authoredSurfaceHeight(x, z, foot);
     if (
       facility.phase === "BOARD" &&
       Math.abs(x) < 2.1 &&
@@ -937,7 +1037,10 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
       for (const axis of ["x", "z"] as const) {
         const x = pos.x + (axis === "x" ? (vel.x * dt) / steps : 0),
           z = pos.z + (axis === "z" ? (vel.z * dt) / steps : 0);
-        const blocked = worldColliders.some(
+        // Every authored floor transition is level or lift-driven. Reject unsupported steps.
+        const currentSurface = authoredSurfaceHeight(pos.x, pos.z, foot);
+        const nextSurface = authoredSurfaceHeight(x, z, foot);
+        const blocked = (currentSurface > -19 && nextSurface < currentSurface - 0.75) || worldColliders.some(
           (c) =>
             c.active !== false &&
             (!team || c.passThroughTeam !== team) &&
@@ -968,6 +1071,8 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     bossPosition: AREA51_LAYOUT.boss.clone(),
     setFaction(faction) {
       facility.faction = faction;
+      spartanRim.position.set(faction === "apex" ? 15.5 : -4, faction === "apex" ? 20 : 21, faction === "apex" ? -187 : -168);
+      spartanRim.color.setHex(faction === "apex" ? 0xa4bac8 : 0xe9c0a0);
       vialGroup.visible = faction === "usmc";
       serverGroup.visible = faction === "apex";
     },
@@ -985,7 +1090,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
       return true;
     },
     openBlastDoors() {
-      if (disposed) return;
+      if (disposed || facility.phase !== "BOSS") return;
       facility.phase = "BOARD";
     },
     tryBoard(position) {
@@ -1012,6 +1117,17 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
         Math.abs(position.y - floor) < 3;
     },
     get liftMoving() { return liftRide !== null; },
+    get bulkheadOpen() { return vaultOpened; },
+    get bulkheadMoving() { return vaultElapsed >= 0 && !vaultOpened; },
+    isNearBulkhead(position) {
+      return !vaultOpened && Math.abs(position.x - 20) < 3.7 && Math.abs(position.z + 36) < 2.4 && position.y < 4;
+    },
+    openBulkhead() {
+      if (disposed || vaultOpened || vaultElapsed >= 0) return false;
+      vaultElapsed = 0;
+      audioManager.play("bulkhead_unseal");
+      return true;
+    },
     transferLift(position, destinationFloor, eyeOffset = 0, animate = true) {
       if (disposed || liftRide || facility.controlsLocked ||
           (destinationFloor !== 0 && destinationFloor !== 15) ||
@@ -1027,6 +1143,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
       liftRide = { position, eye: eyeOffset, from: destinationFloor === 15 ? 0 : 15, to: destinationFloor, elapsed: 0 };
       position.set(-12, liftRide.from + eyeOffset, -136);
       liftCabin.position.y = liftRide.from;
+      cabinSurface.y = liftRide.from;
       audioManager.play("elevator_hum");
       return true;
     },
@@ -1048,8 +1165,9 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
         camera.rotation.set(player.pitch ?? 0, player.yaw, 0, "YXZ");
       } else if (facility.phase === "INTRO") {
         const t = THREE.MathUtils.smoothstep(facility.introElapsed / 3, 0, 1);
-        camera.position.set(-12 + 5 * t, 16.65, -146 - 3 * t);
-        camera.lookAt(0, 18, -170);
+        if (facility.faction === "apex") camera.position.set(7 + 4 * t, 17.3, -166 - 8 * t);
+        else camera.position.set(-12 + 8 * t, 16.65 + 0.65 * t, -146 - 11 * t);
+        camera.lookAt(facility.faction === "apex" ? 17.8 : 0, facility.faction === "apex" ? 17 : 18, facility.faction === "apex" ? -184 : -170);
       } else if (
         facility.phase === "DEPARTING" ||
         facility.phase === "COMPLETE"
@@ -1202,6 +1320,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     while (prev[next] >= 0 && prev[next] !== start) next = prev[next];
     return scratch.copy(navPoints[next]);
   }
+  vaultCollider.active = true;
   function registerHittable(node: THREE.Object3D) {
     if (!hittableObjects.includes(node)) hittableObjects.push(node);
   }
@@ -1305,6 +1424,13 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     scene.fog = fog;
     scene.background = background;
     const dt = Math.min(0.1, Math.max(0, delta));
+    if (vaultElapsed >= 0 && !vaultOpened) {
+      vaultElapsed = Math.min(2.7, vaultElapsed + dt);
+      vaultWheel.rotation.x = Math.PI * 2 * THREE.MathUtils.smoothstep(vaultElapsed / 0.9, 0, 1);
+      vaultHinge.rotation.y = -Math.PI / 2 * THREE.MathUtils.smoothstep((vaultElapsed - 0.9) / 1.8, 0, 1);
+      if (vaultElapsed >= 2.7) { vaultOpened = true; vaultCollider.active = false; }
+    }
+    if (mode !== "extraction" && vaultElapsed < 0) facility.openBulkhead();
     if (liftRide) {
       const ride = liftRide;
       ride.elapsed = Math.min(4.2, ride.elapsed + dt);
@@ -1312,15 +1438,29 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
       const y = THREE.MathUtils.lerp(ride.from, ride.to, travel);
       ride.position.set(-12, y + ride.eye, -136);
       liftCabin.position.y = y;
+      cabinSurface.y = y;
       const openness = ride.elapsed < 0.6 ? 1 - ride.elapsed / 0.6 :
         ride.elapsed > 3.6 ? (ride.elapsed - 3.6) / 0.6 : 0;
-      for (const panels of liftDoors) for (const panel of panels)
-        panel.position.x = panel.userData.side * (1.35 + 2.7 * openness);
+      for (let i = 0; i < liftDoors.length; i++) {
+        const landingY = i * 15;
+        const atLanding = Math.abs(y - landingY) < 0.01;
+        const open = atLanding ? openness : 0;
+        for (const panel of liftDoors[i]) panel.position.x = panel.userData.side * (1.35 + 2.7 * open);
+        landingColliders[i].active = open < 0.95;
+      }
+      for (const panels of cabinDoors) for (const panel of panels)
+        panel.position.x = panel.userData.side * (1.3 + 2.6 * openness);
       if (ride.elapsed >= 4.2) {
-        ride.position.set(-12, ride.to + ride.eye, ride.to === 15 ? -143 : -131);
+        ride.position.set(-12, ride.to + ride.eye, -136);
         if (mode === "extraction" && ride.to === 15 && facility.phase === "INFILTRATE")
           facility.phase = "ARRIVAL";
         liftRide = null;
+      }
+    } else {
+      for (let i = 0; i < liftDoors.length; i++) {
+        const atLanding = Math.abs(liftCabin.position.y - i * 15) < 0.01;
+        for (const panel of liftDoors[i]) panel.position.x = panel.userData.side * (atLanding ? 4.05 : 1.35);
+        landingColliders[i].active = !atLanding;
       }
     }
 
@@ -1343,6 +1483,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
               : 0;
         breachDoors[i].rotation.y = (i % 2 ? 1 : -1) * open * Math.PI * 0.58;
       }
+    spartanRim.intensity = ["INTRO", "BOSS"].includes(facility.phase) ? 80 : 0;
     const lit =
       mode !== "extraction" ||
       !["INFILTRATE", "ARRIVAL"].includes(facility.phase);
@@ -1357,6 +1498,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
       mode !== "extraction"
         ? 1
         : 0;
+    padLights.forEach(l => l.intensity = target ? 300 : 0);
     doorOpen = THREE.MathUtils.damp(doorOpen, target, 2.5, dt);
     blastDoorGroups.forEach(
       (door, i) => (door.position.x = (i ? -1 : 1) * (3 + 6 * doorOpen)),

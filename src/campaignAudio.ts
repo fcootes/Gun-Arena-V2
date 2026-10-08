@@ -1,6 +1,6 @@
 /** Self-contained mission cues. Existing weapon audio remains in audio.ts. */
 export type CampaignCue =
-  "evac_inbound" | "spartan_radio" | "rotor" | "blast_doors" | "elevator_hum";
+  "evac_inbound" | "spartan_radio" | "rotor" | "blast_doors" | "elevator_hum" | "bulkhead_unseal" | "abomination_impact" | "abomination_roar";
 class CampaignAudioManager {
   private context: AudioContext | null = null;
   private active = new Set<AudioScheduledSourceNode>();
@@ -68,6 +68,9 @@ class CampaignAudioManager {
           0.4 * Math.sin(t * 2 * Math.PI * 610) +
           0.22 * Math.sin(t * 2 * Math.PI * 1230);
         data[i] = Math.round((voice * 0.3 + noise * 0.12) * gate * 12) / 12;
+      } else if (cue === "abomination_roar") {
+        const envelope = Math.sin(Math.PI * t / duration);
+        data[i] = envelope * (noise * 0.3 + Math.sin(t * 2 * Math.PI * (48 + 15 * t)) * 0.5);
       } else if (cue === "elevator_hum") {
         const envelope = Math.min(1, t / 0.3, (duration - t) / 0.4);
         data[i] = envelope * (Math.sin(t * 2 * Math.PI * 63) * 0.25 + noise * 0.14);

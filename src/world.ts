@@ -1189,15 +1189,45 @@ export function buildHelicopterMesh(): HelicopterMesh {
   box(3.3, 0.38, 7.8, 0, 0.62, 0, hull);
   box(3.5, 0.45, 7.4, 0, 3.12, 0, hull);
   box(3.2, 2.35, 1.25, 0, 1.86, 3.15, hull);
-  box(3.2, 1.0, 2.25, 0, 1.08, -3.1, hull).rotation.x = -0.13;
-  const nose = new THREE.Mesh(new THREE.CylinderGeometry(1.55, 1.12, 2.5, 4), hull);
-  nose.rotation.set(Math.PI / 2, Math.PI / 4, 0); nose.scale.set(1, 1, 0.6); nose.position.set(0, 1.35, -4.2); nose.castShadow = true; group.add(nose);
+  // Rounded, tapered lower cockpit: connected rings produce smooth outward normals.
+  const noseVertices: number[] = [], noseIndices: number[] = [];
+  const sections = [[-2.6, 1.58, 0.8], [-3.5, 1.56, 0.78], [-4.6, 1.2, 0.58], [-5.35, 0.65, 0.38], [-5.65, 0.08, 0.08]];
+  const radialSegments = 20;
+  for (const [z, rx, ry] of sections) for (let i = 0; i <= radialSegments; i++) {
+    const angle = i / radialSegments * Math.PI * 2;
+    noseVertices.push(Math.cos(angle) * rx, 1.12 + Math.sin(angle) * ry, z);
+  }
+  for (let ring = 0; ring < sections.length - 1; ring++) for (let i = 0; i < radialSegments; i++) {
+    const a = ring * (radialSegments + 1) + i, b = a + radialSegments + 1;
+    noseIndices.push(a, b, a + 1, b, b + 1, a + 1);
+  }
+  const cap = noseVertices.length / 3;
+  noseVertices.push(0, 1.12, -5.67);
+  for (let i = 0; i < radialSegments; i++) noseIndices.push(cap, (sections.length - 1) * (radialSegments + 1) + i + 1, (sections.length - 1) * (radialSegments + 1) + i);
+  const noseGeometry = new THREE.BufferGeometry();
+  noseGeometry.setAttribute('position', new THREE.Float32BufferAttribute(noseVertices, 3));
+  noseGeometry.setIndex(noseIndices);
+  noseGeometry.computeVertexNormals();
+  const nose = new THREE.Mesh(noseGeometry, hull);
+  nose.name = 'UH60_RoundedNose'; nose.castShadow = true; nose.receiveShadow = true; group.add(nose);
+  const pane = (name: string, points: number[][], material: THREE.Material) => {
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(points.flat(), 3));
+    geometry.setIndex([0, 1, 2, 0, 2, 3]); geometry.computeVertexNormals();
+    const mesh = new THREE.Mesh(geometry, material); mesh.name = name; mesh.renderOrder = 2; group.add(mesh);
+    for (let i = 0; i < 4; i++) beamBetween(group, new THREE.Vector3(...points[i] as [number, number, number]), new THREE.Vector3(...points[(i + 1) % 4] as [number, number, number]), 0.045, trim);
+    return mesh;
+  };
+  const cockpitGlass = glass.clone(); cockpitGlass.side = THREE.DoubleSide;
+  for (const side of [-1, 1]) {
+    pane(`UH60_AngledWindshield_${side}`, [[0, 3.02, -4.04], [side * 1.25, 2.94, -3.88], [side * 1.36, 1.78, -4.76], [0, 1.78, -5.13]], cockpitGlass);
+    pane(`UH60_CockpitSide_${side}`, [[side * 1.25, 2.94, -3.88], [side * 1.62, 3.02, -2.55], [side * 1.62, 1.8, -2.55], [side * 1.36, 1.78, -4.76]], cockpitGlass);
+  }
+  pane('UH60_CockpitRoof', [[-1.62, 3.08, -2.55], [1.62, 3.08, -2.55], [1.25, 3.02, -3.88], [-1.25, 3.02, -3.88]], hull);
   for (const side of [-1, 1]) {
     box(0.18, 2.1, 1.8, side * 1.65, 1.9, 2.8, hull);
     box(0.18, 2.1, 1.45, side * 1.65, 1.9, -2.4, hull);
     box(0.11, 0.3, 4.1, side * 1.7, 2.95, 0, trim);
-    const canopy = box(0.08, 1.4, 2.5, side * 1.27, 2.22, -3.45, glass); canopy.rotation.y = side * 0.18;
-    box(0.07, 0.2, 2.45, side * 1.33, 1.55, -3.4, trim);
     const exhaust = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.4, 2.35, 12), hull);
     exhaust.rotation.x = Math.PI / 2; exhaust.position.set(side * 1.1, 3.4, 1.35); group.add(exhaust);
     const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.25, 12, 1, true), trim);
@@ -1211,8 +1241,6 @@ export function buildHelicopterMesh(): HelicopterMesh {
     }
     box(0.035, 0.1, 1.3, side * 1.75, 2.75, 2.65, stencil);
   }
-  const windshield = box(2.42, 1.5, 0.06, 0, 2.2, -4.6, glass); windshield.rotation.x = -0.28;
-  box(0.085, 1.6, 0.08, 0, 2.2, -4.64, trim).rotation.x = -0.28;
   const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.72, 7.7, 6), hull);
   tail.rotation.x = Math.PI / 2; tail.position.set(0, 2.25, 7.1); tail.castShadow = true; group.add(tail);
   box(0.22, 2.6, 1.65, 0, 3.3, 10.4, hull).rotation.x = 0.2;
