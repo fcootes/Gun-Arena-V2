@@ -1,0 +1,1386 @@
+[
+  {
+    "path": "add_medkit.cjs",
+    "lines": 18,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "ai_director.cjs",
+    "lines": 60,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "docs/area51.md",
+    "lines": 34,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "docs/weapon-audio-batch1.md",
+    "lines": 15,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "docs/weapon-audio-batch2.md",
+    "lines": 21,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "docs/weapon-audio-batch3.md",
+    "lines": 13,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_ai_director.cjs",
+    "lines": 6,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_app_gamemode.cjs",
+    "lines": 20,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_apply_damage.cjs",
+    "lines": 59,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_botbuilder.cjs",
+    "lines": 52,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_box.cjs",
+    "lines": 15,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_ceiling.cjs",
+    "lines": 22,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_createDoor.cjs",
+    "lines": 13,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_crosshair.cjs",
+    "lines": 27,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_faction.cjs",
+    "lines": 12,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_focustarget.cjs",
+    "lines": 68,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_focustarget_zombie.cjs",
+    "lines": 44,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_init_match.cjs",
+    "lines": 20,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_inputs.cjs",
+    "lines": 97,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_inputs2.cjs",
+    "lines": 97,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_isZombie.cjs",
+    "lines": 8,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_lobby.cjs",
+    "lines": 101,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_makebot.cjs",
+    "lines": 17,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_map.cjs",
+    "lines": 145,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_medkit.cjs",
+    "lines": 25,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_medkit_timer.cjs",
+    "lines": 60,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_modes.cjs",
+    "lines": 116,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_mousedown.cjs",
+    "lines": 70,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_other_modes.cjs",
+    "lines": 28,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_player_team.cjs",
+    "lines": 8,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_refs.cjs",
+    "lines": 18,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_restore.cjs",
+    "lines": 24,
+    "imports": [
+      "  return {"
+    ],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_spawn_z.cjs",
+    "lines": 4,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_spawns.cjs",
+    "lines": 65,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_squad.cjs",
+    "lines": 127,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_squad_spawn.cjs",
+    "lines": 35,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_state.cjs",
+    "lines": 6,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_target.cjs",
+    "lines": 40,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_team_checks.cjs",
+    "lines": 16,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_ts.cjs",
+    "lines": 18,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_wall.cjs",
+    "lines": 8,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "fix_yaw.cjs",
+    "lines": 15,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "index.html",
+    "lines": 83,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "metadata.json",
+    "lines": 6,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "package.json",
+    "lines": 46,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "remove_global.cjs",
+    "lines": 7,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "rewrite_world.cjs",
+    "lines": 65,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "rewrite_world_safe.cjs",
+    "lines": 90,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/App.tsx",
+    "lines": 4594,
+    "imports": [
+      "./mapRegistry",
+      "./inspectorMode",
+      "./worldResources",
+      "./area51Campaign",
+      "./campaignAudio",
+      "./PostDeathMenu",
+      "./weaponReload",
+      "./weaponAudio",
+      "./ModePosters.css",
+      "./weaponModels",
+      "react",
+      "three",
+      "three/examples/jsm/controls/OrbitControls.js",
+      "./sceneEffects",
+      "./types",
+      "./classes",
+      "./weapons",
+      "./audio",
+      "./world",
+      "./botBuilder",
+      "./lobbyAvatar",
+      "./HelmetHUD",
+      "./LobbyTerminal",
+      "./FactionContext",
+      "./gameLoop",
+      "./types",
+      "./UI",
+      "./careerLedger",
+      "./classes"
+    ],
+    "exports": [
+      "ARMORY_OPTIONS",
+      "App"
+    ],
+    "disposeCalls": 12
+  },
+  {
+    "path": "src/FactionContext.tsx",
+    "lines": 177,
+    "imports": [
+      "react",
+      "./lobbyAvatar"
+    ],
+    "exports": [
+      "GearTier",
+      "HeadgearOption",
+      "TorsoOption",
+      "LowerOption",
+      "FactionGearState",
+      "FactionProvider",
+      "useFaction"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/HelmetHUD.tsx",
+    "lines": 594,
+    "imports": [
+      "react",
+      "./types",
+      "./lobbyAvatar",
+      "./FactionContext",
+      "./LoadoutDMZ"
+    ],
+    "exports": [
+      "RadarPing",
+      "HelmetHUDProps",
+      "VISOR_THEMES",
+      "HelmetHUD"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/LoadoutDMZ.tsx",
+    "lines": 643,
+    "imports": [
+      "./WeaponStudio",
+      "react",
+      "./types",
+      "./weapons",
+      "./classes",
+      "./lobbyAvatar",
+      "./WeaponSilhouettes",
+      "./careerLedger"
+    ],
+    "exports": [
+      "WeaponVaultItem",
+      "VAULT_WEAPONS",
+      "getWeaponPerformance",
+      "ARMORY_GRID_ORDER",
+      "ORDNANCE_ITEM",
+      "LoadoutDMZ"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/LobbyTerminal.tsx",
+    "lines": 1683,
+    "imports": [
+      "./ModePosters",
+      "./TacticalSquad",
+      "react",
+      "./mapRegistry",
+      "./types",
+      "./classes",
+      "./lobbyAvatar",
+      "./LoadoutDMZ",
+      "./FactionContext",
+      "./careerLedger"
+    ],
+    "exports": [
+      "LobbyTab",
+      "PersistentStats",
+      "LobbyTerminalProps",
+      "ARMORY_CATEGORIES",
+      "HELMET_LOCKER_OPTIONS",
+      "getPersistentStats",
+      "LobbyTerminal"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/ModePosters.css",
+    "lines": 27,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/ModePosters.tsx",
+    "lines": 962,
+    "imports": [
+      "react",
+      "./types",
+      "./lobbyAvatar"
+    ],
+    "exports": [
+      "modeSceneDescription",
+      "ModePosters"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/PostDeathMenu.tsx",
+    "lines": 27,
+    "imports": [
+      "react"
+    ],
+    "exports": [
+      "PostDeathMenu"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/TacticalSquad.tsx",
+    "lines": 55,
+    "imports": [
+      "react",
+      "./classes",
+      "./types",
+      "./LoadoutDMZ"
+    ],
+    "exports": [
+      "ClassIcon",
+      "TacticalSquad"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/UI.tsx",
+    "lines": 1002,
+    "imports": [
+      "react",
+      "./types"
+    ],
+    "exports": [
+      "EconomyFundsBadgeProps",
+      "EconomyFundsBadge",
+      "GearLockerTerminalProps",
+      "GearLockerTerminal",
+      "ExtractionObjectiveHUDProps",
+      "ExtractionObjectiveHUD",
+      "ExtractionEndScreenProps",
+      "ExtractionEndScreen",
+      "TripodMountHUDProps",
+      "TripodMountHUD",
+      "EliteSquadSlotStatus",
+      "SquadStatusHUDProps",
+      "SquadStatusHUD"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/WeaponSilhouettes.tsx",
+    "lines": 473,
+    "imports": [
+      "react"
+    ],
+    "exports": [
+      "WeaponSilhouette",
+      "WeaponArchetypeIcon"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/WeaponStudio.tsx",
+    "lines": 199,
+    "imports": [
+      "react",
+      "three",
+      "three/examples/jsm/controls/OrbitControls.js",
+      "./lobbyAvatar",
+      "./botBuilder",
+      "./weaponEffects",
+      "three/examples/jsm/environments/RoomEnvironment.js"
+    ],
+    "exports": [
+      "WeaponStudio"
+    ],
+    "disposeCalls": 5
+  },
+  {
+    "path": "src/area51Assets.ts",
+    "lines": 189,
+    "imports": [
+      "three",
+      "three/examples/jsm/utils/BufferGeometryUtils.js"
+    ],
+    "exports": [
+      "buildArea51Vehicle"
+    ],
+    "disposeCalls": 3
+  },
+  {
+    "path": "src/area51Bosses.ts",
+    "lines": 110,
+    "imports": [
+      "three",
+      "./types",
+      "./gameLoop",
+      "./tacticalNavigation",
+      "./campaignAudio"
+    ],
+    "exports": [
+      "poseSpartan",
+      "animateFacilityBossIntro",
+      "updateAbominationCombat"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/area51Campaign.ts",
+    "lines": 284,
+    "imports": [
+      "three",
+      "./gameLoop",
+      "./gameLoop",
+      "./types",
+      "./area51Bosses",
+      "./campaignAudio"
+    ],
+    "exports": [
+      "Area51ExtractionGameLoop"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/area51World.ts",
+    "lines": 1610,
+    "imports": [
+      "three",
+      "./world",
+      "./world",
+      "./types",
+      "./worldResources",
+      "./area51Assets",
+      "./weaponModels",
+      "./weapons",
+      "./campaignAudio",
+      "./tacticalNavigation"
+    ],
+    "exports": [
+      "AREA51_LAYOUT",
+      "FacilityPhase",
+      "FacilityInteraction",
+      "Area51Facility",
+      "AREA51_SPAWNS",
+      "getArea51SpawnPoints",
+      "area51TerrainHeight",
+      "createArea51World"
+    ],
+    "disposeCalls": 2
+  },
+  {
+    "path": "src/assets/audio/weapons/batch1/clip_manifest.json",
+    "lines": 564,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/assets/audio/weapons/batch2/clip_manifest.json",
+    "lines": 554,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/assets/audio/weapons/batch3/clip_manifest.json",
+    "lines": 230,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/audio.ts",
+    "lines": 657,
+    "imports": [],
+    "exports": [
+      "SoundTrack",
+      "grenadeThrowSound",
+      "grenadeExplosionSound",
+      "FIRST_BATCH_AUDIO_URLS",
+      "SECOND_BATCH_AUDIO_URLS",
+      "THIRD_BATCH_AUDIO_URLS",
+      "PISTOL_AUDIO_FILENAMES",
+      "AUDIO",
+      "updateRailgunChargeAudio",
+      "playRailgunSlugBlast",
+      "updateMinigunSpinAudio",
+      "playMinigunFireShot",
+      "playMinigunVentHiss",
+      "unlockAudioEngine",
+      "getSpatialVolume",
+      "updateAdrenalineHeartbeat",
+      "playKnifeSlashWhoosh",
+      "playRadioChirp"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/botBuilder.ts",
+    "lines": 2244,
+    "imports": [
+      "./weaponModels",
+      "./weaponEffects",
+      "three",
+      "./types"
+    ],
+    "exports": [
+      "BotVisualBuildResult",
+      "BotBuildOptions",
+      "buildBotVisuals",
+      "TripodBuildResult",
+      "buildTripodMachineGun",
+      "buildRegenFieldMesh",
+      "buildTelemetryMarker",
+      "ImpactParticleSystem",
+      "createImpactParticleSystem",
+      "disposeBotVisuals",
+      "disposeBotTextureCache",
+      "setActorWeaponModel"
+    ],
+    "disposeCalls": 13
+  },
+  {
+    "path": "src/campaignAudio.ts",
+    "lines": 126,
+    "imports": [],
+    "exports": [
+      "CampaignCue",
+      "audioManager"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/careerLedger.ts",
+    "lines": 533,
+    "imports": [],
+    "exports": [
+      "MatchRewardBreakdown",
+      "FactionCareerLedger",
+      "RankTierInfo",
+      "getXpForRank",
+      "getRankFromXp",
+      "RANK_TITLES",
+      "getRankTitle",
+      "UnlockRequirement",
+      "UNLOCK_CATALOG",
+      "getCareerLedger",
+      "saveCareerLedger",
+      "isItemUnlocked",
+      "purchaseItemUnlock",
+      "calculateMatchRewards"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/classes.ts",
+    "lines": 89,
+    "imports": [
+      "./types"
+    ],
+    "exports": [
+      "CLASSES"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/gameLoop.ts",
+    "lines": 3223,
+    "imports": [
+      "./area51Bosses",
+      "./weapons",
+      "./weaponReload",
+      "./tacticalNavigation",
+      "three",
+      "./world",
+      "./botBuilder",
+      "./types"
+    ],
+    "exports": [
+      "segmentIntersectsAABB2D",
+      "sightlineBlocked",
+      "steerAroundObstacles",
+      "ExtractionFaction",
+      "ExtractionStage",
+      "ExtractionState",
+      "ExtractionManagerConfig",
+      "ExtractionGameLoop",
+      "ShatteredWallExtractionGameLoop",
+      "SonicDistortionRing",
+      "activeToxicPuddles",
+      "activeDistortionRings",
+      "spawnToxicPuddle",
+      "updateToxicPuddles",
+      "spawnSonicDistortionRing",
+      "updateSonicDistortionRings",
+      "detonateBloater",
+      "BioMutantAIContext",
+      "updateBioMutantAI",
+      "CombatPlayerProxy",
+      "CombatSystemsContext",
+      "resetTacticalEngine",
+      "getPlayerStationaryTime",
+      "findNearestCover",
+      "updateTacticalCombatEngine",
+      "activeProjectiles",
+      "segmentAABBHitFraction",
+      "updateBotLauncherReload",
+      "fireBotLauncher",
+      "firePlayerLauncher",
+      "spawnProjectile",
+      "detonateExplosion",
+      "updateProjectiles",
+      "fireRailPenetrator",
+      "activeRegenFields",
+      "activeTelemetryMarks",
+      "activeTripods",
+      "isPlayerMounted",
+      "getPlayerMountAnchor",
+      "getMountedTripod",
+      "deployTripod",
+      "getTripodInteractionPrompt",
+      "tryToggleTripodMount",
+      "forceDismountPlayer",
+      "firePlayerMountedGun",
+      "updateTripods",
+      "clearTripods",
+      "updateEliteSquad",
+      "clearCombatSystems",
+      "ClassAIState",
+      "createClassAIState",
+      "reviveDownedBot",
+      "updateClassCombatBot"
+    ],
+    "disposeCalls": 12
+  },
+  {
+    "path": "src/index.css",
+    "lines": 769,
+    "imports": [
+      "tailwindcss"
+    ],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/inspectorMode.ts",
+    "lines": 3,
+    "imports": [],
+    "exports": [
+      "INSPECTOR_HEALTH",
+      "INSPECTOR_DAMAGE"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/lobbyAvatar.ts",
+    "lines": 700,
+    "imports": [
+      "./weaponModels",
+      "three",
+      "./botBuilder",
+      "./types",
+      "./FactionContext"
+    ],
+    "exports": [
+      "VisorType",
+      "FactionType",
+      "LobbyAvatarController",
+      "createLobbyAvatar",
+      "buildWeaponMesh"
+    ],
+    "disposeCalls": 1
+  },
+  {
+    "path": "src/main.tsx",
+    "lines": 10,
+    "imports": [
+      "react-dom/client",
+      "./App.tsx",
+      "./FactionContext",
+      "./index.css"
+    ],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/mapRegistry.ts",
+    "lines": 17,
+    "imports": [
+      "./types"
+    ],
+    "exports": [
+      "DEFAULT_OPERATIONAL_MAP",
+      "OPERATIONAL_MAPS",
+      "resolveMapId",
+      "mapForMode"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/sceneEffects.ts",
+    "lines": 20,
+    "imports": [
+      "three",
+      "three/examples/jsm/postprocessing/EffectComposer.js",
+      "three/examples/jsm/postprocessing/RenderPass.js",
+      "three/examples/jsm/postprocessing/UnrealBloomPass.js",
+      "three/examples/jsm/postprocessing/OutputPass.js",
+      "./types"
+    ],
+    "exports": [
+      "createSceneEffects"
+    ],
+    "disposeCalls": 4
+  },
+  {
+    "path": "src/tacticalNavigation.ts",
+    "lines": 67,
+    "imports": [
+      "three",
+      "./types"
+    ],
+    "exports": [
+      "traversalBlocked",
+      "createTacticalNavigation"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/types.ts",
+    "lines": 1810,
+    "imports": [
+      "three"
+    ],
+    "exports": [
+      "WeaponDef",
+      "WeaponSlotState",
+      "MutantType",
+      "ToxicPuddle",
+      "WorldCollider",
+      "Door",
+      "Sector4ObjectiveType",
+      "GroundPickup",
+      "ActiveGrenade",
+      "ExplosionEffect",
+      "DeploymentProtocol",
+      "SquadDirective",
+      "ClassId",
+      "ClassConfig",
+      "ArmoryOption",
+      "WorldMapId",
+      "GameMode",
+      "MatchConfig",
+      "DifficultyConfig",
+      "GAME_PERSISTENCE_KEY",
+      "PERSISTENCE_SCHEMA_VERSION",
+      "KILL_REWARD_STANDARD",
+      "KILL_REWARD_HEAVY",
+      "FactionId",
+      "HeadgearId",
+      "TorsoId",
+      "LowerRigId",
+      "GearSlot",
+      "GearModifiers",
+      "GearItemDef",
+      "DEFAULT_GEAR_MODIFIERS",
+      "HEADGEAR_CATALOG",
+      "TORSO_CATALOG",
+      "LOWER_CATALOG",
+      "FactionStarterAvatar",
+      "FACTION_AVATARS",
+      "WeaponID",
+      "WeaponClass",
+      "ProjectileKind",
+      "ArsenalWeaponDef",
+      "ARSENAL",
+      "ARSENAL_ORDER",
+      "WEAPON_CLASS_ORDER",
+      "SECONDARY_LEGAL",
+      "arsenalToWeaponDef",
+      "TacticalStance",
+      "BoundingRole",
+      "CoverPoint",
+      "TacticalAIState",
+      "createTacticalState",
+      "TACTICAL_TUNING",
+      "SWARM_TUNING",
+      "EliteArchetype",
+      "EliteCompanionConfig",
+      "DEFAULT_ELITE_SQUAD",
+      "ELITE_STAT_MULTIPLIER",
+      "ELITE_HEAVY_ARMOR_MULTIPLIER",
+      "REGEN_FIELD_RADIUS",
+      "REGEN_FIELD_HPS",
+      "REGEN_FIELD_DURATION",
+      "REGEN_FIELD_COOLDOWN",
+      "MEDIC_LEASH_DISTANCE",
+      "RegenField",
+      "TELEMETRY_PING_INTERVAL",
+      "TELEMETRY_PING_RADIUS",
+      "TELEMETRY_MARK_DURATION",
+      "TelemetryMark",
+      "TRIPOD_INTERACT_KEY",
+      "TRIPOD_MOUNT_RADIUS",
+      "TRIPOD_RPM",
+      "TRIPOD_FIRE_INTERVAL",
+      "TRIPOD_MOUNT_COOLDOWN",
+      "TRIPOD_DAMAGE",
+      "TRIPOD_HEADSHOT_MULT",
+      "TRIPOD_RANGE",
+      "TRIPOD_TRAVERSE_LIMIT",
+      "TRIPOD_MAX_HEAT",
+      "TRIPOD_HEAT_PER_SHOT",
+      "TRIPOD_COOL_RATE",
+      "TRIPOD_BUILD_COOLDOWN",
+      "TRIPOD_MAX_ACTIVE",
+      "DeployedTripod",
+      "MountedGunSession",
+      "ActiveProjectile",
+      "CampaignEntity",
+      "Bot",
+      "PersistedLoadout",
+      "GamePersistence",
+      "AggregatedGearStats",
+      "createDefaultPersistence",
+      "loadPersistence",
+      "savePersistence",
+      "resetPersistence",
+      "isHeavyTarget",
+      "killReward",
+      "awardKillFunds",
+      "creditFunds",
+      "PurchaseResult",
+      "purchaseWeapon",
+      "purchaseGear",
+      "equipLoadout",
+      "resolveGearModifiers",
+      "outstandingGrindCost"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/weaponAudio.ts",
+    "lines": 180,
+    "imports": [
+      "./audio",
+      "./types",
+      "./weaponReload"
+    ],
+    "exports": [
+      "playShotgunReloadPhase",
+      "playWeaponReloadAudio",
+      "stopWeaponReloadAudio",
+      "stopWeaponAudio",
+      "pauseWeaponAudio",
+      "resumeWeaponAudio",
+      "playBattleRifleFire",
+      "playLmgFire",
+      "playAutomaticWeaponFire",
+      "updatePlasmaReloadAudio",
+      "updateRailgunWeaponAudio",
+      "updateMinigunWeaponAudio",
+      "releaseMinigunAudio",
+      "playMinigunCoolingAudio"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/weaponEffects.ts",
+    "lines": 394,
+    "imports": [
+      "three",
+      "./weaponModels"
+    ],
+    "exports": [
+      "MuzzleProfile",
+      "MUZZLE_PROFILES",
+      "WeaponMuzzleEffect",
+      "createWeaponMuzzleEffect"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/weaponModels.ts",
+    "lines": 1275,
+    "imports": [
+      "three",
+      "three/examples/jsm/geometries/RoundedBoxGeometry.js",
+      "three/examples/jsm/utils/BufferGeometryUtils.js"
+    ],
+    "exports": [
+      "WEAPON_MODEL_IDS",
+      "WeaponModelId",
+      "WeaponAssembly",
+      "orientHeldWeapon",
+      "disposeWeaponObject",
+      "createWeaponAssembly"
+    ],
+    "disposeCalls": 10
+  },
+  {
+    "path": "src/weaponReload.ts",
+    "lines": 104,
+    "imports": [
+      "./types"
+    ],
+    "exports": [
+      "ReloadPhase",
+      "ReloadPhaseListener",
+      "ReloadSequence",
+      "cancelWeaponReload",
+      "beginWeaponReload",
+      "advanceWeaponReload",
+      "interruptShellReload"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/weapons.ts",
+    "lines": 632,
+    "imports": [
+      "three",
+      "./types",
+      "three/examples/jsm/geometries/RoundedBoxGeometry.js",
+      "./weaponModels",
+      "./weaponEffects"
+    ],
+    "exports": [
+      "WEAPONS",
+      "ViewmodelManager",
+      "createViewmodelManager"
+    ],
+    "disposeCalls": 0
+  },
+  {
+    "path": "src/world.ts",
+    "lines": 1966,
+    "imports": [
+      "./mapRegistry",
+      "./worldResources",
+      "./area51World",
+      "./tacticalNavigation",
+      "three",
+      "three/examples/jsm/objects/Reflector.js",
+      "./types",
+      "./types",
+      "./weapons"
+    ],
+    "exports": [
+      "MAP_HALF",
+      "terrainHeight",
+      "randomMapPoint",
+      "ObjectivePropInstance",
+      "HeliDefenseHit",
+      "WorldManager",
+      "SpawnPoint",
+      "HelicopterState",
+      "OffshorePhase",
+      "WorldTrigger",
+      "ExtractionZones",
+      "HelicopterMesh",
+      "OffshoreState",
+      "SHATTERED_WALL_LAYOUT",
+      "SHATTERED_WALL_SPAWNS",
+      "buildHelicopterMesh",
+      "tuneTrainingAtmosphere",
+      "createWorld",
+      "initWorld",
+      "updateWorld",
+      "getSpawnPoints",
+      "getExtractionZones",
+      "cleanupWorld",
+      "updateHeliDefenses"
+    ],
+    "disposeCalls": 7
+  },
+  {
+    "path": "src/worldResources.ts",
+    "lines": 108,
+    "imports": [
+      "three"
+    ],
+    "exports": [
+      "WorldResources"
+    ],
+    "disposeCalls": 10
+  },
+  {
+    "path": "tests/area51.test.ts",
+    "lines": 369,
+    "imports": [
+      "node:assert/strict",
+      "three",
+      "../src/world",
+      "../src/area51Campaign",
+      "../src/area51World",
+      "../src/area51Assets",
+      "../src/worldResources",
+      "../src/botBuilder",
+      "../src/types"
+    ],
+    "exports": [],
+    "disposeCalls": 4
+  },
+  {
+    "path": "tests/area51Bosses.test.ts",
+    "lines": 70,
+    "imports": [
+      "node:assert/strict",
+      "three",
+      "../src/botBuilder",
+      "../src/world",
+      "../src/area51Bosses",
+      "../src/gameLoop",
+      "../src/types"
+    ],
+    "exports": [],
+    "disposeCalls": 3
+  },
+  {
+    "path": "tests/batch1.test.ts",
+    "lines": 132,
+    "imports": [
+      "node:assert/strict",
+      "node:fs",
+      "node:vm",
+      "typescript",
+      "react",
+      "react-dom/server",
+      "../src/weapons",
+      "three",
+      "../src/botBuilder",
+      "../src/world"
+    ],
+    "exports": [],
+    "disposeCalls": 2
+  },
+  {
+    "path": "tests/batch2.test.ts",
+    "lines": 97,
+    "imports": [
+      "node:assert/strict",
+      "react",
+      "react-dom/server",
+      "three",
+      "../src/classes",
+      "../src/types",
+      "../src/world",
+      "../src/lobbyAvatar",
+      "../src/botBuilder"
+    ],
+    "exports": [],
+    "disposeCalls": 3
+  },
+  {
+    "path": "tests/runtime.test.ts",
+    "lines": 106,
+    "imports": [
+      "node:assert/strict",
+      "node:fs",
+      "node:vm",
+      "typescript",
+      "three",
+      "../src/weapons",
+      "../src/inspectorMode",
+      "../src/mapRegistry",
+      "../src/botBuilder",
+      "../src/gameLoop"
+    ],
+    "exports": [],
+    "disposeCalls": 1
+  },
+  {
+    "path": "tests/scenes.test.ts",
+    "lines": 205,
+    "imports": [
+      "node:assert/strict",
+      "react",
+      "react-dom/server",
+      "three",
+      "../src/ModePosters",
+      "../src/weaponModels",
+      "../src/botBuilder",
+      "../src/lobbyAvatar",
+      "../src/weapons"
+    ],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "tests/tactical.test.ts",
+    "lines": 81,
+    "imports": [
+      "node:assert/strict",
+      "react",
+      "react-dom/server",
+      "three",
+      "../src/weapons",
+      "../src/weaponReload",
+      "../src/weaponModels",
+      "../src/tacticalNavigation",
+      "../src/world",
+      "../src/gameLoop",
+      "../src/botBuilder",
+      "../src/PostDeathMenu",
+      "../src/types",
+      "../src/gameLoop"
+    ],
+    "exports": [],
+    "disposeCalls": 1
+  },
+  {
+    "path": "tests/weaponAudio.test.ts",
+    "lines": 274,
+    "imports": [
+      "node:assert/strict",
+      "node:fs",
+      "node:url",
+      "../src/weapons",
+      "../src/weaponReload",
+      "../src/types"
+    ],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "tests/weapons.test.ts",
+    "lines": 403,
+    "imports": [
+      "node:assert/strict",
+      "react",
+      "react-dom/server",
+      "three",
+      "../src/weapons",
+      "../src/types",
+      "../src/weaponModels",
+      "../src/weaponEffects",
+      "../src/botBuilder",
+      "../src/lobbyAvatar",
+      "../src/gameLoop",
+      "../src/world"
+    ],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "tsconfig.json",
+    "lines": 26,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "update_cards.cjs",
+    "lines": 81,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "update_keys.cjs",
+    "lines": 52,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "update_modes.cjs",
+    "lines": 13,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "update_world.js",
+    "lines": 98,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "update_world_map.cjs",
+    "lines": 144,
+    "imports": [],
+    "exports": [],
+    "disposeCalls": 0
+  },
+  {
+    "path": "vite.config.ts",
+    "lines": 25,
+    "imports": [
+      "@tailwindcss/vite",
+      "@vitejs/plugin-react",
+      "path",
+      "vite"
+    ],
+    "exports": [],
+    "disposeCalls": 0
+  }
+]
