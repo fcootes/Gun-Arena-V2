@@ -9,8 +9,8 @@ progression IDs, saved data, enemy counts or visual quality changes. Delivery br
 All eleven requested npm checks pass on latest main: lint, build, runtime, scenes,
 tactical, weapons, area51, bosses, audio, batch1 and batch2. Build: 1,351.60 kB
 main JS / 387.73 kB gzip, 84.27 kB CSS; Vite warns about the large chunk.
-No lockfile was tracked. Actual scripts use npm, React 19.0.1 and direct Three.js
-0.185 (not the historical React 18 / R3F description). Preserve this actual stack.
+No lockfile was tracked. Actual scripts use npm; package.json declares React ^19.0.1 and direct Three.js
+^0.185.1 (not the historical React 18 / R3F description). Preserve this actual stack.
 
 Node construction timings with a no-op Canvas shim (three sequential constructions):
 Training 180.44 / 74.75 / 40.99 ms; Area 51 864.84 / 818.14 / 600.50 ms;

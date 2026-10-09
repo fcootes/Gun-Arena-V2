@@ -1,0 +1,46 @@
+{
+  "browser": "134.0.6998.35",
+  "viewport": {
+    "width": 960,
+    "height": 540
+  },
+  "errors": [],
+  "results": [
+    {
+      "map": "training",
+      "faction": "usmc",
+      "diagnostic": "F3 / ENGINE DIAGNOSTICS\nFPS 1.5 \u00b7 avg 0.4 \u00b7 ~1% low 0.2\nWorst 4400.1 ms \u00b7 samples 2/600\nJS simulation 30.45 ms \u00b7 AI subset 29.55 ms\nCPU render submission 40.60 ms\nGPU time: not sampled (CPU time is NOT GPU time)\nDraw calls 1152 \u00b7 triangles 324390\nGeometries 786 \u00b7 textures 32 \u00b7 bots 9\nJS heap 33.5 MiB\nWebGL memory: counts only, bytes unavailable\nDEPLOY training (nested timings inclusive)\nLobby teardown: 5.2 ms\nOld world cleanup: 0.0 ms\nNavigation: Training: 155.4 ms\nWorld construction: 394.3 ms\nOperator construction: 2501.8 ms\nPlayer, bots and equipment (inclusive): 2597.7 ms\nAudio preparation: 8.5 ms\nShader compilation: 390.2 ms\nDeployment ready: 3.4 ms\nFirst gameplay frame CPU submission: 2148.0 ms\nDeployment to first visible frame (inclusive): 9474.2 ms",
+      "smokeFlowMs": 31687
+    },
+    {
+      "map": "training",
+      "faction": "apex",
+      "diagnostic": "F3 / ENGINE DIAGNOSTICS\nFPS 1.7 \u00b7 avg 0.6 \u00b7 ~1% low 0.4\nWorst 2663.2 ms \u00b7 samples 2/600\nJS simulation 60.15 ms \u00b7 AI subset 53.85 ms\nCPU render submission 45.10 ms\nGPU time: not sampled (CPU time is NOT GPU time)\nDraw calls 846 \u00b7 triangles 287990\nGeometries 729 \u00b7 textures 31 \u00b7 bots 9\nJS heap 33.5 MiB\nWebGL memory: counts only, bytes unavailable\nDEPLOY training (nested timings inclusive)\nLobby teardown: 4.4 ms\nOld world cleanup: 0.1 ms\nNavigation: Training: 52.6 ms\nWorld construction: 121.6 ms\nOperator construction: 1481.5 ms\nPlayer, bots and equipment (inclusive): 1526.1 ms\nAudio preparation: 0.5 ms\nShader compilation: 135.8 ms\nDeployment ready: 0.0 ms\nFirst gameplay frame CPU submission: 1486.5 ms\nDeployment to first visible frame (inclusive): 5205.1 ms",
+      "smokeFlowMs": 19246
+    },
+    {
+      "map": "area51",
+      "faction": "usmc",
+      "diagnostic": "F3 / ENGINE DIAGNOSTICS\nFPS 0.1 \u00b7 avg 0.1 \u00b7 ~1% low 0.1\nWorst 15423.5 ms \u00b7 samples 1/600\nJS simulation 10.40 ms \u00b7 AI subset 5.00 ms\nCPU render submission 23.70 ms\nGPU time: not sampled (CPU time is NOT GPU time)\nDraw calls 305 \u00b7 triangles 48605\nGeometries 224 \u00b7 textures 33 \u00b7 bots 4\nJS heap 33.5 MiB\nWebGL memory: counts only, bytes unavailable\nDEPLOY area51 (nested timings inclusive)\nLobby teardown: 2.9 ms\nOld world cleanup: 0.1 ms\nFacility base resources: 4.9 ms\nFacility vehicle staging: 861.3 ms\nFacility decontamination: 9.2 ms\nFacility reactor: 12.6 ms\nFacility lift: 4.9 ms\nFacility warehouse: 4.1 ms\nFacility helipad: 1.3 ms\nFacility helicopter: 18.5 ms\nFacility static geometry: 14.4 ms\nNavigation: Area 51 grid and links: 93.1 ms\nFacility navigation: 104.3 ms\nOperator construction: 639.0 ms\nPlayer, bots and equipment (inclusive): 669.0 ms\nAudio preparation: 1.4 ms\nShader compilation: 191.0 ms\nDeployment ready: 0.0 ms\nFirst gameplay frame CPU submission: 12137.3 ms\nDeployment to first visible frame (inclusive): 19503.1 ms",
+      "smokeFlowMs": 63675
+    },
+    {
+      "map": "area51",
+      "faction": "apex",
+      "diagnostic": "F3 / ENGINE DIAGNOSTICS\nFPS 0.1 \u00b7 avg 0.1 \u00b7 ~1% low 0.1\nWorst 13413.9 ms \u00b7 samples 1/600\nJS simulation 3.60 ms \u00b7 AI subset 2.00 ms\nCPU render submission 10.30 ms\nGPU time: not sampled (CPU time is NOT GPU time)\nDraw calls 318 \u00b7 triangles 49181\nGeometries 232 \u00b7 textures 33 \u00b7 bots 4\nJS heap 33.5 MiB\nWebGL memory: counts only, bytes unavailable\nDEPLOY area51 (nested timings inclusive)\nLobby teardown: 9.4 ms\nOld world cleanup: 0.2 ms\nFacility base resources: 1.3 ms\nFacility vehicle staging: 765.9 ms\nFacility decontamination: 3.9 ms\nFacility reactor: 3.0 ms\nFacility lift: 1.4 ms\nFacility warehouse: 1.9 ms\nFacility helipad: 0.4 ms\nFacility helicopter: 8.6 ms\nFacility static geometry: 5.0 ms\nNavigation: Area 51 grid and links: 45.4 ms\nFacility navigation: 50.1 ms\nOperator construction: 560.0 ms\nPlayer, bots and equipment (inclusive): 584.9 ms\nAudio preparation: 1.0 ms\nShader compilation: 258.3 ms\nDeployment ready: 0.9 ms\nFirst gameplay frame CPU submission: 9526.4 ms\nDeployment to first visible frame (inclusive): 16126.9 ms",
+      "smokeFlowMs": 43647
+    },
+    {
+      "map": "shattered_wall",
+      "faction": "usmc",
+      "diagnostic": "F3 / ENGINE DIAGNOSTICS\nFPS 0.1 \u00b7 avg 0.1 \u00b7 ~1% low 0.1\nWorst 12492.1 ms \u00b7 samples 1/600\nJS simulation 52.30 ms \u00b7 AI subset 7.80 ms\nCPU render submission 39.90 ms\nGPU time: not sampled (CPU time is NOT GPU time)\nDraw calls 1212 \u00b7 triangles 224744\nGeometries 656 \u00b7 textures 28 \u00b7 bots 4\nJS heap 33.5 MiB\nWebGL memory: counts only, bytes unavailable\nDEPLOY shattered_wall (nested timings inclusive)\nLobby teardown: 5.5 ms\nOld world cleanup: 0.6 ms\nTexture paint: metal: 21.2 ms\nProcedural texture: metal: 21.9 ms\nTexture paint: concrete: 14.7 ms\nProcedural texture: concrete: 14.8 ms\nTexture paint: helipad: 91.2 ms\nProcedural texture: helipad: 91.5 ms\nOffshore base resources: 0.4 ms\nOffshore helipad: 5.6 ms\nOffshore railings: 130.7 ms\nOffshore signal terminal: 0.7 ms\nOffshore helicopter: 9.9 ms\nOffshore armory: 4.6 ms\nOffshore navigation: 11.4 ms\nOffshore supplies: 225.4 ms\nOperator construction: 3233.5 ms\nPlayer, bots and equipment (inclusive): 3345.5 ms\nAudio preparation: 2.0 ms\nShader compilation: 622.1 ms\nDeployment ready: 0.1 ms\nFirst gameplay frame CPU submission: 9222.3 ms\nDeployment to first visible frame (inclusive): 23987.4 ms",
+      "smokeFlowMs": 62149
+    },
+    {
+      "map": "shattered_wall",
+      "faction": "apex",
+      "diagnostic": "F3 / ENGINE DIAGNOSTICS\nFPS 0.8 \u00b7 avg 0.3 \u00b7 ~1% low 0.1\nWorst 16580.4 ms \u00b7 samples 8/600\nJS simulation 4.57 ms \u00b7 AI subset 1.13 ms\nCPU render submission 38.99 ms\nGPU time: not sampled (CPU time is NOT GPU time)\nDraw calls 1262 \u00b7 triangles 227172\nGeometries 695 \u00b7 textures 28 \u00b7 bots 4\nJS heap 33.5 MiB\nWebGL memory: counts only, bytes unavailable\nDEPLOY shattered_wall (nested timings inclusive)\nLobby teardown: 4.6 ms\nOld world cleanup: 0.0 ms\nTexture paint: metal: 28.4 ms\nProcedural texture: metal: 29.2 ms\nTexture paint: concrete: 25.4 ms\nProcedural texture: concrete: 25.4 ms\nTexture paint: helipad: 30.1 ms\nProcedural texture: helipad: 30.2 ms\nOffshore base resources: 0.6 ms\nOffshore helipad: 1.6 ms\nOffshore railings: 91.5 ms\nOffshore signal terminal: 0.9 ms\nOffshore helicopter: 9.2 ms\nOffshore armory: 9.3 ms\nOffshore navigation: 0.4 ms\nOffshore supplies: 4.4 ms\nOperator construction: 952.3 ms\nPlayer, bots and equipment (inclusive): 985.2 ms\nAudio preparation: 0.4 ms\nShader compilation: 156.7 ms\nDeployment ready: 0.1 ms\nFirst gameplay frame CPU submission: 10980.6 ms\nDeployment to first visible frame (inclusive): 19396.7 ms",
+      "smokeFlowMs": 59967
+    }
+  ]
+}
