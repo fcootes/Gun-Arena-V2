@@ -1,6 +1,8 @@
+import type { DeploymentPipeline } from './deployment';
+import { measureInitialization } from './performance';
 import { resolveMapId } from './mapRegistry';
 import { WorldResources } from './worldResources';
-import { createArea51World, area51TerrainHeight, AREA51_SPAWNS, getArea51SpawnPoints } from './area51World';
+import { createArea51World, createArea51WorldAsync, area51TerrainHeight, AREA51_SPAWNS, getArea51SpawnPoints } from './area51World';
 import { createTacticalNavigation } from './tacticalNavigation';
 import * as THREE from 'three';
 import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
@@ -949,7 +951,7 @@ function createTrainingWorld(scene: THREE.Scene, mapId: 'training'): WorldManage
   }
   resources.track(worldGroup);
 
-  const navigation = createTacticalNavigation(mapId, worldColliders, getHighestSurface);
+  const navigation = measureInitialization('Navigation: Training', () => createTacticalNavigation(mapId, worldColliders, getHighestSurface));
   return {
     mapId,
     updateWorld: (delta) => { if (!disposed) { updateDoors(delta); updateDebris(delta); } },
@@ -1109,8 +1111,30 @@ function canvasTexture(width: number, height: number, paint: (context: CanvasRen
   return texture;
 }
 
+const offshoreImages = new Map<string, HTMLCanvasElement>();
+
+function cachedOffshoreTexture(key: string, width: number, height: number, paint: (ctx: CanvasRenderingContext2D) => void): THREE.Texture {
+  const image = offshoreImages.get(key);
+  if (image) {
+    const texture = new THREE.CanvasTexture(image); texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 4; return texture;
+  }
+  return measureInitialization(`Texture paint: ${key}`, () => {
+    const texture = canvasTexture(width, height, paint);
+    const paintedImage = texture.image as HTMLCanvasElement | undefined;
+    if (paintedImage && typeof paintedImage.getContext === 'function') offshoreImages.set(key, paintedImage);
+    return texture;
+  });
+}
+
+/** Clear CPU pixels when the engine unmounts; worlds own all GPU Texture wrappers. */
+export function clearOffshoreTextureImages(): void { offshoreImages.clear(); }
+export function prepareOffshoreTexture(kind: 'metal' | 'concrete' | 'helipad'): void {
+  const texture = kind === 'helipad' ? helipadTexture() : industrialTexture(kind === 'concrete');
+  texture.dispose();
+}
+
 function industrialTexture(concrete = false): THREE.Texture {
-  const texture = canvasTexture(512, 512, (ctx) => {
+  const texture = cachedOffshoreTexture(concrete ? 'concrete' : 'metal', 512, 512, (ctx) => {
     ctx.fillStyle = concrete ? '#565a58' : '#394444'; ctx.fillRect(0, 0, 512, 512);
     let seed = 7927;
     for (let i = 0; i < 12000; i++) {
@@ -1134,7 +1158,7 @@ function industrialTexture(concrete = false): THREE.Texture {
 }
 
 function helipadTexture(): THREE.Texture {
-  return canvasTexture(2048, 2048, (ctx) => {
+  return cachedOffshoreTexture('helipad', 2048, 2048, (ctx) => {
     ctx.fillStyle = '#303c3c'; ctx.fillRect(0, 0, 2048, 2048);
     ctx.strokeStyle = '#202a2a'; ctx.lineWidth = 4;
     for (let i = 0; i <= 2048; i += 128) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 2048); ctx.moveTo(0, i); ctx.lineTo(2048, i); ctx.stroke(); }
@@ -1391,6 +1415,23 @@ void main() {
 }`;
 
 function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldManager {
+  const builder = buildOffshoreWorld(scene, camera);
+  let step = builder.next();
+  while (!step.done) step = builder.next();
+  return step.value;
+}
+async function createOffshoreWorldAsync(scene: THREE.Scene, camera: THREE.Camera, pipeline: DeploymentPipeline): Promise<WorldManager> {
+  const builder = buildOffshoreWorld(scene, camera);
+  let stage = 'Offshore base resources';
+  try {
+    while (true) {
+      const step = await pipeline.stage(stage, () => builder.next());
+      if (step.done) return step.value;
+      stage = step.value as string;
+    }
+  } finally { builder.return(undefined as never); }
+}
+function* buildOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): Generator<string, WorldManager> {
   currentWorldMapId = 'shattered_wall';
   const root = new THREE.Group(); root.name = 'Operation_Shattered_Wall'; scene.add(root);
   const resources = new WorldResources();
@@ -1403,6 +1444,9 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
   const debris: { mesh: THREE.Mesh; velocity: THREE.Vector3; life: number }[] = [];
   const previousBackground = scene.background;
   const previousFog = scene.fog;
+  let completed = false;
+  let ownedHelicopter: HelicopterMesh | null = null;
+  try {
   const stormBackground = new THREE.Color(0x101c26);
   const stormFog = new THREE.FogExp2(0x14232c, 0.012);
   scene.background = stormBackground; scene.fog = stormFog;
@@ -1414,14 +1458,20 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
   const yellow = new THREE.MeshStandardMaterial({ color: 0xe0b638, metalness: 0.4, roughness: 0.55 });
   const concrete = new THREE.MeshStandardMaterial({ color: 0x9a9e98, roughness: 0.95, map: concreteTexture });
   const glow = new THREE.MeshBasicMaterial({ color: 0xffc65d });
+  [steel, dark, rust, yellow, concrete, glow].forEach(material => resources.retainMaterial(material));
   const registerHittable = (mesh: THREE.Object3D) => { if (!hittableObjects.includes(mesh)) hittableObjects.push(mesh); };
   const unregisterHittable = (mesh: THREE.Object3D) => { const i = hittableObjects.indexOf(mesh); if (i >= 0) hittableObjects.splice(i, 1); };
   const addCollider = (bounds: THREE.Box3, flags: Partial<WorldCollider> = {}): WorldCollider => {
     const collider: WorldCollider = { minX: bounds.min.x, maxX: bounds.max.x, minY: bounds.min.y, maxY: bounds.max.y, minZ: bounds.min.z, maxZ: bounds.max.z, active: true, ...flags };
     worldColliders.push(collider); return collider;
   };
+  // Dimension-keyed geometry preserves unscaled child attachment coordinates.
+  const boxGeometries = new Map<string, THREE.BoxGeometry>();
   const box = (w: number, h: number, d: number, x: number, y: number, z: number, material: THREE.Material, solid = false, parent = root): THREE.Mesh => {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material); mesh.position.set(x, y, z); mesh.castShadow = true; mesh.receiveShadow = true; parent.add(mesh);
+    const key = `${w}:${h}:${d}`;
+    let geometry = boxGeometries.get(key);
+    if (!geometry) { geometry = new THREE.BoxGeometry(w, h, d); boxGeometries.set(key, geometry); resources.retainGeometry(geometry); }
+    const mesh = new THREE.Mesh(geometry, material); mesh.position.set(x, y, z); mesh.castShadow = true; mesh.receiveShadow = true; parent.add(mesh);
     if (parent === root) {
       registerHittable(mesh);
       if (solid) addCollider(new THREE.Box3(new THREE.Vector3(x - w / 2, y - h / 2, z - d / 2), new THREE.Vector3(x + w / 2, y + h / 2, z + d / 2)));
@@ -1431,6 +1481,7 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
   const addSurface = (minX: number, maxX: number, minZ: number, maxZ: number, height: number | ((x: number, z: number) => number), contains?: (x: number, z: number) => boolean) => {
     surfaces.push({ bounds: new THREE.Box3(new THREE.Vector3(minX, -20, minZ), new THREE.Vector3(maxX, 30, maxZ)), height: typeof height === 'number' ? () => height : height, contains });
   };
+  yield 'Offshore helipad';
   const deckShape = new THREE.Shape();
   const radius = 22 / Math.cos(Math.PI / 8);
   for (let i = 0; i < 8; i++) {
@@ -1447,6 +1498,7 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
   const terrainMesh = new THREE.Mesh(topGeometry, padMaterial); terrainMesh.position.y = 14.015; terrainMesh.receiveShadow = true; terrainMesh.name = 'Helipad_ReinforcedDeck'; terrainMesh.userData.type = 'terrain'; root.add(terrainMesh); registerHittable(terrainMesh);
   addSurface(-22, 22, -22, 22, 14, insideHelipad);
   addCollider(new THREE.Box3(new THREE.Vector3(-22, 13.1, -22), new THREE.Vector3(22, 14, 22)), { isRamp: true });
+  yield 'Offshore railings';
   const blinkers: { mesh: THREE.Mesh; light?: THREE.PointLight; offset: number }[] = [];
   const rail = (ax: number, az: number, bx: number, bz: number, floor: number, safety = false) => {
     const start = new THREE.Vector3(ax, floor + 1.12, az); const end = new THREE.Vector3(bx, floor + 1.12, bz);
@@ -1580,6 +1632,7 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
   const rainGeometry = new THREE.BufferGeometry(); rainGeometry.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3).setUsage(THREE.DynamicDrawUsage)); rainGeometry.setAttribute('velocity', new THREE.BufferAttribute(rainVelocities, 3));
   const rainMaterial = new THREE.ShaderMaterial({ uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uPixelRatio: { value: typeof window === 'undefined' ? 1 : Math.min(window.devicePixelRatio, 2) } }]), vertexShader: rainVertexShader, fragmentShader: rainFragmentShader, transparent: true, depthWrite: false, fog: true });
   const rain = new THREE.Points(rainGeometry, rainMaterial); rain.name = 'HeavyRain_6000'; rain.frustumCulled = false; root.add(rain);
+  yield 'Offshore signal terminal';
   const signalTerminal = new THREE.Group(); signalTerminal.name = 'SignalBeacon'; signalTerminal.position.set(8, 8, 34); root.add(signalTerminal);
   box(1.1, 1.3, 0.7, 0, 0.65, 0, dark, false, signalTerminal);
   const signalScreenMaterial = new THREE.MeshStandardMaterial({ color: 0x063644, emissive: 0x25b7d9, emissiveIntensity: 0.9, roughness: 0.25 });
@@ -1595,9 +1648,11 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
   };
   const holdoutMaterial = new THREE.MeshBasicMaterial({ color: 0x55d8ca, transparent: true, opacity: 0.15, side: THREE.DoubleSide, depthWrite: false });
   const holdoutRing = new THREE.Mesh(new THREE.RingGeometry(14.8, 15, 96), holdoutMaterial); holdoutRing.rotation.x = -Math.PI / 2; holdoutRing.position.y = 14.035; holdoutRing.visible = false; root.add(holdoutRing);
-  const helicopter = buildHelicopterMesh(); helicopter.group.position.set(95, 55, 100); helicopter.group.rotation.y = Math.PI / 7; helicopter.group.visible = false; scene.add(helicopter.group);
+  yield 'Offshore helicopter';
+  const helicopter = ownedHelicopter = buildHelicopterMesh(); helicopter.group.position.set(95, 55, 100); helicopter.group.rotation.y = Math.PI / 7; helicopter.group.visible = false; scene.add(helicopter.group);
   const boardingStep = box(4.8, 0.32, 3.7, 0, 14.18, 0, yellow); boardingStep.visible = false; unregisterHittable(boardingStep);
   const boardingSurface = { bounds: new THREE.Box3(new THREE.Vector3(-2.4, 14, -1.85), new THREE.Vector3(2.4, 15, 1.85)), height: () => 14.34 };
+  yield 'Offshore armory';
   const lobbyGroup = new THREE.Group(); lobbyGroup.name = 'OffshoreArmoryLobby'; lobbyGroup.position.copy(SHATTERED_WALL_LAYOUT.lobbyOrigin); lobbyGroup.visible = false; root.add(lobbyGroup);
   box(16, 0.4, 18, 0, -0.2, -4, concrete, false, lobbyGroup); box(16, 5, 0.4, 0, 2.5, -12, concrete, false, lobbyGroup); box(0.4, 5, 18, -8, 2.5, -4, concrete, false, lobbyGroup); box(0.4, 5, 18, 8, 2.5, -4, concrete, false, lobbyGroup); box(16, 0.25, 18, 0, 5, -4, dark, false, lobbyGroup);
   for (const x of [-5, 5]) {
@@ -1718,6 +1773,7 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
     const collider = addCollider(new THREE.Box3().setFromObject(group)); collider.passThroughTeam = team; resources.track(group); deployedCovers.push({group,collider}); return group;
   }
   const navigationScratch = new THREE.Vector3();
+  yield 'Offshore navigation';
   const navigationNodes = [
     new THREE.Vector3(0, 14, 0),
     new THREE.Vector3(0, 14, 18), new THREE.Vector3(-18, 14, 0), new THREE.Vector3(0, 14, -18), new THREE.Vector3(18, 14, 0),
@@ -1829,7 +1885,10 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
   const updateDoors = (delta: number) => { for (const door of doors) { door.currentAngle = THREE.MathUtils.damp(door.currentAngle, door.targetAngle, 6, delta); door.hingeGroup.rotation.y = door.currentAngle; } };
   signalTerminal.traverse((node) => { if (node instanceof THREE.Mesh) registerHittable(node); });
   dishGroup.traverse((node) => { if (node instanceof THREE.Mesh) registerHittable(node); });
-  for (const p of [[-11, -6], [11, 6], [-12, 34], [34, -14]] as const) createGroundPickup(p[0], p[1], 0, 60);
+  for (const p of [[-11, -6], [11, 6], [-12, 34], [34, -14]] as const) {
+    yield 'Offshore supplies';
+    createGroundPickup(p[0], p[1], 0, 60);
+  }
   root.traverse((node) => {
     if (!(node instanceof THREE.Mesh) || node === ocean || node === holdoutRing || node === boardingStep) return;
     let parent: THREE.Object3D | null = node;
@@ -1886,7 +1945,7 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
     if (scene.background === stormBackground) scene.background = previousBackground;
     if (scene.fog === stormFog) scene.fog = previousFog;
   }
-  return {
+  const manager: WorldManager = {
     mapId: 'shattered_wall', updateHeliDefenses, terrainMesh, worldColliders, doors, hittableObjects, groundPickups, structures, offshore, lobbyGroup,
     sectorCenters: { 1: new THREE.Vector3(8, 8, 34), 2: new THREE.Vector3(0, 14, 0), 3: new THREE.Vector3(34, 11, 16), 4: new THREE.Vector3(0, 14, 0), 5: new THREE.Vector3(0, 14.5, 0) },
     facilityCorridorNodes: { mainframe: new THREE.Vector3(8, 8, 34), cryo: new THREE.Vector3(34, 11, 16), evac: new THREE.Vector3(0, 14, 0), center: new THREE.Vector3(0, 14, 0) },
@@ -1894,6 +1953,14 @@ function createOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): WorldMa
     getExtractionZones: () => zones, updateWorld, updateDoors, registerHittable, unregisterHittable, removeGroundPickup, createGroundPickup, collectPickup,
     getHighestSurface, moveEntityWithCollision, damageEnvironmentalBlock, updateDebris, spawnObjectiveProp, spawnDeployableCover, clearDeployableCover, getNavigationTarget, navigationPoints: navigationNodes, dispose,
   };
+  completed = true; return manager;
+  } finally {
+    if (!completed) {
+      ownedHelicopter?.dispose(); resources.track(root); resources.dispose();
+      root.removeFromParent(); root.clear();
+      scene.background = previousBackground; scene.fog = previousFog;
+    }
+  }
 }
 
 export function tuneTrainingAtmosphere(scene: THREE.Scene, manager: WorldManager): void {
@@ -1925,6 +1992,22 @@ export function createWorld(scene: THREE.Scene, mapId: WorldMapId = 'area51'): W
   mapId = resolveMapId(mapId);
   currentWorldMapId = mapId;
   const manager = mapId === 'shattered_wall' ? createOffshoreWorld(scene) : mapId === 'area51' ? createArea51World(scene) : createTrainingWorld(scene, mapId);
+  if (mapId === 'training') tuneTrainingAtmosphere(scene, manager);
+  activeWorld = manager; activeScene = scene;
+  const disposeManager = manager.dispose;
+  manager.dispose = () => { disposeManager(); if (activeWorld === manager) { activeWorld = null; activeScene = null; } };
+  return manager;
+}
+
+/** Async facility staging preserves the synchronous constructor used by existing callers/tests. */
+export async function createWorldAsync(scene: THREE.Scene, mapId: WorldMapId, pipeline: DeploymentPipeline, camera: THREE.Camera): Promise<WorldManager> {
+  if (activeWorld) cleanupWorld(activeScene ?? scene);
+  mapId = resolveMapId(mapId); currentWorldMapId = mapId;
+  const manager = mapId === 'area51'
+    ? await createArea51WorldAsync(scene, pipeline)
+    : mapId === 'shattered_wall'
+      ? await createOffshoreWorldAsync(scene, camera, pipeline)
+      : await pipeline.stage('World construction', () => createTrainingWorld(scene, 'training'));
   if (mapId === 'training') tuneTrainingAtmosphere(scene, manager);
   activeWorld = manager; activeScene = scene;
   const disposeManager = manager.dispose;

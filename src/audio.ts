@@ -9,6 +9,10 @@ export class SoundTrack {
   confirmedSrc: string | null;
   duration: number;
   private _vol: number;
+  private prepared = false;
+  private generation = 0;
+  private probe: HTMLAudioElement | null = null;
+  private probeCleanup: (() => void) | null = null;
   private pausedForResume = new Set<HTMLAudioElement>();
 
   constructor(
@@ -31,61 +35,84 @@ export class SoundTrack {
       }
     });
 
-    this.candidates = [...new Set(candidates)];
+    // Bundler-resolved recordings are authoritative: never probe nonexistent extensions.
+    this.candidates = typeof filenames === 'string' && /^(https?:|file:)/.test(filenames)
+      ? [filenames] : [...new Set(candidates)];
     this.poolSize = poolSize;
     this.loop = loop;
     this.pool = [];
     this.index = 0;
-    this.confirmedSrc = null;
+    this.confirmedSrc = this.candidates.length === 1 && /^(https?:|file:)/.test(this.candidates[0]) ? this.candidates[0] : null;
     this.duration = 0;
     this._vol = 1.0;
 
-    for (let i = 0; i < poolSize; i++) {
-      const a = new Audio();
-      a.preload = 'none';
-      if (loop) a.loop = true;
-      this.pool.push(a);
-    }
-    this.detectSources();
   }
 
   set volume(v: number) { this._vol = Math.max(0, Math.min(1, v)); }
   get volume(): number { return this._vol; }
 
+  private voice(index: number): HTMLAudioElement {
+    while (this.pool.length <= index) {
+      const audio = new Audio(); audio.preload = 'none'; audio.loop = this.loop;
+      if (this.confirmedSrc) audio.src = this.confirmedSrc;
+      this.pool.push(audio);
+    }
+    return this.pool[index];
+  }
+
+  /** Prepare one voice; allocate additional overlap voices only when actually played. */
+  prepare(): void { this.detectSources(); }
+
   detectSources(): void {
-    if (this.candidates.length === 0) return;
-    
+    if (this.prepared || !this.candidates.length) return;
+    this.prepared = true;
+    const generation = this.generation;
+    if (this.confirmedSrc) {
+      const audio = this.voice(0);
+      audio.preload = 'metadata';
+      const loaded = () => {
+        if (generation === this.generation && Number.isFinite(audio.duration)) this.duration = audio.duration;
+      };
+      audio.addEventListener('loadedmetadata', loaded, { once: true });
+      this.probeCleanup = () => audio.removeEventListener?.('loadedmetadata', loaded);
+      // Also handles already-loaded voices and synchronous test audio implementations.
+      loaded();
+      audio.load?.();
+      return;
+    }
     let candidateIndex = 0;
     const probeNext = () => {
-      if (this.confirmedSrc || candidateIndex >= this.candidates.length) return;
-      const src = this.candidates[candidateIndex++];
-      const test = new Audio();
-      test.preload = 'metadata';
-      
+      if (generation !== this.generation || this.confirmedSrc || candidateIndex >= this.candidates.length) return;
+      const src = this.candidates[candidateIndex++], test = new Audio();
+      this.probe = test; test.preload = 'metadata';
+      const cleanup = () => {
+        test.removeEventListener?.('loadedmetadata', onSuccess);
+        test.removeEventListener?.('canplaythrough', onSuccess);
+        test.removeEventListener?.('error', onError);
+        test.pause(); test.removeAttribute?.('src'); test.load?.();
+        if (this.probe === test) this.probe = null;
+      };
       const onSuccess = () => {
-        if (!this.confirmedSrc) {
-          this.confirmedSrc = src;
-          if (test.duration && !isNaN(test.duration)) {
-            this.duration = test.duration;
-          }
-          this.pool.forEach(a => {
-            a.src = src;
-            a.preload = 'auto';
-          });
-        }
+        if (generation !== this.generation || this.confirmedSrc) return;
+        this.confirmedSrc = src;
+        if (Number.isFinite(test.duration)) this.duration = test.duration;
+        cleanup(); this.probeCleanup = null;
       };
-
-      const onError = () => {
-        probeNext();
-      };
-
+      const onError = () => { cleanup(); this.probeCleanup = null; probeNext(); };
+      this.probeCleanup = cleanup;
       test.addEventListener('loadedmetadata', onSuccess, { once: true });
       test.addEventListener('canplaythrough', onSuccess, { once: true });
       test.addEventListener('error', onError, { once: true });
       test.src = src;
     };
-
     probeNext();
+  }
+
+  /** Engine-session release, retaining only the confirmed URL/duration for reuse. */
+  release(): void {
+    this.generation++; this.stop(); this.probeCleanup?.(); this.probeCleanup = null;
+    for (const audio of this.pool) { audio.removeAttribute?.('src'); audio.load?.(); }
+    this.pool.length = 0; this.index = 0; this.prepared = false; this.probe = null;
   }
 
   play(volume: number | null = null, restart = true, playbackRate = 1, offsetSeconds = 0): void {
@@ -93,10 +120,11 @@ export class SoundTrack {
     if (targetVol <= 0.005) return;
     const clamped = Math.max(0, Math.min(1, targetVol));
 
+    this.prepare();
     // Purely audio file playback - no synthetic noise overrides
     if (!this.confirmedSrc) return;
 
-    const audio = this.pool[this.index];
+    const audio = this.voice(this.index);
     this.index = (this.index + 1) % this.poolSize;
 
     audio.volume = clamped;
@@ -113,9 +141,10 @@ export class SoundTrack {
   playContinuous(volume = 1.0): void {
     if (volume <= 0.005) return;
     const clamped = Math.max(0, Math.min(1, volume));
+    this.prepare();
     if (!this.confirmedSrc) return;
 
-    const audio = this.pool[0];
+    const audio = this.voice(0);
     this.pausedForResume.delete(audio);
     audio.playbackRate = 1;
     audio.volume = clamped;

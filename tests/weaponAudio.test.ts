@@ -40,6 +40,7 @@ class MockAudio {
 (globalThis as any).Audio = MockAudio;
 const { AUDIO, FIRST_BATCH_AUDIO_URLS, SECOND_BATCH_AUDIO_URLS, THIRD_BATCH_AUDIO_URLS } = await import('../src/audio');
 const { playWeaponReloadAudio, playShotgunReloadPhase, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } = await import('../src/weaponAudio');
+for (const track of Object.values(AUDIO)) track.prepare();
 const latest = (track: typeof AUDIO.arSingle) => track.pool[(track.index + track.poolSize - 1) % track.poolSize] as unknown as MockAudio;
 const plays = (track: typeof AUDIO.arSingle) => track.pool.reduce((n, audio) => n + (audio as unknown as MockAudio).plays, 0);
 const weapon = (id: string) => WEAPONS.find(w => w.id === id)!;

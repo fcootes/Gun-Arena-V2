@@ -1,3 +1,7 @@
+import { DeploymentPipeline } from './deployment';
+import { initialization, createPerformanceOverlay } from './performance';
+import { HudDom } from './hudDom';
+import { GRAPHICS } from './graphicsConfig';
 import { DEFAULT_OPERATIONAL_MAP, mapForMode } from './mapRegistry';
 import { INSPECTOR_HEALTH, INSPECTOR_DAMAGE } from './inspectorMode';
 import { WorldResources } from './worldResources';
@@ -5,7 +9,7 @@ import { Area51ExtractionGameLoop } from './area51Campaign';
 import { audioManager } from './campaignAudio';
 import { PostDeathMenu } from './PostDeathMenu';
 import { beginWeaponReload, advanceWeaponReload, cancelWeaponReload, interruptShellReload } from './weaponReload';
-import { playWeaponReloadAudio, playShotgunReloadPhase, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } from './weaponAudio';
+import { prepareWeaponAudio, releaseWeaponAudio, playWeaponReloadAudio, playShotgunReloadPhase, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } from './weaponAudio';
 import './ModePosters.css';
 import { createWeaponAssembly, disposeWeaponObject } from './weaponModels';
 import { useEffect, useRef, useState } from 'react';
@@ -43,7 +47,7 @@ import {
   updateAdrenalineHeartbeat,
   playKnifeSlashWhoosh
 } from './audio';
-import { createWorld, initWorld, cleanupWorld, terrainHeight, randomMapPoint, updateHeliDefenses } from './world';
+import { createWorld, createWorldAsync, cleanupWorld, terrainHeight, randomMapPoint, updateHeliDefenses, prepareOffshoreTexture, clearOffshoreTextureImages } from './world';
 import { buildBotVisuals, disposeBotVisuals, disposeBotTextureCache, setActorWeaponModel } from './botBuilder';
 import { createLobbyAvatar, VisorType, FactionType, LobbyAvatarController } from './lobbyAvatar';
 import { HelmetHUD, RadarPing } from './HelmetHUD';
@@ -220,7 +224,7 @@ export default function App() {
   const selectLoadoutSlotRef = useRef<(index: number) => void>(() => {});
 
   // React UI state for overlays and audio guidance
-  const [gameState, setGameState] = useState<'start' | 'playing' | 'paused' | 'DEATH_SCREEN'>('start');
+  const [gameState, setGameState] = useState<'start' | 'loading' | 'playing' | 'paused' | 'DEATH_SCREEN'>('start');
   const [endResult, setEndResult] = useState<{ victory: boolean; title: string; sub: string }>({ victory: true, title: 'VICTORY', sub: '' });
   const [matchRewards, setMatchRewards] = useState<MatchRewardBreakdown | null>(null);
   const [showAudioHelper, setShowAudioHelper] = useState(false);
@@ -362,6 +366,9 @@ export default function App() {
   const restartHandlerRef = useRef<() => void>();
   const lobbyHandlerRef = useRef<() => void>();
 
+  const [deploymentStage, setDeploymentStage] = useState('Preparing deployment');
+  const [deploymentError, setDeploymentError] = useState<string | null>(null);
+
   const [hudData, setHudData] = useState({
     health: 100,
     maxHealth: 100,
@@ -388,8 +395,8 @@ export default function App() {
     if (!containerRef.current) return;
 
     // Set up Three.js Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const renderer = new THREE.WebGLRenderer({ antialias: GRAPHICS.antialias });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, GRAPHICS.maxPixelRatio));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -405,6 +412,11 @@ export default function App() {
     camera.rotation.order = 'YXZ';
     scene.add(camera);
     const effects = createSceneEffects(renderer, scene, camera);
+    const profiler = createPerformanceOverlay(containerRef.current, renderer, !!(import.meta as ImportMeta & { env?: { DEV?: boolean } }).env?.DEV);
+    const hudDom = new HudDom(containerRef.current);
+    let engineDisposed = false;
+    let pendingDeployment: DeploymentPipeline | null = null;
+    let submittedDeploymentFrame = false;
     effects.resize(window.innerWidth, window.innerHeight);
     const operatorControls = new OrbitControls(camera, renderer.domElement);
     operatorControls.enabled = false; operatorControls.enablePan = false; operatorControls.enableZoom = false;
@@ -1276,26 +1288,30 @@ export default function App() {
       }
     }
 
+    let sharedCombatContext: CombatSystemsContext | null = null;
+    let sharedMutantContext: BioMutantAIContext | null = null;
     function getCombatContext(): CombatSystemsContext {
-      return {
+      if (!sharedCombatContext) sharedCombatContext = {
           scene,camera,world,bots,damageBot,pushKillFeed,
-          squadDirective:squadDirectiveRef.current,focusTargetId:focusTargetIDRef.current,
-          player:{pos:player.pos,yaw:player.yaw,pitch:player.pitch,health:player.health,maxHealth:player.maxHealth,alive:player.alive,team:player.team,
+          get squadDirective(){return squadDirectiveRef.current;},get focusTargetId(){return focusTargetIDRef.current;},
+          player:{pos:player.pos,get yaw(){return player.yaw;},get pitch(){return player.pitch;},get health(){return player.health;},get maxHealth(){return player.maxHealth;},get alive(){return player.alive;},get team(){return player.team;},
             applyDamage:applyDamageToPlayer,heal:amount=>{player.health=Math.min(player.maxHealth,player.health+amount);}},
-          needsAmmo:()=>playerWeaponState.slice(0,2).some(ws=>(ws.reserve??0)<30),
+          needsAmmo:()=>playerWeaponState.some((ws,index)=>index<2&&(ws.reserve??0)<30),
           onBotShot:(bot,weapon)=>{radarPingsRef.current.push({x:bot.pos.x,z:bot.pos.z,timestamp:performance.now(),duration:1.5,type:'gunfire'});const audio=weapon.id==='sniper'?AUDIO.sniperShotWithBolt:weapon.id==='pistol'?AUDIO.pistolShot:weapon.id==='shotgun'?AUDIO.shotgunShot:weapon.id==='lmg'?AUDIO.lmgFire:weapon.id==='br'?AUDIO.brSingle:weapon.id==='smg'?AUDIO.smgFire:weapon.id==='laser'?AUDIO.plasmaSingle:weapon.id==='railgun'?AUDIO.railgunFire:AUDIO.arSingle;audio.play(getSpatialVolume(camera.position,bot.pos));},
           onExplosionHit:(target,amount)=>{if(target!== 'player'&&amount>0){showHitmarker(false);}}
       };
+      sharedCombatContext.world = world;
+      return sharedCombatContext;
     }
 
     function getMutantAIContext(): BioMutantAIContext {
-      return {
+      if (!sharedMutantContext) sharedMutantContext = {
         player: {
           pos: player.pos,
-          yaw: player.yaw,
-          health: player.health,
-          maxHealth: player.maxHealth,
-          alive: player.alive,
+          get yaw() { return player.yaw; },
+          get health() { return player.health; },
+          get maxHealth() { return player.maxHealth; },
+          get alive() { return player.alive; },
           applyDamage: (dmg, isHead, isExp, attacker) => applyDamageToPlayer(dmg, false, false, attacker),
         },
         bots,
@@ -1305,12 +1321,14 @@ export default function App() {
         pushKillFeed,
         makeBot,
         damageBot,
-        focusTargetId: focusTargetIDRef.current,
+        get focusTargetId() { return focusTargetIDRef.current; },
         scrambleRadar: (duration: number) => {
           (window as any).radarScrambleTimer = Math.max((window as any).radarScrambleTimer || 0, duration);
         },
-        selectedMap: selectedMapStateRef.current
+        get selectedMap() { return selectedMapStateRef.current; }
       };
+      sharedMutantContext.world = world;
+      return sharedMutantContext;
     }
 
     function damageBot(bot: Bot, amount: number, isHeadshot: boolean, attacker: 'player' | Bot, impactDir?: THREE.Vector3) {
@@ -1483,11 +1501,6 @@ export default function App() {
       else if (matchConfig.mode === 'extraction') {
         // Handled strictly by Evac Elevator trigger (Victory) or Player Death (Defeat).
         // Score targets do NOT trigger victory or defeat in Subterranean Extraction.
-      } else if (false) {
-        const vip = bots.find(b => b.isVIP);
-        if (!vip || !vip.alive) {
-           triggerGameOver(false); // VIP killed
-        }
       } else {
         if (player.kills >= matchConfig.targetScore) {
           triggerGameOver(true);
@@ -1941,12 +1954,17 @@ export default function App() {
       }
     }
 
-    function initMatch() {
+    async function initMatch(pipeline: DeploymentPipeline) {
+      await pipeline.stage('Lobby teardown', () => {
       stopWeaponAudio();
       // 1. Completely tear down, purge, and dispose of the Lobby Operator's Three.js turntable meshes and light variables before instantiating the match arena.
       teardownLobbyScene();
+      });
 
-      clearMatchEntities();
+      await pipeline.stage('Old world cleanup', () => {
+        clearMatchEntities();
+        world?.dispose();
+      });
       
       // Reset AI Director
       window.aiDirectorState = {
@@ -1959,8 +1977,12 @@ export default function App() {
       selectedMapStateRef.current = activeMap;
       setSelectedMapState(activeMap);
 
-      world?.dispose();
-      world = activeMap === 'shattered_wall' ? initWorld(scene, camera) : createWorld(scene, activeMap);
+      if (activeMap === 'shattered_wall') {
+        for (const kind of ['metal', 'concrete', 'helipad'] as const)
+          await pipeline.stage(`Procedural texture: ${kind}`, () => prepareOffshoreTexture(kind));
+      }
+      world = await createWorldAsync(scene, activeMap, pipeline, camera);
+      await pipeline.stage('Player, bots and equipment (inclusive)', async () => {
       
       const isFacility = activeMap === 'area51';
       combatLightGroup.visible = !world.offshore && !world.facility;
@@ -2090,19 +2112,19 @@ export default function App() {
             { x: -3.8, z: -2.0 }, // Slot 4 Recon: Rear-Left
             { x: -3.2, z: 2.2 }   // Slot 5 Engineer: Front-Left
           ];
-          squad.forEach((companion, idx) => {
+          for (const [idx, companion] of squad.entries()) {
             const off = formationOffsets[idx] || { x: 3, z: 3 };
-            const bot = makeBot('blue', null, false, companion);
+            const bot = await pipeline.stage('Operator construction', () => makeBot('blue', null, false, companion));
             if (world.offshore) {
-              const node = world.getSpawnPoints(matchConfig.mode === 'zombie' ? 'ffa' : 'extraction')[(idx + 1) % 4];
+              const node = world.getSpawnPoints('extraction')[(idx + 1) % 4];
               bot.pos.copy(node.position);
             } else bot.pos.set(player.pos.x + off.x, terrainHeight(player.pos.x + off.x, player.pos.z + off.z), player.pos.z + off.z);
             bot.group.position.copy(bot.pos);
-          });
+          }
           pushKillFeed('COMMAND: ELITE TASK FORCE DEPLOYED');
         } else {
           for (let i = 0; i < matchConfig.friendlyCount; i++) {
-            const bot = makeBot('blue');
+            const bot = await pipeline.stage('Operator construction', () => makeBot('blue'));
             if (!world.offshore) bot.pos.set(player.pos.x + (Math.random() - 0.5) * 4, 1.2, player.pos.z + (Math.random() - 0.5) * 4);
             bot.group.position.copy(bot.pos);
           }
@@ -2120,19 +2142,19 @@ export default function App() {
             { x: -3.8, z: -2.0 },
             { x: -3.2, z: 2.2 }
           ];
-          squad.forEach((companion, idx) => {
+          for (const [idx, companion] of squad.entries()) {
             const off = formationOffsets[idx] || { x: 3, z: 3 };
-            const bot = makeBot('blue', null, false, companion);
+            const bot = await pipeline.stage('Operator construction', () => makeBot('blue', null, false, companion));
             if (world.offshore) {
-              const node = world.getSpawnPoints(matchConfig.mode === 'zombie' ? 'ffa' : 'extraction')[(idx + 1) % 4];
+              const node = world.getSpawnPoints('extraction')[(idx + 1) % 4];
               bot.pos.copy(node.position);
             } else bot.pos.set(player.pos.x + off.x, terrainHeight(player.pos.x + off.x, player.pos.z + off.z), player.pos.z + off.z);
             bot.group.position.copy(bot.pos);
-          });
+          }
           pushKillFeed('COMMAND: ELITE TASK FORCE DEPLOYED');
         } else {
           for (let i = 0; i < matchConfig.friendlyCount; i++) {
-            const bot = makeBot('blue');
+            const bot = await pipeline.stage('Operator construction', () => makeBot('blue'));
             if (!world.offshore) bot.pos.set(player.pos.x + (Math.random() - 0.5) * 4, 1.2, player.pos.z + (Math.random() - 0.5) * 4);
             bot.group.position.copy(bot.pos);
           }
@@ -2142,19 +2164,20 @@ export default function App() {
         const isElite = !matchConfig.inspectorMode && deploymentProtocolRef.current === 'elite';
         if (isElite) {
           const squad = eliteSquadRef.current || DEFAULT_ELITE_SQUAD;
-          squad.forEach((companion) => makeBot('blue', null, false, companion));
+          for (const companion of squad) await pipeline.stage('Operator construction', () => makeBot('blue', null, false, companion));
           pushKillFeed('COMMAND: ELITE TASK FORCE DEPLOYED');
         } else {
           for (let i = 0; i < matchConfig.friendlyCount; i++) {
-            const bot = makeBot('blue');
+            const bot = await pipeline.stage('Operator construction', () => makeBot('blue'));
             if (!world.offshore) bot.pos.set(player.pos.x + (Math.random() - 0.5) * 4, 1.2, player.pos.z + (Math.random() - 0.5) * 4);
             bot.group.position.copy(bot.pos);
           }
         }
-        for (let i = 0; i < matchConfig.enemyCount; i++) makeBot('red');
+        for (let i = 0; i < matchConfig.enemyCount; i++) await pipeline.stage('Operator construction', () => makeBot('red'));
       } else if (matchConfig.mode === 'ffa') {
-        for (let i = 0; i < matchConfig.enemyCount; i++) makeBot();
+        for (let i = 0; i < matchConfig.enemyCount; i++) await pipeline.stage('Operator construction', () => makeBot());
       }
+      });
     }
 
     // Weapons and consumables use the active four-slot loadout.
@@ -2834,11 +2857,62 @@ export default function App() {
     const bottomCenterEl = containerRef.current?.querySelector('#bottom-center');
     bottomCenterEl?.addEventListener('click', onBottomCenterClick as EventListener);
 
-    // Global action triggers from UI buttons
+    async function runDeployment() {
+      if (pendingDeployment || engineDisposed) return;
+      const activeMap = mapForMode(selectedMapStateRef.current, matchConfig.mode);
+      initialization.begin(activeMap);
+      submittedDeploymentFrame = false;
+      setDeploymentError(null);
+      gameStateRef.current = 'loading';
+      setGameState('loading');
+      const pipeline = new DeploymentPipeline(stage => {
+        const labels: Record<string, string> = {
+          'Lobby teardown': 'Preparing deployment', 'Old world cleanup': 'Clearing the previous operation',
+          'World construction (includes navigation)': 'Building the environment',
+          'Player, bots and equipment (inclusive)': 'Preparing operators and equipment',
+          'Operator construction': 'Preparing operators and equipment',
+          'Audio preparation': 'Preparing mission audio', 'Shader compilation': 'Preparing lighting',
+          'Deployment ready': 'Ready to deploy',
+        };
+        setDeploymentStage(labels[stage] ?? (stage.startsWith('Facility') || stage.startsWith('Offshore') || stage === 'World construction' ? 'Building the environment' : 'Preparing environment textures'));
+      });
+      pendingDeployment = pipeline;
+      // Keep the cursor available for loading cancellation; capture it only when ready.
+      try {
+        await initMatch(pipeline);
+        switchSlot(player.slotIndex);
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.fov = HIP_FOV; camera.updateProjectionMatrix();
+        camera.position.copy(player.pos); camera.rotation.order = 'YXZ';
+        camera.rotation.set(player.pitch, player.yaw, 0);
+        await pipeline.stage('Audio preparation', () => {
+          unlockAudioEngine(); prepareWeaponAudio([...playerLoadout.map(w => w.id), ...bots.map(bot => bot.weaponType)]);
+        });
+        await pipeline.stage('Shader compilation', async () => {
+          scene.updateMatrixWorld(true);
+          await renderer.compileAsync(scene, camera);
+        });
+        await pipeline.stage('Deployment ready', () => {});
+        if (engineDisposed || pipeline.canceled) return;
+        profiler.reset();
+        gameStateRef.current = 'playing'; setGameState('playing');
+        requestGamePointerLock(); // Existing canvas click also retries if user activation expired.
+      } catch (error) {
+        if (engineDisposed || pipeline.canceled) return;
+        initialization.active = false;
+        stopMatchInput(); clearMatchEntities(); world?.dispose(); cleanupWorld(scene);
+        console.error('Deployment failed', error);
+        setDeploymentError('Deployment could not finish. Please try again.');
+        gameStateRef.current = 'start'; setGameState('start');
+        setEngineGeneration(generation => generation + 1);
+      } finally {
+        if (pendingDeployment === pipeline) pendingDeployment = null;
+      }
+    }
+
     const deployHandler = () => {
-      if (gameStateRef.current !== 'start') return;
+      if (gameStateRef.current !== 'start' || pendingDeployment) return;
       unlockAudioEngine();
-      setupPlayerLoadout();
       matchConfig.mode = matchModeRef.current;
       matchConfig.faction = factionAlignmentRef.current;
       matchConfig.inspectorMode = inspectorModeRef.current;
@@ -2847,57 +2921,18 @@ export default function App() {
       matchConfig.targetScore = targetScoreRef.current;
       currentDifficulty = DIFFICULTIES[difficultyKeyRef.current] || DIFFICULTIES.medium;
       mouseSensitivity = (sensitivityValRef.current || 11) / 5000;
-
-
-      initMatch();
-      switchSlot(player.slotIndex);
-      gameStateRef.current = 'playing';
-      setGameState('playing');
-
-      // Ensure active gameplay camera recalculates initial target projection parameters
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.fov = HIP_FOV;
-      camera.updateProjectionMatrix();
-
-      // Immediately orient camera at player spawn location and eye level
-      camera.position.set(player.pos.x, player.pos.y, player.pos.z);
-      camera.rotation.order = 'YXZ';
-      camera.rotation.set(player.pitch, player.yaw, 0);
-
-      // Force fresh renderer.render() execution cycle immediately upon mounting
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.render(scene, camera);
-
-      requestGamePointerLock();
+      void runDeployment();
     };
 
     const resumeHandler = () => {
-      gameStateRef.current = 'playing';
-      setGameState('playing');
-      requestGamePointerLock();
+      if (gameStateRef.current !== 'paused' || pendingDeployment) return;
+      gameStateRef.current = 'playing'; setGameState('playing'); requestGamePointerLock();
     };
 
     const restartHandler = () => {
-      if (gameStateRef.current !== 'DEATH_SCREEN' && gameStateRef.current !== 'paused') return;
+      if ((gameStateRef.current !== 'DEATH_SCREEN' && gameStateRef.current !== 'paused') || pendingDeployment) return;
       stopMatchInput();
-      initMatch();
-      switchSlot(player.slotIndex);
-      gameStateRef.current = 'playing';
-      setGameState('playing');
-
-      // Ensure active gameplay camera recalculates initial target projection parameters
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.fov = HIP_FOV;
-      camera.updateProjectionMatrix();
-      camera.position.set(player.pos.x, player.pos.y, player.pos.z);
-      camera.rotation.order = 'YXZ';
-      camera.rotation.set(player.pitch, player.yaw, 0);
-
-      // Force fresh renderer.render() execution cycle
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.render(scene, camera);
-
-      requestGamePointerLock();
+      void runDeployment();
     };
 
     function stopMatchInput() {
@@ -2914,6 +2949,7 @@ export default function App() {
 
     const lobbyHandler = () => {
       if (gameStateRef.current === 'start') return;
+      pendingDeployment?.cancel();
       stopMatchInput();
       gameStateRef.current = 'start';
       setGameState('start'); setActiveTab('play');
@@ -2931,13 +2967,21 @@ export default function App() {
 
     // React owns button events. Do not attach a second native listener to the same buttons.
 
+    const healthProjection = new THREE.Vector3();
+    const aiDifficulty = { accuracy: 0, damageMultiplier: 1, fireRateMultiplier: 1 };
+
     // Main Game Loop
     const clock = new THREE.Clock();
     let animId = 0;
 
     function animate() {
       animId = requestAnimationFrame(animate);
+      const frameStart = profiler.enabled ? performance.now() : 0;
+      let aiTime = 0;
       const dt = Math.min(0.05, clock.getDelta());
+      // Never simulate or render a partially initialized/disposed world.
+      if (gameStateRef.current === 'loading') return;
+      if (submittedDeploymentFrame && gameStateRef.current === 'playing') initialization.finish();
 
       if (gameStateRef.current === 'playing') {
         operatorControls.enabled = false; previousOperatorZoom = '';
@@ -3593,6 +3637,10 @@ export default function App() {
         }
 
         // 10. Bots & AI logic
+        const aiStart = profiler.enabled ? performance.now() : 0;
+        aiDifficulty.accuracy = currentDifficulty.botAccuracy;
+        aiDifficulty.damageMultiplier = currentDifficulty.botDamageMult;
+        aiDifficulty.fireRateMultiplier = currentDifficulty.botFireRateMult;
         for (const bot of bots) {
           if(bot.userData?.boarded || bot.userData?.entranceActive)continue;
           bot.flashMats.forEach(m => {
@@ -3727,10 +3775,12 @@ export default function App() {
             bot.armRPivot.rotation.x = -1.6 - slash * 0.7;
           }
 
-          updateClassCombatBot(bot,dt,getCombatContext(),{accuracy:currentDifficulty.botAccuracy,damageMultiplier:currentDifficulty.botDamageMult,fireRateMultiplier:currentDifficulty.botFireRateMult});
+          updateClassCombatBot(bot,dt,getCombatContext(),aiDifficulty);
 
           // Health bar in screen space
-          const eyePos = bot.pos.clone().add(new THREE.Vector3(0, bot.zType === 'tank' ? 2.4 : 1.8, 0)).project(camera);
+          const eyePos = healthProjection.copy(bot.pos);
+          eyePos.y += bot.zType === 'tank' ? 2.4 : 1.8;
+          eyePos.project(camera);
           if (eyePos.z < 1 && bot.health < bot.maxHealth) {
             bot.healthEl.style.display = 'block';
             bot.healthEl.style.left = `${(eyePos.x * 0.5 + 0.5) * window.innerWidth}px`;
@@ -3744,6 +3794,8 @@ export default function App() {
         const combatContext = getCombatContext();
         updateTripods(dt,combatContext);
         updateProjectiles(dt,combatContext);
+
+        if (profiler.enabled) aiTime = performance.now() - aiStart;
 
         // Zombie wave intermission
         if (matchConfig.mode === 'zombie' && waveIntermission) {
@@ -3891,11 +3943,6 @@ export default function App() {
         if (matchConfig.mode !== 'zombie') {
           storm.elapsed += dt;
 
-          if (false && storm.elapsed >= 180) {
-            triggerGameOver(true);
-            return;
-          }
-
           const t = Math.max(0, Math.min(1, (storm.elapsed - STORM_SAFE_TIME) / STORM_SHRINK_TIME));
           storm.radius = STORM_START_R - (STORM_START_R - STORM_MIN_R) * t;
           storm.mesh.scale.set(storm.radius / STORM_START_R, 1, storm.radius / STORM_START_R);
@@ -3908,18 +3955,6 @@ export default function App() {
             }
             if (blueAlive < matchConfig.friendlyCount) makeBot('blue');
             // Hostile mutants are spawned exclusively by ExtractionGameLoop AI Director
-          } else if (false) {
-            let redAlive = 0;
-            for (let i = 0; i < bots.length; i++) {
-              if ((bots[i].alive || bots[i].downed) && bots[i].team === 'red') redAlive++;
-            }
-            if (redAlive < matchConfig.enemyCount) makeBot('red');
-          } else if (false) {
-            let aliveCount = 0;
-            for (let i = 0; i < bots.length; i++) {
-              if (bots[i].alive) aliveCount++;
-            }
-            if (aliveCount < matchConfig.enemyCount) makeBot();
           }
         }
 
@@ -3930,100 +3965,95 @@ export default function App() {
         const hpVal = Math.ceil(Math.max(0, player.health));
         const shVal = Math.ceil(Math.max(0, player.shield));
 
-        const hpFillEl = containerRef.current?.querySelector('#bar-fill-health') as HTMLElement | null;
-        const hpNumEl = containerRef.current?.querySelector('#bar-num-health');
-        const shFillEl = containerRef.current?.querySelector('#bar-fill-shield') as HTMLElement | null;
-        const shNumEl = containerRef.current?.querySelector('#bar-num-shield');
+        const hpFillEl = hudDom.get('#bar-fill-health') as HTMLElement | null;
+        const hpNumEl = hudDom.get('#bar-num-health');
+        const shFillEl = hudDom.get('#bar-fill-shield') as HTMLElement | null;
+        const shNumEl = hudDom.get('#bar-num-shield');
         if (hpFillEl) hpFillEl.style.width = `${Math.min(100, (hpVal / (player.maxHealth || 100)) * 100)}%`;
-        if (hpNumEl) hpNumEl.textContent = `${hpVal}`;
+        if (hpNumEl) hudDom.text(hpNumEl, `${hpVal}`);
         if (shFillEl) shFillEl.style.width = `${Math.min(100, (shVal / (player.maxShield || 100)) * 100)}%`;
-        if (shNumEl) shNumEl.textContent = `${shVal}`;
+        if (shNumEl) hudDom.text(shNumEl, `${shVal}`);
 
-        const fundsEl = containerRef.current?.querySelector('#currency-val');
-        if (fundsEl) fundsEl.textContent = `$${playerPoints}`;
+        const fundsEl = hudDom.get('#currency-val');
+        if (fundsEl) hudDom.text(fundsEl, `$${playerPoints}`);
 
-        const teleKills = containerRef.current?.querySelector('#telemetry-kills');
-        const teleTime = containerRef.current?.querySelector('#telemetry-time');
-        const teleZone = containerRef.current?.querySelector('#telemetry-zone');
-        const teleDiff = containerRef.current?.querySelector('#telemetry-diff');
-        if (teleKills) teleKills.textContent = `${player.kills}`;
-        if (teleTime) teleTime.textContent = timeStr;
-        if (teleZone) teleZone.textContent = zoneStr;
-        if (teleDiff) teleDiff.textContent = currentDifficulty.label;
+        const teleKills = hudDom.get('#telemetry-kills');
+        const teleTime = hudDom.get('#telemetry-time');
+        const teleZone = hudDom.get('#telemetry-zone');
+        const teleDiff = hudDom.get('#telemetry-diff');
+        if (teleKills) hudDom.text(teleKills, `${player.kills}`);
+        if (teleTime) hudDom.text(teleTime, timeStr);
+        if (teleZone) hudDom.text(teleZone, zoneStr);
+        if (teleDiff) hudDom.text(teleDiff, currentDifficulty.label);
 
-        const scoreBoardEl = containerRef.current?.querySelector('#match-scoreboard');
+        const scoreBoardEl = hudDom.get('#match-scoreboard');
         if (scoreBoardEl) {
           if (matchConfig.mode === 'zombie') {
-            scoreBoardEl.innerHTML = `<span class="score-zombie">WAVE ${currentWave}</span> <span> | </span> <span class="score-red">ZOMBIES: ${Math.max(0, zombiesRemaining)}</span>`;
-          } else if (false) {
-            const timeLeft = Math.max(0, 180 - storm.elapsed);
-            const m = Math.floor(timeLeft / 60);
-            const s = Math.floor(timeLeft % 60);
-            scoreBoardEl.innerHTML = `<span class="score-blue">DEFEND VIP</span> <span> | </span> <span class="score-target-tag">(TIME: ${m}:${s < 10 ? '0' : ''}${s})</span>`;
+            hudDom.html(scoreBoardEl, `<span class="score-zombie">WAVE ${currentWave}</span> <span> | </span> <span class="score-red">ZOMBIES: ${Math.max(0, zombiesRemaining)}</span>`);
           } else if (matchConfig.mode === 'extraction') {
-            scoreBoardEl.innerHTML = '';
+            hudDom.html(scoreBoardEl, '');
           } else {
-            scoreBoardEl.innerHTML = `<span class="score-blue">YOU ${player.kills}</span> <span> | </span> <span class="score-target-tag">(TARGET: ${matchConfig.targetScore})</span>`;
+            hudDom.html(scoreBoardEl, `<span class="score-blue">YOU ${player.kills}</span> <span> | </span> <span class="score-target-tag">(TARGET: ${matchConfig.targetScore})</span>`);
           }
         }
 
         // Update DOM Crosshair recoil scale & Ammo UI directly for maximum 60fps responsiveness
         recoilKick = Math.max(0, recoilKick - 0.06);
-        const cross = containerRef.current?.querySelector('#crosshair') as HTMLElement | null;
+        const cross = hudDom.get('#crosshair') as HTMLElement | null;
         if (cross) cross.style.transform = `translate(-50%,-50%) scale(${1 + recoilKick * 3})`;
 
         const activeWs = currentSlotState();
-        const ammoEl = containerRef.current?.querySelector('#ammo-readout');
-        const reloadTagEl = containerRef.current?.querySelector('#reload-tag');
-        const weaponNameEl = containerRef.current?.querySelector('#weapon-name');
+        const ammoEl = hudDom.get('#ammo-readout');
+        const reloadTagEl = hudDom.get('#reload-tag');
+        const weaponNameEl = hudDom.get('#weapon-name');
 
-        if (weaponNameEl) weaponNameEl.textContent = curW.name;
+        if (weaponNameEl) hudDom.text(weaponNameEl, curW.name);
         if (ammoEl) {
           if (curW.id === 'laser') {
             const heatPct = Math.round(activeWs.heat ?? 0);
-            ammoEl.innerHTML = `${100 - heatPct}% <span class="reserve">CHARGE (HEAT ${heatPct}%)</span>`;
+            hudDom.html(ammoEl, `${100 - heatPct}% <span class="reserve">CHARGE (HEAT ${heatPct}%)</span>`);
           } else if (curW.id === 'minigun') {
             const heatPct = Math.round(activeWs.heat ?? 0);
-            ammoEl.innerHTML = `${heatPct}% <span class="reserve">HEAT (MAX 100%)</span>`;
+            hudDom.html(ammoEl, `${heatPct}% <span class="reserve">HEAT (MAX 100%)</span>`);
           } else if (curW.id === 'railgun') {
-            ammoEl.innerHTML = `${activeWs.ammo ?? 1} <span class="reserve">/ ${activeWs.reserve ?? 30} SLUGS</span>`;
+            hudDom.html(ammoEl, `${activeWs.ammo ?? 1} <span class="reserve">/ ${activeWs.reserve ?? 30} SLUGS</span>`);
           } else if (curW.type === 'weapon') {
-            ammoEl.innerHTML = `${activeWs.ammo ?? 0} <span class="reserve">/ ${activeWs.reserve ?? 0}</span>`;
+            hudDom.html(ammoEl, `${activeWs.ammo ?? 0} <span class="reserve">/ ${activeWs.reserve ?? 0}</span>`);
           } else if (curW.type === 'grenade') {
-            ammoEl.innerHTML = `${activeWs.count ?? 0} <span class="reserve">GRENADES</span>`;
+            hudDom.html(ammoEl, `${activeWs.count ?? 0} <span class="reserve">GRENADES</span>`);
           } else {
-            ammoEl.innerHTML = `${activeWs.count ?? 0} <span class="reserve">MINIS</span>`;
+            hudDom.html(ammoEl, `${activeWs.count ?? 0} <span class="reserve">MINIS</span>`);
           }
         }
         if (reloadTagEl) {
           if (curW.id === 'laser') {
-            reloadTagEl.textContent = activeWs.overheated
+            hudDom.text(reloadTagEl, activeWs.overheated
               ? 'OVERHEATED! [R] TO VENT'
-              : (activeWs.reloading ? 'VENTING CORE…' : (player.fireHeld ? 'FIRING CONTINUOUS BEAM' : ''));
+              : (activeWs.reloading ? 'VENTING CORE…' : (player.fireHeld ? 'FIRING CONTINUOUS BEAM' : '')));
           } else if (curW.id === 'minigun') {
-            reloadTagEl.textContent = activeWs.overheated
+            hudDom.text(reloadTagEl, activeWs.overheated
               ? `OVERHEATED! VENTING ${(activeWs.ventTimer ?? 0).toFixed(1)}s`
               : ((activeWs.spinWarmup ?? 0) > 0 && (activeWs.spinWarmup ?? 0) < 0.5
                 ? 'SPINNING UP BARRELS...'
-                : (player.fireHeld && (activeWs.spinWarmup ?? 0) >= 0.5 ? 'FIRING HYPER-AUTO' : 'HOLD LMB TO SPIN & FIRE'));
+                : (player.fireHeld && (activeWs.spinWarmup ?? 0) >= 0.5 ? 'FIRING HYPER-AUTO' : 'HOLD LMB TO SPIN & FIRE')));
           } else if (curW.id === 'railgun') {
-            reloadTagEl.textContent = activeWs.reloading
+            hudDom.text(reloadTagEl, activeWs.reloading
               ? 'RELOADING SLUG...'
               : (activeWs.charging
                 ? `CHARGING RAILGUN ${Math.round(((activeWs.chargeTimer ?? 0) / 1.2) * 100)}%`
-                : 'HOLD LMB (1.2s) TO FIRE PIERCING SLUG');
+                : 'HOLD LMB (1.2s) TO FIRE PIERCING SLUG'));
           } else if (curW.type === 'weapon') {
-            reloadTagEl.textContent = activeWs.reloading ? 'RELOADING…' : '';
+            hudDom.text(reloadTagEl, activeWs.reloading ? 'RELOADING…' : '');
           } else if (curW.type === 'grenade') {
-            reloadTagEl.textContent = 'LMB OR [G] TO THROW';
+            hudDom.text(reloadTagEl, 'LMB OR [G] TO THROW');
           } else {
-            reloadTagEl.textContent = player.isDrinking ? `DRINKING ${player.drinkTimer.toFixed(1)}s` : 'LMB TO APPLY FIELD KIT';
+            hudDom.text(reloadTagEl, player.isDrinking ? `DRINKING ${player.drinkTimer.toFixed(1)}s` : 'LMB TO APPLY FIELD KIT');
           }
         }
 
         // Highlight all four active loadout slots.
         for (let s = 0; s < playerLoadout.length; s++) {
-          const slotEl = containerRef.current?.querySelector(`#slot-${s + 1}`);
+          const slotEl = hudDom.get(`#slot-${s + 1}`);
           if (slotEl) {
             slotEl.classList.toggle('selected', player.slotIndex === s);
             const labelEl = slotEl.children[1] as HTMLElement;
@@ -4031,19 +4061,19 @@ export default function App() {
               const itemW = playerLoadout[s];
               const itemWs = playerWeaponState[s];
               if (!itemW || !itemWs) continue;
-              if (itemW.type === 'consumable') labelEl.textContent = `FIELD KIT (x${itemWs?.count ?? 0})`;
-              else if (itemW.type === 'grenade') labelEl.textContent = `GRENADES (x${itemWs?.count ?? 0})`;
-              else if (itemW.id === 'laser') labelEl.textContent = `LASER (${Math.round(itemWs?.heat ?? 0)}%)`;
-              else if (itemW.id === 'minigun') labelEl.textContent = `MINIGUN (${Math.round(itemWs?.heat ?? 0)}%)`;
-              else if (itemW.id === 'railgun') labelEl.textContent = `RAILGUN (${itemWs?.ammo ?? 0})`;
-              else labelEl.textContent = `${itemW.name.toUpperCase()} (${itemWs?.ammo ?? 0})`;
+              if (itemW.type === 'consumable') hudDom.text(labelEl, `FIELD KIT (x${itemWs?.count ?? 0})`);
+              else if (itemW.type === 'grenade') hudDom.text(labelEl, `GRENADES (x${itemWs?.count ?? 0})`);
+              else if (itemW.id === 'laser') hudDom.text(labelEl, `LASER (${Math.round(itemWs?.heat ?? 0)}%)`);
+              else if (itemW.id === 'minigun') hudDom.text(labelEl, `MINIGUN (${Math.round(itemWs?.heat ?? 0)}%)`);
+              else if (itemW.id === 'railgun') hudDom.text(labelEl, `RAILGUN (${itemWs?.ammo ?? 0})`);
+              else hudDom.text(labelEl, `${itemW.name.toUpperCase()} (${itemWs?.ammo ?? 0})`);
             }
           }
         }
 
         // Update compass
         const deg = ((player.yaw * 180 / Math.PI) % 360 + 360) % 360;
-        const strip = containerRef.current?.querySelector('#compass-strip') as HTMLElement | null;
+        const strip = hudDom.get('#compass-strip') as HTMLElement | null;
         if (strip) {
           const pxPerDeg = 40 / 45;
           strip.style.left = `${140 - deg * pxPerDeg}px`;
@@ -4140,9 +4170,19 @@ export default function App() {
       else if(gameStateRef.current==='start'&&thirdPersonActor)thirdPersonActor.rootGroup.visible=false;
       if (world?.offshore?.phase === 'DEPARTING') camera.position.copy(player.pos);
       if(gameStateRef.current==='playing' && world.facility?.controlsLocked){world.facility.updateCamera(camera,player);vmManager.root.visible=false;if(thirdPersonActor)thirdPersonActor.rootGroup.visible=false;}
+      const renderStart = profiler.enabled || initialization.active ? performance.now() : 0;
       // These tabs own opaque UI environments; skip the lobby/storm and bloom passes.
       if(gameStateRef.current==='start'&&(activeTabRef.current==='loadout'||activeTabRef.current==='gamemode'))renderer.clear();
       else effects.render(dt, selectedMapStateRef.current);
+      if (profiler.enabled) {
+        let activeBots = 0;
+        for (const bot of bots) if (bot.alive || bot.downed) activeBots++;
+        profiler.frame(frameStart, renderStart - frameStart, performance.now() - renderStart, aiTime, activeBots);
+      }
+      if (initialization.active && gameStateRef.current === 'playing' && !submittedDeploymentFrame) {
+        initialization.record('First gameplay frame CPU submission', performance.now() - renderStart);
+        submittedDeploymentFrame = true;
+      }
     }
     let hudSyncTimer = 0;
     animate();
@@ -4162,6 +4202,8 @@ export default function App() {
     }
 
     return () => {
+      engineDisposed = true; pendingDeployment?.cancel(); initialization.active = false;
+      profiler.dispose(); hudDom.clear();
       stopWeaponAudio();
       cancelAnimationFrame(animId);
       stopMatchInput();
@@ -4184,7 +4226,9 @@ export default function App() {
       disposeBotTextureCache();
       world?.dispose();
       cleanupWorld(scene);
+      clearOffshoreTextureImages();
       audioManager.dispose();
+      releaseWeaponAudio(); grenadeThrowSound.release(); grenadeExplosionSound.release();
       disposeBotVisuals(combatLightGroup);
       botHealthLayer?.remove();
       operatorControls.dispose();
@@ -4198,6 +4242,13 @@ export default function App() {
 
   return (
     <div ref={containerRef} className="relative w-full h-screen max-h-screen select-none overflow-hidden font-mono bg-black text-[#e8edf0]">
+      {gameState === 'loading' && <div role="status" aria-live="polite" className="absolute inset-0 z-[100] flex flex-col items-center justify-center gap-5 bg-[#050a10] text-cyan-100">
+        <div className="h-10 w-10 rounded-full border-2 border-cyan-500/20 border-t-cyan-200 animate-spin" />
+        <div className="text-xs tracking-[.3em]">DEPLOYING OPERATION</div>
+        <div className="text-sm text-slate-300">{deploymentStage}</div>
+        <button className="border border-white/20 px-4 py-2 text-xs cursor-pointer" onClick={() => lobbyHandlerRef.current?.()}>RETURN TO LOBBY</button>
+      </div>}
+      {deploymentError && gameState === 'start' && <div role="alert" className="absolute top-4 left-1/2 -translate-x-1/2 z-[110] bg-black/90 border border-red-400 p-3 text-sm">{deploymentError}<button className="ml-4 cursor-pointer" onClick={() => setDeploymentError(null)}>DISMISS</button></div>}
       {/* 3D Viewport */}
       <div id="viewport" className="absolute inset-0 z-0" />
 

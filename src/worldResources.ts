@@ -10,42 +10,36 @@ export class WorldResources {
   private lights = new Set<THREE.Light>();
   private instances = new Set<THREE.InstancedMesh>();
 
+  /** Retain construction resources before they are attached, including canceled stages. */
+  retainGeometry(geometry: THREE.BufferGeometry): void {
+    this.geometries.set(geometry, (this.geometries.get(geometry) ?? 0) + 1);
+  }
+
+  retainMaterial(material: THREE.Material): void {
+    if (!this.materials.has(material)) {
+      const textures = new Set<THREE.Texture>();
+      for (const value of Object.values(material))
+        if (value instanceof THREE.Texture) textures.add(value);
+      if (material instanceof THREE.ShaderMaterial)
+        for (const uniform of Object.values(material.uniforms))
+          for (const value of Array.isArray(uniform.value) ? uniform.value : [uniform.value])
+            if (value instanceof THREE.Texture) textures.add(value);
+      this.materialTextures.set(material, textures);
+      textures.forEach(texture => this.textures.set(texture, (this.textures.get(texture) ?? 0) + 1));
+    }
+    this.materials.set(material, (this.materials.get(material) ?? 0) + 1);
+  }
+
   track(root: THREE.Object3D): void {
     root.traverse((node) => {
       if (this.nodes.has(node)) return;
       this.nodes.add(node);
       if (node instanceof THREE.InstancedMesh) this.instances.add(node);
       const drawable = node as THREE.Mesh;
-      if (drawable.geometry)
-        this.geometries.set(
-          drawable.geometry,
-          (this.geometries.get(drawable.geometry) ?? 0) + 1,
-        );
-      if (drawable.material) {
-        for (const material of Array.isArray(drawable.material)
-          ? drawable.material
-          : [drawable.material]) {
-          if (!this.materials.has(material)) {
-            const textures = new Set<THREE.Texture>();
-            for (const value of Object.values(material))
-              if (value instanceof THREE.Texture) textures.add(value);
-            if (material instanceof THREE.ShaderMaterial) {
-              for (const uniform of Object.values(material.uniforms)) {
-                const values: unknown[] = Array.isArray(uniform.value)
-                  ? uniform.value
-                  : [uniform.value];
-                for (const value of values)
-                  if (value instanceof THREE.Texture) textures.add(value);
-              }
-            }
-            this.materialTextures.set(material, textures);
-            textures.forEach((texture) =>
-              this.textures.set(texture, (this.textures.get(texture) ?? 0) + 1),
-            );
-          }
-          this.materials.set(material, (this.materials.get(material) ?? 0) + 1);
-        }
-      }
+      if (drawable.geometry) this.retainGeometry(drawable.geometry);
+      if (drawable.material)
+        for (const material of Array.isArray(drawable.material) ? drawable.material : [drawable.material])
+          this.retainMaterial(material);
       if (node instanceof THREE.Light) this.lights.add(node);
     });
   }

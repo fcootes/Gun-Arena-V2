@@ -121,15 +121,18 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
   const isUSMC = factionAlignment === 'usmc';
   const isSpecialized = gearTier === 'specialized';
 
+  const radarData = useRef({ playerPos, playerYaw, radarPingsRef, vTheme });
+  radarData.current = { playerPos, playerYaw, radarPingsRef, vTheme };
+
   // Radar Canvas (Raw, Transparent Tactical Radar Disc)
   useEffect(() => {
     let animationFrameId: number;
+    const canvas = radarCanvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
 
     const renderRadar = () => {
-      const canvas = radarCanvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      const { playerPos, playerYaw, radarPingsRef, vTheme } = radarData.current;
 
       const w = canvas.width;
       const h = canvas.height;
@@ -256,7 +259,7 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [playerPos, playerYaw, radarPingsRef]);
+  }, []);
 
   // Ammunition formatting
   let ammoDisplay = `${weaponSlotState.ammo ?? 0}`;

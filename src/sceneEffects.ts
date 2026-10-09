@@ -1,3 +1,4 @@
+import { GRAPHICS } from './graphicsConfig';
 import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -12,9 +13,21 @@ export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.S
   const output = new OutputPass();
   composer.addPass(renderPass); composer.addPass(bloom); composer.addPass(output);
   let disposed = false;
+  const initialSize = renderer.getSize(new THREE.Vector2());
+  let lastWidth = initialSize.x, lastHeight = initialSize.y, lastRatio = renderer.getPixelRatio();
+  renderer.info.autoReset = false;
   return {
-    resize(width: number, height: number) { if (!disposed) { composer.setPixelRatio(Math.min(renderer.getPixelRatio(), 1.5)); composer.setSize(width, height); } },
-    render(delta: number, map: WorldMapId) { if (!disposed) { bloom.strength = map === 'area51' ? 0.35 : map === 'shattered_wall' ? 0.4 : 0.22; composer.render(delta); } },
+    resize(width: number, height: number) {
+      if (disposed) return;
+      const ratio = Math.min(renderer.getPixelRatio(), GRAPHICS.composerPixelRatio);
+      if (width === lastWidth && height === lastHeight && ratio === lastRatio) return;
+      // setPixelRatio internally resizes: change its value before our single setSize.
+      // Composer's private pixel ratio is not accessed. A DPR change legitimately needs both.
+      if (ratio !== lastRatio) composer.setPixelRatio(ratio);
+      if (width !== lastWidth || height !== lastHeight) composer.setSize(width, height);
+      lastWidth = width; lastHeight = height; lastRatio = ratio;
+    },
+    render(delta: number, map: WorldMapId) { if (!disposed) { bloom.strength = GRAPHICS.bloomStrength[map]; renderer.info.reset(); composer.render(delta); } },
     dispose() { if (disposed) return; disposed = true; bloom.dispose(); output.dispose(); renderPass.dispose(); composer.dispose(); }
   };
 }
