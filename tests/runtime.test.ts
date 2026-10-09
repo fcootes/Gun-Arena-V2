@@ -79,10 +79,10 @@ console.log('PASS: actual incoming-damage immunity, exact 99,999 body damage, al
 
 let generation = 0, initializations = 0, stops = 0;
 const state = { current: 'DEATH_SCREEN' };
-const actions = { gameStateRef: state, stopMatchInput() { stops++; }, initMatch() { initializations++; }, switchSlot() {}, player: { slotIndex: 0, pos: new THREE.Vector3(), yaw: 0, pitch: 0 }, setGameState() {}, camera: { aspect: 1, fov: 90, position: new THREE.Vector3(), rotation: new THREE.Euler(), updateProjectionMatrix() {} }, renderer: { setSize() {}, render() {} }, HIP_FOV: 90, window: { innerWidth: 800, innerHeight: 600 }, scene: {}, requestGamePointerLock() {}, setActiveTab() {}, setExtractionState() {}, setMatchRewards() {}, setTargetingPhase() {}, setSquadDirectiveBanner() {}, radarPingsRef: { current: [1] }, setEngineGeneration(update: (n: number) => number) { generation = update(generation); } };
+const actions = { pendingDeployment: null, runDeployment() { initializations++; state.current = 'loading'; }, gameStateRef: state, stopMatchInput() { stops++; }, initMatch() { initializations++; }, switchSlot() {}, player: { slotIndex: 0, pos: new THREE.Vector3(), yaw: 0, pitch: 0 }, setGameState() {}, camera: { aspect: 1, fov: 90, position: new THREE.Vector3(), rotation: new THREE.Euler(), updateProjectionMatrix() {} }, renderer: { setSize() {}, render() {} }, HIP_FOV: 90, window: { innerWidth: 800, innerHeight: 600 }, scene: {}, requestGamePointerLock() {}, setActiveTab() {}, setExtractionState() {}, setMatchRewards() {}, setTargetingPhase() {}, setSquadDirectiveBanner() {}, radarPingsRef: { current: [1] }, setEngineGeneration(update: (n: number) => number) { generation = update(generation); } };
 const restart = handler('restartHandler', actions); restart(); restart();
 assert.equal(initializations, 1, 'Repeated replay click cannot initialize twice');
-assert.equal(state.current, 'playing');
+assert.equal(state.current, 'loading', 'Replay enters loading synchronously and cannot reinitialize');
 const lobby = handler('lobbyHandler', actions); lobby(); lobby();
 assert.equal(state.current, 'start'); assert.equal(generation, 1, 'Lobby return unmounts the engine exactly once');
 assert.equal(actions.radarPingsRef.current.length, 0); assert.equal(stops, 2);

@@ -1,0 +1,899 @@
+[
+  {
+    "label": "baseline",
+    "renderer": "No WebGL renderer in CPU construction benchmark",
+    "browser": "134.0.6998.35",
+    "errors": [],
+    "measurements": [
+      {
+        "map": "training",
+        "run": 0,
+        "constructionMs": 135.3000000002794,
+        "cleanupMs": 1.2000000001862645,
+        "meshes": 173,
+        "points": 0,
+        "lines": 0,
+        "triangles": 27258,
+        "geometries": 173,
+        "materials": 138,
+        "textures": 0,
+        "navigationPoints": 2175,
+        "colliders": 125,
+        "navigationHash": "d81cd6dc202b8119adaaffeb9deeeac3494c23259bb0be40062b2235b54a7a78",
+        "colliderHash": "4427bcd4917572327344b6ef2859e0315165669fa6646b0e0aef7087a5d2cf24",
+        "worldBoundsHash": "8bca1e8db8e92d84e31de5e69a5452839bf51f9d5f7b4fcc9a8ad654c59fae52",
+        "pixelHashes": []
+      },
+      {
+        "map": "training",
+        "run": 1,
+        "constructionMs": 89.70000000018626,
+        "cleanupMs": 0.19999999972060323,
+        "meshes": 173,
+        "points": 0,
+        "lines": 0,
+        "triangles": 27258,
+        "geometries": 173,
+        "materials": 138,
+        "textures": 0,
+        "navigationPoints": 2175,
+        "colliders": 125
+      },
+      {
+        "map": "training",
+        "run": 2,
+        "constructionMs": 113.29999999981374,
+        "cleanupMs": 0.2999999998137355,
+        "meshes": 173,
+        "points": 0,
+        "lines": 0,
+        "triangles": 27258,
+        "geometries": 173,
+        "materials": 138,
+        "textures": 0,
+        "navigationPoints": 2175,
+        "colliders": 125
+      },
+      {
+        "map": "training",
+        "run": 3,
+        "constructionMs": 109.39999999990687,
+        "cleanupMs": 0.19999999972060323,
+        "meshes": 173,
+        "points": 0,
+        "lines": 0,
+        "triangles": 27258,
+        "geometries": 173,
+        "materials": 138,
+        "textures": 0,
+        "navigationPoints": 2175,
+        "colliders": 125
+      },
+      {
+        "map": "training",
+        "run": 4,
+        "constructionMs": 40.10000000009313,
+        "cleanupMs": 0.5,
+        "meshes": 173,
+        "points": 0,
+        "lines": 0,
+        "triangles": 27258,
+        "geometries": 173,
+        "materials": 138,
+        "textures": 0,
+        "navigationPoints": 2175,
+        "colliders": 125
+      },
+      {
+        "map": "training",
+        "run": 5,
+        "constructionMs": 69.39999999990687,
+        "cleanupMs": 0.09999999962747097,
+        "meshes": 173,
+        "points": 0,
+        "lines": 0,
+        "triangles": 27258,
+        "geometries": 173,
+        "materials": 138,
+        "textures": 0,
+        "navigationPoints": 2175,
+        "colliders": 125
+      },
+      {
+        "map": "training",
+        "run": 6,
+        "constructionMs": 79.79999999981374,
+        "cleanupMs": 0.19999999972060323,
+        "meshes": 173,
+        "points": 0,
+        "lines": 0,
+        "triangles": 27258,
+        "geometries": 173,
+        "materials": 138,
+        "textures": 0,
+        "navigationPoints": 2175,
+        "colliders": 125
+      },
+      {
+        "map": "area51",
+        "run": 0,
+        "constructionMs": 1278.1000000000931,
+        "cleanupMs": 2.3000000002793968,
+        "meshes": 368,
+        "points": 2,
+        "lines": 1,
+        "triangles": 100615,
+        "geometries": 371,
+        "materials": 118,
+        "textures": 28,
+        "navigationPoints": 1429,
+        "colliders": 214,
+        "navigationHash": "0f5c6d2c20f97f90e7feda42c3ab2971699561c280c35f815e5ad28c18c1c6c9",
+        "colliderHash": "780b01f13d126022b41e223fb71955739bf3e7d0d3bf5953bc2b23ec9ce8235f",
+        "worldBoundsHash": "a19abc1d980b59a990eac5926f15519a2e87a88d592da07df24f6e807b46d47c",
+        "pixelHashes": [
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "5574a5f7417195cda02cd1891c5a0600f25e7bb761e35eeddecaac4ded586cc2"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "26f2f1f1c8686de8bef197172a487a244fd68fd967beb7864df90630a223be83"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "26f2f1f1c8686de8bef197172a487a244fd68fd967beb7864df90630a223be83"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "0f005b7ad5a332cb5f3623584762e28eefd6da57db71ae73e10b4386251ebd20"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "fe1ebea2371831d006198c96c1ea5bbb002d065f77a3866b4ba5f4b44143c37e"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "fe1ebea2371831d006198c96c1ea5bbb002d065f77a3866b4ba5f4b44143c37e"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "fe1ebea2371831d006198c96c1ea5bbb002d065f77a3866b4ba5f4b44143c37e"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "379d3776d39e1707de0a35f66b9bcf35fae551201611e4cf2ee2fc2f99f92fed"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "3acd73c1c1ac2ccd6be447dfccdd0b8d6eca107fa368b82c44e66b47d5975b75"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "d0f9d5037142216b39725dcb1cac7c1a660cf661c4e0288643cb0a93bf4805bf"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "b920939778348c0da37d312de4e0a61e6db7e79af32a8518ef7332d0a0aa5436"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "4e1ef42aecfe516f87f410da51b96a13d439efa3889be0a59f6794b29c213d64"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "4e1ef42aecfe516f87f410da51b96a13d439efa3889be0a59f6794b29c213d64"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "4e1ef42aecfe516f87f410da51b96a13d439efa3889be0a59f6794b29c213d64"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "d9454f70db1b3aff8085d0e0fed7a5f945a922b81a824a3cd76324c3d40e5936"
+          },
+          {
+            "width": 128,
+            "height": 128,
+            "sha256": "b4e22747d16e82c3a3a86314f164a444edd877829c138c230a5030c7d885a1f8"
+          }
+        ]
+      },
+      {
+        "map": "area51",
+        "run": 1,
+        "constructionMs": 1123.9000000003725,
+        "cleanupMs": 0.3000000002793968,
+        "meshes": 368,
+        "points": 2,
+        "lines": 1,
+        "triangles": 100615,
+        "geometries": 371,
+        "materials": 118,
+        "textures": 28,
+        "navigationPoints": 1429,
+        "colliders": 214
+      },
+      {
+        "map": "area51",
+        "run": 2,
+        "constructionMs": 1019,
+        "cleanupMs": 0.20000000018626451,
+        "meshes": 368,
+        "points": 2,
+        "lines": 1,
+        "triangles": 100615,
+        "geometries": 371,
+        "materials": 118,
+        "textures": 28,
+        "navigationPoints": 1429,
+        "colliders": 214
+      },
+      {
+        "map": "area51",
+        "run": 3,
+        "constructionMs": 915.6000000000931,
+        "cleanupMs": 0.20000000018626451,
+        "meshes": 368,
+        "points": 2,
+        "lines": 1,
+        "triangles": 100615,
+        "geometries": 371,
+        "materials": 118,
+        "textures": 28,
+        "navigationPoints": 1429,
+        "colliders": 214
+      },
+      {
+        "map": "area51",
+        "run": 4,
+        "constructionMs": 860.0999999996275,
+        "cleanupMs": 0.39999999990686774,
+        "meshes": 368,
+        "points": 2,
+        "lines": 1,
+        "triangles": 100615,
+        "geometries": 371,
+        "materials": 118,
+        "textures": 28,
+        "navigationPoints": 1429,
+        "colliders": 214
+      },
+      {
+        "map": "area51",
+        "run": 5,
+        "constructionMs": 641,
+        "cleanupMs": 0.19999999972060323,
+        "meshes": 368,
+        "points": 2,
+        "lines": 1,
+        "triangles": 100615,
+        "geometries": 371,
+        "materials": 118,
+        "textures": 28,
+        "navigationPoints": 1429,
+        "colliders": 214
+      },
+      {
+        "map": "area51",
+        "run": 6,
+        "constructionMs": 1065.8000000002794,
+        "cleanupMs": 0.39999999990686774,
+        "meshes": 368,
+        "points": 2,
+        "lines": 1,
+        "triangles": 100615,
+        "geometries": 371,
+        "materials": 118,
+        "textures": 28,
+        "navigationPoints": 1429,
+        "colliders": 214
+      },
+      {
+        "map": "shattered_wall",
+        "run": 0,
+        "constructionMs": 149,
+        "cleanupMs": 6.2999999998137355,
+        "meshes": 850,
+        "points": 1,
+        "lines": 1,
+        "triangles": 83094,
+        "geometries": 853,
+        "materials": 58,
+        "textures": 6,
+        "navigationPoints": 22,
+        "colliders": 174,
+        "navigationHash": "a3f05e00e6ac3e22f600fc6b2f899c3b5983892eb95766cdde4b7c116676c9eb",
+        "colliderHash": "3a724737d5d4f9584bcd2206302d745f6b1d4b82dffdf66867b3869428cb347a",
+        "worldBoundsHash": "538be54a40ff9a77c8a41551cd0a49f00e5697834e3a16736a2c1c914924dbf1",
+        "pixelHashes": [
+          {
+            "width": 2048,
+            "height": 2048,
+            "sha256": "51ae2c673d59800800a41fe4f665433518862b7d45e86e162194e88f25ebdfa5"
+          },
+          {
+            "width": 512,
+            "height": 512,
+            "sha256": "e6f5f5f8d157bcb6bbc268a10df16b17055f58567d42f872c11390a94c5bc5a9"
+          },
+          {
+            "width": 512,
+            "height": 512,
+            "sha256": "69724b27ce01c4a8e565ab520e862b2f4f643424075ca977305091e5fabc1dfd"
+          },
+          {
+            "width": 128,
+            "height": 128,
+            "sha256": "2620b597e78a55ec318e442a2738384fbfaf962f1a6abeb2b401d47352509027"
+          },
+          {
+            "width": 1024,
+            "height": 256,
+            "sha256": "66b9153f6e1ad77b87585ebe78433193bce405f2f37d461eace7b75369a3a92f"
+          },
+          {
+            "width": 128,
+            "height": 128,
+            "sha256": "b4e22747d16e82c3a3a86314f164a444edd877829c138c230a5030c7d885a1f8"
+          }
+        ]
+      },
+      {
+        "map": "shattered_wall",
+        "run": 1,
+        "constructionMs": 196.29999999981374,
+        "cleanupMs": 1.2999999998137355,
+        "meshes": 850,
+        "points": 1,
+        "lines": 1,
+        "triangles": 83094,
+        "geometries": 853,
+        "materials": 58,
+        "textures": 6,
+        "navigationPoints": 22,
+        "colliders": 174
+      },
+      {
+        "map": "shattered_wall",
+        "run": 2,
+        "constructionMs": 173.39999999990687,
+        "cleanupMs": 0.39999999990686774,
+        "meshes": 850,
+        "points": 1,
+        "lines": 1,
+        "triangles": 83094,
+        "geometries": 853,
+        "materials": 58,
+        "textures": 6,
+        "navigationPoints": 22,
+        "colliders": 174
+      },
+      {
+        "map": "shattered_wall",
+        "run": 3,
+        "constructionMs": 337.6999999997206,
+        "cleanupMs": 0.39999999990686774,
+        "meshes": 850,
+        "points": 1,
+        "lines": 1,
+        "triangles": 83094,
+        "geometries": 853,
+        "materials": 58,
+        "textures": 6,
+        "navigationPoints": 22,
+        "colliders": 174
+      },
+      {
+        "map": "shattered_wall",
+        "run": 4,
+        "constructionMs": 763.7999999998137,
+        "cleanupMs": 4.899999999906868,
+        "meshes": 850,
+        "points": 1,
+        "lines": 1,
+        "triangles": 83094,
+        "geometries": 853,
+        "materials": 58,
+        "textures": 6,
+        "navigationPoints": 22,
+        "colliders": 174
+      },
+      {
+        "map": "shattered_wall",
+        "run": 5,
+        "constructionMs": 434.59999999962747,
+        "cleanupMs": 0.5,
+        "meshes": 850,
+        "points": 1,
+        "lines": 1,
+        "triangles": 83094,
+        "geometries": 853,
+        "materials": 58,
+        "textures": 6,
+        "navigationPoints": 22,
+        "colliders": 174
+      },
+      {
+        "map": "shattered_wall",
+        "run": 6,
+        "constructionMs": 628.5,
+        "cleanupMs": 2.6999999997206032,
+        "meshes": 850,
+        "points": 1,
+        "lines": 1,
+        "triangles": 83094,
+        "geometries": 853,
+        "materials": 58,
+        "textures": 6,
+        "navigationPoints": 22,
+        "colliders": 174
+      }
+    ]
+  },
+  {
+    "label": "optimized",
+    "renderer": "No WebGL renderer in CPU construction benchmark",
+    "browser": "134.0.6998.35",
+    "errors": [],
+    "measurements": [
+      {
+        "map": "training",
+        "run": 0,
+        "constructionMs": 206.5,
+        "cleanupMs": 1,
+        "meshes": 173,
+        "points": 0,
+        "lines": 0,
+        "triangles": 27258,
+        "geometries": 173,
+        "materials": 138,
+        "textures": 0,
+        "navigationPoints": 2175,
+        "colliders": 125,
+        "maximumWorldBoundsDelta": 0,
+        "navigationHash": "d81cd6dc202b8119adaaffeb9deeeac3494c23259bb0be40062b2235b54a7a78",
+        "colliderHash": "4427bcd4917572327344b6ef2859e0315165669fa6646b0e0aef7087a5d2cf24",
+        "worldBoundsHash": "8bca1e8db8e92d84e31de5e69a5452839bf51f9d5f7b4fcc9a8ad654c59fae52",
+        "pixelHashes": []
+      },
+      {
+        "map": "training",
+        "run": 1,
+        "constructionMs": 75,
+        "cleanupMs": 0.10000000009313226,
+        "meshes": 173,
+        "points": 0,
+        "lines": 0,
+        "triangles": 27258,
+        "geometries": 173,
+        "materials": 138,
+        "textures": 0,
+        "navigationPoints": 2175,
+        "colliders": 125
+      },
+      {
+        "map": "training",
+        "run": 2,
+        "constructionMs": 73.70000000018626,
+        "cleanupMs": 0.20000000018626451,
+        "meshes": 173,
+        "points": 0,
+        "lines": 0,
+        "triangles": 27258,
+        "geometries": 173,
+        "materials": 138,
+        "textures": 0,
+        "navigationPoints": 2175,
+        "colliders": 125
+      },
+      {
+        "map": "training",
+        "run": 3,
+        "constructionMs": 96.70000000018626,
+        "cleanupMs": 0.40000000037252903,
+        "meshes": 173,
+        "points": 0,
+        "lines": 0,
+        "triangles": 27258,
+        "geometries": 173,
+        "materials": 138,
+        "textures": 0,
+        "navigationPoints": 2175,
+        "colliders": 125
+      },
+      {
+        "map": "training",
+        "run": 4,
+        "constructionMs": 52.3000000002794,
+        "cleanupMs": 0.19999999972060323,
+        "meshes": 173,
+        "points": 0,
+        "lines": 0,
+        "triangles": 27258,
+        "geometries": 173,
+        "materials": 138,
+        "textures": 0,
+        "navigationPoints": 2175,
+        "colliders": 125
+      },
+      {
+        "map": "training",
+        "run": 5,
+        "constructionMs": 53.39999999990687,
+        "cleanupMs": 0.10000000009313226,
+        "meshes": 173,
+        "points": 0,
+        "lines": 0,
+        "triangles": 27258,
+        "geometries": 173,
+        "materials": 138,
+        "textures": 0,
+        "navigationPoints": 2175,
+        "colliders": 125
+      },
+      {
+        "map": "training",
+        "run": 6,
+        "constructionMs": 58,
+        "cleanupMs": 0,
+        "meshes": 173,
+        "points": 0,
+        "lines": 0,
+        "triangles": 27258,
+        "geometries": 173,
+        "materials": 138,
+        "textures": 0,
+        "navigationPoints": 2175,
+        "colliders": 125
+      },
+      {
+        "map": "area51",
+        "run": 0,
+        "constructionMs": 1199.2000000001863,
+        "cleanupMs": 1.7000000001862645,
+        "meshes": 368,
+        "points": 2,
+        "lines": 1,
+        "triangles": 100615,
+        "geometries": 310,
+        "materials": 118,
+        "textures": 28,
+        "navigationPoints": 1429,
+        "colliders": 214,
+        "maximumWorldBoundsDelta": 0,
+        "navigationHash": "0f5c6d2c20f97f90e7feda42c3ab2971699561c280c35f815e5ad28c18c1c6c9",
+        "colliderHash": "780b01f13d126022b41e223fb71955739bf3e7d0d3bf5953bc2b23ec9ce8235f",
+        "worldBoundsHash": "a19abc1d980b59a990eac5926f15519a2e87a88d592da07df24f6e807b46d47c",
+        "pixelHashes": [
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "5574a5f7417195cda02cd1891c5a0600f25e7bb761e35eeddecaac4ded586cc2"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "26f2f1f1c8686de8bef197172a487a244fd68fd967beb7864df90630a223be83"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "26f2f1f1c8686de8bef197172a487a244fd68fd967beb7864df90630a223be83"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "0f005b7ad5a332cb5f3623584762e28eefd6da57db71ae73e10b4386251ebd20"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "fe1ebea2371831d006198c96c1ea5bbb002d065f77a3866b4ba5f4b44143c37e"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "fe1ebea2371831d006198c96c1ea5bbb002d065f77a3866b4ba5f4b44143c37e"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "fe1ebea2371831d006198c96c1ea5bbb002d065f77a3866b4ba5f4b44143c37e"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "379d3776d39e1707de0a35f66b9bcf35fae551201611e4cf2ee2fc2f99f92fed"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "3acd73c1c1ac2ccd6be447dfccdd0b8d6eca107fa368b82c44e66b47d5975b75"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "d0f9d5037142216b39725dcb1cac7c1a660cf661c4e0288643cb0a93bf4805bf"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "b920939778348c0da37d312de4e0a61e6db7e79af32a8518ef7332d0a0aa5436"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "4e1ef42aecfe516f87f410da51b96a13d439efa3889be0a59f6794b29c213d64"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "4e1ef42aecfe516f87f410da51b96a13d439efa3889be0a59f6794b29c213d64"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "4e1ef42aecfe516f87f410da51b96a13d439efa3889be0a59f6794b29c213d64"
+          },
+          {
+            "width": 768,
+            "height": 128,
+            "sha256": "d9454f70db1b3aff8085d0e0fed7a5f945a922b81a824a3cd76324c3d40e5936"
+          },
+          {
+            "width": 128,
+            "height": 128,
+            "sha256": "b4e22747d16e82c3a3a86314f164a444edd877829c138c230a5030c7d885a1f8"
+          }
+        ]
+      },
+      {
+        "map": "area51",
+        "run": 1,
+        "constructionMs": 820.5,
+        "cleanupMs": 0.10000000009313226,
+        "meshes": 368,
+        "points": 2,
+        "lines": 1,
+        "triangles": 100615,
+        "geometries": 310,
+        "materials": 118,
+        "textures": 28,
+        "navigationPoints": 1429,
+        "colliders": 214
+      },
+      {
+        "map": "area51",
+        "run": 2,
+        "constructionMs": 866,
+        "cleanupMs": 0.5,
+        "meshes": 368,
+        "points": 2,
+        "lines": 1,
+        "triangles": 100615,
+        "geometries": 310,
+        "materials": 118,
+        "textures": 28,
+        "navigationPoints": 1429,
+        "colliders": 214
+      },
+      {
+        "map": "area51",
+        "run": 3,
+        "constructionMs": 754.3000000002794,
+        "cleanupMs": 0.10000000009313226,
+        "meshes": 368,
+        "points": 2,
+        "lines": 1,
+        "triangles": 100615,
+        "geometries": 310,
+        "materials": 118,
+        "textures": 28,
+        "navigationPoints": 1429,
+        "colliders": 214
+      },
+      {
+        "map": "area51",
+        "run": 4,
+        "constructionMs": 625.2000000001863,
+        "cleanupMs": 0.19999999972060323,
+        "meshes": 368,
+        "points": 2,
+        "lines": 1,
+        "triangles": 100615,
+        "geometries": 310,
+        "materials": 118,
+        "textures": 28,
+        "navigationPoints": 1429,
+        "colliders": 214
+      },
+      {
+        "map": "area51",
+        "run": 5,
+        "constructionMs": 626.3999999999069,
+        "cleanupMs": 0.2999999998137355,
+        "meshes": 368,
+        "points": 2,
+        "lines": 1,
+        "triangles": 100615,
+        "geometries": 310,
+        "materials": 118,
+        "textures": 28,
+        "navigationPoints": 1429,
+        "colliders": 214
+      },
+      {
+        "map": "area51",
+        "run": 6,
+        "constructionMs": 664.9000000003725,
+        "cleanupMs": 0.6000000000931323,
+        "meshes": 368,
+        "points": 2,
+        "lines": 1,
+        "triangles": 100615,
+        "geometries": 310,
+        "materials": 118,
+        "textures": 28,
+        "navigationPoints": 1429,
+        "colliders": 214
+      },
+      {
+        "map": "shattered_wall",
+        "run": 0,
+        "constructionMs": 167.10000000009313,
+        "cleanupMs": 3.1000000000931323,
+        "meshes": 850,
+        "points": 1,
+        "lines": 1,
+        "triangles": 83094,
+        "geometries": 567,
+        "materials": 58,
+        "textures": 6,
+        "navigationPoints": 22,
+        "colliders": 174,
+        "maximumWorldBoundsDelta": 0,
+        "navigationHash": "a3f05e00e6ac3e22f600fc6b2f899c3b5983892eb95766cdde4b7c116676c9eb",
+        "colliderHash": "3a724737d5d4f9584bcd2206302d745f6b1d4b82dffdf66867b3869428cb347a",
+        "worldBoundsHash": "538be54a40ff9a77c8a41551cd0a49f00e5697834e3a16736a2c1c914924dbf1",
+        "pixelHashes": [
+          {
+            "width": 2048,
+            "height": 2048,
+            "sha256": "51ae2c673d59800800a41fe4f665433518862b7d45e86e162194e88f25ebdfa5"
+          },
+          {
+            "width": 512,
+            "height": 512,
+            "sha256": "e6f5f5f8d157bcb6bbc268a10df16b17055f58567d42f872c11390a94c5bc5a9"
+          },
+          {
+            "width": 512,
+            "height": 512,
+            "sha256": "69724b27ce01c4a8e565ab520e862b2f4f643424075ca977305091e5fabc1dfd"
+          },
+          {
+            "width": 128,
+            "height": 128,
+            "sha256": "2620b597e78a55ec318e442a2738384fbfaf962f1a6abeb2b401d47352509027"
+          },
+          {
+            "width": 1024,
+            "height": 256,
+            "sha256": "66b9153f6e1ad77b87585ebe78433193bce405f2f37d461eace7b75369a3a92f"
+          },
+          {
+            "width": 128,
+            "height": 128,
+            "sha256": "b4e22747d16e82c3a3a86314f164a444edd877829c138c230a5030c7d885a1f8"
+          }
+        ]
+      },
+      {
+        "map": "shattered_wall",
+        "run": 1,
+        "constructionMs": 71.89999999990687,
+        "cleanupMs": 0.3000000002793968,
+        "meshes": 850,
+        "points": 1,
+        "lines": 1,
+        "triangles": 83094,
+        "geometries": 567,
+        "materials": 58,
+        "textures": 6,
+        "navigationPoints": 22,
+        "colliders": 174
+      },
+      {
+        "map": "shattered_wall",
+        "run": 2,
+        "constructionMs": 54.60000000009313,
+        "cleanupMs": 0.2999999998137355,
+        "meshes": 850,
+        "points": 1,
+        "lines": 1,
+        "triangles": 83094,
+        "geometries": 567,
+        "materials": 58,
+        "textures": 6,
+        "navigationPoints": 22,
+        "colliders": 174
+      },
+      {
+        "map": "shattered_wall",
+        "run": 3,
+        "constructionMs": 46.59999999962747,
+        "cleanupMs": 0.19999999972060323,
+        "meshes": 850,
+        "points": 1,
+        "lines": 1,
+        "triangles": 83094,
+        "geometries": 567,
+        "materials": 58,
+        "textures": 6,
+        "navigationPoints": 22,
+        "colliders": 174
+      },
+      {
+        "map": "shattered_wall",
+        "run": 4,
+        "constructionMs": 55.89999999990687,
+        "cleanupMs": 0.6000000000931323,
+        "meshes": 850,
+        "points": 1,
+        "lines": 1,
+        "triangles": 83094,
+        "geometries": 567,
+        "materials": 58,
+        "textures": 6,
+        "navigationPoints": 22,
+        "colliders": 174
+      },
+      {
+        "map": "shattered_wall",
+        "run": 5,
+        "constructionMs": 65.60000000009313,
+        "cleanupMs": 0.7999999998137355,
+        "meshes": 850,
+        "points": 1,
+        "lines": 1,
+        "triangles": 83094,
+        "geometries": 567,
+        "materials": 58,
+        "textures": 6,
+        "navigationPoints": 22,
+        "colliders": 174
+      },
+      {
+        "map": "shattered_wall",
+        "run": 6,
+        "constructionMs": 50.6999999997206,
+        "cleanupMs": 0.3000000002793968,
+        "meshes": 850,
+        "points": 1,
+        "lines": 1,
+        "triangles": 83094,
+        "geometries": 567,
+        "materials": 58,
+        "textures": 6,
+        "navigationPoints": 22,
+        "colliders": 174
+      }
+    ]
+  }
+]

@@ -1,3 +1,6 @@
+import type { DeploymentPipeline } from './deployment';
+import { ColliderIndex } from './colliderIndex';
+import { measureInitialization } from './performance';
 import * as THREE from "three";
 import { buildHelicopterMesh } from "./world";
 import type {
@@ -113,6 +116,25 @@ export function area51TerrainHeight(_x: number, z: number): number {
 
 /** Entire facility is world-owned; runtime props and shared resources have counted ownership. */
 export function createArea51World(scene: THREE.Scene): WorldManager {
+  const builder = buildArea51World(scene);
+  let step = builder.next();
+  while (!step.done) step = builder.next();
+  return step.value;
+}
+
+export async function createArea51WorldAsync(scene: THREE.Scene, pipeline: DeploymentPipeline): Promise<WorldManager> {
+  const builder = buildArea51World(scene);
+  let stage = 'Facility base resources';
+  try {
+    while (true) {
+      const step = await pipeline.stage(stage, () => builder.next());
+      if (step.done) return step.value;
+      stage = step.value as string;
+    }
+  } finally { builder.return(undefined as never); }
+}
+
+function* buildArea51World(scene: THREE.Scene): Generator<string, WorldManager> {
   const root = new THREE.Group();
   root.name = "Area51_Facility";
   scene.add(root);
@@ -120,9 +142,13 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     worldColliders: WorldCollider[] = [],
     hittableObjects: THREE.Object3D[] = [],
     groundPickups: GroundPickup[] = [];
+  const colliderIndex = new ColliderIndex();
   let disposed = false;
   const previousFog = scene.fog,
     previousBackground = scene.background;
+  let completed = false;
+  let ownedHelicopter: ReturnType<typeof buildHelicopterMesh> | null = null;
+  try {
   const fog = new THREE.FogExp2(0x090f15, 0.008),
     background = new THREE.Color(0x050a10);
   const floorMat = new THREE.MeshStandardMaterial({
@@ -175,6 +201,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     depthWrite: false,
     side: THREE.DoubleSide,
   });
+  [floorMat, concrete, steel, sterile, crateMat, amber, black, cyan, red, glass].forEach(material => resources.retainMaterial(material));
   const surfaces: {
     minX: number;
     maxX: number;
@@ -205,8 +232,11 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
       active: true,
     };
     worldColliders.push(c);
+    colliderIndex.add(c);
     return c;
   }
+  // Dimension-keyed geometry preserves unscaled child attachment coordinates.
+  const boxGeometries = new Map<string, THREE.BoxGeometry>();
   function box(
     w: number,
     h: number,
@@ -218,7 +248,10 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     solid = false,
     parent: THREE.Group = root,
   ): THREE.Mesh {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    const key = `${w}:${h}:${d}`;
+    let geometry = boxGeometries.get(key);
+    if (!geometry) { geometry = new THREE.BoxGeometry(w, h, d); boxGeometries.set(key, geometry); resources.retainGeometry(geometry); }
+    const mesh = new THREE.Mesh(geometry, mat);
     mesh.position.set(x, y, z);
     mesh.castShadow = mesh.receiveShadow = true;
     parent.add(mesh);
@@ -393,6 +426,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     segment("z", x + w / 2, z - d / 2, z + d / 2, open.east);
     batch(w, 0.35, d, x, y + h + 0.18, z, black, true);
   }
+  yield 'Facility vehicle staging';
   // ZONE 1 — vehicle staging, parking bays and persistent supplies.
   const terrainMesh = floor(40, 40, 0, 0, -20);
   walls(40, 40, 0, 0, -20, 8, concrete, { east: [-39, -33] });
@@ -498,6 +532,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
   let vaultOpened = false;
   sign("E // UNSEAL DECONTAMINATION", 19.55, 5.3, -36, 5.6, 0.45, -Math.PI / 2);
   lamp(18, 4.8, -36, 0xffcd83, 35, 9);
+  yield 'Facility decontamination';
   // ZONE 2 — six-metre decon spine and lit observation rooms.
   floor(6, 64, 27.5, 0, -68);
   walls(6, 64, 27.5, 0, -68, 6, sterile, {
@@ -589,6 +624,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     for (const z of [-0.25, 0.25])
       box(0.06, 0.8, 0.06, x, 0.45, z, steel, false, gurney);
   collider(1.5, 1.1, 2, 25.3, 0.55, -74);
+  yield 'Facility reactor';
   // ZONE 3 — authored octagon with actual cut corners, central objective and perimeter systems.
   const octagon = [
     [-9, -15],
@@ -734,6 +770,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
   lamp(15, 6.5, -111, 0x75e3dc, 140, 22);
   lamp(8, 6.5, -124, 0xe03f31, 40, 15);
   sign("03 // CENTRAL BIO-LAB", 15, 4, -129.65, 7, 0.8);
+  yield 'Facility lift';
   // Lift approach outside the octagon, then an authored two-level shaft.
   floor(14, 6, -6, 0, -120);
   walls(14, 6, -6, 0, -120, 5, steel, { east: [-123, -117], north: [-15, -9] });
@@ -813,6 +850,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     sign(y === 0 ? "E // LEVEL 4 WAREHOUSE" : "E // BIO-LAB", -12, y + 3.65, z, 4, 0.55, rotation);
   }
   let liftRide: { position: THREE.Vector3; eye: number; from: number; to: number; elapsed: number } | null = null;
+  yield 'Facility warehouse';
   // ZONE 4 — low safety illumination, then brighter emergency light at evac.
   floor(40, 60, 0, 15, -170);
   walls(40, 60, 0, 15, -170, 12, concrete, {
@@ -898,6 +936,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
       box(5.8, 0.12, 0.1, 0, 1 + j * 1.5, 0.4, black, false, g);
     blastColliders.push(collider(6, 7, 0.8, i ? -3 : 3, 18.5, -200));
   });
+  yield 'Facility helipad';
   // Outdoor landing apron, rain, helipad and a cabin with finite positive transforms.
   floor(40, 36, 0, 15, -218);
   for (const x of [-19.7, 19.7])
@@ -916,7 +955,8 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
   root.add(padRing);
   for (const x of [-2, 2]) batch(0.45, 0.025, 5, x, 15.02, -219, amber);
   batch(4, 0.025, 0.45, 0, 15.02, -219, amber);
-  const helicopter = buildHelicopterMesh();
+  yield 'Facility helicopter';
+  const helicopter = ownedHelicopter = buildHelicopterMesh();
   helicopter.group.name = "Area51_UH60_Extraction";
   helicopter.group.position.set(0, 15, -219);
   helicopter.group.visible = false;
@@ -968,6 +1008,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     }),
   );
   root.add(steam);
+  yield 'Facility static geometry';
   // One instanced draw per static material (matrix bounds and normals baked by Three.js).
   for (const [mat, list] of staticBoxes) {
     const mesh = new THREE.InstancedMesh(
@@ -1203,16 +1244,22 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
       ),
     };
   }
+  function blockedTraversal(from: THREE.Vector3, to: THREE.Vector3, team?: string) {
+    const candidates = colliderIndex.query(Math.min(from.x, to.x) - .4, Math.max(from.x, to.x) + .4, Math.min(from.z, to.z) - .4, Math.max(from.z, to.z) + .4);
+    return traversalBlocked(from, to, candidates, team);
+  }
+  yield 'Facility navigation';
   // Grid is limited to authored surfaces; disconnected voids never become navigable nodes.
   const navPoints: THREE.Vector3[] = [],
     cells = new Map<string, number>();
+  const links = measureInitialization('Navigation: Area 51 grid and links', () => {
   for (const y of [0, 15])
     for (let x = -18; x <= 34; x += 2)
       for (let z = -234; z <= -2; z += 2) {
         if (getHighestSurface(x, z, y) !== y) continue;
         const p = new THREE.Vector3(x, y, z);
         if (
-          worldColliders.some(
+          colliderIndex.query(x - .42, x + .42, z - .42, z + .42).some(
             (c) =>
               c.active !== false &&
               c.maxY > y + 0.6 &&
@@ -1227,7 +1274,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
         cells.set(`${x},${y},${z}`, navPoints.length);
         navPoints.push(p);
       }
-  const links = navPoints.map((p) => {
+  return navPoints.map((p) => {
     const result: number[] = [];
     for (const dx of [-2, 0, 2])
       for (const dz of [-2, 0, 2]) {
@@ -1235,11 +1282,12 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
         const next = cells.get(`${p.x + dx},${p.y},${p.z + dz}`);
         if (
           next !== undefined &&
-          !traversalBlocked(p, navPoints[next], worldColliders)
+          !blockedTraversal(p, navPoints[next])
         )
           result.push(next);
       }
     return result;
+  });
   });
   const g = new Float64Array(navPoints.length),
     prev = new Int32Array(navPoints.length),
@@ -1252,7 +1300,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
       const n = navPoints[i];
       if (Math.abs(n.y - p.y) > 3) continue;
       const distance = n.distanceToSquared(p);
-      if (distance < d && !traversalBlocked(p, n, worldColliders, team)) {
+      if (distance < d && !blockedTraversal(p, n, team)) {
         d = distance;
         best = i;
       }
@@ -1273,7 +1321,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     if (differentFloor && facility.transferLift(from, from.y < 10 ? 15 : 0, 0, false))
       return target;
     if (
-      !traversalBlocked(from, dest, worldColliders, team) &&
+      !blockedTraversal(from, dest, team) &&
       Math.abs(from.y - dest.y) < 3
     )
       return dest;
@@ -1299,12 +1347,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
       open.delete(best);
       for (const next of links[best]) {
         if (
-          traversalBlocked(
-            navPoints[best],
-            navPoints[next],
-            worldColliders,
-            team,
-          )
+          blockedTraversal(navPoints[best], navPoints[next], team)
         )
           continue;
         const cost = g[best] + navPoints[best].distanceTo(navPoints[next]);
@@ -1376,6 +1419,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     resources.release(item.group);
     const i = worldColliders.indexOf(item.collider);
     if (i >= 0) worldColliders.splice(i, 1);
+    colliderIndex.remove(item.collider);
   }
   function clearDeployableCover() {
     covers.forEach(removeCover);
@@ -1554,6 +1598,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     liftRide = null;
     helicopter.dispose();
     resources.dispose();
+    colliderIndex.clear();
     root.removeFromParent();
     root.clear();
     worldColliders.length =
@@ -1564,7 +1609,7 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     if (scene.fog === fog) scene.fog = previousFog;
     if (scene.background === background) scene.background = previousBackground;
   }
-  return {
+  const manager: WorldManager = {
     mapId: "area51",
     facility,
     terrainMesh,
@@ -1607,4 +1652,15 @@ export function createArea51World(scene: THREE.Scene): WorldManager {
     updateDebris: () => {},
     dispose,
   };
+  completed = true;
+  return manager;
+  } finally {
+    if (!completed) {
+      // Include partially assembled nodes, but preserve the helicopter's separate owner.
+      ownedHelicopter?.group.removeFromParent(); ownedHelicopter?.dispose();
+      resources.track(root); resources.dispose(); colliderIndex.clear();
+      root.removeFromParent(); root.clear();
+      scene.fog = previousFog; scene.background = previousBackground;
+    }
+  }
 }

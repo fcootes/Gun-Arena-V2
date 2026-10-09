@@ -22,6 +22,20 @@ const reloadTracks = [
 ];
 const weaponUrls = { ...FIRST_BATCH_AUDIO_URLS, ...SECOND_BATCH_AUDIO_URLS, ...THIRD_BATCH_AUDIO_URLS };
 const weaponTracks = Object.keys(weaponUrls).map(key => AUDIO[key as keyof typeof weaponUrls]);
+
+/** Prime only recordings for the current loadout and spawned actors; later shots stay lazy. */
+export function prepareWeaponAudio(ids: readonly string[]): void {
+  const wanted = new Set(ids.map(id => id === 'laser' ? 'plasma' : id));
+  for (const key of Object.keys(weaponUrls)) {
+    const family = key.startsWith('laser') ? 'plasma' : key.match(/^[a-z]+(?=[A-Z])/)?.[0];
+    if (family && wanted.has(family)) AUDIO[key as keyof typeof weaponUrls].prepare();
+  }
+}
+export function releaseWeaponAudio(): void {
+  stopWeaponAudio();
+  for (const track of Object.values(AUDIO)) track.release();
+}
+
 let plasmaReloads = new WeakMap<WeaponSlotState, { sequence: NonNullable<WeaponSlotState['reloadSequence']>; inserted: boolean }>();
 
 function playFitted(track: SoundTrack, clipDuration: number, duration: number, volume = 1, offset = 0): void {
