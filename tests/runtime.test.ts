@@ -90,17 +90,18 @@ console.log('PASS: replay/lobby handlers are idempotent and request a fresh lobb
 
 const scene = new THREE.Scene();
 const owned = () => { const m = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial()); scene.add(m); return m; };
-const grenade = owned(), spark = owned(), limb = owned(), projectile = owned(), flash = owned();
+const grenade = owned(), spark = owned(), limb = owned(), projectile = owned(), flash = owned(), prepared = owned();
 const smokeGeometry = new THREE.SphereGeometry(), smoke = new THREE.Mesh(smokeGeometry, new THREE.MeshBasicMaterial()); scene.add(smoke);
 spawnToxicPuddle(scene, new THREE.Vector3()); spawnSonicDistortionRing(scene, new THREE.Vector3());
-const ownedGeometries = [grenade, spark, limb, projectile, flash, activeToxicPuddles[0].mesh, activeDistortionRings[0].mesh].map(m => m.geometry);
+const ownedGeometries = [grenade, spark, limb, projectile, flash, prepared, activeToxicPuddles[0].mesh, activeDistortionRings[0].mesh].map(m => m.geometry);
 let disposed = 0, sharedDisposed = 0;
 ownedGeometries.forEach(g => g.addEventListener('dispose', () => disposed++));
 smokeGeometry.addEventListener('dispose', () => sharedDisposed++);
-const pools = { runtimeTimeouts: new Set(), clearTimeout() {}, scene, world: { groundPickups: [], clearDeployableCover() {} }, audioManager: sound, clearCombatSystems, disposeBotVisuals, THREE, vmManager: { resetEffects() {} }, thirdPersonActor: null, carriedWeapon: null, carriedId: '', extractionDirector: null, extractionPhase: false, extractionState: 'none', extractionTimer: 0, extractionTargetObj: null, extractionTankBossSpawned: false, bots: [], removeBot() {}, activeGrenades: [{ group: grenade }], explosionEffects: [{ mesh: flash }], sparkPool: [{ mesh: spark }], smokePool: [{ mesh: smoke }], limbPool: [{ mesh: limb }], railgunProjectiles: [{ group: projectile }], containerRef: { current: null } };
+const pools = { runtimeTimeouts: new Set(), clearTimeout() {}, scene, world: { groundPickups: [], clearDeployableCover() {} }, audioManager: sound, clearCombatSystems, disposeBotVisuals, THREE, vmManager: { resetEffects() {} }, thirdPersonActor: null, carriedWeapon: null, carriedId: '', extractionDirector: null, extractionPhase: false, extractionState: 'none', extractionTimer: 0, extractionTargetObj: null, extractionTankBossSpawned: false, bots: [], preparedMissionVisuals: [{ rootGroup: prepared }], removeBot() {}, activeGrenades: [{ group: grenade }], explosionEffects: [{ mesh: flash }], sparkPool: [{ mesh: spark }], smokePool: [{ mesh: smoke }], limbPool: [{ mesh: limb }], railgunProjectiles: [{ group: projectile }], containerRef: { current: null } };
 const clear = handler('clearMatchEntities', pools); clear(); clear();
 assert.equal(disposed, ownedGeometries.length, 'Every transient owned geometry disposed exactly once');
 assert.equal(sharedDisposed, 0, 'Session smoke geometry survives replay');
+assert.equal(pools.preparedMissionVisuals.length, 0, 'Replay releases and removes preparation-only actors');
 assert.equal(scene.children.length, 0); assert.equal(activeToxicPuddles.length + activeDistortionRings.length, 0);
 smokeGeometry.dispose();
 console.log('PASS: replay cleanup releases grenades, sparks, ragdolls, tracers, explosions, toxic puddles and distortion rings');

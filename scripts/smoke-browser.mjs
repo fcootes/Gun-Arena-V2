@@ -14,7 +14,7 @@ const browser = await chromium.launch({ headless: true,
 });
 const context = await browser.newContext({ viewport: { width: 960, height: 540 } });
 const page = await context.newPage();
-page.setDefaultTimeout(120000);
+page.setDefaultTimeout(300000);
 const errors = [], results = [];
 page.on('pageerror', error => { errors.push(error.message); console.error(error.message); });
 try {

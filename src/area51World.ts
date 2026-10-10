@@ -1609,6 +1609,9 @@ function* buildArea51World(scene: THREE.Scene): Generator<string, WorldManager> 
     if (scene.fog === fog) scene.fog = previousFog;
     if (scene.background === background) scene.background = previousBackground;
   }
+  // Compile with the same fog/background that the first gameplay update uses.
+  scene.fog = fog;
+  scene.background = background;
   const manager: WorldManager = {
     mapId: "area51",
     facility,

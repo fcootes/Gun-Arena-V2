@@ -19,7 +19,9 @@
     "test:runtime": "node --import tsx tests/runtime.test.ts",
     "test:audio": "node --import tsx tests/weaponAudio.test.ts",
     "test:performance": "node --import tsx tests/performance.test.ts",
-    "benchmark:browser": "node scripts/benchmark-browser.mjs"
+    "benchmark:browser": "node scripts/benchmark-browser.mjs",
+    "test:preparation": "node --import tsx tests/preparation.test.ts",
+    "profile:first-use": "node scripts/profile-first-use.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",
