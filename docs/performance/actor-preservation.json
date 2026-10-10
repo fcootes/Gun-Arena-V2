@@ -1,0 +1,453 @@
+{
+  "baselineCommit": "3aae545867138b41f54867cd12613927eff17fe0",
+  "matchingVariants": 31,
+  "method": "SHA256 of geometry attributes/indices, local/world matrices, material appearance settings and hit/head-part tree paths; seeded visual randomness excluding UUID generation",
+  "variants": [
+    {
+      "options": {
+        "botId": 0,
+        "factionAlignment": "usmc",
+        "team": "blue",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 0,
+        "weaponType": "ar"
+      },
+      "meshes": 70,
+      "signature": "c6f8dc440066c05a5ddfb92704872098e58842f12f0165fd4371aa417a194865"
+    },
+    {
+      "options": {
+        "botId": 1,
+        "factionAlignment": "usmc",
+        "team": "blue",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 1,
+        "weaponType": "shotgun"
+      },
+      "meshes": 55,
+      "signature": "417b757ee9d6f7fb2781f570b1fcf61a78f755f52b38804ff47ae2db79f2646c"
+    },
+    {
+      "options": {
+        "botId": 2,
+        "factionAlignment": "usmc",
+        "team": "blue",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 2,
+        "weaponType": "sniper"
+      },
+      "meshes": 61,
+      "signature": "a296cd0a2ce17875d914a55a00753aef5510859ebbca75d29c9e999a8b2ad40e"
+    },
+    {
+      "options": {
+        "botId": 3,
+        "factionAlignment": "usmc",
+        "team": "blue",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 3,
+        "weaponType": "pistol"
+      },
+      "meshes": 66,
+      "signature": "26322e928f4baed92aa30ea1da6cfba674c373ee0878bd31f55874eb6934106b"
+    },
+    {
+      "options": {
+        "botId": 4,
+        "factionAlignment": "usmc",
+        "team": "blue",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 4,
+        "weaponType": "smg"
+      },
+      "meshes": 61,
+      "signature": "84f1ab8b6a52f6bb0d11b15eb8de895d9f2e1e4393ed7a200bd1d6c86b399c53"
+    },
+    {
+      "options": {
+        "botId": 5,
+        "factionAlignment": "usmc",
+        "team": "blue",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 5,
+        "weaponType": "lmg"
+      },
+      "meshes": 57,
+      "signature": "a8de3e120d71022cd9de8bf8efcc879c26945eb830fd29cf0738505e5ad4233f"
+    },
+    {
+      "options": {
+        "botId": 0,
+        "factionAlignment": "apex",
+        "team": "blue",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 0,
+        "weaponType": "ar"
+      },
+      "meshes": 86,
+      "signature": "8933d1169c69421bde1849acc2fe969ba3f9089fe4320042965be60de5daf289"
+    },
+    {
+      "options": {
+        "botId": 1,
+        "factionAlignment": "apex",
+        "team": "blue",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 1,
+        "weaponType": "shotgun"
+      },
+      "meshes": 77,
+      "signature": "2bf528af40b7df3c1bf52212b8bb742b092dcb24968e368c204b2494b9ad80f7"
+    },
+    {
+      "options": {
+        "botId": 2,
+        "factionAlignment": "apex",
+        "team": "blue",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 2,
+        "weaponType": "sniper"
+      },
+      "meshes": 86,
+      "signature": "b0f182902331efe9315be34d54b8fcbadc7a2174e3045c31887b2a5019a6e0a1"
+    },
+    {
+      "options": {
+        "botId": 3,
+        "factionAlignment": "apex",
+        "team": "blue",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 3,
+        "weaponType": "pistol"
+      },
+      "meshes": 73,
+      "signature": "3d7c2dcc9e137b6f8729d8bd3747eb8f92e18bbf75d77c32f9154bb07ccf1e03"
+    },
+    {
+      "options": {
+        "botId": 4,
+        "factionAlignment": "apex",
+        "team": "blue",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 4,
+        "weaponType": "smg"
+      },
+      "meshes": 82,
+      "signature": "d4d9d0abada3b999e97a58035628d82a347f0ed4e0a0837b67fe4853876e82bb"
+    },
+    {
+      "options": {
+        "botId": 5,
+        "factionAlignment": "apex",
+        "team": "blue",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 5,
+        "weaponType": "lmg"
+      },
+      "meshes": 72,
+      "signature": "c796c70fe6bd7ccf384d9d4f769c48478ff2e6e1688dad8616a476f278fe532e"
+    },
+    {
+      "options": {
+        "botId": 0,
+        "factionAlignment": "apex",
+        "team": "red",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 4,
+        "weaponType": "smg",
+        "campaignEntity": "security"
+      },
+      "meshes": 65,
+      "signature": "804c788c075fe830dc040e51dedf55647aa84a884f5e71e8df009c41ef39738f"
+    },
+    {
+      "options": {
+        "botId": 1,
+        "factionAlignment": "apex",
+        "team": "red",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 3,
+        "weaponType": "pistol",
+        "campaignEntity": "security"
+      },
+      "meshes": 53,
+      "signature": "b161e1cce95e5d44feb5fadf0d6ac3e4ffe1e2291481b657d6d8eced968e0fbc"
+    },
+    {
+      "options": {
+        "botId": 2,
+        "factionAlignment": "apex",
+        "team": "red",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 4,
+        "weaponType": "smg",
+        "campaignEntity": "security"
+      },
+      "meshes": 60,
+      "signature": "11a4badc48d0502bc85098726374d9f1419301141557b45336711f351226e4a6"
+    },
+    {
+      "options": {
+        "botId": 3,
+        "factionAlignment": "apex",
+        "team": "red",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 3,
+        "weaponType": "pistol",
+        "campaignEntity": "security"
+      },
+      "meshes": 58,
+      "signature": "fe1c8ece9a6bfbe0e0f474ba8a35588cb900c7a121173bfb256aea5a51b3a6a3"
+    },
+    {
+      "options": {
+        "botId": 0,
+        "factionAlignment": "apex",
+        "team": "red",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 0,
+        "weaponType": "ar",
+        "campaignEntity": "marine"
+      },
+      "meshes": 92,
+      "signature": "ffe10d0107557f2aa0b65f9b718ce318e1ab7cb9e9fee1b2977e97077a58b652"
+    },
+    {
+      "options": {
+        "botId": 1,
+        "factionAlignment": "apex",
+        "team": "red",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 0,
+        "weaponType": "ar",
+        "campaignEntity": "marine"
+      },
+      "meshes": 87,
+      "signature": "df5c4f6a573e2756b49bf5b6859f65cef0dd189f2d506c5ab6e0e5bb9a409414"
+    },
+    {
+      "options": {
+        "botId": 2,
+        "factionAlignment": "apex",
+        "team": "red",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 0,
+        "weaponType": "ar",
+        "campaignEntity": "marine"
+      },
+      "meshes": 87,
+      "signature": "df5c4f6a573e2756b49bf5b6859f65cef0dd189f2d506c5ab6e0e5bb9a409414"
+    },
+    {
+      "options": {
+        "botId": 3,
+        "factionAlignment": "apex",
+        "team": "red",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 0,
+        "weaponType": "ar",
+        "campaignEntity": "marine"
+      },
+      "meshes": 92,
+      "signature": "ffe10d0107557f2aa0b65f9b718ce318e1ab7cb9e9fee1b2977e97077a58b652"
+    },
+    {
+      "options": {
+        "botId": 0,
+        "factionAlignment": "apex",
+        "team": "red",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 0,
+        "weaponType": "ar",
+        "campaignEntity": "spartan"
+      },
+      "meshes": 79,
+      "signature": "3378fe758b92b339a060476f74ed97f6d06d7de115e75a0f547fc20fd122b5df"
+    },
+    {
+      "options": {
+        "botId": 1,
+        "factionAlignment": "apex",
+        "team": "red",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 0,
+        "weaponType": "ar",
+        "campaignEntity": "spartan"
+      },
+      "meshes": 74,
+      "signature": "cc0cafe812b8f8e94a84c321a806c00befd20352dd8eb229cdfe452268a0ba9e"
+    },
+    {
+      "options": {
+        "botId": 2,
+        "factionAlignment": "apex",
+        "team": "red",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 0,
+        "weaponType": "ar",
+        "campaignEntity": "spartan"
+      },
+      "meshes": 74,
+      "signature": "cc0cafe812b8f8e94a84c321a806c00befd20352dd8eb229cdfe452268a0ba9e"
+    },
+    {
+      "options": {
+        "botId": 3,
+        "factionAlignment": "apex",
+        "team": "red",
+        "isZombie": false,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 0,
+        "weaponType": "ar",
+        "campaignEntity": "spartan"
+      },
+      "meshes": 79,
+      "signature": "3378fe758b92b339a060476f74ed97f6d06d7de115e75a0f547fc20fd122b5df"
+    },
+    {
+      "options": {
+        "botId": 0,
+        "factionAlignment": "usmc",
+        "team": "zombie",
+        "isZombie": true,
+        "zType": "walker",
+        "isVIP": false,
+        "weaponTypeIndex": 0,
+        "weaponType": "ar"
+      },
+      "meshes": 29,
+      "signature": "3bce69ae49364059f000ed4d8c267a9b20b2f7e24ddbfedbffa575423e4610ce"
+    },
+    {
+      "options": {
+        "botId": 0,
+        "factionAlignment": "usmc",
+        "team": "zombie",
+        "isZombie": true,
+        "zType": "runner",
+        "isVIP": false,
+        "weaponTypeIndex": 0,
+        "weaponType": "ar"
+      },
+      "meshes": 38,
+      "signature": "42d083dde0f67f41badaec518f0c447da5329b38adb141aa3158fc2f8bb2b2da"
+    },
+    {
+      "options": {
+        "botId": 0,
+        "factionAlignment": "usmc",
+        "team": "zombie",
+        "isZombie": true,
+        "zType": "tank",
+        "isVIP": false,
+        "weaponTypeIndex": 0,
+        "weaponType": "ar"
+      },
+      "meshes": 31,
+      "signature": "ddd5bcfe6b074330dc8d6fb2c1ba4460253d64b3c55c53eed02a1897904610af"
+    },
+    {
+      "options": {
+        "botId": 0,
+        "factionAlignment": "usmc",
+        "team": "zombie",
+        "isZombie": true,
+        "zType": "brute",
+        "isVIP": false,
+        "weaponTypeIndex": 0,
+        "weaponType": "ar"
+      },
+      "meshes": 35,
+      "signature": "51ea7155ff457f87c50798e5ad699ef4239d0e24a6182d300a3ba673142c60dd"
+    },
+    {
+      "options": {
+        "botId": 0,
+        "factionAlignment": "usmc",
+        "team": "zombie",
+        "isZombie": true,
+        "zType": "banshee",
+        "isVIP": false,
+        "weaponTypeIndex": 0,
+        "weaponType": "ar"
+      },
+      "meshes": 34,
+      "signature": "b36b31d6d2689186be07e3f0acfe0a69a31fddfbae318f957bbd17b05b5833c3"
+    },
+    {
+      "options": {
+        "botId": 0,
+        "factionAlignment": "usmc",
+        "team": "zombie",
+        "isZombie": true,
+        "zType": "bloater",
+        "isVIP": false,
+        "weaponTypeIndex": 0,
+        "weaponType": "ar"
+      },
+      "meshes": 35,
+      "signature": "0fa8e4d2134d68c190b14faabb3e1c7110a6f7dbe61af534ae396a3d99041d45"
+    },
+    {
+      "options": {
+        "botId": 0,
+        "factionAlignment": "usmc",
+        "team": "zombie",
+        "isZombie": true,
+        "zType": "megaboss",
+        "isVIP": false,
+        "weaponTypeIndex": 0,
+        "weaponType": "ar"
+      },
+      "meshes": 47,
+      "signature": "e01e182c0c086e6c0bbab1fe6756f0d97d4a3e199f933dd8a8a80822e8be5b3e"
+    }
+  ]
+}

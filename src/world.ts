@@ -1966,6 +1966,7 @@ function* buildOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): Generat
 export function tuneTrainingAtmosphere(scene: THREE.Scene, manager: WorldManager): void {
   const previousFog = scene.fog;
   const fog = new THREE.FogExp2(0x9eb8bd, .0038);
+  scene.fog = fog;
   const floor = manager.terrainMesh.material;
   if (floor instanceof THREE.MeshStandardMaterial) { floor.roughness = .68; floor.metalness = .16; }
   const geometry = new THREE.PlaneGeometry(5, 5);

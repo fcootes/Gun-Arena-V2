@@ -265,6 +265,7 @@ export const WEAPONS: WeaponDef[] = [
 
 export interface ViewmodelManager {
   root: THREE.Group;
+  prepare: (ids: readonly string[]) => void;
   update: (
     dt: number,
     slotOrWeapon: number | WeaponDef,
@@ -589,6 +590,7 @@ export function createViewmodelManager(): ViewmodelManager {
   return {
     root,
     update,
+    prepare(ids: readonly string[]) { ids.forEach(id => getModel(id)); },
     triggerPistolSlideFire() {
       slideTimer = 0.12;
     },

@@ -4,6 +4,7 @@ export type CampaignCue =
 class CampaignAudioManager {
   private context: AudioContext | null = null;
   private active = new Set<AudioScheduledSourceNode>();
+  private buffers = new Map<CampaignCue, AudioBuffer>();
   private rotor: { source: AudioBufferSourceNode; gain: GainNode } | null =
     null;
   private utterance: SpeechSynthesisUtterance | null = null;
@@ -24,27 +25,14 @@ class CampaignAudioManager {
       void this.context.resume().catch(() => {});
     return this.context;
   }
-  play(cue: CampaignCue): void {
-    if (cue === "evac_inbound") {
-      if (
-        typeof window !== "undefined" &&
-        "speechSynthesis" in window &&
-        this.volume > 0
-      ) {
-        const speech = new SpeechSynthesisUtterance(
-          "Pickup has arrived, let's get the hell out of here!",
-        );
-        speech.rate = 1.08;
-        speech.pitch = 0.78;
-        speech.volume = this.volume;
-        this.utterance = speech;
-        window.speechSynthesis.speak(speech);
-      }
-      return;
-    }
+  prepare(cue: CampaignCue): void {
+    if (cue === 'evac_inbound') return;
     const ctx = this.getContext();
-    if (!ctx || this.volume === 0) return;
-    if (cue === "rotor" && this.rotor) return;
+    if (ctx) this.getBuffer(ctx, cue);
+  }
+  private getBuffer(ctx: AudioContext, cue: CampaignCue): AudioBuffer {
+    const cached = this.buffers.get(cue);
+    if (cached) return cached;
     const duration = cue === "elevator_hum" ? 4.2 : cue === "rotor" ? 2 : cue === "spartan_radio" ? 1.5 : 1.3;
     const buffer = ctx.createBuffer(
         1,
@@ -79,6 +67,31 @@ class CampaignAudioManager {
           noise * (1 - t / duration) * 0.45 +
           Math.sin(t * 2 * Math.PI * 63) * 0.22;
     }
+    this.buffers.set(cue, buffer);
+    return buffer;
+  }
+  play(cue: CampaignCue): void {
+    if (cue === "evac_inbound") {
+      if (
+        typeof window !== "undefined" &&
+        "speechSynthesis" in window &&
+        this.volume > 0
+      ) {
+        const speech = new SpeechSynthesisUtterance(
+          "Pickup has arrived, let's get the hell out of here!",
+        );
+        speech.rate = 1.08;
+        speech.pitch = 0.78;
+        speech.volume = this.volume;
+        this.utterance = speech;
+        window.speechSynthesis.speak(speech);
+      }
+      return;
+    }
+    const ctx = this.getContext();
+    if (!ctx || this.volume === 0) return;
+    if (cue === "rotor" && this.rotor) return;
+    const buffer = this.getBuffer(ctx, cue);
     const source = ctx.createBufferSource(),
       gain = ctx.createGain(),
       filter = ctx.createBiquadFilter();
@@ -121,6 +134,7 @@ class CampaignAudioManager {
     this.stop();
     if (this.context) void this.context.close();
     this.context = null;
+    this.buffers.clear();
   }
 }
 export const audioManager = new CampaignAudioManager();
