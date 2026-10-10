@@ -57,17 +57,20 @@ export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.S
       const representatives = new Map<WebGLProgram, Map<string, THREE.Object3D>>();
       const callbacks = new Map<THREE.Object3D, THREE.Object3D['onAfterRender']>();
       const gl = renderer.getContext();
-      const drawBatch = async (objects: readonly THREE.Object3D[]) => {
+      const submitBatch = (objects: readonly THREE.Object3D[]) => {
         const hide = visibility.showBatch(objects);
         try {
           target.scissor.set(0, 0, 1, 1); target.scissorTest = true;
           renderer.setRenderTarget(target);
           renderer.render(scene, camera);
-          await waitForGpu(renderer, pipeline.signal);
         } finally {
           hide();
           if (!gl.isContextLost()) renderer.setRenderTarget(originalTarget);
         }
+      };
+      const drawBatch = async (objects: readonly THREE.Object3D[]) => {
+        submitBatch(objects);
+        await waitForGpu(renderer, pipeline.signal);
       };
       const passScene = new THREE.Scene();
       const passCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -168,10 +171,23 @@ export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.S
             try { renderer.compile(litPrograms, camera, scene); await waitForPrograms(renderer, pipeline.signal); }
             finally { if (!gl.isContextLost()) renderer.setRenderTarget(originalTarget); }
           });
-          for (const object of litPrograms.children) await pipeline.stage('Combat lighting draws', async () => {
-            aimPreparationCamera(projectionCamera, object as THREE.Mesh);
-            target.viewport.set(0, 0, 1, 1);
-            await drawBatch([object]);
+          // Each representative still gets its own aimed, real draw. A fence
+          // covers all preceding submissions, so waiting after every object only
+          // adds driver round trips and paint boundaries. Keep batches small and
+          // stop after a slow submission so cancellation/progress can paint.
+          let offset = 0;
+          while (offset < litPrograms.children.length) await pipeline.stage('Combat lighting draws', async () => {
+            const deadline = performance.now() + 4;
+            let submitted = 0;
+            do {
+              pipeline.signal.throwIfAborted();
+              const object = litPrograms.children[offset++];
+              aimPreparationCamera(projectionCamera, object as THREE.Mesh);
+              target.viewport.set(0, 0, 1, 1);
+              submitBatch([object]);
+              submitted++;
+            } while (offset < litPrograms.children.length && submitted < 8 && performance.now() < deadline);
+            await waitForGpu(renderer, pipeline.signal);
           });
         }
         litPrograms.removeFromParent();

@@ -112,8 +112,51 @@ assert.equal(preparationScene.children.length, 1, 'Canceled preparation removes 
 assert.equal(particles.visible, false); assert.equal(renderTarget, null); assert.equal(scissorTest, false);
 assert.deepEqual(preparationCamera.matrixWorld, originalCamera); assert.deepEqual(preparationCamera.projectionMatrix, originalProjection);
 assert.equal(fakeRenderer.shadowMap.autoUpdate, true);
+// Multiple independent formats must retain all real draws while sharing fences.
+const batchMaterials = Array.from({ length: 17 }, () => new THREE.MeshBasicMaterial());
+const batchMeshes = batchMaterials.map(material => new THREE.Mesh(new THREE.BoxGeometry(), material));
+preparationScene.add(...batchMeshes);
+const batchSubmissions = new Map(batchMaterials.map(material => [material, new Set<number>()]));
+const originalRender = fakeRenderer.render;
+let currentProgram: THREE.Material = unlit, fences = 0, batches = 0, inBatch = false, drawsInBatch = 0;
+const batchSizes: number[] = [];
+completeGl.getParameter = () => currentProgram as typeof unlit;
+completeGl.fenceSync = () => { fences++; return {}; };
+fakeRenderer.render = (s, c) => {
+  if (inBatch) drawsInBatch++;
+  let lights = 0; s.traverseVisible(object => { if (object instanceof THREE.PointLight) lights++; });
+  s.traverseVisible((object: any) => {
+    if (!object.geometry || !object.material) return;
+    currentProgram = object.material;
+    batchSubmissions.get(object.material)?.add(lights);
+    object.onAfterRender(fakeRenderer, s, c, object.geometry, object.material, null);
+  });
+};
+await effects.prepare(new DeploymentPipeline(name => {
+  if (inBatch) batchSizes.push(drawsInBatch);
+  inBatch = name === 'Combat lighting draws'; drawsInBatch = 0;
+  if (inBatch) batches++;
+}), 'area51', 2);
+for (const counts of batchSubmissions.values()) assert.deepEqual([...counts].sort(), [0, 1, 2]);
+assert.ok(batchSizes.every(size => size > 0 && size <= 8), 'Each paint batch is capped at eight real submissions');
+assert.ok(batches < 17 * 3 && fences < 17 * 3, 'Formats share stages and GPU fences without skipping variants');
+let canceledDraws = 0;
+let combatDraw = false;
+const duringDraw = new DeploymentPipeline(name => { combatDraw = name === 'Combat lighting draws'; });
+fakeRenderer.render = (s, c) => {
+  if (combatDraw) { canceledDraws++; duringDraw.cancel(); }
+  originalRender(s, c);
+};
+await assert.rejects(effects.prepare(duringDraw, 'area51', 2), { name: 'AbortError' });
+assert.equal(canceledDraws, 1);
+assert.equal(preparationScene.children.length, 18); assert.equal(renderTarget, null); assert.equal(scissorTest, false);
+assert.deepEqual(preparationCamera.matrixWorld, originalCamera); assert.equal(fakeRenderer.shadowMap.autoUpdate, true);
+fakeRenderer.render = originalRender;
+batchMeshes.forEach(mesh => { mesh.removeFromParent(); mesh.geometry.dispose(); }); batchMaterials.forEach(material => material.dispose());
+completeGl.getParameter = () => unlit;
 effects.dispose(); pointGeometry.dispose(); unlit.dispose();
 console.log('PASS: real preparation includes unlit particle variants and restores camera, render target, shadow, scissor and scene state');
+console.log('PASS: bounded multi-format batches retain every light-count draw, reduce fences and restore state on mid-draw cancellation');
 
 const options = { botId: 0, team: 'zombie', isZombie: true, zType: 'walker' as const, isVIP: false,
   weaponTypeIndex: 0, weaponType: 'ar', factionAlignment: 'usmc' as const };
