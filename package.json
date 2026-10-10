@@ -21,6 +21,7 @@
     "test:performance": "node --import tsx tests/performance.test.ts",
     "benchmark:browser": "node scripts/benchmark-browser.mjs",
     "test:preparation": "node --import tsx tests/preparation.test.ts",
+    "test:preparation:browser": "node scripts/test-preparation-browser.mjs",
     "profile:first-use": "node scripts/profile-first-use.mjs"
   },
   "dependencies": {
