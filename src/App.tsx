@@ -5,7 +5,7 @@ import { GRAPHICS } from './graphicsConfig';
 import { DEFAULT_OPERATIONAL_MAP, mapForMode } from './mapRegistry';
 import { INSPECTOR_HEALTH, INSPECTOR_DAMAGE } from './inspectorMode';
 import { WorldResources } from './worldResources';
-import { Area51ExtractionGameLoop } from './area51Campaign';
+import { Area51ExtractionGameLoop, AREA51_MAX_ARMED_ENCOUNTERS } from './area51Campaign';
 import { audioManager } from './campaignAudio';
 import { PostDeathMenu } from './PostDeathMenu';
 import { beginWeaponReload, advanceWeaponReload, cancelWeaponReload, interruptShellReload } from './weaponReload';
@@ -831,6 +831,8 @@ export default function App() {
     
     // EXTRACTION MECHANICS
     let extractionDirector: Area51ExtractionGameLoop | ShatteredWallExtractionGameLoop | null = null;
+    // Visual resources only: these never enter bots, navigation, damage or mission state.
+    const preparedMissionVisuals: ReturnType<typeof buildBotVisuals>[] = [];
     let extractionPhase = false;
     let extractionState = 'none'; // 'mainframe_search' | 'hacking' | 'evac' | 'cryo_search' | 'carrying' | 'defend'
     let extractionTimer = 0;
@@ -1915,6 +1917,8 @@ export default function App() {
       extractionTankBossSpawned = false;
 
       for (const b of [...bots]) removeBot(b);
+      for (const visuals of preparedMissionVisuals) disposeBotVisuals(visuals.rootGroup);
+      preparedMissionVisuals.length = 0;
       for (const g of activeGrenades) disposeBotVisuals(g.group);
       activeGrenades.length = 0;
       for (const fx of explosionEffects) {
@@ -2826,10 +2830,14 @@ export default function App() {
     };
     document.addEventListener('pointerlockchange', onPointerLockChange);
 
+    const rendererSize = renderer.getSize(new THREE.Vector2());
     const onResize = () => {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      effects.resize(window.innerWidth, window.innerHeight);
-      camera.aspect = window.innerWidth / window.innerHeight;
+      const width = window.innerWidth, height = window.innerHeight;
+      if (width === rendererSize.x && height === rendererSize.y) return;
+      rendererSize.set(width, height);
+      renderer.setSize(width, height);
+      effects.resize(width, height);
+      camera.aspect = width / height;
       camera.updateProjectionMatrix();
     };
     window.addEventListener('resize', onResize);
@@ -2871,10 +2879,14 @@ export default function App() {
           'World construction (includes navigation)': 'Building the environment',
           'Player, bots and equipment (inclusive)': 'Preparing operators and equipment',
           'Operator construction': 'Preparing operators and equipment',
-          'Audio preparation': 'Preparing mission audio', 'Shader compilation': 'Preparing lighting',
+          'Audio preparation': 'Preparing mission audio', 'Mission visual preparation': 'Preparing mission encounters',
+          'Campaign audio preparation': 'Preparing mission audio', 'Combat lighting draws': 'Preparing combat lighting',
+          'Lighting programs': 'Preparing lighting', 'Restore deployment lighting': 'Preparing lighting',
+          'Viewmodel preparation': 'Preparing weapons', 'Postprocessing programs': 'Preparing visual effects',
+          'Geometry, textures and shadows': 'Uploading environment and equipment', 'First complete render': 'Preparing the first frame',
           'Deployment ready': 'Ready to deploy',
         };
-        setDeploymentStage(labels[stage] ?? (stage.startsWith('Facility') || stage.startsWith('Offshore') || stage === 'World construction' ? 'Building the environment' : 'Preparing environment textures'));
+        setDeploymentStage(labels[stage] ?? (stage.startsWith('Lighting programs') ? 'Preparing combat lighting' : stage.startsWith('Facility') || stage.startsWith('Offshore') || stage === 'World construction' ? 'Building the environment' : 'Preparing environment textures'));
       });
       pendingDeployment = pipeline;
       // Keep the cursor available for loading cancellation; capture it only when ready.
@@ -2885,13 +2897,39 @@ export default function App() {
         camera.fov = HIP_FOV; camera.updateProjectionMatrix();
         camera.position.copy(player.pos); camera.rotation.order = 'YXZ';
         camera.rotation.set(player.pitch, player.yaw, 0);
+        await pipeline.stage('Viewmodel preparation', () => {
+          vmManager.prepare(playerLoadout.filter(weapon => weapon.type === 'weapon').map(weapon => weapon.id));
+          vmManager.update(0, currentSlot(), currentSlotState(), false, false, player.onGround, false, false, false, 0, true, true);
+        });
+        if (matchConfig.mode === 'extraction') {
+          const variants: { zType?: 'walker' | 'runner' | 'brute' | 'bloater' | 'megaboss'; campaignEntity?: import('./types').CampaignEntity; botId: number }[] =
+            world.offshore ? ['walker', 'runner', 'brute'].map(zType => ({ zType: zType as 'walker' | 'runner' | 'brute', botId: 0 })) :
+            factionAlignmentRef.current === 'usmc' ? ['walker', 'runner', 'brute', 'bloater', 'megaboss'].map(zType => ({ zType: zType as 'walker' | 'runner' | 'brute' | 'bloater' | 'megaboss', botId: 0 })) :
+            [...[0, 1, 2, 3].map(botId => ({ campaignEntity: 'security' as const, botId })),
+              ...(['marine', 'spartan'] as const).flatMap(campaignEntity => [0, 1].map(botId => ({ campaignEntity, botId })))];
+          for (const variant of variants) await pipeline.stage('Mission visual preparation', () => {
+            const weaponTypeIndex = variant.campaignEntity === 'security' ? variant.botId % 2 ? 3 : 4 : 0;
+            const visuals = buildBotVisuals({ ...variant, team: variant.zType ? 'zombie' : 'red', isZombie: !!variant.zType,
+              zType: variant.zType ?? 'walker', isVIP: false, weaponTypeIndex, weaponType: WEAPONS[weaponTypeIndex].id,
+              factionAlignment: factionAlignmentRef.current, gearTier: gearTierRef.current, mode: matchConfig.mode });
+            visuals.rootGroup.position.copy(player.pos); visuals.rootGroup.visible = false;
+            preparedMissionVisuals.push(visuals); scene.add(visuals.rootGroup);
+          });
+        }
         await pipeline.stage('Audio preparation', () => {
           unlockAudioEngine(); prepareWeaponAudio([...playerLoadout.map(w => w.id), ...bots.map(bot => bot.weaponType)]);
         });
-        await pipeline.stage('Shader compilation', async () => {
-          scene.updateMatrixWorld(true);
-          await renderer.compileAsync(scene, camera);
-        });
+        if (world.facility || world.offshore) {
+          const cues: import('./campaignAudio').CampaignCue[] = world.offshore ? ['rotor'] :
+            ['rotor', 'blast_doors', 'elevator_hum', 'bulkhead_unseal', 'abomination_impact', 'abomination_roar', 'spartan_radio'];
+          for (const cue of cues) await pipeline.stage('Campaign audio preparation', () => audioManager.prepare(cue));
+        }
+        // Visible zero-intensity lights still affect Three's program key. Prepare
+        // all simultaneous mission muzzle lights, transport beacon and grenades.
+        const armedBots = bots.filter(bot => !!bot.weaponEffects).length;
+        const futureArmedBots = matchConfig.mode === 'extraction' && world.facility && factionAlignmentRef.current === 'apex' ? AREA51_MAX_ARMED_ENCOUNTERS : 0;
+        const grenadeLights = playerLoadout.reduce((count, weapon) => count + (weapon.type === 'grenade' ? weapon.count ?? 3 : 0), 0);
+        await effects.prepare(pipeline, activeMap, armedBots + futureArmedBots + 1 + (world.offshore || world.facility ? 1 : 0) + grenadeLights, world.lobbyGroup ? [world.lobbyGroup] : []);
         await pipeline.stage('Deployment ready', () => {});
         if (engineDisposed || pipeline.canceled) return;
         profiler.reset();
@@ -3355,10 +3393,10 @@ export default function App() {
         camera.fov += (targetFov - camera.fov) * Math.min(1, dt * adsSpeed);
         camera.updateProjectionMatrix();
         const showScope = player.aiming && !!curW.scoped;
-        const scopeEl = containerRef.current?.querySelector('#scope-overlay') as HTMLElement | null;
-        const crossEl = containerRef.current?.querySelector('#crosshair') as HTMLElement | null;
-        if (scopeEl) scopeEl.style.display = showScope ? 'block' : 'none';
-        if (crossEl) crossEl.style.display = showScope ? 'none' : 'block';
+        const scopeEl = hudDom.get('#scope-overlay');
+        const crossEl = hudDom.get('#crosshair');
+        if (scopeEl && scopeEl.style.display !== (showScope ? 'block' : 'none')) scopeEl.style.display = showScope ? 'block' : 'none';
+        if (crossEl && crossEl.style.display !== (showScope ? 'none' : 'block')) crossEl.style.display = showScope ? 'none' : 'block';
 
         // 4. Muzzle flash fade
         // 5. Viewmodels update

@@ -1,0 +1,49 @@
+{
+  "implementationCommit": "e03a337c0af8e61683e76c1c8e602a0b6c51f668",
+  "snapshotCommit": "e331aaad26873157338da06e2a501bb68f1bea45",
+  "checks": [
+    {
+      "name": "test:preparation",
+      "status": "passed",
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "lint",
+      "status": "passed",
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "test:runtime",
+      "status": "passed",
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "test:performance",
+      "status": "passed",
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "build",
+      "status": "passed",
+      "timeoutSeconds": 30
+    }
+  ],
+  "snapshotFileCount": 26,
+  "recoveryBundle": "git bundle verify passed; prerequisites present",
+  "browserEvidence": "preparation-review-browser.json",
+  "buildAdvisory": "existing bundle larger than 500 kB",
+  "environmentNotes": [
+    "Recovered external Chromium executables were truncated and could not launch.",
+    "Playwright full Chrome hit a restricted Unix socket during startup.",
+    "Installed Chromium 134 headless shell completed the focused regression using SwiftShader."
+  ],
+  "notRun": [
+    "full six-flow smoke rerun",
+    "full map timing comparison",
+    "native GPU/Surface Pro test",
+    "long-session resource benchmark",
+    "full manual campaign/boss visual acceptance",
+    "actual App window aspect/DPR resize, scope/HUD alignment and final React cancel/redeploy integration"
+  ],
+  "recoveredImplementation": "src/tests/scripts/package.json match recovered bundle HEAD byte-for-byte at checkpoint"
+}

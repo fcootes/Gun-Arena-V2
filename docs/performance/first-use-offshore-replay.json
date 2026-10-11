@@ -1,0 +1,2110 @@
+{
+  "revision": "c993e6d before the subsequent unlit-key preparation change",
+  "capture": {
+    "browser": "134.0.6998.35",
+    "viewport": "640x360",
+    "renderer": "see per-run GL renderer",
+    "results": [
+      {
+        "map": "shattered_wall",
+        "faction": "usmc",
+        "run": "cold",
+        "started": 13832.100000000093,
+        "ready": 36530.60000000009,
+        "loadingMs": 22698.5,
+        "frames": [
+          {
+            "state": "start",
+            "phase": "first frames",
+            "time": 0,
+            "render": 12598.700000000186,
+            "simulation": 0,
+            "programs": 17,
+            "geometries": 104,
+            "textures": 20,
+            "bots": 0
+          },
+          {
+            "state": "start",
+            "phase": "first frames",
+            "time": 0,
+            "render": 12607.200000000186,
+            "simulation": 0,
+            "programs": 17,
+            "geometries": 104,
+            "textures": 21,
+            "bots": 0
+          },
+          {
+            "state": "start",
+            "phase": "first frames",
+            "time": 0,
+            "render": 12629.299999999814,
+            "simulation": 0,
+            "programs": 17,
+            "geometries": 104,
+            "textures": 21,
+            "bots": 0
+          },
+          {
+            "state": "start",
+            "phase": "first frames",
+            "time": 0,
+            "render": 12632.100000000093,
+            "simulation": 0,
+            "programs": 17,
+            "geometries": 104,
+            "textures": 21,
+            "bots": 0
+          },
+          {
+            "state": "start",
+            "phase": "first frames",
+            "time": 0,
+            "render": 13203.600000000093,
+            "simulation": 0,
+            "programs": 17,
+            "geometries": 104,
+            "textures": 21,
+            "bots": 0
+          },
+          {
+            "state": "start",
+            "phase": "first frames",
+            "time": 0,
+            "render": 13243.100000000093,
+            "simulation": 0,
+            "programs": 17,
+            "geometries": 104,
+            "textures": 21,
+            "bots": 0
+          },
+          {
+            "state": "start",
+            "phase": "first frames",
+            "time": 0,
+            "render": 13370.799999999814,
+            "simulation": 0,
+            "programs": 17,
+            "geometries": 104,
+            "textures": 21,
+            "bots": 0
+          },
+          {
+            "state": "start",
+            "phase": "first frames",
+            "time": 0,
+            "render": 13468.299999999814,
+            "simulation": 0,
+            "programs": 17,
+            "geometries": 104,
+            "textures": 21,
+            "bots": 0
+          },
+          {
+            "state": "start",
+            "phase": "first frames",
+            "time": 0,
+            "render": 13638.799999999814,
+            "simulation": 0,
+            "programs": 17,
+            "geometries": 104,
+            "textures": 21,
+            "bots": 0
+          },
+          {
+            "state": "start",
+            "phase": "first frames",
+            "time": 0,
+            "render": 13769.799999999814,
+            "simulation": 0,
+            "programs": 17,
+            "geometries": 104,
+            "textures": 21,
+            "bots": 0
+          },
+          {
+            "state": "start",
+            "phase": "first frames",
+            "time": 0,
+            "render": 13782,
+            "simulation": 0,
+            "programs": 17,
+            "geometries": 104,
+            "textures": 21,
+            "bots": 0
+          },
+          {
+            "state": "start",
+            "phase": "first frames",
+            "time": 0,
+            "render": 13819.700000000186,
+            "simulation": 0,
+            "programs": 17,
+            "geometries": 104,
+            "textures": 21,
+            "bots": 0
+          },
+          {
+            "state": "start",
+            "phase": "first frames",
+            "time": 0,
+            "render": 13823,
+            "simulation": 0,
+            "programs": 17,
+            "geometries": 104,
+            "textures": 21,
+            "bots": 0
+          },
+          {
+            "state": "start",
+            "phase": "first frames",
+            "time": 13957.299999999814,
+            "render": 0.10000000009313226,
+            "simulation": 0,
+            "programs": 17,
+            "geometries": 104,
+            "textures": 21,
+            "bots": 0
+          },
+          {
+            "state": "start",
+            "phase": "first frames",
+            "time": 13970.399999999907,
+            "render": 0,
+            "simulation": 0,
+            "programs": 17,
+            "geometries": 104,
+            "textures": 21,
+            "bots": 0
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 36488.5,
+            "render": 17.5,
+            "simulation": 12.5,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 36537.89999999991,
+            "render": 14.100000000093132,
+            "simulation": 2.1000000000931323,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 36582.60000000009,
+            "render": 14.099999999627471,
+            "simulation": 1.6000000000931323,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 36983.10000000009,
+            "render": 8.300000000279397,
+            "simulation": 0.7999999998137355,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 37199.5,
+            "render": 24.800000000279397,
+            "simulation": 0.8999999999068677,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 37452.5,
+            "render": 20.100000000093132,
+            "simulation": 8.799999999813735,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 37672.60000000009,
+            "render": 20.5,
+            "simulation": 0.6999999997206032,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 37897.10000000009,
+            "render": 17.399999999906868,
+            "simulation": 1.7999999998137355,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 38200.799999999814,
+            "render": 19.299999999813735,
+            "simulation": 2.2000000001862645,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 38527.799999999814,
+            "render": 10.399999999906868,
+            "simulation": 1.1000000000931323,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 38903.60000000009,
+            "render": 15.799999999813735,
+            "simulation": 0.8999999999068677,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 39162.89999999991,
+            "render": 9.399999999906868,
+            "simulation": 0.8000000002793968,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 39266.200000000186,
+            "render": 17,
+            "simulation": 0.8999999999068677,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 39365.700000000186,
+            "render": 12.600000000093132,
+            "simulation": 0.7999999998137355,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 39577.299999999814,
+            "render": 16.799999999813735,
+            "simulation": 0.900000000372529,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 39770,
+            "render": 16.100000000093132,
+            "simulation": 0.7999999998137355,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 39986.200000000186,
+            "render": 26.300000000279397,
+            "simulation": 3.1999999997206032,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 40162.799999999814,
+            "render": 17.100000000093132,
+            "simulation": 2.6000000000931323,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 40473.10000000009,
+            "render": 9.399999999906868,
+            "simulation": 2,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 40629.39999999991,
+            "render": 8.299999999813735,
+            "simulation": 1.8000000002793968,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 40828.200000000186,
+            "render": 7.800000000279397,
+            "simulation": 1.599999999627471,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 40989.200000000186,
+            "render": 6.699999999720603,
+            "simulation": 1.3999999999068677,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 41127.10000000009,
+            "render": 11,
+            "simulation": 2.2999999998137355,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 41254.89999999991,
+            "render": 10.299999999813735,
+            "simulation": 2.2000000001862645,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 41460.200000000186,
+            "render": 13.299999999813735,
+            "simulation": 2.5,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 41658.5,
+            "render": 13.800000000279397,
+            "simulation": 1.7999999998137355,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 41746.200000000186,
+            "render": 21.199999999720603,
+            "simulation": 1,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 41867.200000000186,
+            "render": 8.099999999627471,
+            "simulation": 2.5,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 42067.299999999814,
+            "render": 8.699999999720603,
+            "simulation": 0.8000000002793968,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 42237.60000000009,
+            "render": 9.899999999906868,
+            "simulation": 0.7999999998137355,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 42412.39999999991,
+            "render": 11.099999999627471,
+            "simulation": 0.8000000002793968,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 42486.5,
+            "render": 9.200000000186265,
+            "simulation": 0.7999999998137355,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 42703.5,
+            "render": 14,
+            "simulation": 15.799999999813735,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 42945.60000000009,
+            "render": 10.5,
+            "simulation": 9.699999999720603,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 43142.700000000186,
+            "render": 9.100000000093132,
+            "simulation": 4.2999999998137355,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 43323,
+            "render": 8.5,
+            "simulation": 3.2999999998137355,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 43482.10000000009,
+            "render": 11.800000000279397,
+            "simulation": 9.299999999813735,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 43672.700000000186,
+            "render": 9.600000000093132,
+            "simulation": 2.8999999999068677,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 43827,
+            "render": 8.300000000279397,
+            "simulation": 4.399999999906868,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 44051,
+            "render": 9,
+            "simulation": 2.8999999999068677,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 44305.799999999814,
+            "render": 16.200000000186265,
+            "simulation": 2,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 44533.700000000186,
+            "render": 7.5,
+            "simulation": 2.3999999999068677,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "helicopter arrival",
+            "time": 44750.799999999814,
+            "render": 7.5,
+            "simulation": 3.7000000001862645,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "helicopter arrival",
+            "time": 44850.5,
+            "render": 5.599999999627471,
+            "simulation": 3.2000000001862645,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "helicopter arrival",
+            "time": 44914.5,
+            "render": 9.600000000093132,
+            "simulation": 2.3999999999068677,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "helicopter arrival",
+            "time": 44962.700000000186,
+            "render": 8.299999999813735,
+            "simulation": 5.899999999906868,
+            "programs": 158,
+            "geometries": 824,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "helicopter arrival",
+            "time": 45129.200000000186,
+            "render": 7.899999999906868,
+            "simulation": 2.5,
+            "programs": 158,
+            "geometries": 828,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "helicopter arrival",
+            "time": 45511.299999999814,
+            "render": 7.599999999627471,
+            "simulation": 7.400000000372529,
+            "programs": 158,
+            "geometries": 828,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "helicopter arrival",
+            "time": 45679.39999999991,
+            "render": 16.5,
+            "simulation": 3.3000000002793968,
+            "programs": 158,
+            "geometries": 828,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "helicopter arrival",
+            "time": 45785.700000000186,
+            "render": 10.5,
+            "simulation": 7.5,
+            "programs": 158,
+            "geometries": 828,
+            "textures": 35,
+            "bots": 7
+          }
+        ],
+        "operations": [
+          {
+            "name": "bot construction",
+            "duration": 81.39999999990687,
+            "type": "walker"
+          },
+          {
+            "name": "bot construction",
+            "duration": 62.3000000002794,
+            "type": "walker"
+          },
+          {
+            "name": "bot construction",
+            "duration": 89.70000000018626,
+            "type": "walker"
+          },
+          {
+            "name": "bot construction",
+            "duration": 62.5,
+            "type": "walker"
+          },
+          {
+            "name": "signal activation",
+            "duration": 0.10000000009313226
+          },
+          {
+            "name": "bot construction",
+            "duration": 1.1000000000931323,
+            "type": "walker"
+          },
+          {
+            "name": "bot construction",
+            "duration": 1.099999999627471,
+            "type": "runner"
+          },
+          {
+            "name": "bot construction",
+            "duration": 0.3000000002793968,
+            "type": "walker"
+          },
+          {
+            "name": "first holdout wave",
+            "duration": 2.8999999999068677
+          },
+          {
+            "name": "inbound helicopter",
+            "duration": 0.20000000018626451
+          }
+        ],
+        "longTasks": [
+          {
+            "start": 1483.7000000001863,
+            "duration": 1072
+          },
+          {
+            "start": 3183.600000000093,
+            "duration": 83
+          },
+          {
+            "start": 4768.399999999907,
+            "duration": 55
+          },
+          {
+            "start": 5437.700000000186,
+            "duration": 668
+          },
+          {
+            "start": 6849.299999999814,
+            "duration": 53
+          },
+          {
+            "start": 7773.100000000093,
+            "duration": 560
+          },
+          {
+            "start": 9022,
+            "duration": 60
+          },
+          {
+            "start": 9900.399999999907,
+            "duration": 532
+          },
+          {
+            "start": 11132,
+            "duration": 55
+          },
+          {
+            "start": 12057.399999999907,
+            "duration": 546
+          },
+          {
+            "start": 13247.799999999814,
+            "duration": 52
+          },
+          {
+            "start": 14336.399999999907,
+            "duration": 82
+          },
+          {
+            "start": 14422.299999999814,
+            "duration": 62
+          },
+          {
+            "start": 14485.5,
+            "duration": 90
+          },
+          {
+            "start": 14576.399999999907,
+            "duration": 63
+          },
+          {
+            "start": 14643.200000000186,
+            "duration": 90
+          },
+          {
+            "start": 14813.600000000093,
+            "duration": 52
+          },
+          {
+            "start": 15022.5,
+            "duration": 62
+          },
+          {
+            "start": 18955.799999999814,
+            "duration": 97
+          },
+          {
+            "start": 20553.100000000093,
+            "duration": 79
+          },
+          {
+            "start": 22269.799999999814,
+            "duration": 88
+          },
+          {
+            "start": 24052.700000000186,
+            "duration": 90
+          },
+          {
+            "start": 25989,
+            "duration": 73
+          },
+          {
+            "start": 27839.399999999907,
+            "duration": 85
+          },
+          {
+            "start": 29752.700000000186,
+            "duration": 105
+          },
+          {
+            "start": 31785.799999999814,
+            "duration": 100
+          },
+          {
+            "start": 33752.799999999814,
+            "duration": 84
+          },
+          {
+            "start": 36892.799999999814,
+            "duration": 167
+          },
+          {
+            "start": 37160.200000000186,
+            "duration": 122
+          },
+          {
+            "start": 37367.299999999814,
+            "duration": 223
+          },
+          {
+            "start": 37612.10000000009,
+            "duration": 167
+          },
+          {
+            "start": 37821.700000000186,
+            "duration": 222
+          },
+          {
+            "start": 38113.89999999991,
+            "duration": 286
+          },
+          {
+            "start": 38456.299999999814,
+            "duration": 260
+          },
+          {
+            "start": 38795.39999999991,
+            "duration": 296
+          },
+          {
+            "start": 39106,
+            "duration": 130
+          },
+          {
+            "start": 39527.700000000186,
+            "duration": 90
+          },
+          {
+            "start": 39733.60000000009,
+            "duration": 78
+          },
+          {
+            "start": 39938.39999999991,
+            "duration": 94
+          },
+          {
+            "start": 40135.299999999814,
+            "duration": 58
+          },
+          {
+            "start": 40409,
+            "duration": 179
+          },
+          {
+            "start": 40600,
+            "duration": 54
+          },
+          {
+            "start": 40802.200000000186,
+            "duration": 55
+          },
+          {
+            "start": 40955.60000000009,
+            "duration": 86
+          },
+          {
+            "start": 41097.5,
+            "duration": 55
+          },
+          {
+            "start": 41412.799999999814,
+            "duration": 106
+          },
+          {
+            "start": 41628.5,
+            "duration": 82
+          },
+          {
+            "start": 42376.700000000186,
+            "duration": 66
+          },
+          {
+            "start": 42654.10000000009,
+            "duration": 129
+          },
+          {
+            "start": 42904.60000000009,
+            "duration": 132
+          },
+          {
+            "start": 43106.60000000009,
+            "duration": 74
+          },
+          {
+            "start": 43285.5,
+            "duration": 66
+          },
+          {
+            "start": 43452,
+            "duration": 68
+          },
+          {
+            "start": 43631.60000000009,
+            "duration": 68
+          },
+          {
+            "start": 43796.200000000186,
+            "duration": 72
+          },
+          {
+            "start": 43967.700000000186,
+            "duration": 222
+          },
+          {
+            "start": 44256.10000000009,
+            "duration": 214
+          },
+          {
+            "start": 44488.700000000186,
+            "duration": 185
+          },
+          {
+            "start": 44697.200000000186,
+            "duration": 124
+          },
+          {
+            "start": 45086.700000000186,
+            "duration": 76
+          },
+          {
+            "start": 45398.60000000009,
+            "duration": 208
+          },
+          {
+            "start": 45628.700000000186,
+            "duration": 111
+          },
+          {
+            "start": 45768.39999999991,
+            "duration": 77
+          }
+        ],
+        "diagnostic": "F3 / ENGINE DIAGNOSTICS\nFPS 9.4 \u00b7 avg 5.3 \u00b7 ~1% low 2.5\nWorst 400.5 ms \u00b7 samples 49/600\nJS simulation 2.98 ms \u00b7 AI subset 1.77 ms\nCPU render submission 12.39 ms\nGPU time: not sampled (CPU time is NOT GPU time)\nDraw calls 1015 \u00b7 triangles 188880\nGeometries 828 \u00b7 textures 35 \u00b7 programs 158 \u00b7 bots 7\nJS heap 33.5 MiB\nWebGL memory: counts only, bytes unavailable\nDEPLOY shattered_wall (nested timings inclusive)\nLobby teardown: 3.4 ms\nOld world cleanup: 0.1 ms\nTexture paint: metal: 5.6 ms\nProcedural texture: metal: 5.9 ms\nTexture paint: concrete: 3.1 ms\nProcedural texture: concrete: 3.1 ms\nTexture paint: helipad: 18.3 ms\nProcedural texture: helipad: 18.5 ms\nOffshore base resources: 0.3 ms\nOffshore helipad: 1.0 ms\nOffshore railings: 34.5 ms\nOffshore signal terminal: 0.5 ms\nOffshore helicopter: 4.7 ms\nOffshore armory: 1.3 ms\nOffshore navigation: 0.3 ms\nOffshore supplies: 3.4 ms\nOperator construction: 297.5 ms\nPlayer, bots and equipment (inclusive): 319.1 ms\nViewmodel preparation: 90.3 ms\nMission visual preparation: 3.8 ms\nAudio preparation: 1.1 ms\nCampaign audio preparation: 14.2 ms\nLighting programs: 52.6 ms\nPostprocessing programs: 5.3 ms\nGeometry, textures and shadows: 2973.0 ms\nCombat lighting programs: 103.9 ms\nCombat lighting draws: 14817.8 ms\nRestore deployment lighting: 13.7 ms\nFirst complete render: 283.3 ms\nDeployment ready: 0.0 ms\nFirst gameplay frame CPU submission: 17.6 ms\nDeployment to first visible frame (inclusive): 22560.9 ms",
+        "initialization": [
+          {
+            "name": "Lobby teardown",
+            "milliseconds": 3.3999999999068677
+          },
+          {
+            "name": "Old world cleanup",
+            "milliseconds": 0.10000000009313226
+          },
+          {
+            "name": "Texture paint: metal",
+            "milliseconds": 5.600000000093132
+          },
+          {
+            "name": "Procedural texture: metal",
+            "milliseconds": 5.900000000372529
+          },
+          {
+            "name": "Texture paint: concrete",
+            "milliseconds": 3.1000000000931323
+          },
+          {
+            "name": "Procedural texture: concrete",
+            "milliseconds": 3.1000000000931323
+          },
+          {
+            "name": "Texture paint: helipad",
+            "milliseconds": 18.300000000279397
+          },
+          {
+            "name": "Procedural texture: helipad",
+            "milliseconds": 18.5
+          },
+          {
+            "name": "Offshore base resources",
+            "milliseconds": 0.2999999998137355
+          },
+          {
+            "name": "Offshore helipad",
+            "milliseconds": 1
+          },
+          {
+            "name": "Offshore railings",
+            "milliseconds": 34.5
+          },
+          {
+            "name": "Offshore signal terminal",
+            "milliseconds": 0.5
+          },
+          {
+            "name": "Offshore helicopter",
+            "milliseconds": 4.7000000001862645
+          },
+          {
+            "name": "Offshore armory",
+            "milliseconds": 1.3000000002793968
+          },
+          {
+            "name": "Offshore navigation",
+            "milliseconds": 0.2999999998137355
+          },
+          {
+            "name": "Offshore supplies",
+            "milliseconds": 3.3999999999068677
+          },
+          {
+            "name": "Operator construction",
+            "milliseconds": 297.5
+          },
+          {
+            "name": "Player, bots and equipment (inclusive)",
+            "milliseconds": 319.09999999962747
+          },
+          {
+            "name": "Viewmodel preparation",
+            "milliseconds": 90.29999999981374
+          },
+          {
+            "name": "Mission visual preparation",
+            "milliseconds": 3.799999999348074
+          },
+          {
+            "name": "Audio preparation",
+            "milliseconds": 1.1000000000931323
+          },
+          {
+            "name": "Campaign audio preparation",
+            "milliseconds": 14.200000000186265
+          },
+          {
+            "name": "Lighting programs",
+            "milliseconds": 52.60000000009313
+          },
+          {
+            "name": "Postprocessing programs",
+            "milliseconds": 5.300000000279397
+          },
+          {
+            "name": "Geometry, textures and shadows",
+            "milliseconds": 2973
+          },
+          {
+            "name": "Combat lighting programs",
+            "milliseconds": 103.8999999994412
+          },
+          {
+            "name": "Combat lighting draws",
+            "milliseconds": 14817.799999999814
+          },
+          {
+            "name": "Restore deployment lighting",
+            "milliseconds": 13.699999999720603
+          },
+          {
+            "name": "First complete render",
+            "milliseconds": 283.29999999981374
+          },
+          {
+            "name": "Deployment ready",
+            "milliseconds": 0
+          },
+          {
+            "name": "First gameplay frame CPU submission",
+            "milliseconds": 17.600000000093132
+          },
+          {
+            "name": "Deployment to first visible frame (inclusive)",
+            "milliseconds": 22560.899999999907
+          }
+        ],
+        "glRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+      },
+      {
+        "map": "shattered_wall",
+        "faction": "usmc",
+        "run": "replay",
+        "started": 47370.700000000186,
+        "ready": 70498.1000000001,
+        "loadingMs": 23127.399999999907,
+        "frames": [
+          {
+            "state": "DEATH_SCREEN",
+            "phase": "first frames",
+            "time": 47501.799999999814,
+            "render": 8.300000000279397,
+            "simulation": 0,
+            "programs": 158,
+            "geometries": 832,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "DEATH_SCREEN",
+            "phase": "first frames",
+            "time": 47617.799999999814,
+            "render": 7.900000000372529,
+            "simulation": 0,
+            "programs": 158,
+            "geometries": 832,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "DEATH_SCREEN",
+            "phase": "first frames",
+            "time": 48557.89999999991,
+            "render": 13.399999999906868,
+            "simulation": 0.10000000009313226,
+            "programs": 158,
+            "geometries": 832,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "DEATH_SCREEN",
+            "phase": "first frames",
+            "time": 48590.60000000009,
+            "render": 12.299999999813735,
+            "simulation": 0,
+            "programs": 158,
+            "geometries": 832,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 70442.70000000019,
+            "render": 16.799999999813735,
+            "simulation": 16.299999999813735,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 70509.5,
+            "render": 11.700000000186265,
+            "simulation": 1,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 70556.1000000001,
+            "render": 26.600000000093132,
+            "simulation": 11,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 70779.79999999981,
+            "render": 12.200000000186265,
+            "simulation": 1.2000000001862645,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 70929.29999999981,
+            "render": 8.700000000186265,
+            "simulation": 0.6000000000931323,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 71169.20000000019,
+            "render": 10.400000000372529,
+            "simulation": 1.099999999627471,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 71423.20000000019,
+            "render": 16.399999999906868,
+            "simulation": 1,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 71999,
+            "render": 9.100000000093132,
+            "simulation": 0.7999999998137355,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 72176.79999999981,
+            "render": 12.299999999813735,
+            "simulation": 1.400000000372529,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 72223.8999999999,
+            "render": 18.5,
+            "simulation": 1.1000000000931323,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 72352.1000000001,
+            "render": 11.699999999720603,
+            "simulation": 0.6000000000931323,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 72593,
+            "render": 10.800000000279397,
+            "simulation": 0.7999999998137355,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 72750,
+            "render": 11.300000000279397,
+            "simulation": 0.8999999999068677,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 72937.5,
+            "render": 18,
+            "simulation": 0.8999999999068677,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 73131.6000000001,
+            "render": 12.399999999906868,
+            "simulation": 0.5,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 73216.1000000001,
+            "render": 8.799999999813735,
+            "simulation": 0.6000000000931323,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "first frames",
+            "time": 73288.70000000019,
+            "render": 15.5,
+            "simulation": 1.099999999627471,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 73530.8999999999,
+            "render": 20.899999999906868,
+            "simulation": 1.8000000002793968,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 73623.8999999999,
+            "render": 11,
+            "simulation": 1.1000000000931323,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 73831.70000000019,
+            "render": 12.399999999906868,
+            "simulation": 1.8999999999068677,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 74007.79999999981,
+            "render": 9.100000000093132,
+            "simulation": 1.5,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 74194.6000000001,
+            "render": 13.200000000186265,
+            "simulation": 1.6999999997206032,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 74460.29999999981,
+            "render": 6.199999999720603,
+            "simulation": 1.3000000002793968,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 74828.79999999981,
+            "render": 6.800000000279397,
+            "simulation": 1.5,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 74919.6000000001,
+            "render": 7.899999999906868,
+            "simulation": 0.8999999999068677,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 74956.6000000001,
+            "render": 12.100000000093132,
+            "simulation": 1.2999999998137355,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 74972.1000000001,
+            "render": 9.799999999813735,
+            "simulation": 0.8999999999068677,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 75191.79999999981,
+            "render": 15,
+            "simulation": 1.6000000000931323,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 75298.6000000001,
+            "render": 11.100000000093132,
+            "simulation": 0.8999999999068677,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 75492.3999999999,
+            "render": 12.800000000279397,
+            "simulation": 1,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 75718.6000000001,
+            "render": 8.799999999813735,
+            "simulation": 1,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "turn ADS fire",
+            "time": 75866.3999999999,
+            "render": 6.600000000093132,
+            "simulation": 1,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 4
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 75972.5,
+            "render": 7.7000000001862645,
+            "simulation": 2.5,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 76116.1000000001,
+            "render": 9,
+            "simulation": 3.6999999997206032,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 76245.6000000001,
+            "render": 11.100000000093132,
+            "simulation": 3,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 76387.3999999999,
+            "render": 8.200000000186265,
+            "simulation": 2.1000000000931323,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 76566.70000000019,
+            "render": 6.7000000001862645,
+            "simulation": 3.2999999998137355,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 76686.1000000001,
+            "render": 8.700000000186265,
+            "simulation": 3.1999999997206032,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 76824.6000000001,
+            "render": 8.800000000279397,
+            "simulation": 2.1999999997206032,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 77109.5,
+            "render": 5.7999999998137355,
+            "simulation": 2,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 77319.8999999999,
+            "render": 8.299999999813735,
+            "simulation": 2.8000000002793968,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 77442.8999999999,
+            "render": 8.799999999813735,
+            "simulation": 4.800000000279397,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "signal and first wave",
+            "time": 77553.1000000001,
+            "render": 11.600000000093132,
+            "simulation": 10.5,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "helicopter arrival",
+            "time": 77681.29999999981,
+            "render": 8.200000000186265,
+            "simulation": 4.600000000093132,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "helicopter arrival",
+            "time": 77829.6000000001,
+            "render": 9.400000000372529,
+            "simulation": 3.1999999997206032,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "helicopter arrival",
+            "time": 77986.5,
+            "render": 13.700000000186265,
+            "simulation": 4,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "helicopter arrival",
+            "time": 78095,
+            "render": 18.5,
+            "simulation": 4.7999999998137355,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "helicopter arrival",
+            "time": 78289.70000000019,
+            "render": 7.2000000001862645,
+            "simulation": 2.099999999627471,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "helicopter arrival",
+            "time": 78429.1000000001,
+            "render": 9.100000000093132,
+            "simulation": 6.2999999998137355,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "helicopter arrival",
+            "time": 78562.5,
+            "render": 6,
+            "simulation": 2.3999999999068677,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          },
+          {
+            "state": "playing",
+            "phase": "helicopter arrival",
+            "time": 78752.1000000001,
+            "render": 7.2999999998137355,
+            "simulation": 2.3999999999068677,
+            "programs": 158,
+            "geometries": 822,
+            "textures": 35,
+            "bots": 7
+          }
+        ],
+        "operations": [
+          {
+            "name": "bot construction",
+            "duration": 54.39999999990687,
+            "type": "walker"
+          },
+          {
+            "name": "bot construction",
+            "duration": 50.799999999813735,
+            "type": "walker"
+          },
+          {
+            "name": "bot construction",
+            "duration": 48.6999999997206,
+            "type": "walker"
+          },
+          {
+            "name": "bot construction",
+            "duration": 49.60000000009313,
+            "type": "walker"
+          },
+          {
+            "name": "signal activation",
+            "duration": 0.6000000000931323
+          },
+          {
+            "name": "bot construction",
+            "duration": 1.099999999627471,
+            "type": "walker"
+          },
+          {
+            "name": "bot construction",
+            "duration": 0.7000000001862645,
+            "type": "runner"
+          },
+          {
+            "name": "bot construction",
+            "duration": 0.20000000018626451,
+            "type": "walker"
+          },
+          {
+            "name": "first holdout wave",
+            "duration": 2
+          },
+          {
+            "name": "inbound helicopter",
+            "duration": 0.20000000018626451
+          }
+        ],
+        "longTasks": [
+          {
+            "start": 47617.5,
+            "duration": 940
+          },
+          {
+            "start": 48985.10000000009,
+            "duration": 54
+          },
+          {
+            "start": 49042,
+            "duration": 51
+          },
+          {
+            "start": 49143.10000000009,
+            "duration": 50
+          },
+          {
+            "start": 51185,
+            "duration": 99
+          },
+          {
+            "start": 70541.70000000019,
+            "duration": 69
+          },
+          {
+            "start": 70723,
+            "duration": 91
+          },
+          {
+            "start": 71115.6000000001,
+            "duration": 114
+          },
+          {
+            "start": 71364.29999999981,
+            "duration": 107
+          },
+          {
+            "start": 71887.29999999981,
+            "duration": 231
+          },
+          {
+            "start": 72145.1000000001,
+            "duration": 56
+          },
+          {
+            "start": 72531.29999999981,
+            "duration": 128
+          },
+          {
+            "start": 72894.1000000001,
+            "duration": 78
+          },
+          {
+            "start": 73088.3999999999,
+            "duration": 101
+          },
+          {
+            "start": 73199.3999999999,
+            "duration": 51
+          },
+          {
+            "start": 73482.29999999981,
+            "duration": 76
+          },
+          {
+            "start": 73794.79999999981,
+            "duration": 62
+          },
+          {
+            "start": 73976.29999999981,
+            "duration": 51
+          },
+          {
+            "start": 74170,
+            "duration": 58
+          },
+          {
+            "start": 74401.79999999981,
+            "duration": 119
+          },
+          {
+            "start": 74745.1000000001,
+            "duration": 148
+          },
+          {
+            "start": 75137.1000000001,
+            "duration": 73
+          },
+          {
+            "start": 75463.1000000001,
+            "duration": 63
+          },
+          {
+            "start": 75669.6000000001,
+            "duration": 93
+          },
+          {
+            "start": 75839.8999999999,
+            "duration": 60
+          },
+          {
+            "start": 76525.1000000001,
+            "duration": 69
+          },
+          {
+            "start": 76799.70000000019,
+            "duration": 65
+          },
+          {
+            "start": 77047.5,
+            "duration": 196
+          },
+          {
+            "start": 77272.8999999999,
+            "duration": 127
+          },
+          {
+            "start": 77413.70000000019,
+            "duration": 67
+          },
+          {
+            "start": 77519.5,
+            "duration": 60
+          },
+          {
+            "start": 77651.5,
+            "duration": 56
+          },
+          {
+            "start": 77799.79999999981,
+            "duration": 67
+          },
+          {
+            "start": 77937.6000000001,
+            "duration": 100
+          },
+          {
+            "start": 78246.3999999999,
+            "duration": 143
+          },
+          {
+            "start": 78400.79999999981,
+            "duration": 88
+          },
+          {
+            "start": 78522.20000000019,
+            "duration": 81
+          },
+          {
+            "start": 78712.79999999981,
+            "duration": 195
+          }
+        ],
+        "diagnostic": "F3 / ENGINE DIAGNOSTICS\nFPS 5.3 \u00b7 avg 6.0 \u00b7 ~1% low 1.7\nWorst 575.8 ms \u00b7 samples 50/600\nJS simulation 2.28 ms \u00b7 AI subset 1.16 ms\nCPU render submission 11.06 ms\nGPU time: not sampled (CPU time is NOT GPU time)\nDraw calls 959 \u00b7 triangles 187796\nGeometries 822 \u00b7 textures 35 \u00b7 programs 158 \u00b7 bots 7\nJS heap 33.5 MiB\nWebGL memory: counts only, bytes unavailable\nDEPLOY shattered_wall (nested timings inclusive)\nLobby teardown: 0.2 ms\nOld world cleanup: 24.8 ms\nProcedural texture: metal: 0.3 ms\nProcedural texture: concrete: 0.1 ms\nProcedural texture: helipad: 0.2 ms\nOffshore base resources: 0.4 ms\nOffshore helipad: 0.8 ms\nOffshore railings: 42.4 ms\nOffshore signal terminal: 0.8 ms\nOffshore helicopter: 7.9 ms\nOffshore armory: 3.7 ms\nOffshore navigation: 1.3 ms\nOffshore supplies: 2.1 ms\nOperator construction: 204.5 ms\nPlayer, bots and equipment (inclusive): 224.5 ms\nViewmodel preparation: 0.0 ms\nMission visual preparation: 2.1 ms\nAudio preparation: 0.2 ms\nCampaign audio preparation: 0.1 ms\nLighting programs: 25.7 ms\nPostprocessing programs: 1.2 ms\nGeometry, textures and shadows: 2369.9 ms\nCombat lighting programs: 73.7 ms\nCombat lighting draws: 15133.6 ms\nRestore deployment lighting: 14.8 ms\nFirst complete render: 113.9 ms\nDeployment ready: 0.0 ms\nFirst gameplay frame CPU submission: 16.9 ms\nDeployment to first visible frame (inclusive): 21901.5 ms",
+        "initialization": [
+          {
+            "name": "Lobby teardown",
+            "milliseconds": 0.20000000018626451
+          },
+          {
+            "name": "Old world cleanup",
+            "milliseconds": 24.800000000279397
+          },
+          {
+            "name": "Procedural texture: metal",
+            "milliseconds": 0.2999999998137355
+          },
+          {
+            "name": "Procedural texture: concrete",
+            "milliseconds": 0.09999999962747097
+          },
+          {
+            "name": "Procedural texture: helipad",
+            "milliseconds": 0.19999999972060323
+          },
+          {
+            "name": "Offshore base resources",
+            "milliseconds": 0.39999999990686774
+          },
+          {
+            "name": "Offshore helipad",
+            "milliseconds": 0.7999999998137355
+          },
+          {
+            "name": "Offshore railings",
+            "milliseconds": 42.40000000037253
+          },
+          {
+            "name": "Offshore signal terminal",
+            "milliseconds": 0.7999999998137355
+          },
+          {
+            "name": "Offshore helicopter",
+            "milliseconds": 7.899999999906868
+          },
+          {
+            "name": "Offshore armory",
+            "milliseconds": 3.6999999997206032
+          },
+          {
+            "name": "Offshore navigation",
+            "milliseconds": 1.2999999998137355
+          },
+          {
+            "name": "Offshore supplies",
+            "milliseconds": 2.1000000000931323
+          },
+          {
+            "name": "Operator construction",
+            "milliseconds": 204.5
+          },
+          {
+            "name": "Player, bots and equipment (inclusive)",
+            "milliseconds": 224.5
+          },
+          {
+            "name": "Viewmodel preparation",
+            "milliseconds": 0
+          },
+          {
+            "name": "Mission visual preparation",
+            "milliseconds": 2.1000000000931323
+          },
+          {
+            "name": "Audio preparation",
+            "milliseconds": 0.19999999972060323
+          },
+          {
+            "name": "Campaign audio preparation",
+            "milliseconds": 0.10000000009313226
+          },
+          {
+            "name": "Lighting programs",
+            "milliseconds": 25.700000000186265
+          },
+          {
+            "name": "Postprocessing programs",
+            "milliseconds": 1.1999999997206032
+          },
+          {
+            "name": "Geometry, textures and shadows",
+            "milliseconds": 2369.900000001304
+          },
+          {
+            "name": "Combat lighting programs",
+            "milliseconds": 73.6999999997206
+          },
+          {
+            "name": "Combat lighting draws",
+            "milliseconds": 15133.59999999823
+          },
+          {
+            "name": "Restore deployment lighting",
+            "milliseconds": 14.800000000279397
+          },
+          {
+            "name": "First complete render",
+            "milliseconds": 113.89999999990687
+          },
+          {
+            "name": "Deployment ready",
+            "milliseconds": 0
+          },
+          {
+            "name": "First gameplay frame CPU submission",
+            "milliseconds": 16.899999999906868
+          },
+          {
+            "name": "Deployment to first visible frame (inclusive)",
+            "milliseconds": 21901.5
+          }
+        ],
+        "glRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+      }
+    ],
+    "cancellations": [],
+    "errors": []
+  }
+}

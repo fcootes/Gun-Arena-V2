@@ -5,6 +5,10 @@ import type { Bot, CampaignEntity } from "./types";
 import { animateFacilityBossIntro } from "./area51Bosses";
 import { audioManager } from "./campaignAudio";
 
+const REGULAR_ENEMY_LIMIT = 18;
+const SPARTAN_COUNT = 3;
+export const AREA51_MAX_ARMED_ENCOUNTERS = REGULAR_ENEMY_LIMIT + SPARTAN_COUNT;
+
 /** Faction-safe finite encounters with boss references retained through corpse cleanup. */
 export class Area51ExtractionGameLoop extends ExtractionGameLoop {
   private mission: ExtractionManagerConfig;
@@ -97,7 +101,7 @@ export class Area51ExtractionGameLoop extends ExtractionGameLoop {
         : "ELIMINATE SPARTAN SQUAD";
     this.state.objectiveDetail =
       "Pickup has arrived, let's get the hell out of here! Clear the warehouse threat to unlock the rear blast doors.";
-    const count = this.state.faction === "usmc" ? 1 : 3;
+    const count = this.state.faction === "usmc" ? 1 : SPARTAN_COUNT;
     for (let i = 0; i < count; i++) this.spawnEnemy(4, true, i);
     audioManager.play("evac_inbound");
     if (this.state.faction === "apex") audioManager.play("spartan_radio");
@@ -127,7 +131,7 @@ export class Area51ExtractionGameLoop extends ExtractionGameLoop {
       if (
         this.spawnClock <= 0 &&
         this.mission.bots.filter((b: Bot) => b.alive && b.team !== "blue")
-          .length < 18
+          .length < REGULAR_ENEMY_LIMIT
       ) {
         this.spawnEnemy(this.pending.zone, false, this.pending.remaining);
         this.pending.remaining--;

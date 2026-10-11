@@ -18,6 +18,7 @@ export class DeploymentPipeline {
   constructor(private progress: (stage: string) => void) {}
   cancel() { this.controller.abort(); }
   get canceled() { return this.controller.signal.aborted; }
+  get signal() { return this.controller.signal; }
   async stage<T>(name: string, action: () => T | Promise<T>): Promise<T> {
     this.controller.signal.throwIfAborted();
     this.progress(name);
@@ -28,6 +29,6 @@ export class DeploymentPipeline {
       const result = await action();
       this.controller.signal.throwIfAborted();
       return result;
-    } finally { initialization.record(name, performance.now() - start); }
+    } finally { initialization.record(name.replace(/^Lighting programs \d+\/\d+$/, 'Combat lighting programs'), performance.now() - start); }
   }
 }

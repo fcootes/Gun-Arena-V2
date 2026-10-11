@@ -1,0 +1,34 @@
+{
+  "browser": "134.0.6998.35",
+  "cancellations": [
+    {
+      "stage": "Lighting programs",
+      "preparedCount": 0,
+      "sceneChildren": 0,
+      "contextLost": true,
+      "stalePlayingFrames": 0
+    },
+    {
+      "stage": "Geometry, textures and shadows",
+      "preparedCount": 0,
+      "sceneChildren": 0,
+      "contextLost": true,
+      "stalePlayingFrames": 0
+    },
+    {
+      "stage": "Combat lighting draws",
+      "preparedCount": 0,
+      "sceneChildren": 0,
+      "contextLost": true,
+      "stalePlayingFrames": 0
+    },
+    {
+      "stage": "First complete render",
+      "preparedCount": 0,
+      "sceneChildren": 0,
+      "contextLost": true,
+      "stalePlayingFrames": 0
+    }
+  ],
+  "errors": []
+}

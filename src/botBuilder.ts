@@ -12,6 +12,29 @@ import {
   TacticalAIState
 } from './types';
 
+// Body primitives are immutable; their engine owner outlives individual actors.
+// Dimension keys preserve authored bounds without scaling parent meshes.
+// Random-sized ghillie threads and torn fabric remain actor-owned below.
+const actorGeometryCache = new Map<string, THREE.BufferGeometry>();
+const sharedActorGeometries = new WeakSet<THREE.BufferGeometry>();
+function cachedActorGeometry<T extends THREE.BufferGeometry>(kind: string, args: readonly unknown[], create: () => T): T {
+  const key = `${kind}:${JSON.stringify(args)}`;
+  let geometry = actorGeometryCache.get(key) as T | undefined;
+  if (!geometry) { geometry = create(); actorGeometryCache.set(key, geometry); sharedActorGeometries.add(geometry); }
+  return geometry;
+}
+const actorGeometry = {
+  Box: (...args: ConstructorParameters<typeof THREE.BoxGeometry>) => cachedActorGeometry('Box', args, () => new THREE.BoxGeometry(...args)),
+  Circle: (...args: ConstructorParameters<typeof THREE.CircleGeometry>) => cachedActorGeometry('Circle', args, () => new THREE.CircleGeometry(...args)),
+  Cone: (...args: ConstructorParameters<typeof THREE.ConeGeometry>) => cachedActorGeometry('Cone', args, () => new THREE.ConeGeometry(...args)),
+  Cylinder: (...args: ConstructorParameters<typeof THREE.CylinderGeometry>) => cachedActorGeometry('Cylinder', args, () => new THREE.CylinderGeometry(...args)),
+  Dodecahedron: (...args: ConstructorParameters<typeof THREE.DodecahedronGeometry>) => cachedActorGeometry('Dodecahedron', args, () => new THREE.DodecahedronGeometry(...args)),
+  Icosahedron: (...args: ConstructorParameters<typeof THREE.IcosahedronGeometry>) => cachedActorGeometry('Icosahedron', args, () => new THREE.IcosahedronGeometry(...args)),
+  Plane: (...args: ConstructorParameters<typeof THREE.PlaneGeometry>) => cachedActorGeometry('Plane', args, () => new THREE.PlaneGeometry(...args)),
+  Sphere: (...args: ConstructorParameters<typeof THREE.SphereGeometry>) => cachedActorGeometry('Sphere', args, () => new THREE.SphereGeometry(...args)),
+  Torus: (...args: ConstructorParameters<typeof THREE.TorusGeometry>) => cachedActorGeometry('Torus', args, () => new THREE.TorusGeometry(...args)),
+};
+
 /* =============================================================================
  * PROCEDURAL SURFACE DETAIL — cached canvas bump maps & physical glass
  * Built once per session and reused across every material that wants them, so
@@ -208,7 +231,7 @@ function makeChamferedPlate(
   height: number,
   mat: THREE.Material
 ): THREE.Mesh {
-  const geo = new THREE.CylinderGeometry(topRadius, bottomRadius, height, 4, 1);
+  const geo = actorGeometry.Cylinder(topRadius, bottomRadius, height, 4, 1);
   const mesh = new THREE.Mesh(geo, mat);
   mesh.rotation.y = Math.PI / 4;
   return mesh;
@@ -488,13 +511,13 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     else if (zType === 'tank') torsoGroup.rotation.x = 0.22;
   }
 
-  const lowerTorso = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.24, 0.22), matPants);
+  const lowerTorso = new THREE.Mesh(actorGeometry.Box(0.38, 0.24, 0.22), matPants);
   lowerTorso.position.y = 0.98;
   lowerTorso.castShadow = true;
   torsoGroup.add(lowerTorso);
   hitParts.push(lowerTorso);
 
-  const upperTorso = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.36, 0.26), matShirt);
+  const upperTorso = new THREE.Mesh(actorGeometry.Box(0.56, 0.36, 0.26), matShirt);
   upperTorso.position.y = 1.28;
   upperTorso.castShadow = true;
   torsoGroup.add(upperTorso);
@@ -511,13 +534,13 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         torsoGroup.add(iotvCarrier);
         hitParts.push(iotvCarrier);
 
-        const neckGuard = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.12, 0.30), matSteelArmor);
+        const neckGuard = new THREE.Mesh(actorGeometry.Box(0.32, 0.12, 0.30), matSteelArmor);
         neckGuard.position.set(0, 1.50, 0.01);
         torsoGroup.add(neckGuard);
         hitParts.push(neckGuard);
 
         [-0.14, -0.05, 0.05, 0.14].forEach((px) => {
-          const pouch = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.15, 0.08), matPouches);
+          const pouch = new THREE.Mesh(actorGeometry.Box(0.08, 0.15, 0.08), matPouches);
           pouch.position.set(px, 1.20, 0.19);
           torsoGroup.add(pouch);
           hitParts.push(pouch);
@@ -525,12 +548,12 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
 
         if (options.torsoConfig === 'EXO_HARNESS') {
           // Powered load-bearing spine frame
-          const spine = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.5, 0.1), matSteelArmor);
+          const spine = new THREE.Mesh(actorGeometry.Box(0.12, 0.5, 0.1), matSteelArmor);
           spine.position.set(0, 1.26, -0.2);
           torsoGroup.add(spine);
           hitParts.push(spine);
           [-0.24, 0.24].forEach((px) => {
-            const actuator = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.026, 0.34, 8), matAccent);
+            const actuator = new THREE.Mesh(actorGeometry.Cylinder(0.03, 0.026, 0.34, 8), matAccent);
             actuator.position.set(px, 1.24, -0.14);
             torsoGroup.add(actuator);
           });
@@ -542,7 +565,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         hitParts.push(standardPlate);
 
         [-0.12, 0, 0.12].forEach((px) => {
-          const pouch = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.14, 0.06), matPouches);
+          const pouch = new THREE.Mesh(actorGeometry.Box(0.09, 0.14, 0.06), matPouches);
           pouch.position.set(px, 1.18, 0.17);
           torsoGroup.add(pouch);
           hitParts.push(pouch);
@@ -562,13 +585,13 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
 
       if (['rifleman', 'sergeant', 'ghost', 'infiltrator'].includes(subClass)) {
         [-0.13, 0, 0.13].forEach((px) => {
-          const pouch = new THREE.Mesh(new THREE.BoxGeometry(0.088, 0.14, 0.065), matPouches);
+          const pouch = new THREE.Mesh(actorGeometry.Box(0.088, 0.14, 0.065), matPouches);
           pouch.position.set(px, 1.22, 0.175);
           pouch.castShadow = true;
           torsoGroup.add(pouch);
           hitParts.push(pouch);
         });
-        const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.12, 0.09), matPouches);
+        const sideL = new THREE.Mesh(actorGeometry.Box(0.07, 0.12, 0.09), matPouches);
         sideL.position.set(-0.27, 1.24, 0.02);
         torsoGroup.add(sideL);
         hitParts.push(sideL);
@@ -578,36 +601,36 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     /* ------------------- FACTION-SPECIFIC ACCESSORY DETAIL ------------------- */
     if (faction === 'usmc') {
       // Chest admin panel with pen/knife insert lines + PTT radio button
-      const adminPanel = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.08, 0.02), matPouches);
+      const adminPanel = new THREE.Mesh(actorGeometry.Box(0.1, 0.08, 0.02), matPouches);
       adminPanel.position.set(0.2, 1.15, 0.19);
       torsoGroup.add(adminPanel);
-      const insertLineA = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.06, 0.006), matTapeWrap);
+      const insertLineA = new THREE.Mesh(actorGeometry.Box(0.004, 0.06, 0.006), matTapeWrap);
       insertLineA.position.set(0.195, 1.15, 0.201);
       const insertLineB = insertLineA.clone();
       insertLineB.position.x = 0.205;
       torsoGroup.add(insertLineA, insertLineB);
-      const pttButton = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.012, 10), matAccent);
+      const pttButton = new THREE.Mesh(actorGeometry.Cylinder(0.014, 0.014, 0.012, 10), matAccent);
       pttButton.rotation.x = Math.PI / 2;
       pttButton.position.set(-0.24, 1.36, 0.16);
       torsoGroup.add(pttButton);
 
       // Shoulder-routed antenna: two angled thin cylinder segments
-      const antennaBase = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.008, 0.16, 6), matWireBundle);
+      const antennaBase = new THREE.Mesh(actorGeometry.Cylinder(0.006, 0.008, 0.16, 6), matWireBundle);
       antennaBase.position.set(-0.3, 1.5, -0.04);
       antennaBase.rotation.z = 0.12;
-      const antennaTip = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.006, 0.22, 6), matWireBundle);
+      const antennaTip = new THREE.Mesh(actorGeometry.Cylinder(0.004, 0.006, 0.22, 6), matWireBundle);
       antennaTip.position.set(-0.32, 1.66, -0.06);
       antennaTip.rotation.z = 0.28;
       torsoGroup.add(antennaBase, antennaTip);
 
       // Dump pouch, left hip
-      const dumpPouch = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.13, 0.09), matPouches);
+      const dumpPouch = new THREE.Mesh(actorGeometry.Box(0.11, 0.13, 0.09), matPouches);
       dumpPouch.position.set(-0.24, 0.92, 0.05);
       torsoGroup.add(dumpPouch);
       hitParts.push(dumpPouch);
     } else {
       // Mercenary: Kevlar neck collar as a torus arc (curved, not a box)
-      const neckCollarGeo = new THREE.TorusGeometry(0.15, 0.035, 8, 16, Math.PI * 1.3);
+      const neckCollarGeo = actorGeometry.Torus(0.15, 0.035, 8, 16, Math.PI * 1.3);
       const neckCollar = new THREE.Mesh(neckCollarGeo, matSteelArmor);
       neckCollar.rotation.x = Math.PI / 2;
       neckCollar.rotation.z = Math.PI * 0.85;
@@ -622,7 +645,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       torsoGroup.add(pauldronPlate);
       hitParts.push(pauldronPlate);
       for (let b = 0; b < 4; b++) {
-        const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.01, 6), matAccent);
+        const bolt = new THREE.Mesh(actorGeometry.Cylinder(0.008, 0.008, 0.01, 6), matAccent);
         bolt.rotation.x = Math.PI / 2;
         const a = (b / 4) * Math.PI * 2;
         bolt.position.set(-0.33 + Math.cos(a) * 0.06, 1.46 + Math.sin(a) * 0.06, 0.1);
@@ -630,12 +653,12 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       }
 
       // Crossed bandolier with shotgun-shell loops
-      const bandolier = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.5, 0.02), matTapeWrap);
+      const bandolier = new THREE.Mesh(actorGeometry.Box(0.06, 0.5, 0.02), matTapeWrap);
       bandolier.position.set(0.05, 1.28, 0.16);
       bandolier.rotation.z = 0.5;
       torsoGroup.add(bandolier);
       for (let s = 0; s < 5; s++) {
-        const shell = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.045, 8), matBrassShell);
+        const shell = new THREE.Mesh(actorGeometry.Cylinder(0.014, 0.014, 0.045, 8), matBrassShell);
         shell.position.set(0.05 - 0.06 * s * 0.35, 1.44 - 0.09 * s, 0.17);
         shell.rotation.z = 0.5;
         torsoGroup.add(shell);
@@ -643,7 +666,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
 
       // Zip-tied loose gear
       [0.18, -0.05].forEach((px) => {
-        const tie = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.004, 6, 10), matZipTie);
+        const tie = new THREE.Mesh(actorGeometry.Torus(0.02, 0.004, 6, 10), matZipTie);
         tie.position.set(px, 1.1, 0.18);
         torsoGroup.add(tie);
       });
@@ -657,14 +680,14 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     }
 
     if (subClass === 'corpsman') {
-      const medBackpack = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.38, 0.20), matVest);
+      const medBackpack = new THREE.Mesh(actorGeometry.Box(0.38, 0.38, 0.20), matVest);
       medBackpack.position.set(0, 1.28, -0.23);
       medBackpack.castShadow = true;
-      const patchBg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.02), matRedCross);
+      const patchBg = new THREE.Mesh(actorGeometry.Box(0.12, 0.12, 0.02), matRedCross);
       patchBg.position.set(0, 0, -0.105);
-      const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.09, 0.025), matWhiteCross);
+      const crossV = new THREE.Mesh(actorGeometry.Box(0.03, 0.09, 0.025), matWhiteCross);
       crossV.position.set(0, 0, -0.108);
-      const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.03, 0.025), matWhiteCross);
+      const crossH = new THREE.Mesh(actorGeometry.Box(0.09, 0.03, 0.025), matWhiteCross);
       crossH.position.set(0, 0, -0.108);
       medBackpack.add(patchBg, crossV, crossH);
       torsoGroup.add(medBackpack);
@@ -672,7 +695,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     }
 
     if (subClass === 'pointman') {
-      const throatGuard = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.12, 0.26), matVest);
+      const throatGuard = new THREE.Mesh(actorGeometry.Box(0.28, 0.12, 0.26), matVest);
       throatGuard.position.set(0, 1.48, 0.02);
       throatGuard.castShadow = true;
       torsoGroup.add(throatGuard);
@@ -682,7 +705,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     if (subClass === 'recon' || subClass === 'elite_recon') {
       for (let i = 0; i < 8; i++) {
         const mat = i % 2 === 0 ? matFoliage : matFoliageSage;
-        const strip = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.09, 0.04), mat);
+        const strip = new THREE.Mesh(actorGeometry.Box(0.04, 0.09, 0.04), mat);
         strip.position.set((Math.random() - 0.5) * 0.4, 1.2 + (Math.random() - 0.5) * 0.2, 0.16);
         strip.rotation.set(
           (Math.random() - 0.5) * 0.4,
@@ -696,26 +719,26 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
 
     if (isSpecializedBot && !eliteRole) {
       if (faction === 'usmc') {
-        const breacherNeck = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.12, 0.28), matVest);
+        const breacherNeck = new THREE.Mesh(actorGeometry.Box(0.30, 0.12, 0.28), matVest);
         breacherNeck.position.set(0, 1.48, 0.02);
         breacherNeck.castShadow = true;
         torsoGroup.add(breacherNeck);
         hitParts.push(breacherNeck);
 
-        const breacherGroin = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.16, 0.06), matVest);
+        const breacherGroin = new THREE.Mesh(actorGeometry.Box(0.24, 0.16, 0.06), matVest);
         breacherGroin.position.set(0, 0.82, 0.12);
         breacherGroin.castShadow = true;
         torsoGroup.add(breacherGroin);
         hitParts.push(breacherGroin);
 
-        const throatMic = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.024, 0.04), matGun);
+        const throatMic = new THREE.Mesh(actorGeometry.Box(0.14, 0.024, 0.04), matGun);
         throatMic.position.set(0, 1.46, 0.145);
         torsoGroup.add(throatMic);
 
         healthMultiplier *= 1.15;
         speedMultiplier *= 0.95;
       } else {
-        const lowVisRig = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.22, 0.14), matSteelArmor);
+        const lowVisRig = new THREE.Mesh(actorGeometry.Box(0.42, 0.22, 0.14), matSteelArmor);
         lowVisRig.position.set(0, 1.22, 0.13);
         lowVisRig.castShadow = true;
         torsoGroup.add(lowVisRig);
@@ -727,7 +750,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     }
 
     if (subClass === 'juggernaut') {
-      const waistPlate = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.16, 0.28), matSteelArmor);
+      const waistPlate = new THREE.Mesh(actorGeometry.Box(0.44, 0.16, 0.28), matSteelArmor);
       waistPlate.position.y = 0.98;
       torsoGroup.add(waistPlate);
       hitParts.push(waistPlate);
@@ -746,7 +769,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       speedMultiplier *= 1.05;
 
       // Cyan command band worn by every elite operator
-      const commandBand = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.035, 0.16), matAccent);
+      const commandBand = new THREE.Mesh(actorGeometry.Box(0.15, 0.035, 0.16), matAccent);
       commandBand.position.set(-0.3, 1.34, 0);
       torsoGroup.add(commandBand);
 
@@ -758,17 +781,17 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         frontPlate.castShadow = true;
         const backPlate = makeChamferedPlate(0.36, 0.42, 0.40, matSteelArmor);
         backPlate.position.set(0, 1.28, -0.2);
-        const ammoHopper = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.19, 0.34, 10), matGun);
+        const ammoHopper = new THREE.Mesh(actorGeometry.Cylinder(0.16, 0.19, 0.34, 10), matGun);
         ammoHopper.position.set(0, 1.26, -0.3);
         // Articulated ammo chute: three angled cylinder links approximating a
         // flexible belt feed from the hopper into the weapon receiver.
-        const chuteLinkA = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.18, 8), matSteelArmor);
+        const chuteLinkA = new THREE.Mesh(actorGeometry.Cylinder(0.028, 0.028, 0.18, 8), matSteelArmor);
         chuteLinkA.position.set(0.14, 1.32, -0.16);
         chuteLinkA.rotation.set(0.2, 0.5, 1.1);
-        const chuteLinkB = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.16, 8), matSteelArmor);
+        const chuteLinkB = new THREE.Mesh(actorGeometry.Cylinder(0.026, 0.026, 0.16, 8), matSteelArmor);
         chuteLinkB.position.set(0.24, 1.24, -0.04);
         chuteLinkB.rotation.set(0.1, 0.9, 1.3);
-        const chuteLinkC = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.14, 8), matSteelArmor);
+        const chuteLinkC = new THREE.Mesh(actorGeometry.Cylinder(0.024, 0.024, 0.14, 8), matSteelArmor);
         chuteLinkC.position.set(0.28, 1.1, 0.1);
         chuteLinkC.rotation.set(-0.1, 1.1, 1.5);
         torsoGroup.add(frontPlate, backPlate, ammoHopper, chuteLinkA, chuteLinkB, chuteLinkC);
@@ -777,20 +800,20 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         speedMultiplier *= 0.88;
       } else if (eliteRole === 'medic') {
         // Doc-3 — trauma pack w/ visible blood bags & tourniquets, shoulder emitter
-        const medPack = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.22), matVest);
+        const medPack = new THREE.Mesh(actorGeometry.Box(0.4, 0.4, 0.22), matVest);
         medPack.position.set(0, 1.28, -0.24);
         const bloodBagA = new THREE.Mesh(
-          new THREE.BoxGeometry(0.08, 0.11, 0.03),
+          actorGeometry.Box(0.08, 0.11, 0.03),
           new THREE.MeshStandardMaterial({ color: 0x8a1010, roughness: 0.3, transparent: true, opacity: 0.85 })
         );
         bloodBagA.position.set(-0.1, 1.4, -0.12);
         const bloodBagB = bloodBagA.clone();
         bloodBagB.position.set(0.1, 1.4, -0.12);
-        const tourniquetA = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.01, 6, 12), matTapeWrap);
+        const tourniquetA = new THREE.Mesh(actorGeometry.Torus(0.05, 0.01, 6, 12), matTapeWrap);
         tourniquetA.position.set(-0.28, 1.14, 0.02);
         tourniquetA.rotation.y = Math.PI / 2;
         const emitter = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.09, 0.11, 0.16, 12),
+          actorGeometry.Cylinder(0.09, 0.11, 0.16, 12),
           new THREE.MeshStandardMaterial({
             color: 0x22c55e,
             emissive: 0x22c55e,
@@ -799,11 +822,11 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
           })
         );
         emitter.position.set(0, 1.5, -0.26);
-        const patchBg = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.02), matWhiteCross);
+        const patchBg = new THREE.Mesh(actorGeometry.Box(0.14, 0.14, 0.02), matWhiteCross);
         patchBg.position.set(0, 1.3, 0.2);
-        const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.1, 0.03), matRedCross);
+        const crossV = new THREE.Mesh(actorGeometry.Box(0.035, 0.1, 0.03), matRedCross);
         crossV.position.set(0, 1.3, 0.212);
-        const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.035, 0.03), matRedCross);
+        const crossH = new THREE.Mesh(actorGeometry.Box(0.1, 0.035, 0.03), matRedCross);
         crossH.position.set(0, 1.3, 0.212);
         torsoGroup.add(medPack, bloodBagA, bloodBagB, tourniquetA, emitter, patchBg, crossV, crossH);
         hitParts.push(medPack);
@@ -819,10 +842,10 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
           thread.rotation.set(Math.random() * 0.6, Math.random() * Math.PI, Math.random() * 0.6);
           torsoGroup.add(thread);
         }
-        const dishMast = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.26, 8), matSteelArmor);
+        const dishMast = new THREE.Mesh(actorGeometry.Cylinder(0.012, 0.012, 0.26, 8), matSteelArmor);
         dishMast.position.set(-0.24, 1.5, -0.12);
         const dish = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.11, 0.11, 0.02, 14),
+          actorGeometry.Cylinder(0.11, 0.11, 0.02, 14),
           new THREE.MeshStandardMaterial({
             color: 0xff3344,
             emissive: 0xff2233,
@@ -838,14 +861,14 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         // Wrench-5 — welder's apron, oxy-acetylene mini-tanks, slung tripod
         const apron = makeChamferedPlate(0.24, 0.3, 0.5, matTapeWrap);
         apron.position.set(0, 1.02, 0.16);
-        const toolBelt = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.1, 0.26), matPouches);
+        const toolBelt = new THREE.Mesh(actorGeometry.Box(0.46, 0.1, 0.26), matPouches);
         toolBelt.position.set(0, 1.02, 0);
-        const foldedTripod = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.52, 0.1), matSteelArmor);
+        const foldedTripod = new THREE.Mesh(actorGeometry.Box(0.1, 0.52, 0.1), matSteelArmor);
         foldedTripod.position.set(0.16, 1.3, -0.26);
         foldedTripod.rotation.z = 0.28;
-        const oxyTankA = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.4, 10), matAccent);
+        const oxyTankA = new THREE.Mesh(actorGeometry.Cylinder(0.06, 0.06, 0.4, 10), matAccent);
         oxyTankA.position.set(-0.22, 1.28, -0.2);
-        const oxyTankB = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.4, 10), matSteelArmor);
+        const oxyTankB = new THREE.Mesh(actorGeometry.Cylinder(0.06, 0.06, 0.4, 10), matSteelArmor);
         oxyTankB.position.set(-0.11, 1.28, -0.24);
         torsoGroup.add(apron, toolBelt, foldedTripod, oxyTankA, oxyTankB);
         hitParts.push(toolBelt, foldedTripod, apron);
@@ -853,7 +876,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     }
   } else {
     /* --------------------------- ZOMBIE TORSO --------------------------- */
-    const chestCavity = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.38, 0.09), matInnerCavity);
+    const chestCavity = new THREE.Mesh(actorGeometry.Box(0.34, 0.38, 0.09), matInnerCavity);
     chestCavity.position.set(0, 1.28, 0.11);
     torsoGroup.add(chestCavity);
 
@@ -868,7 +891,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
 
     [1.16, 1.23, 1.3, 1.37].forEach((ry, idx) => {
       const ribW = idx === 0 || idx === 3 ? 0.24 : 0.3;
-      const rib = new THREE.Mesh(new THREE.BoxGeometry(ribW, 0.024, 0.052), matBoneRibs);
+      const rib = new THREE.Mesh(actorGeometry.Box(ribW, 0.024, 0.052), matBoneRibs);
       rib.position.set(0, ry, 0.155);
       rib.castShadow = true;
       torsoGroup.add(rib);
@@ -888,34 +911,34 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         [0.14, 1.36, 0.12]
       ];
       pustulePositions.forEach(([px, py, pz]) => {
-        const pus = new THREE.Mesh(new THREE.DodecahedronGeometry(0.045, 0), matBioPustule);
+        const pus = new THREE.Mesh(actorGeometry.Dodecahedron(0.045, 0), matBioPustule);
         pus.position.set(px, py, pz);
         torsoGroup.add(pus);
         hitParts.push(pus);
       });
     } else if (zType === 'brute') {
-      const chestArmor = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.44, 0.28), matCalcifiedArmor);
+      const chestArmor = new THREE.Mesh(actorGeometry.Box(0.78, 0.44, 0.28), matCalcifiedArmor);
       chestArmor.position.set(0, 1.28, 0.12);
       chestArmor.castShadow = true;
-      const carapaceL = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 0.32), matBoneCarapace);
+      const carapaceL = new THREE.Mesh(actorGeometry.Box(0.28, 0.22, 0.32), matBoneCarapace);
       carapaceL.position.set(-0.38, 1.48, 0);
       carapaceL.castShadow = true;
-      const carapaceR = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 0.32), matBoneCarapace);
+      const carapaceR = new THREE.Mesh(actorGeometry.Box(0.28, 0.22, 0.32), matBoneCarapace);
       carapaceR.position.set(0.38, 1.48, 0);
       carapaceR.castShadow = true;
-      const spinePlate = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.48, 0.14), matCalcifiedArmor);
+      const spinePlate = new THREE.Mesh(actorGeometry.Box(0.32, 0.48, 0.14), matCalcifiedArmor);
       spinePlate.position.set(0, 1.28, -0.16);
       spinePlate.castShadow = true;
-      const spikeL = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.32, 6), matBoneCarapace);
+      const spikeL = new THREE.Mesh(actorGeometry.Cone(0.08, 0.32, 6), matBoneCarapace);
       spikeL.position.set(-0.44, 1.56, 0);
       spikeL.rotation.z = 0.55;
-      const spikeR = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.32, 6), matBoneCarapace);
+      const spikeR = new THREE.Mesh(actorGeometry.Cone(0.08, 0.32, 6), matBoneCarapace);
       spikeR.position.set(0.44, 1.56, 0);
       spikeR.rotation.z = -0.55;
       torsoGroup.add(chestArmor, carapaceL, carapaceR, spinePlate, spikeL, spikeR);
       hitParts.push(chestArmor, carapaceL, carapaceR, spinePlate, spikeL, spikeR);
     } else if (zType === 'bloater') {
-      const bellyMesh = new THREE.Mesh(new THREE.SphereGeometry(0.38, 16, 16), matBloaterBelly);
+      const bellyMesh = new THREE.Mesh(actorGeometry.Sphere(0.38, 16, 16), matBloaterBelly);
       bellyMesh.scale.set(1.18, 0.96, 1.26);
       bellyMesh.position.set(0, 1.05, 0.2);
       bellyMesh.castShadow = true;
@@ -930,52 +953,52 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         [0.22, 1.1, 0.18]
       ];
       pustulePositions.forEach(([px, py, pz]) => {
-        const pus = new THREE.Mesh(new THREE.DodecahedronGeometry(0.055, 0), matBioPustule);
+        const pus = new THREE.Mesh(actorGeometry.Dodecahedron(0.055, 0), matBioPustule);
         pus.position.set(px, py, pz);
         torsoGroup.add(pus);
         hitParts.push(pus);
       });
     } else if (zType === 'banshee') {
       for (let i = 0; i < 4; i++) {
-        const ribbon = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.82, 0.02), matBansheeShroud);
+        const ribbon = new THREE.Mesh(actorGeometry.Box(0.05, 0.82, 0.02), matBansheeShroud);
         ribbon.position.set((i - 1.5) * 0.14, 0.88, -0.12);
         ribbon.rotation.x = 0.18;
         ribbon.rotation.z = (i - 1.5) * 0.08;
         torsoGroup.add(ribbon);
       }
-      const crest = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.35, 4), matBansheeSkin);
+      const crest = new THREE.Mesh(actorGeometry.Cone(0.06, 0.35, 4), matBansheeSkin);
       crest.position.set(0, 1.48, 0.08);
       crest.rotation.x = 0.4;
       torsoGroup.add(crest);
       hitParts.push(crest);
     } else if (zType === 'megaboss') {
-      const coreMesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.18, 0), matMegaBossCore);
+      const coreMesh = new THREE.Mesh(actorGeometry.Dodecahedron(0.18, 0), matMegaBossCore);
       coreMesh.position.set(0, 1.28, 0.16);
       coreMesh.castShadow = true;
-      const carapaceL = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.24, 0.36), matBoneCarapace);
+      const carapaceL = new THREE.Mesh(actorGeometry.Box(0.32, 0.24, 0.36), matBoneCarapace);
       carapaceL.position.set(-0.42, 1.5, 0);
       carapaceL.castShadow = true;
-      const carapaceR = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.24, 0.36), matBoneCarapace);
+      const carapaceR = new THREE.Mesh(actorGeometry.Box(0.32, 0.24, 0.36), matBoneCarapace);
       carapaceR.position.set(0.42, 1.5, 0);
       carapaceR.castShadow = true;
-      const chestPlate = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.32, 0.16), matBoneCarapace);
+      const chestPlate = new THREE.Mesh(actorGeometry.Box(0.68, 0.32, 0.16), matBoneCarapace);
       chestPlate.position.set(0, 1.38, 0.18);
       chestPlate.castShadow = true;
-      const spinePlate1 = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.24, 0.16), matBoneCarapace);
+      const spinePlate1 = new THREE.Mesh(actorGeometry.Box(0.36, 0.24, 0.16), matBoneCarapace);
       spinePlate1.position.set(0, 1.42, -0.2);
       spinePlate1.castShadow = true;
-      const spinePlate2 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.22, 0.14), matBoneCarapace);
+      const spinePlate2 = new THREE.Mesh(actorGeometry.Box(0.3, 0.22, 0.14), matBoneCarapace);
       spinePlate2.position.set(0, 1.2, -0.18);
       spinePlate2.castShadow = true;
       torsoGroup.add(coreMesh, carapaceL, carapaceR, chestPlate, spinePlate1, spinePlate2);
       hitParts.push(coreMesh, carapaceL, carapaceR, chestPlate, spinePlate1, spinePlate2);
       const crystalMat=new THREE.MeshStandardMaterial({color:0x397586,emissive:0x176c85,emissiveIntensity:.8,roughness:.35,metalness:.25});
-      for(let i=0;i<7;i++){const spike=new THREE.Mesh(new THREE.ConeGeometry(.08,.35+i*.045,5),crystalMat);spike.position.set(.35+i*.028,1.54,-.18+i*.045);spike.rotation.z=-.35-i*.14;torsoGroup.add(spike);hitParts.push(spike);}
+      for(let i=0;i<7;i++){const spike=new THREE.Mesh(actorGeometry.Cone(.08,.35+i*.045,5),crystalMat);spike.position.set(.35+i*.028,1.54,-.18+i*.045);spike.rotation.z=-.35-i*.14;torsoGroup.add(spike);hitParts.push(spike);}
     } else if (zType === 'tank') {
-      const carapaceL = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.18, 0.28), matBoneCarapace);
+      const carapaceL = new THREE.Mesh(actorGeometry.Box(0.24, 0.18, 0.28), matBoneCarapace);
       carapaceL.position.set(-0.35, 1.46, 0);
       carapaceL.castShadow = true;
-      const carapaceR = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.18, 0.28), matBoneCarapace);
+      const carapaceR = new THREE.Mesh(actorGeometry.Box(0.24, 0.18, 0.28), matBoneCarapace);
       carapaceR.position.set(0.35, 1.46, 0);
       carapaceR.castShadow = true;
       torsoGroup.add(carapaceL, carapaceR);
@@ -985,7 +1008,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
 
   /* ============================ 2. NECK ============================ */
   if (!isZombie) {
-    const neckCylinder = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.095, 0.24, 12), matSkin);
+    const neckCylinder = new THREE.Mesh(actorGeometry.Cylinder(0.08, 0.095, 0.24, 12), matSkin);
     neckCylinder.position.set(0, 1.42, 0);
     neckCylinder.castShadow = true;
     torsoGroup.add(neckCylinder);
@@ -1000,7 +1023,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
   if (!isZombie) {
     // Non-uniformly scaled sphere instead of a box gives a real cranium
     // silhouette; a small wedge underneath suggests the jawline.
-    const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), matSkin);
+    const headMesh = new THREE.Mesh(actorGeometry.Sphere(0.13, 12, 10), matSkin);
     headMesh.scale.set(0.9, 1.05, 0.96);
     headMesh.position.y = 0.08;
     headMesh.castShadow = true;
@@ -1008,7 +1031,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     hitParts.push(headMesh);
     headParts.add(headMesh);
 
-    const jawWedge = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.09, 0.07, 4, 1), matSkin);
+    const jawWedge = new THREE.Mesh(actorGeometry.Cylinder(0.02, 0.09, 0.07, 4, 1), matSkin);
     jawWedge.rotation.set(Math.PI, Math.PI / 4, 0);
     jawWedge.position.set(0, -0.035, 0.03);
     jawWedge.scale.set(1.0, 0.6, 1.15);
@@ -1019,34 +1042,34 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     if (hg) {
       if (hg === 'mp_cap') {
         const capMat=new THREE.MeshStandardMaterial({color:0xd7dbcf,roughness:.7});
-        const crown=new THREE.Mesh(new THREE.CylinderGeometry(.18,.15,.11,12),capMat);crown.position.y=.21;
-        const brim=new THREE.Mesh(new THREE.BoxGeometry(.3,.025,.14),matGun);brim.position.set(0,.14,.11);headGroup.add(crown,brim);hitParts.push(crown);headParts.add(crown);
-        const badge=new THREE.Mesh(new THREE.BoxGeometry(.05,.05,.015),matAccent);badge.position.set(0,.21,.165);headGroup.add(badge);
+        const crown=new THREE.Mesh(actorGeometry.Cylinder(.18,.15,.11,12),capMat);crown.position.y=.21;
+        const brim=new THREE.Mesh(actorGeometry.Box(.3,.025,.14),matGun);brim.position.set(0,.14,.11);headGroup.add(crown,brim);hitParts.push(crown);headParts.add(crown);
+        const badge=new THREE.Mesh(actorGeometry.Box(.05,.05,.015),matAccent);badge.position.set(0,.21,.165);headGroup.add(badge);
       } else if (hg === 'spartan') {
         const armor=new THREE.MeshStandardMaterial({color:0x262c2e,metalness:.65,roughness:.46});
-        const helmet=new THREE.Mesh(new THREE.SphereGeometry(.2,12,10),armor);helmet.scale.set(1,1.2,1.05);helmet.position.y=.14;headGroup.add(helmet);hitParts.push(helmet);headParts.add(helmet);
+        const helmet=new THREE.Mesh(actorGeometry.Sphere(.2,12,10),armor);helmet.scale.set(1,1.2,1.05);helmet.position.y=.14;headGroup.add(helmet);hitParts.push(helmet);headParts.add(helmet);
         const slitMat=new THREE.MeshStandardMaterial({color:0xb42b21,emissive:0xff2111,emissiveIntensity:2});
-        const slit=new THREE.Mesh(new THREE.BoxGeometry(.27,.04,.025),slitMat);slit.position.set(0,.14,.208);headGroup.add(slit);
-        const mask=new THREE.Mesh(new THREE.BoxGeometry(.25,.19,.1),armor);mask.position.set(0,-.015,.16);headGroup.add(mask);hitParts.push(mask);headParts.add(mask);
-        for(const side of [-1,1]){const plate=new THREE.Mesh(new THREE.BoxGeometry(.22,.25,.24),armor);plate.position.set(side*.32,1.35,0);torsoGroup.add(plate);hitParts.push(plate);}
+        const slit=new THREE.Mesh(actorGeometry.Box(.27,.04,.025),slitMat);slit.position.set(0,.14,.208);headGroup.add(slit);
+        const mask=new THREE.Mesh(actorGeometry.Box(.25,.19,.1),armor);mask.position.set(0,-.015,.16);headGroup.add(mask);hitParts.push(mask);headParts.add(mask);
+        for(const side of [-1,1]){const plate=new THREE.Mesh(actorGeometry.Box(.22,.25,.24),armor);plate.position.set(side*.32,1.35,0);torsoGroup.add(plate);hitParts.push(plate);}
         // Angled brow, cheek plates and respirator vents broaden the heavy helm silhouette.
-        const brow = new THREE.Mesh(new THREE.BoxGeometry(.32,.075,.1), armor);
+        const brow = new THREE.Mesh(actorGeometry.Box(.32,.075,.1), armor);
         brow.position.set(0,.205,.19); brow.rotation.x = -.2; headGroup.add(brow); hitParts.push(brow); headParts.add(brow);
         for (const side of [-1,1]) {
-          const cheek = new THREE.Mesh(new THREE.BoxGeometry(.065,.2,.17), armor);
+          const cheek = new THREE.Mesh(actorGeometry.Box(.065,.2,.17), armor);
           cheek.position.set(side*.145,.005,.115); cheek.rotation.z = side*.17;
           headGroup.add(cheek); hitParts.push(cheek); headParts.add(cheek);
           for (let i = 0; i < 3; i++) {
-            const vent = new THREE.Mesh(new THREE.BoxGeometry(.025,.008,.015), matGun);
+            const vent = new THREE.Mesh(actorGeometry.Box(.025,.008,.015), matGun);
             vent.position.set(side*.09,-.055+i*.028,.218); headGroup.add(vent);
           }
         }
-        const chest=new THREE.Mesh(new THREE.BoxGeometry(.53,.5,.16),armor);chest.position.set(0,1.17,.2);torsoGroup.add(chest);hitParts.push(chest);
+        const chest=new THREE.Mesh(actorGeometry.Box(.53,.5,.16),armor);chest.position.set(0,1.17,.2);torsoGroup.add(chest);hitParts.push(chest);
         healthMultiplier=2.8;speedMultiplier=1.45;armorMultiplier=2;rootGroup.scale.setScalar(1.3);
       } else if (hg === 'fast' || hg === 'FAST_HELMET') {
         // Half-sphere shell reads as a real dome rather than a cube.
         const helmetMesh = new THREE.Mesh(
-          new THREE.SphereGeometry(0.165, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.62),
+          actorGeometry.Sphere(0.165, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.62),
           matHelmet
         );
         helmetMesh.position.set(0, 0.16, -0.02);
@@ -1057,18 +1080,18 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
 
         // Ear cutout notches: small dark inset boxes over the shell
         [-1, 1].forEach((side) => {
-          const notch = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.06, 0.09), matSocketRecess);
+          const notch = new THREE.Mesh(actorGeometry.Box(0.04, 0.06, 0.09), matSocketRecess);
           notch.position.set(side * 0.15, 0.08, 0.01);
           headGroup.add(notch);
         });
 
-        const nvgBracket = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.08, 0.04), matSteelArmor);
+        const nvgBracket = new THREE.Mesh(actorGeometry.Box(0.07, 0.08, 0.04), matSteelArmor);
         nvgBracket.position.set(0, 0.16, 0.15);
         headGroup.add(nvgBracket);
 
         // Rail teeth along both sides of the shell
         for (let r = 0; r < 5; r++) {
-          const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.016, 0.03), matSteelArmor);
+          const tooth = new THREE.Mesh(actorGeometry.Box(0.022, 0.016, 0.03), matSteelArmor);
           tooth.position.set(-0.155, 0.14, 0.06 - r * 0.035);
           const toothR = tooth.clone();
           toothR.position.x = 0.155;
@@ -1076,65 +1099,65 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         }
 
         // Ops-Core headset ear cups + flexible boom mic
-        const commL = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.05, 10), matSteelArmor);
+        const commL = new THREE.Mesh(actorGeometry.Cylinder(0.045, 0.045, 0.05, 10), matSteelArmor);
         commL.rotation.z = Math.PI / 2;
         commL.position.set(-0.15, 0.04, 0);
         const commR = commL.clone();
         commR.position.x = 0.15;
         headGroup.add(commL, commR);
-        const boomArm = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.008, 0.12, 6), matGun);
+        const boomArm = new THREE.Mesh(actorGeometry.Cylinder(0.006, 0.008, 0.12, 6), matGun);
         boomArm.position.set(-0.1, 0.0, 0.09);
         boomArm.rotation.set(0, 0.4, 1.3);
-        const boomMic = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.012, 0.02, 8), matGun);
+        const boomMic = new THREE.Mesh(actorGeometry.Cylinder(0.01, 0.012, 0.02, 8), matGun);
         boomMic.position.set(-0.05, -0.04, 0.14);
         headGroup.add(boomArm, boomMic);
 
         // Flip-down dual-tube PVS-31 NVG, modeled in the lowered position
-        const nvgBridge = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 0.02), matSteelArmor);
+        const nvgBridge = new THREE.Mesh(actorGeometry.Box(0.1, 0.02, 0.02), matSteelArmor);
         nvgBridge.position.set(0, -0.02, 0.17);
         [-1, 1].forEach((side) => {
-          const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.028, 0.09, 10), matSteelArmor);
+          const tube = new THREE.Mesh(actorGeometry.Cylinder(0.025, 0.028, 0.09, 10), matSteelArmor);
           tube.rotation.x = Math.PI / 2;
           tube.position.set(side * 0.045, -0.02, 0.21);
-          const lens = new THREE.Mesh(new THREE.CircleGeometry(0.02, 10), matNvgGlow);
+          const lens = new THREE.Mesh(actorGeometry.Circle(0.02, 10), matNvgGlow);
           lens.position.set(side * 0.045, -0.02, 0.255);
           headGroup.add(tube, lens);
         });
         headGroup.add(nvgBridge);
 
         // ESS ballistic goggles strapped over the crown — a curved torus arc
-        const gogglesBand = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.012, 6, 16, Math.PI * 0.7), matTapeWrap);
+        const gogglesBand = new THREE.Mesh(actorGeometry.Torus(0.15, 0.012, 6, 16, Math.PI * 0.7), matTapeWrap);
         gogglesBand.rotation.set(Math.PI / 2, 0, Math.PI / 2);
         gogglesBand.position.set(0, 0.24, -0.02);
         headGroup.add(gogglesBand);
       } else if (hg === 'HEAVY_EOD_VISOR') {
-        const eodShell = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.26, 0.34), matSteelArmor);
+        const eodShell = new THREE.Mesh(actorGeometry.Box(0.34, 0.26, 0.34), matSteelArmor);
         eodShell.position.set(0, 0.16, -0.01);
         eodShell.castShadow = true;
-        const eodVisor = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.16, 0.05), matVisorTint);
+        const eodVisor = new THREE.Mesh(actorGeometry.Box(0.3, 0.16, 0.05), matVisorTint);
         eodVisor.position.set(0, 0.1, 0.17);
-        const eodCollar = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.1, 0.34), matSteelArmor);
+        const eodCollar = new THREE.Mesh(actorGeometry.Box(0.36, 0.1, 0.34), matSteelArmor);
         eodCollar.position.set(0, -0.04, 0);
         headGroup.add(eodShell, eodVisor, eodCollar);
         hitParts.push(eodShell, eodCollar);
         headParts.add(eodShell);
       } else if (hg === 'boonie') {
-        const hatBase = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.1, 0.26), matVest);
+        const hatBase = new THREE.Mesh(actorGeometry.Box(0.26, 0.1, 0.26), matVest);
         hatBase.position.set(0, 0.18, 0);
-        const hatRim = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.02, 16), matVest);
+        const hatRim = new THREE.Mesh(actorGeometry.Cylinder(0.24, 0.24, 0.02, 16), matVest);
         hatRim.position.set(0, 0.14, 0);
         headGroup.add(hatBase, hatRim);
         hitParts.push(hatBase);
         headParts.add(hatBase);
       } else if (hg === 'skull' || hg === 'BALLISTIC_SKULL') {
-        const skullMask = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.12, 0.13), matSkullMask);
+        const skullMask = new THREE.Mesh(actorGeometry.Box(0.25, 0.12, 0.13), matSkullMask);
         skullMask.position.set(0, 0.02, 0.1);
         skullMask.castShadow = true;
-        const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.045, 0.045), matSocketRecess);
+        const eyeL = new THREE.Mesh(actorGeometry.Box(0.05, 0.045, 0.045), matSocketRecess);
         eyeL.position.set(-0.06, 0.05, 0.15);
-        const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.045, 0.045), matSocketRecess);
+        const eyeR = new THREE.Mesh(actorGeometry.Box(0.05, 0.045, 0.045), matSocketRecess);
         eyeR.position.set(0.06, 0.05, 0.15);
-        const cap = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.1, 0.25), matShirt);
+        const cap = new THREE.Mesh(actorGeometry.Box(0.25, 0.1, 0.25), matShirt);
         cap.position.set(0, 0.22, 0);
         headGroup.add(skullMask, eyeL, eyeR, cap);
         hitParts.push(skullMask, cap);
@@ -1143,14 +1166,14 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       }
     } else if (subClass === 'elite_heavy') {
       const helmetMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(0.175, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.62),
+        actorGeometry.Sphere(0.175, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.62),
         matSteelArmor
       );
       helmetMesh.position.set(0, 0.16, -0.02);
       helmetMesh.castShadow = true;
-      const faceShield = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.18, 0.04), matSteelArmor);
+      const faceShield = new THREE.Mesh(actorGeometry.Box(0.28, 0.18, 0.04), matSteelArmor);
       faceShield.position.set(0, 0.08, 0.15);
-      const slit = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.03, 0.05), matAccent);
+      const slit = new THREE.Mesh(actorGeometry.Box(0.2, 0.03, 0.05), matAccent);
       slit.position.set(0, 0.1, 0.155);
       headGroup.add(helmetMesh, faceShield, slit);
       hitParts.push(helmetMesh, faceShield);
@@ -1158,20 +1181,20 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       headParts.add(faceShield);
     } else if (subClass === 'elite_medic') {
       const helmetMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(0.165, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.6),
+        actorGeometry.Sphere(0.165, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.6),
         matHelmet
       );
       helmetMesh.position.set(0, 0.16, -0.02);
-      const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.09, 0.02), matWhiteCross);
+      const crossV = new THREE.Mesh(actorGeometry.Box(0.03, 0.09, 0.02), matWhiteCross);
       crossV.position.set(0, 0.17, 0.155);
-      const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.03, 0.02), matWhiteCross);
+      const crossH = new THREE.Mesh(actorGeometry.Box(0.09, 0.03, 0.02), matWhiteCross);
       crossH.position.set(0, 0.17, 0.155);
       headGroup.add(helmetMesh, crossV, crossH);
       hitParts.push(helmetMesh);
       headParts.add(helmetMesh);
     } else if (subClass === 'elite_recon') {
       const helmetMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(0.16, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.58),
+        actorGeometry.Sphere(0.16, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.58),
         matHelmet
       );
       helmetMesh.position.set(0, 0.16, -0.02);
@@ -1180,70 +1203,70 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       headParts.add(helmetMesh);
       for (let i = 0; i < 6; i++) {
         const mat = i % 2 === 0 ? matFoliage : matFoliageSage;
-        const strip = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.08, 0.04), mat);
+        const strip = new THREE.Mesh(actorGeometry.Box(0.04, 0.08, 0.04), mat);
         strip.position.set((Math.random() - 0.5) * 0.26, 0.22 + Math.random() * 0.06, (Math.random() - 0.5) * 0.26);
         strip.rotation.set(Math.random() * 0.4, Math.random() * 0.4, Math.random() * 0.4);
         headGroup.add(strip);
       }
-      const monocle = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.05, 10), matNvgGlow);
+      const monocle = new THREE.Mesh(actorGeometry.Cylinder(0.022, 0.022, 0.05, 10), matNvgGlow);
       monocle.rotation.x = Math.PI / 2;
       monocle.position.set(0.055, 0.13, 0.17);
       headGroup.add(monocle);
     } else if (subClass === 'elite_engineer') {
       const helmetMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(0.165, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.6),
+        actorGeometry.Sphere(0.165, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.6),
         matHelmet
       );
       helmetMesh.position.set(0, 0.16, -0.02);
-      const goggleBridge = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.06, 0.06), matPouches);
+      const goggleBridge = new THREE.Mesh(actorGeometry.Box(0.2, 0.06, 0.06), matPouches);
       goggleBridge.position.set(0, 0.2, 0.14);
-      const lens = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 0.03), matVisorTint);
+      const lens = new THREE.Mesh(actorGeometry.Box(0.16, 0.05, 0.03), matVisorTint);
       lens.position.set(0, 0.2, 0.17);
-      const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.04, 10), matAccent);
+      const lamp = new THREE.Mesh(actorGeometry.Cylinder(0.03, 0.035, 0.04, 10), matAccent);
       lamp.rotation.x = Math.PI / 2;
       lamp.position.set(-0.1, 0.24, 0.13);
       // Flip-down tinted blast visor
-      const flipVisor = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.12, 0.015), matVisorTint);
+      const flipVisor = new THREE.Mesh(actorGeometry.Box(0.19, 0.12, 0.015), matVisorTint);
       flipVisor.position.set(0, 0.06, 0.165);
       headGroup.add(helmetMesh, goggleBridge, lens, lamp, flipVisor);
       hitParts.push(helmetMesh);
       headParts.add(helmetMesh);
     } else if (subClass === 'sergeant') {
-      const capCrown = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.12, 0.26), matHelmet);
+      const capCrown = new THREE.Mesh(actorGeometry.Box(0.26, 0.12, 0.26), matHelmet);
       capCrown.position.set(0, 0.16, 0);
-      const capBrim = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.02, 0.11), matHelmet);
+      const capBrim = new THREE.Mesh(actorGeometry.Box(0.18, 0.02, 0.11), matHelmet);
       capBrim.position.set(0, 0.11, -0.16);
       headGroup.add(capCrown, capBrim);
       hitParts.push(capCrown, capBrim);
       headParts.add(capCrown);
       headParts.add(capBrim);
 
-      const beardJaw = new THREE.Mesh(new THREE.BoxGeometry(0.23, 0.09, 0.14), matBeard);
+      const beardJaw = new THREE.Mesh(actorGeometry.Box(0.23, 0.09, 0.14), matBeard);
       beardJaw.position.set(0, 0.01, 0.1);
-      const beardChin = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.07, 0.08), matBeard);
+      const beardChin = new THREE.Mesh(actorGeometry.Box(0.13, 0.07, 0.08), matBeard);
       beardChin.position.set(0, -0.04, 0.13);
       headGroup.add(beardJaw, beardChin);
       hitParts.push(beardJaw, beardChin);
       headParts.add(beardJaw);
       headParts.add(beardChin);
 
-      const earL = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.08, 0.08), matPouches);
+      const earL = new THREE.Mesh(actorGeometry.Box(0.04, 0.08, 0.08), matPouches);
       earL.position.set(-0.15, 0.08, 0);
-      const earR = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.08, 0.08), matPouches);
+      const earR = new THREE.Mesh(actorGeometry.Box(0.04, 0.08, 0.08), matPouches);
       earR.position.set(0.15, 0.08, 0);
-      const mic = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.015, 0.13), matGun);
+      const mic = new THREE.Mesh(actorGeometry.Box(0.015, 0.015, 0.13), matGun);
       mic.position.set(-0.13, 0.03, 0.08);
       mic.rotation.y = 0.35;
       headGroup.add(earL, earR, mic);
     } else if (subClass === 'heavy_gunner') {
       const helmetMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(0.16, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.58),
+        actorGeometry.Sphere(0.16, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.58),
         matHelmet
       );
       helmetMesh.position.set(0, 0.16, -0.02);
-      const faceShield = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.17, 0.04), matHelmet);
+      const faceShield = new THREE.Mesh(actorGeometry.Box(0.26, 0.17, 0.04), matHelmet);
       faceShield.position.set(0, 0.08, 0.14);
-      const visionSlit = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.03, 0.05), matVisorTint);
+      const visionSlit = new THREE.Mesh(actorGeometry.Box(0.18, 0.03, 0.05), matVisorTint);
       visionSlit.position.set(0, 0.1, 0.145);
       headGroup.add(helmetMesh, faceShield, visionSlit);
       hitParts.push(helmetMesh, faceShield);
@@ -1251,41 +1274,41 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       headParts.add(faceShield);
     } else if (subClass === 'engineer') {
       const helmetMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(0.16, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.58),
+        actorGeometry.Sphere(0.16, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.58),
         matHelmet
       );
       helmetMesh.position.set(0, 0.16, -0.02);
-      const goggleBridge = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.05, 0.07), matPouches);
+      const goggleBridge = new THREE.Mesh(actorGeometry.Box(0.18, 0.05, 0.07), matPouches);
       goggleBridge.position.set(0, 0.17, 0.15);
-      const lensL = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.03, 8), matVisorTint);
+      const lensL = new THREE.Mesh(actorGeometry.Cylinder(0.025, 0.025, 0.03, 8), matVisorTint);
       lensL.rotation.x = Math.PI / 2;
       lensL.position.set(-0.05, 0.17, 0.19);
-      const lensR = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.03, 8), matVisorTint);
+      const lensR = new THREE.Mesh(actorGeometry.Cylinder(0.025, 0.025, 0.03, 8), matVisorTint);
       lensR.rotation.x = Math.PI / 2;
       lensR.position.set(0.05, 0.17, 0.19);
       headGroup.add(helmetMesh, goggleBridge, lensL, lensR);
       hitParts.push(helmetMesh);
       headParts.add(helmetMesh);
     } else if (subClass === 'ghost') {
-      const skullPlate = new THREE.Mesh(new THREE.BoxGeometry(0.23, 0.19, 0.05), matSkullMask);
+      const skullPlate = new THREE.Mesh(actorGeometry.Box(0.23, 0.19, 0.05), matSkullMask);
       skullPlate.position.set(0, 0.05, 0.14);
-      const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.05, 0.045), matSocketRecess);
+      const eyeL = new THREE.Mesh(actorGeometry.Box(0.055, 0.05, 0.045), matSocketRecess);
       eyeL.position.set(-0.06, 0.09, 0.15);
-      const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.05, 0.045), matSocketRecess);
+      const eyeR = new THREE.Mesh(actorGeometry.Box(0.055, 0.05, 0.045), matSocketRecess);
       eyeR.position.set(0.06, 0.09, 0.15);
-      const nose = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.035, 0.045), matSocketRecess);
+      const nose = new THREE.Mesh(actorGeometry.Box(0.028, 0.035, 0.045), matSocketRecess);
       nose.position.set(0, 0.04, 0.15);
-      const teeth = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.025, 0.045), matSocketRecess);
+      const teeth = new THREE.Mesh(actorGeometry.Box(0.13, 0.025, 0.045), matSocketRecess);
       teeth.position.set(0, -0.015, 0.16);
-      const hoodBack = new THREE.Mesh(new THREE.BoxGeometry(0.29, 0.28, 0.15), matHoodFabric);
+      const hoodBack = new THREE.Mesh(actorGeometry.Box(0.29, 0.28, 0.15), matHoodFabric);
       hoodBack.position.set(0, 0.07, -0.08);
-      const hoodCollar = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.08, 0.24), matHoodFabric);
+      const hoodCollar = new THREE.Mesh(actorGeometry.Box(0.38, 0.08, 0.24), matHoodFabric);
       hoodCollar.position.set(0, -0.05, 0);
       // Taped comms wiring from the mask down to the collar
-      const wireA = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.12, 6), matWireBundle);
+      const wireA = new THREE.Mesh(actorGeometry.Cylinder(0.005, 0.005, 0.12, 6), matWireBundle);
       wireA.position.set(-0.11, -0.02, 0.09);
       wireA.rotation.set(0.3, 0, 0.6);
-      const wireB = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.1, 6), matWireBundle);
+      const wireB = new THREE.Mesh(actorGeometry.Cylinder(0.005, 0.005, 0.1, 6), matWireBundle);
       wireB.position.set(-0.14, -0.12, 0.02);
       wireB.rotation.set(0.6, 0, 0.3);
       headGroup.add(skullPlate, eyeL, eyeR, nose, teeth, hoodBack, hoodCollar, wireA, wireB);
@@ -1293,29 +1316,29 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       headParts.add(skullPlate);
       headParts.add(hoodBack);
     } else if (subClass === 'infiltrator') {
-      const balaclava = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.7), matHoodFabric);
+      const balaclava = new THREE.Mesh(actorGeometry.Sphere(0.14, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.7), matHoodFabric);
       balaclava.position.y = 0.05;
       // Quad-tube panoramic GPNVG-18 in a 2x2 cluster
       [-0.05, 0.05].forEach((lx) => {
         [0.03, -0.03].forEach((ly) => {
-          const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.05, 8), matPouches);
+          const barrel = new THREE.Mesh(actorGeometry.Cylinder(0.017, 0.017, 0.05, 8), matPouches);
           barrel.rotation.x = Math.PI / 2;
           barrel.position.set(lx, 0.15 + ly, 0.24);
-          const glowLens = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.01, 8), matNvgGlow);
+          const glowLens = new THREE.Mesh(actorGeometry.Cylinder(0.014, 0.014, 0.01, 8), matNvgGlow);
           glowLens.rotation.x = Math.PI / 2;
           glowLens.position.set(lx, 0.15 + ly, 0.265);
           headGroup.add(barrel, glowLens);
           hitParts.push(barrel);
         });
       });
-      const nvgMountArm = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.03, 0.08), matPouches);
+      const nvgMountArm = new THREE.Mesh(actorGeometry.Box(0.09, 0.03, 0.08), matPouches);
       nvgMountArm.position.set(0, 0.17, 0.18);
       headGroup.add(balaclava, nvgMountArm);
       hitParts.push(balaclava);
       headParts.add(balaclava);
     } else if (subClass === 'recon') {
       const helmetMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(0.16, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.58),
+        actorGeometry.Sphere(0.16, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.58),
         matHelmet
       );
       helmetMesh.position.set(0, 0.16, -0.02);
@@ -1325,7 +1348,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
 
       for (let i = 0; i < 8; i++) {
         const mat = i % 2 === 0 ? matFoliage : matFoliageSage;
-        const strip = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.08, 0.04), mat);
+        const strip = new THREE.Mesh(actorGeometry.Box(0.04, 0.08, 0.04), mat);
         strip.position.set((Math.random() - 0.5) * 0.26, 0.22 + Math.random() * 0.06, (Math.random() - 0.5) * 0.26);
         strip.rotation.set(Math.random() * 0.4, Math.random() * 0.4, Math.random() * 0.4);
         headGroup.add(strip);
@@ -1333,13 +1356,13 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       }
     } else {
       const helmetMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(0.165, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.6),
+        actorGeometry.Sphere(0.165, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.6),
         subClass === 'juggernaut' ? matSteelArmor : matHelmet
       );
       helmetMesh.position.set(0, 0.16, -0.02);
       helmetMesh.castShadow = true;
       const visorBrim = new THREE.Mesh(
-        new THREE.BoxGeometry(0.24, 0.024, 0.09),
+        actorGeometry.Box(0.24, 0.024, 0.09),
         subClass === 'juggernaut' ? matSteelArmor : matHelmet
       );
       visorBrim.position.set(0, 0.1, 0.16);
@@ -1350,13 +1373,13 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       headParts.add(visorBrim);
 
       if (isSpecializedBot && faction === 'apex') {
-        const mandible = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.1, 0.12), matSteelArmor);
+        const mandible = new THREE.Mesh(actorGeometry.Box(0.25, 0.1, 0.12), matSteelArmor);
         mandible.position.set(0, 0.02, 0.09);
         headGroup.add(mandible);
         hitParts.push(mandible);
         headParts.add(mandible);
 
-        const headsetL = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.06, 10), matPouches);
+        const headsetL = new THREE.Mesh(actorGeometry.Cylinder(0.038, 0.038, 0.06, 10), matPouches);
         headsetL.rotation.z = Math.PI / 2;
         headsetL.position.set(-0.15, 0.08, 0);
         const headsetR = headsetL.clone();
@@ -1365,7 +1388,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       }
     }
   } else {
-    const skullTop = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), matSkin);
+    const skullTop = new THREE.Mesh(actorGeometry.Sphere(0.13, 12, 10), matSkin);
     skullTop.scale.set(0.92, 0.86, 0.98);
     skullTop.position.y = 0.1;
     skullTop.castShadow = true;
@@ -1373,32 +1396,32 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     hitParts.push(skullTop);
     headParts.add(skullTop);
 
-    const innerMaw = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.18, 0.18), matInnerCavity);
+    const innerMaw = new THREE.Mesh(actorGeometry.Box(0.2, 0.18, 0.18), matInnerCavity);
     innerMaw.position.set(0, 0.03, 0.02);
     headGroup.add(innerMaw);
 
-    const lowerJaw = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.2), matSkin);
+    const lowerJaw = new THREE.Mesh(actorGeometry.Box(0.22, 0.08, 0.2), matSkin);
     lowerJaw.position.set(0, -0.06, 0.06);
     lowerJaw.rotation.x = 0.38;
     headGroup.add(lowerJaw);
     hitParts.push(lowerJaw);
     headParts.add(lowerJaw);
 
-    const upperTeeth = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.022, 0.03), matBoneRibs);
+    const upperTeeth = new THREE.Mesh(actorGeometry.Box(0.16, 0.022, 0.03), matBoneRibs);
     upperTeeth.position.set(0, 0.06, 0.115);
-    const lowerTeeth = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.022, 0.03), matBoneRibs);
+    const lowerTeeth = new THREE.Mesh(actorGeometry.Box(0.16, 0.022, 0.03), matBoneRibs);
     lowerTeeth.position.set(0, -0.025, 0.115);
     headGroup.add(upperTeeth, lowerTeeth);
 
     const activeEyeMat =
       zType === 'walker' ? matWalkerEyes : zType === 'runner' ? matBioPustule : matZombieEyes;
-    const socketL = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.048, 0.035), matZombieSocket);
+    const socketL = new THREE.Mesh(actorGeometry.Box(0.048, 0.048, 0.035), matZombieSocket);
     socketL.position.set(-0.055, 0.11, 0.125);
-    const socketR = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.048, 0.035), matZombieSocket);
+    const socketR = new THREE.Mesh(actorGeometry.Box(0.048, 0.048, 0.035), matZombieSocket);
     socketR.position.set(0.055, 0.11, 0.125);
-    const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.022, 0.025), activeEyeMat);
+    const eyeL = new THREE.Mesh(actorGeometry.Box(0.022, 0.022, 0.025), activeEyeMat);
     eyeL.position.set(-0.055, 0.11, 0.136);
-    const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.022, 0.025), activeEyeMat);
+    const eyeR = new THREE.Mesh(actorGeometry.Box(0.022, 0.022, 0.025), activeEyeMat);
     eyeR.position.set(0.055, 0.11, 0.136);
     headGroup.add(socketL, socketR, eyeL, eyeR);
   }
@@ -1426,90 +1449,90 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     const lowerArmMat = isApexSpecialized ? matSkin : matShirt;
 
     // Tapered biceps (wider at the shoulder) instead of a straight box.
-    const armLUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.062, 0.26, 8), matShirt);
+    const armLUpper = new THREE.Mesh(actorGeometry.Cylinder(0.075, 0.062, 0.26, 8), matShirt);
     armLUpper.position.set(0, -0.13, 0);
     armLUpper.castShadow = true;
     armLPivot.add(armLUpper);
     hitParts.push(armLUpper);
-    const elbowCapL = new THREE.Mesh(new THREE.SphereGeometry(0.058, 8, 6), matShirt);
+    const elbowCapL = new THREE.Mesh(actorGeometry.Sphere(0.058, 8, 6), matShirt);
     elbowCapL.position.set(0, -0.26, 0);
     armLPivot.add(elbowCapL);
 
     armLLowerPivot.position.set(0, -0.26, 0);
     armLPivot.add(armLLowerPivot);
-    const armLLower = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.048, 0.26, 8), lowerArmMat);
+    const armLLower = new THREE.Mesh(actorGeometry.Cylinder(0.055, 0.048, 0.26, 8), lowerArmMat);
     armLLower.position.set(0, -0.13, 0.02);
     armLLower.castShadow = true;
-    const handL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.08, 0.1), matGloves);
+    const handL = new THREE.Mesh(actorGeometry.Box(0.1, 0.08, 0.1), matGloves);
     handL.position.set(0, -0.27, 0.02);
     armLLowerPivot.add(armLLower, handL);
     hitParts.push(armLLower, handL);
 
-    const armRUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.062, 0.26, 8), matShirt);
+    const armRUpper = new THREE.Mesh(actorGeometry.Cylinder(0.075, 0.062, 0.26, 8), matShirt);
     armRUpper.position.set(0, -0.13, 0);
     armRUpper.castShadow = true;
     armRPivot.add(armRUpper);
     hitParts.push(armRUpper);
-    const elbowCapR = new THREE.Mesh(new THREE.SphereGeometry(0.058, 8, 6), matShirt);
+    const elbowCapR = new THREE.Mesh(actorGeometry.Sphere(0.058, 8, 6), matShirt);
     elbowCapR.position.set(0, -0.26, 0);
     armRPivot.add(elbowCapR);
 
     armRLowerPivot.position.set(0, -0.26, 0);
     armRPivot.add(armRLowerPivot);
-    const armRLower = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.048, 0.26, 8), lowerArmMat);
+    const armRLower = new THREE.Mesh(actorGeometry.Cylinder(0.055, 0.048, 0.26, 8), lowerArmMat);
     armRLower.position.set(0, -0.13, 0.02);
     armRLower.castShadow = true;
-    const handR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.08, 0.1), matGloves);
+    const handR = new THREE.Mesh(actorGeometry.Box(0.1, 0.08, 0.1), matGloves);
     handR.position.set(0, -0.27, 0.02);
     armRLowerPivot.add(armRLower, handR);
     hitParts.push(armRLower, handR);
 
     if (isUsmcSpecialized || subClass === 'elite_heavy') {
-      const pauldronL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.14, 0.16), matVest);
+      const pauldronL = new THREE.Mesh(actorGeometry.Box(0.15, 0.14, 0.16), matVest);
       pauldronL.position.set(0, -0.06, 0);
       armLUpper.add(pauldronL);
-      const pauldronR = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.14, 0.16), matVest);
+      const pauldronR = new THREE.Mesh(actorGeometry.Box(0.15, 0.14, 0.16), matVest);
       pauldronR.position.set(0, -0.06, 0);
       armRUpper.add(pauldronR);
     }
 
     if (subClass === 'sergeant') {
       [-0.01, 0, 0.01].forEach((cy) => {
-        const chevL = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.025, 0.08), matChevron);
+        const chevL = new THREE.Mesh(actorGeometry.Box(0.015, 0.025, 0.08), matChevron);
         chevL.position.set(-0.065, -0.1 + cy * 2, 0);
         armLUpper.add(chevL);
-        const chevR = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.025, 0.08), matChevron);
+        const chevR = new THREE.Mesh(actorGeometry.Box(0.015, 0.025, 0.08), matChevron);
         chevR.position.set(0.065, -0.1 + cy * 2, 0);
         armRUpper.add(chevR);
       });
     }
 
     if (subClass === 'corpsman' || subClass === 'elite_medic') {
-      const redPatchL = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.08, 0.08), matRedCross);
+      const redPatchL = new THREE.Mesh(actorGeometry.Box(0.015, 0.08, 0.08), matRedCross);
       redPatchL.position.set(-0.065, -0.1, 0);
-      const crossVL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.06, 0.02), matWhiteCross);
+      const crossVL = new THREE.Mesh(actorGeometry.Box(0.02, 0.06, 0.02), matWhiteCross);
       crossVL.position.set(-0.066, -0.1, 0);
-      const crossHL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.06), matWhiteCross);
+      const crossHL = new THREE.Mesh(actorGeometry.Box(0.02, 0.02, 0.06), matWhiteCross);
       crossHL.position.set(-0.066, -0.1, 0);
       armLUpper.add(redPatchL, crossVL, crossHL);
 
-      const redPatchR = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.08, 0.08), matRedCross);
+      const redPatchR = new THREE.Mesh(actorGeometry.Box(0.015, 0.08, 0.08), matRedCross);
       redPatchR.position.set(0.065, -0.1, 0);
-      const crossVR = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.06, 0.02), matWhiteCross);
+      const crossVR = new THREE.Mesh(actorGeometry.Box(0.02, 0.06, 0.02), matWhiteCross);
       crossVR.position.set(0.066, -0.1, 0);
-      const crossHR = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.06), matWhiteCross);
+      const crossHR = new THREE.Mesh(actorGeometry.Box(0.02, 0.02, 0.06), matWhiteCross);
       crossHR.position.set(0.066, -0.1, 0);
       armRUpper.add(redPatchR, crossVR, crossHR);
     }
 
     if (subClass === 'heavy_gunner' || subClass === 'juggernaut') {
       const matPaul = subClass === 'juggernaut' ? matSteelArmor : matVest;
-      const pauldronL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 0.18), matPaul);
+      const pauldronL = new THREE.Mesh(actorGeometry.Box(0.18, 0.12, 0.18), matPaul);
       pauldronL.position.set(-0.03, -0.04, 0);
       armLPivot.add(pauldronL);
       hitParts.push(pauldronL);
 
-      const pauldronR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 0.18), matPaul);
+      const pauldronR = new THREE.Mesh(actorGeometry.Box(0.18, 0.12, 0.18), matPaul);
       pauldronR.position.set(0.03, -0.04, 0);
       armRPivot.add(pauldronR);
       hitParts.push(pauldronR);
@@ -1533,25 +1556,25 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     armLPivot.rotation.set(-1.35, 0.12, 0);
     armRPivot.rotation.set(-1.35, -0.12, 0);
 
-    const armLMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.058, 0.44, 8), matSkin);
+    const armLMesh = new THREE.Mesh(actorGeometry.Cylinder(0.07, 0.058, 0.44, 8), matSkin);
     armLMesh.position.set(0, -0.2, 0);
     armLMesh.castShadow = true;
     armLPivot.add(armLMesh);
     hitParts.push(armLMesh);
 
-    const armRUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.075, 0.46, 8), matSkin);
+    const armRUpper = new THREE.Mesh(actorGeometry.Cylinder(0.09, 0.075, 0.46, 8), matSkin);
     armRUpper.position.set(0, -0.21, 0);
     armRUpper.castShadow = true;
     armRPivot.add(armRUpper);
     hitParts.push(armRUpper);
 
-    const boneSpur = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.14, 0.05), matBoneRibs);
+    const boneSpur = new THREE.Mesh(actorGeometry.Box(0.05, 0.14, 0.05), matBoneRibs);
     boneSpur.position.set(0.08, -0.4, 0);
     boneSpur.rotation.z = -0.6;
     armRPivot.add(boneSpur);
     hitParts.push(boneSpur);
 
-    const armRForearm = new THREE.Mesh(new THREE.CylinderGeometry(0.076, 0.06, 0.58, 8), matSkin);
+    const armRForearm = new THREE.Mesh(actorGeometry.Cylinder(0.076, 0.06, 0.58, 8), matSkin);
     armRForearm.position.set(0.06, -0.66, 0.06);
     armRForearm.rotation.z = -0.22;
     armRForearm.rotation.x = -0.32;
@@ -1559,13 +1582,13 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     armRPivot.add(armRForearm);
     hitParts.push(armRForearm);
 
-    const clawHand = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), matSkin);
+    const clawHand = new THREE.Mesh(actorGeometry.Box(0.16, 0.16, 0.16), matSkin);
     clawHand.position.set(0.08, -0.98, 0.1);
     // Jagged bone talons, ~0.2m as specified
-    const talon1 = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.2, 4), matZombieClaw);
+    const talon1 = new THREE.Mesh(actorGeometry.Cone(0.02, 0.2, 4), matZombieClaw);
     talon1.position.set(0.05, -1.14, 0.08);
     talon1.rotation.x = Math.PI;
-    const talon2 = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.2, 4), matZombieClaw);
+    const talon2 = new THREE.Mesh(actorGeometry.Cone(0.02, 0.2, 4), matZombieClaw);
     talon2.position.set(0.11, -1.14, 0.12);
     talon2.rotation.x = Math.PI;
     if (zType === 'megaboss') {
@@ -1574,16 +1597,16 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       club.name = 'Abomination_MutatedClub';
       club.position.set(0.08, -0.95, 0.1);
       armRPivot.add(club);
-      const clubHead = new THREE.Mesh(new THREE.IcosahedronGeometry(0.28, 1), matBoneCarapace);
+      const clubHead = new THREE.Mesh(actorGeometry.Icosahedron(0.28, 1), matBoneCarapace);
       clubHead.scale.set(1, 1.65, 1);
       club.add(clubHead);
       hitParts.push(clubHead);
-      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.18, 8), matGun);
+      const collar = new THREE.Mesh(actorGeometry.Cylinder(0.3, 0.3, 0.18, 8), matGun);
       collar.position.y = 0.05;
       club.add(collar);
       hitParts.push(collar);
       for (let i = 0; i < 6; i++) {
-        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.22, 5), matBoneRibs);
+        const spike = new THREE.Mesh(actorGeometry.Cone(0.07, 0.22, 5), matBoneRibs);
         const angle = i * Math.PI / 3;
         spike.position.set(Math.cos(angle) * 0.28, -0.04, Math.sin(angle) * 0.28);
         spike.rotation.z = -Math.cos(angle) * Math.PI / 2;
@@ -1591,8 +1614,8 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         club.add(spike);
         hitParts.push(spike);
       }
-      // Detached legacy talons are not owned by the visual tree.
-      for (const mesh of [clawHand, talon1, talon2]) mesh.geometry.dispose();
+      // Detached legacy talons use engine-owned cached buffers. The session
+      // cache releases them; disposing here would invalidate other infected.
     } else {
       armRPivot.add(clawHand, talon1, talon2);
       hitParts.push(clawHand);
@@ -1614,13 +1637,13 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
   /** Sole + raised heel + tapered toe cap, replacing a single flat box boot. */
   function buildBoot(): THREE.Group {
     const bootGroup = new THREE.Group();
-    const sole = new THREE.Mesh(new THREE.BoxGeometry(0.145, 0.035, 0.24), matBootSole);
+    const sole = new THREE.Mesh(actorGeometry.Box(0.145, 0.035, 0.24), matBootSole);
     sole.position.set(0, -0.4, 0.02);
-    const heel = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.05, 0.09), matBootSole);
+    const heel = new THREE.Mesh(actorGeometry.Box(0.13, 0.05, 0.09), matBootSole);
     heel.position.set(0, -0.365, -0.06);
-    const upper = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.11, 0.2), matBoots);
+    const upper = new THREE.Mesh(actorGeometry.Box(0.14, 0.11, 0.2), matBoots);
     upper.position.set(0, -0.335, 0.02);
-    const toeCap = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.06, 8), matBoots);
+    const toeCap = new THREE.Mesh(actorGeometry.Cylinder(0.07, 0.07, 0.06, 8), matBoots);
     toeCap.rotation.z = Math.PI / 2;
     toeCap.scale.set(1, 1, 0.55);
     toeCap.position.set(0, -0.36, 0.13);
@@ -1629,18 +1652,18 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
   }
 
   if (!isZombie) {
-    const legLUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.072, 0.36, 8), matPants);
+    const legLUpper = new THREE.Mesh(actorGeometry.Cylinder(0.085, 0.072, 0.36, 8), matPants);
     legLUpper.position.set(0, -0.18, 0);
     legLUpper.castShadow = true;
     legLPivot.add(legLUpper);
     hitParts.push(legLUpper);
-    const kneeCapL = new THREE.Mesh(new THREE.SphereGeometry(0.068, 8, 6), matPants);
+    const kneeCapL = new THREE.Mesh(actorGeometry.Sphere(0.068, 8, 6), matPants);
     kneeCapL.position.set(0, -0.36, 0);
     legLPivot.add(kneeCapL);
 
     legLLowerPivot.position.set(0, -0.36, 0);
     legLPivot.add(legLLowerPivot);
-    const legLLower = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.05, 0.36, 8), matPants);
+    const legLLower = new THREE.Mesh(actorGeometry.Cylinder(0.062, 0.05, 0.36, 8), matPants);
     legLLower.position.set(0, -0.18, -0.01);
     legLLower.castShadow = true;
     const bootL = buildBoot();
@@ -1649,18 +1672,18 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     hitParts.push(legLLower);
     bootL.children.forEach((c) => hitParts.push(c as THREE.Mesh));
 
-    const legRUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.072, 0.36, 8), matPants);
+    const legRUpper = new THREE.Mesh(actorGeometry.Cylinder(0.085, 0.072, 0.36, 8), matPants);
     legRUpper.position.set(0, -0.18, 0);
     legRUpper.castShadow = true;
     legRPivot.add(legRUpper);
     hitParts.push(legRUpper);
-    const kneeCapR = new THREE.Mesh(new THREE.SphereGeometry(0.068, 8, 6), matPants);
+    const kneeCapR = new THREE.Mesh(actorGeometry.Sphere(0.068, 8, 6), matPants);
     kneeCapR.position.set(0, -0.36, 0);
     legRPivot.add(kneeCapR);
 
     legRLowerPivot.position.set(0, -0.36, 0);
     legRPivot.add(legRLowerPivot);
-    const legRLower = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.05, 0.36, 8), matPants);
+    const legRLower = new THREE.Mesh(actorGeometry.Cylinder(0.062, 0.05, 0.36, 8), matPants);
     legRLower.position.set(0, -0.18, -0.01);
     legRLower.castShadow = true;
     const bootR = buildBoot();
@@ -1672,26 +1695,26 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     const lc = options.lowerConfig;
     if (lc) {
       if (lc === 'holster' || lc === 'THIGH_HOLSTER') {
-        const holsterDrop = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.18, 0.14), matSteelArmor);
+        const holsterDrop = new THREE.Mesh(actorGeometry.Box(0.08, 0.18, 0.14), matSteelArmor);
         holsterDrop.position.set(0.12, -0.05, 0);
         legRUpper.add(holsterDrop);
         hitParts.push(holsterDrop);
         // Visible sidearm nested in the holster
-        const sidearmSlide = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.1), matGun);
+        const sidearmSlide = new THREE.Mesh(actorGeometry.Box(0.03, 0.03, 0.1), matGun);
         sidearmSlide.position.set(0.12, 0.05, 0.03);
         legRUpper.add(sidearmSlide);
       } else if (lc === 'HEAVY_POUCHES') {
         [-0.11, 0.11].forEach((px) => {
-          const pouch = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.16, 0.1), matPouches);
+          const pouch = new THREE.Mesh(actorGeometry.Box(0.1, 0.16, 0.1), matPouches);
           pouch.position.set(px, -0.06, 0.06);
           (px < 0 ? legLUpper : legRUpper).add(pouch);
           hitParts.push(pouch);
         });
       } else if (lc === 'EXO_BRACES') {
         [legLLowerPivot, legRLowerPivot].forEach((pivot) => {
-          const brace = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.2, 0.06), matSteelArmor);
+          const brace = new THREE.Mesh(actorGeometry.Box(0.17, 0.2, 0.06), matSteelArmor);
           brace.position.set(0, -0.08, 0.1);
-          const actuator = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.022, 0.22, 8), matAccent);
+          const actuator = new THREE.Mesh(actorGeometry.Cylinder(0.025, 0.022, 0.22, 8), matAccent);
           actuator.position.set(0.09, -0.1, 0.02);
           pivot.add(brace, actuator);
           hitParts.push(brace);
@@ -1699,24 +1722,24 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
       }
     } else {
       if (subClass === 'pointman' || subClass === 'elite_engineer') {
-        const kneePadL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.06), matVest);
+        const kneePadL = new THREE.Mesh(actorGeometry.Box(0.16, 0.12, 0.06), matVest);
         kneePadL.position.set(0, -0.06, 0.1);
         legLLowerPivot.add(kneePadL);
         hitParts.push(kneePadL);
 
-        const kneePadR = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.06), matVest);
+        const kneePadR = new THREE.Mesh(actorGeometry.Box(0.16, 0.12, 0.06), matVest);
         kneePadR.position.set(0, -0.06, 0.1);
         legRLowerPivot.add(kneePadR);
         hitParts.push(kneePadR);
       }
 
       if (subClass === 'juggernaut' || subClass === 'elite_heavy') {
-        const thighPlateL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.24, 0.2), matSteelArmor);
+        const thighPlateL = new THREE.Mesh(actorGeometry.Box(0.18, 0.24, 0.2), matSteelArmor);
         thighPlateL.position.set(0, -0.2, 0);
         legLPivot.add(thighPlateL);
         hitParts.push(thighPlateL);
 
-        const thighPlateR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.24, 0.2), matSteelArmor);
+        const thighPlateR = new THREE.Mesh(actorGeometry.Box(0.18, 0.24, 0.2), matSteelArmor);
         thighPlateR.position.set(0, -0.2, 0);
         legRPivot.add(thighPlateR);
         hitParts.push(thighPlateR);
@@ -1724,7 +1747,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
 
       if (faction === 'apex') {
         // BDU cargo pants: reinforced knee braces + thigh utility pouch + knife sheath
-        const kneeBraceL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.1, 0.06), matSteelArmor);
+        const kneeBraceL = new THREE.Mesh(actorGeometry.Box(0.15, 0.1, 0.06), matSteelArmor);
         kneeBraceL.position.set(0, -0.04, 0.1);
         legLLowerPivot.add(kneeBraceL);
         hitParts.push(kneeBraceL);
@@ -1732,28 +1755,28 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
         legRLowerPivot.add(kneeBraceR);
         hitParts.push(kneeBraceR);
 
-        const thighPouch = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.14, 0.08), matPouches);
+        const thighPouch = new THREE.Mesh(actorGeometry.Box(0.09, 0.14, 0.08), matPouches);
         thighPouch.position.set(0, -0.05, 0.09);
         legLUpper.add(thighPouch);
         hitParts.push(thighPouch);
 
-        const sheath = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.16, 0.03), matTapeWrap);
+        const sheath = new THREE.Mesh(actorGeometry.Box(0.04, 0.16, 0.03), matTapeWrap);
         sheath.position.set(0.08, -0.1, 0.08);
         legRUpper.add(sheath);
-        const knifeHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.06, 6), matGun);
+        const knifeHandle = new THREE.Mesh(actorGeometry.Cylinder(0.012, 0.012, 0.06, 6), matGun);
         knifeHandle.position.set(0.08, -0.02, 0.08);
         legRUpper.add(knifeHandle);
         hitParts.push(sheath);
       }
     }
   } else {
-    const legLMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.085, 0.86, 8), matPants);
+    const legLMesh = new THREE.Mesh(actorGeometry.Cylinder(0.1, 0.085, 0.86, 8), matPants);
     legLMesh.position.set(0, -0.43, 0);
     legLMesh.castShadow = true;
     legLPivot.add(legLMesh);
     hitParts.push(legLMesh);
 
-    const legRMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.085, 0.86, 8), matPants);
+    const legRMesh = new THREE.Mesh(actorGeometry.Cylinder(0.1, 0.085, 0.86, 8), matPants);
     legRMesh.position.set(0, -0.43, 0);
     legRMesh.castShadow = true;
     legRPivot.add(legRMesh);
@@ -1764,7 +1787,7 @@ export function buildBotVisuals(options: BotBuildOptions): BotVisualBuildResult 
     const canvas=document.createElement('canvas');canvas.width=128;canvas.height=64;const ctx=canvas.getContext('2d');
     if(ctx){ctx.fillStyle='#12191a';ctx.fillRect(0,0,128,64);ctx.fillStyle='#f0efdb';ctx.font='bold 48px sans-serif';ctx.textAlign='center';ctx.fillText('MP',64,49);}
     const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
-    const badge=new THREE.Mesh(new THREE.PlaneGeometry(.32,.16),new THREE.MeshBasicMaterial({map:texture}));badge.material.userData.ownedTextures=[texture];badge.position.set(0,1.25,.257);torsoGroup.add(badge);
+    const badge=new THREE.Mesh(actorGeometry.Plane(.32,.16),new THREE.MeshBasicMaterial({map:texture}));badge.material.userData.ownedTextures=[texture];badge.position.set(0,1.25,.257);torsoGroup.add(badge);
   }
 
   /* ---------------------- MUTANT SCALE & POSTURE ---------------------- */
@@ -2221,7 +2244,7 @@ export function disposeBotVisuals(root: THREE.Object3D): void {
     if (mesh.material) for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) materials.add(material);
     if (object instanceof THREE.Light) object.dispose();
   });
-  geometries.forEach((geometry) => geometry.dispose());
+  geometries.forEach((geometry) => { if (!sharedActorGeometries.has(geometry)) geometry.dispose(); });
   materials.forEach((material) => { for (const texture of material.userData.ownedTextures ?? []) ownedTextures.add(texture); material.dispose(); });
   ownedTextures.forEach(texture => texture.dispose());
   root.removeFromParent();
@@ -2229,6 +2252,8 @@ export function disposeBotVisuals(root: THREE.Object3D): void {
 }
 
 export function disposeBotTextureCache(): void {
+  actorGeometryCache.forEach(geometry => geometry.dispose());
+  actorGeometryCache.clear();
   const textures = new Set([_weaveTex, _scratchTex]);
   _weaveTex = null;
   _scratchTex = null;

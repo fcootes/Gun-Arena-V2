@@ -1,0 +1,70 @@
+{
+  "testedCommit": "4670bf0",
+  "results": [
+    {
+      "check": "lint",
+      "status": "passed",
+      "milliseconds": 7108
+    },
+    {
+      "check": "test:batch1",
+      "status": "passed",
+      "milliseconds": 1228
+    },
+    {
+      "check": "test:batch2",
+      "status": "passed",
+      "milliseconds": 1213
+    },
+    {
+      "check": "test:weapons",
+      "status": "passed",
+      "milliseconds": 2385
+    },
+    {
+      "check": "test:scenes",
+      "status": "passed",
+      "milliseconds": 2333
+    },
+    {
+      "check": "test:tactical",
+      "status": "passed",
+      "milliseconds": 1428
+    },
+    {
+      "check": "test:area51",
+      "status": "passed",
+      "milliseconds": 1945
+    },
+    {
+      "check": "test:bosses",
+      "status": "passed",
+      "milliseconds": 908
+    },
+    {
+      "check": "test:runtime",
+      "status": "passed",
+      "milliseconds": 1317
+    },
+    {
+      "check": "test:audio",
+      "status": "passed",
+      "milliseconds": 429
+    },
+    {
+      "check": "test:performance",
+      "status": "passed",
+      "milliseconds": 2889
+    },
+    {
+      "check": "test:preparation",
+      "status": "passed",
+      "milliseconds": 857
+    },
+    {
+      "check": "build",
+      "status": "passed",
+      "milliseconds": 5075
+    }
+  ]
+}
