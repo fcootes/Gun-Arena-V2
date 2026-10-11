@@ -22,7 +22,9 @@
     "benchmark:browser": "node scripts/benchmark-browser.mjs",
     "test:preparation": "node --import tsx tests/preparation.test.ts",
     "test:preparation:browser": "node scripts/test-preparation-browser.mjs",
-    "profile:first-use": "node scripts/profile-first-use.mjs"
+    "profile:first-use": "node scripts/profile-first-use.mjs",
+    "test:controls": "node --import tsx tests/controls.test.ts",
+    "test:controls:browser": "node scripts/test-controls-browser.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",

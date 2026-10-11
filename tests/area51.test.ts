@@ -1,3 +1,4 @@
+import { GameplayInput } from '../src/gameplayInput';
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { createWorld, terrainHeight } from "../src/world";
@@ -268,13 +269,20 @@ for (const faction of ["usmc", "apex"] as const) {
     assert.ok(bots.every((b) => !b.isZombie));
     assert.ok(bots.some((b) => b.campaignEntity === "security"));
   }
+  const controls = new GameplayInput();
+  const interact = () => {
+    assert.equal(controls.keyDown('KeyE'), true);
+    const result = director.update(0.1, controls.keys);
+    controls.keyUp('KeyE');
+    return result;
+  };
   player.pos.copy(facility.liftBottom).y += 1.65;
-  director.update(0.1, { KeyE: true });
+  interact();
   assert.ok(player.pos.y < 5, "locked lift before objective");
   player.pos.copy(facility.objectivePosition);
   player.pos.x += 2.5;
   player.pos.y = 1.65;
-  director.update(0.1, { KeyE: true });
+  interact();
   if (faction === "apex") {
     for (let i = 0; i < 81; i++) director.update(0.1, {});
     assert.equal(director.state.mainframeHacked, true);
@@ -283,7 +291,7 @@ for (const faction of ["usmc", "apex"] as const) {
   player.pos.copy(facility.liftBottom).y += 1.65;
   const liftPrompt = director.update(0.1, {});
   assert.equal(liftPrompt.interactionPrompt, "[ E ] - ENTER ELEVATOR (LEVEL 4 WAREHOUSE)");
-  director.update(0.1, { KeyE: true });
+  interact();
   assert.equal(player.pos.y, 1.65);
   for (let i = 0; i < 43; i++) {
     world.updateWorld(0.1, i * 0.1, "extraction");
@@ -292,7 +300,7 @@ for (const faction of ["usmc", "apex"] as const) {
   assert.equal(player.pos.y, 16.65);
   assert.equal(facility.phase, "ARRIVAL");
   player.pos.copy(facility.consolePosition);
-  director.update(0.1, { KeyE: true });
+  interact();
   assert.equal(facility.phase, "INTRO");
   assert.ok(facility.controlsLocked);
   const bosses = bots.filter((b) => b.userData?.entranceActive);
