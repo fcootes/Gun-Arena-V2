@@ -1,0 +1,147 @@
+{
+  "base": "55523e929977b493efe999c9ab7ca1dadfc50594",
+  "implementationCommit": "7b17ef813add595bb6b29847595c933577051a06",
+  "implementationTree": "150ef81817b5790e6e80bf0f57e74f3c251f2373",
+  "sourceSha256": {
+    "package.json": "16d61ad5c2fecece3407c2eacd961bbf6649f1c5783350a1bc0378bc2371ca61",
+    "scripts/test-controls-browser.mjs": "cea593c3b5804b598947ca6cf7bc90634de1c0625644b4edcb1634ac045bd038",
+    "src/App.tsx": "1341444459675fb6eb45b5b675892de7038a2cd0ee7e2c9023ccfc25fb09589a",
+    "src/gameplayInput.ts": "36047217f973c28e50e554a2a2fd42084f2820bce7bf96975545b1dc23a0e203",
+    "tests/area51.test.ts": "80b4469016c4e42bfbbf8509f1ddc01a039f73079331fe660169c6e73569033c",
+    "tests/batch1.test.ts": "ed991a15b826f782a71668d3b8676a519c8fc93c132eaf03eea2850bdeb491a5",
+    "tests/controls.test.ts": "9ac20856dea74c3fc23725c1d3ad4cb0beb4549f0bfacc839475599e9fdc9669",
+    "tests/inputHarness.mjs": "10a920830a1c650d0bebc8070efb67010c801c287fca3f007925f3f1e80f945a"
+  },
+  "mergedBaseRegressionRun": {
+    "base": "55523e929977b493efe999c9ab7ca1dadfc50594",
+    "implementation": "c7c79795316314742a237f8aa13dd4b8184ed3fb",
+    "checks": [
+      {
+        "command": "npm run lint",
+        "exitCode": 124,
+        "seconds": 30,
+        "output": "b'npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\\n\\n> gun-arena-v2@0.0.0 lint\\n> tsc --noEmit\\n\\n'"
+      },
+      {
+        "command": "npm run build",
+        "exitCode": 0,
+        "seconds": 18.72,
+        "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 build\n> vite build\n\nvite v6.4.4 building for production...\ntransforming...\n\u2713 88 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                                                 3.37 kB \u2502 gzip:   1.21 kB\ndist/assets/lmg_fire_single-NJzcBAnn.wav                       15.40 kB\ndist/assets/plasma_chamber_insert-CNDNZEqU.wav                 30.76 kB\ndist/assets/plasma_fire_single-D0IjigXU.wav                    31.72 kB\ndist/assets/shotgun_reload_shell_insert-BU_IxnJE.wav           75.52 kB\ndist/assets/shotgun_pump-D4I_3IIO.wav                          80.68 kB\ndist/assets/smg_fire_single-D_p1kfL5.wav                       84.52 kB\ndist/assets/minigun_warmup-CRzokXtF.wav                        96.04 kB\ndist/assets/shotgun_reload_shell_insert_empty-DmFCATmS.wav    106.49 kB\ndist/assets/lmg_fire_auto_loop-BE_4z8wA.wav                   110.44 kB\ndist/assets/br_reload_tactical-44u6Ge6E.wav                   143.81 kB\ndist/assets/sniper_fire_single-CREar2y0.wav                   149.80 kB\ndist/assets/br_fire_single-CXmXP82y.wav                       157.48 kB\ndist/assets/sniper_fire_with_bolt-ExwP6_gZ.wav                163.24 kB\ndist/assets/sniper_bolt_cycle-Cb9Mzjid.wav                    163.24 kB\ndist/assets/ar_fire_single-C5vmyHtD.wav                       170.92 kB\ndist/assets/br_fire_burst_3-CF-Jy6zQ.wav                      186.28 kB\ndist/assets/plasma_fire_auto_loop-iYQ2ci9P.wav                211.24 kB\ndist/assets/pistol_fire_single-DaCkoGDJ.wav                   215.08 kB\ndist/assets/smg_reload_tactical-vTAW0HJh.wav                  215.70 kB\ndist/assets/pistol_reload_tactical-C7ScYSDJ.wav               227.68 kB\ndist/assets/railgun_charge-D9SiYAfb.wav                       230.44 kB\ndist/assets/br_reload_empty-BMe_5_4j.wav                      253.48 kB\ndist/assets/minigun_spin_down-DM-a2uzf.wav                    268.84 kB\ndist/assets/sniper_reload_tactical-BJDnpCP6.wav               323.52 kB\ndist/assets/smg_fire_auto_loop-BtYYMCHK.wav                   331.82 kB\ndist/assets/minigun_fire_auto_loop-C0umsVzs.wav               345.64 kB\ndist/assets/shotgun_fire_single-Cl_R7u2_.wav                  361.00 kB\ndist/assets/ar_reload_tactical-DiSwx-iM.wav                   371.45 kB\ndist/assets/smg_reload_empty-BTXvlvx5.wav                     380.20 kB\ndist/assets/minigun_cooling_hiss-CJoccMz4.wav                 384.04 kB\ndist/assets/minigun_overheat-DE6yWt_v.wav                     384.04 kB\ndist/assets/pistol_reload_empty-BsASj1C1.wav                  401.32 kB\ndist/assets/plasma_cooling_hiss-BcIyrCT4.wav                  422.44 kB\ndist/assets/plasma_reload_empty-CeXiGbBC.wav                  422.44 kB\ndist/assets/railgun_fire_single-CFg_3Wgg.wav                  460.84 kB\ndist/assets/ar_fire_auto_loop-CM1uqqsX.wav                    506.92 kB\ndist/assets/sniper_reload_empty-Kue3AdrL.wav                  570.28 kB\ndist/assets/lmg_reload_tactical-vD9wVL--.wav                  629.04 kB\ndist/assets/ar_reload_empty-DSLjvbdg.wav                      654.76 kB\ndist/assets/lmg_reload_empty-OaGZp1-n.wav                   1,064.49 kB\ndist/assets/index-D6ZcH5hH.css                                 85.35 kB \u2502 gzip:  15.00 kB\ndist/assets/index-DdfrOXuI.js                               1,377.33 kB \u2502 gzip: 397.10 kB\n\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\n\u2713 built in 15.82s\n"
+      },
+      {
+        "command": "npm run test:controls",
+        "exitCode": 0,
+        "seconds": 8.6,
+        "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 test:controls\n> node --import tsx tests/controls.test.ts\n\nPASS: exclusive F/V and physical/auto-repeat guards\nPASS: RMB priority in both press orders; grounded sprint, opposite keys, crouch/jump and unchanged collision/class speed\nPASS: reload/ADS recovery, fire holds, multi-button release, grenade, E consumable latch, squad selection and slots/wheel\nPASS: pause/resume, death, restart, lobby, blur/hidden, real lock loss, rejected lock/drag fallback and locked/dead guards\n"
+      },
+      {
+        "command": "npm run test:runtime",
+        "exitCode": 0,
+        "seconds": 6.22,
+        "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 test:runtime\n> node --import tsx tests/runtime.test.ts\n\nPASS: explicit Area 51 registration/default, retired-key normalization, Pacific Rim and Training preservation\nPASS: actual SMG/LMG/BR/plasma reload handlers select dedicated audio once without generic doubling\nPASS: actual incoming-damage immunity, exact 99,999 body damage, all firearm dispatches and normal damage restoration\nPASS: replay/lobby handlers are idempotent and request a fresh lobby engine\nPASS: replay cleanup releases grenades, sparks, ragdolls, tracers, explosions, toxic puddles and distortion rings\n"
+      },
+      {
+        "command": "npm run test:weapons",
+        "exitCode": 0,
+        "seconds": 9.06,
+        "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 test:weapons\n> node --import tsx tests/weapons.test.ts\n\nPASS: twelve distinct detailed assemblies, moving parts, batched draws, bounded muzzle pools and complete GPU teardown\nPASS: all twelve models propagate through inspection/lobby, first-person and actor equipment without changing hitboxes\nPASS: launcher cadence/ammo, player and AI projectile paths, thin-target sweep, ally protection, attribution, reload and reset disposal\nPASS: isolated twelve-card armory, grouped real performance values, tactical scores and equipped/locked badges\n"
+      },
+      {
+        "command": "npm run test:tactical",
+        "exitCode": 0,
+        "seconds": 9.46,
+        "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 test:tactical\n> node --import tsx tests/tactical.test.ts\n\nPASS: tactical/empty phase selection, ammo conservation, resumed chambering, exact shell counts, interruption and energy vents\nPASS: all twelve procedural reload paths keep finite transforms and AR has a dedicated optic\nPASS: graph routes around blocked corners and allied walls stay traversable on both world implementations\nPASS: revive priority, healing, suppression/ammo packs, reachable high ground, assault grenades and automatic engineer turret cleanup\nPASS: accessible centered post-death dialog exposes exactly two match actions\n"
+      },
+      {
+        "command": "npm run test:area51",
+        "exitCode": 0,
+        "seconds": 11.7,
+        "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 test:area51\n> node --import tsx tests/area51.test.ts\n\nPASS: Area 51 vehicles, all-mode spawns, connected routes, lift gates, resource disposal, both faction campaigns, complete boss gate and helicopter departure\n"
+      },
+      {
+        "command": "npm run test:bosses",
+        "exitCode": 0,
+        "seconds": 5.39,
+        "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 test:bosses\n> node --import tsx tests/area51Bosses.test.ts\n\nPASS: boss scaling/club, drop-impact-roar, single-hit localized attacks, ranged charge, clear file entrances, Spartan aim/sprint/flanks and finite helicopter normals\n"
+      },
+      {
+        "command": "npm run test:audio",
+        "exitCode": 0,
+        "seconds": 2.35,
+        "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 test:audio\n> node --import tsx tests/weaponAudio.test.ts\n\nPASS: all 40 real PCM assets, source selection and sustained AR loop without restart\nPASS: tactical/empty selection, class reload duration, ammo preservation and chamber-only resume\nPASS: exact shell counts, phase-start timing through large deltas, final pump and interruption\nPASS: pause/resume preserves cursor and speed; cancellation clears pending resume\nPASS: new reload/chamber profiles, one LMG loop, exactly three/two/one BR reports\nPASS: minigun transitions, shortened warmup, fitted spin/vent, no duplicate hiss, pause and cancellation\nPASS: SMG/plasma taps, sustained loops without restarting/layering, and final reports\nPASS: class-fitted plasma cooling/composite selection, insert cue, no duplicate hiss, pause/cancellation\nPASS: one railgun charge, cursor preservation, early cancellation, slug transition and no synthetic doubling\n"
+      },
+      {
+        "command": "npm run test:batch1",
+        "exitCode": 0,
+        "seconds": 5.62,
+        "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 test:batch1\n> node --import tsx tests/batch1.test.ts\n\nPASS: resource ownership, cache lifetime, helper signatures and repeated offshore atmosphere transitions\nPASS: four-slot HUD, field kit counts, ammo placement and visor styling\nPASS: keyboard slots 1\u20134, wheel wrap in both directions and paused input guard\nPASS: depleted/full-health kit guards and uninterrupted finite-kit application\n"
+      },
+      {
+        "command": "npm run test:batch2",
+        "exitCode": 0,
+        "seconds": 4.61,
+        "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 test:batch2\n> node --import tsx tests/batch2.test.ts\n\nPASS: five classes, editable four-member allocation, deployment presets and four mode posters\nPASS: all weapon meshes, resource-safe swaps, rounded operator head and map lighting\nPASS: legacy exponential fog restoration and reflection teardown on training map\nPASS: helicopter target selection, ally/dead guards, cadence, range, occlusion and phase gating\n"
+      },
+      {
+        "command": "npm run test:scenes",
+        "exitCode": 0,
+        "seconds": 8.45,
+        "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 test:scenes\n> node --import tsx tests/scenes.test.ts\n\nPASS: all twelve inspect, lobby, bot/third-person and animated FPS directions; swaps never double-flip\nPASS: twenty-four reactive mode scenes, all four extraction variants, selection semantics and unique SVG resources\n"
+      },
+      {
+        "command": "npm run test:performance",
+        "exitCode": 0,
+        "seconds": 8.88,
+        "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 test:performance\n> node --import tsx tests/performance.test.ts\n\nPASS: 1,200 exact indexed/full traversal comparisons, live active/team flags and cover removal\nPASS: pixel-cache reuse, unique texture ownership, four full world disposals and repeated actor weapon replacement\nPASS: bounded rolling samples, frame-time weighted average and slowest-one-percent mean\nPASS: cancellation before work and during async stage; ordered initialization timing\nPASS: real staged constructors complete both maps; cancellation at eight partial-world stages restores scene and ownership\n"
+      },
+      {
+        "command": "npm run test:preparation",
+        "exitCode": 0,
+        "seconds": 3.3,
+        "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 test:preparation\n> node --import tsx tests/preparation.test.ts\n\nPASS: hidden mission geometry, frozen light counts, excluded lobby and exact visibility/layer restoration\nPASS: representative draw camera covers actual instance geometry\nPASS: real completion polling, cancellation/context failure cleanup and all shader-program completion\nPASS: real preparation includes unlit particle variants and restores camera, render target, shadow, scissor and scene state\nPASS: bounded multi-format batches retain every light-count draw, reduce fences and restore state on mid-draw cancellation\nPASS: immutable body-buffer reuse, independent damage materials, engine disposal and idempotent selected-viewmodel preparation\nPASS: silent mission-audio preparation, exact cue lengths, playback/loop reuse and context disposal\n"
+      }
+    ]
+  },
+  "finalChecks": [
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "seconds": 17.58,
+      "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 lint\n> tsc --noEmit\n\n"
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "seconds": 11.6,
+      "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 build\n> vite build\n\nvite v6.4.4 building for production...\ntransforming...\n\u2713 88 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                                                 3.37 kB \u2502 gzip:   1.21 kB\ndist/assets/lmg_fire_single-NJzcBAnn.wav                       15.40 kB\ndist/assets/plasma_chamber_insert-CNDNZEqU.wav                 30.76 kB\ndist/assets/plasma_fire_single-D0IjigXU.wav                    31.72 kB\ndist/assets/shotgun_reload_shell_insert-BU_IxnJE.wav           75.52 kB\ndist/assets/shotgun_pump-D4I_3IIO.wav                          80.68 kB\ndist/assets/smg_fire_single-D_p1kfL5.wav                       84.52 kB\ndist/assets/minigun_warmup-CRzokXtF.wav                        96.04 kB\ndist/assets/shotgun_reload_shell_insert_empty-DmFCATmS.wav    106.49 kB\ndist/assets/lmg_fire_auto_loop-BE_4z8wA.wav                   110.44 kB\ndist/assets/br_reload_tactical-44u6Ge6E.wav                   143.81 kB\ndist/assets/sniper_fire_single-CREar2y0.wav                   149.80 kB\ndist/assets/br_fire_single-CXmXP82y.wav                       157.48 kB\ndist/assets/sniper_fire_with_bolt-ExwP6_gZ.wav                163.24 kB\ndist/assets/sniper_bolt_cycle-Cb9Mzjid.wav                    163.24 kB\ndist/assets/ar_fire_single-C5vmyHtD.wav                       170.92 kB\ndist/assets/br_fire_burst_3-CF-Jy6zQ.wav                      186.28 kB\ndist/assets/plasma_fire_auto_loop-iYQ2ci9P.wav                211.24 kB\ndist/assets/pistol_fire_single-DaCkoGDJ.wav                   215.08 kB\ndist/assets/smg_reload_tactical-vTAW0HJh.wav                  215.70 kB\ndist/assets/pistol_reload_tactical-C7ScYSDJ.wav               227.68 kB\ndist/assets/railgun_charge-D9SiYAfb.wav                       230.44 kB\ndist/assets/br_reload_empty-BMe_5_4j.wav                      253.48 kB\ndist/assets/minigun_spin_down-DM-a2uzf.wav                    268.84 kB\ndist/assets/sniper_reload_tactical-BJDnpCP6.wav               323.52 kB\ndist/assets/smg_fire_auto_loop-BtYYMCHK.wav                   331.82 kB\ndist/assets/minigun_fire_auto_loop-C0umsVzs.wav               345.64 kB\ndist/assets/shotgun_fire_single-Cl_R7u2_.wav                  361.00 kB\ndist/assets/ar_reload_tactical-DiSwx-iM.wav                   371.45 kB\ndist/assets/smg_reload_empty-BTXvlvx5.wav                     380.20 kB\ndist/assets/minigun_cooling_hiss-CJoccMz4.wav                 384.04 kB\ndist/assets/minigun_overheat-DE6yWt_v.wav                     384.04 kB\ndist/assets/pistol_reload_empty-BsASj1C1.wav                  401.32 kB\ndist/assets/plasma_cooling_hiss-BcIyrCT4.wav                  422.44 kB\ndist/assets/plasma_reload_empty-CeXiGbBC.wav                  422.44 kB\ndist/assets/railgun_fire_single-CFg_3Wgg.wav                  460.84 kB\ndist/assets/ar_fire_auto_loop-CM1uqqsX.wav                    506.92 kB\ndist/assets/sniper_reload_empty-Kue3AdrL.wav                  570.28 kB\ndist/assets/lmg_reload_tactical-vD9wVL--.wav                  629.04 kB\ndist/assets/ar_reload_empty-DSLjvbdg.wav                      654.76 kB\ndist/assets/lmg_reload_empty-OaGZp1-n.wav                   1,064.49 kB\ndist/assets/index-D6ZcH5hH.css                                 85.35 kB \u2502 gzip:  15.00 kB\ndist/assets/index-Ct0jg2ku.js                               1,377.36 kB \u2502 gzip: 397.12 kB\n\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\n\u2713 built in 10.64s\n"
+    },
+    {
+      "command": "npm run test:controls",
+      "exitCode": 0,
+      "seconds": 2.89,
+      "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 test:controls\n> node --import tsx tests/controls.test.ts\n\nPASS: exclusive F/V and physical/auto-repeat guards\nPASS: RMB priority in both press orders; grounded sprint, opposite keys, crouch/jump and unchanged collision/class speed\nPASS: reload/ADS recovery, fire holds, multi-button release, grenade, E consumable latch, squad selection and slots/wheel\nPASS: pause/resume, death, restart, lobby, blur/hidden, real lock loss, rejected lock/drag fallback and locked/dead guards\n"
+    },
+    {
+      "command": "npm run test:audio",
+      "exitCode": 0,
+      "seconds": 1.41,
+      "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 test:audio\n> node --import tsx tests/weaponAudio.test.ts\n\nPASS: all 40 real PCM assets, source selection and sustained AR loop without restart\nPASS: tactical/empty selection, class reload duration, ammo preservation and chamber-only resume\nPASS: exact shell counts, phase-start timing through large deltas, final pump and interruption\nPASS: pause/resume preserves cursor and speed; cancellation clears pending resume\nPASS: new reload/chamber profiles, one LMG loop, exactly three/two/one BR reports\nPASS: minigun transitions, shortened warmup, fitted spin/vent, no duplicate hiss, pause and cancellation\nPASS: SMG/plasma taps, sustained loops without restarting/layering, and final reports\nPASS: class-fitted plasma cooling/composite selection, insert cue, no duplicate hiss, pause/cancellation\nPASS: one railgun charge, cursor preservation, early cancellation, slug transition and no synthetic doubling\n"
+    },
+    {
+      "command": "npm run test:runtime",
+      "exitCode": 0,
+      "seconds": 5.34,
+      "output": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n\n> gun-arena-v2@0.0.0 test:runtime\n> node --import tsx tests/runtime.test.ts\n\nPASS: explicit Area 51 registration/default, retired-key normalization, Pacific Rim and Training preservation\nPASS: actual SMG/LMG/BR/plasma reload handlers select dedicated audio once without generic doubling\nPASS: actual incoming-damage immunity, exact 99,999 body damage, all firearm dispatches and normal damage restoration\nPASS: replay/lobby handlers are idempotent and request a fresh lobby engine\nPASS: replay cleanup releases grenades, sparks, ragdolls, tracers, explosions, toxic puddles and distortion rings\n"
+    }
+  ],
+  "preservation": {
+    "runDeploymentIdenticalToMergedPR12": true,
+    "performanceResourceModulesUnchanged": true,
+    "productionObservationHookAbsent": true
+  },
+  "limits": [
+    "Initial concurrent 30-second lint limit expired; final isolated lint passed under a 60-second command limit.",
+    "Initial post-merge browser 30-second readiness check reached the upload stage without page errors, then timed out; isolated 45-second readiness/120-second whole-run checks passed.",
+    "No native Windows/Surface GPU acceptance, full-map browser matrix or FPS/loading benchmark was performed."
+  ]
+}
