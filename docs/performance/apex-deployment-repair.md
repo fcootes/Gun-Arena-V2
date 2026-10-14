@@ -114,9 +114,14 @@ required before merge. A previous scope assertion failure was isolated to the
 old profiling harness setting ADS directly; it now invokes the real RMB handler
 introduced by PR #13 and the scoped checks pass.
 
+Scoped Shattered Wall APEX cold/warm/replay also passed: 11.36 / 14.20 / 9.26 s,
+with real RMB ADS/scope, movement/fire, signal/wave/helicopter fixtures, lobby
+return, cancellation cleanup and zero new shader programs/page errors.
+
 ## Publication / resume
 
 Both implementation checkpoints were pushed to the dedicated feature branch.
+Draft PR: <https://github.com/fcootes/Gun-Arena-V2/pull/14>.
 GitHub API access recovered after the saved network-domain change propagated;
 API evidence confirms PR #13 is merged. The linked Vercel project is
 `fcootes/gun-arena-v2`; each feature-branch push creates a Preview deployment.

@@ -280,6 +280,67 @@
           }
         }
       ]
+    },
+    "shatteredWall": {
+      "scopedLoadout": true,
+      "cancellation": [
+        {
+          "stage": "Combat lighting draws",
+          "preparedCount": 0,
+          "sceneChildren": 0,
+          "contextLost": true,
+          "stalePlayingFrames": 0
+        }
+      ],
+      "errors": [],
+      "runs": [
+        {
+          "run": "cold",
+          "loadingMs": 11363.30000000028,
+          "scopeVisible": true,
+          "newGameplayPrograms": 0,
+          "firstGameplayCpuMs": 18.299999999813735,
+          "phaseCpuRenderMaxMs": {
+            "first frames": 18.09999999962747,
+            "turn ADS fire": 21.799999999813735,
+            "signal and first wave": 35.299999999813735,
+            "helicopter arrival": 14.400000000372529
+          }
+        },
+        {
+          "run": "warm",
+          "loadingMs": 14196.600000000093,
+          "scopeVisible": true,
+          "newGameplayPrograms": 0,
+          "firstGameplayCpuMs": 11.399999999906868,
+          "phaseCpuRenderMaxMs": {
+            "first frames": 22.5,
+            "turn ADS fire": 27.399999999906868,
+            "signal and first wave": 38.89999999990687,
+            "helicopter arrival": 19.200000000186265
+          }
+        },
+        {
+          "run": "replay",
+          "loadingMs": 9258.30000000028,
+          "scopeVisible": true,
+          "newGameplayPrograms": 0,
+          "firstGameplayCpuMs": 8.700000000186265,
+          "phaseCpuRenderMaxMs": {
+            "first frames": 14,
+            "turn ADS fire": 24.399999999906868,
+            "signal and first wave": 15,
+            "helicopter arrival": 14.100000000093132
+          }
+        }
+      ]
     }
+  },
+  "publication": {
+    "draftPr": "https://github.com/fcootes/Gun-Arena-V2/pull/14",
+    "branch": "fix/apex-combat-preparation-20261014",
+    "vercelProject": "fcootes/gun-arena-v2",
+    "previewAccess": "Vercel deployment protection redirects anonymous requests to login; remote gameplay not verified",
+    "productionUpdated": false
   }
 }
