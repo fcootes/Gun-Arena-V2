@@ -1,3 +1,4 @@
+import { GameplayInput, KEY_ACTIONS, MOUSE_BUTTONS, CONTROLS_GUIDE } from './gameplayInput';
 import { DeploymentPipeline } from './deployment';
 import { initialization, createPerformanceOverlay } from './performance';
 import { HudDom } from './hudDom';
@@ -290,6 +291,7 @@ export default function App() {
     if (gameState === 'playing') resumeWeaponAudio();
     else if (gameState === 'paused') pauseWeaponAudio();
     else stopWeaponAudio();
+    if (gameState !== 'playing') clearInputRef.current?.();
   }, [gameState]);
 
   const matchModeRef = useRef(matchMode);
@@ -362,6 +364,8 @@ export default function App() {
 
   const radarPingsRef = useRef<RadarPing[]>([]);
   const deployHandlerRef = useRef<() => void>();
+  const pauseHandlerRef = useRef<() => void>();
+  const clearInputRef = useRef<() => void>();
   const resumeHandlerRef = useRef<() => void>();
   const restartHandlerRef = useRef<() => void>();
   const lobbyHandlerRef = useRef<() => void>();
@@ -844,7 +848,8 @@ export default function App() {
     let recoilKick = 0;
     let mouseSensitivity = sensitivityVal / 5000;
     let bobPhase = 0;
-    const keys: Record<string, boolean> = {};
+    const input = new GameplayInput();
+    const keys = input.keys;
 
     const activeGrenades: ActiveGrenade[] = [];
     const explosionEffects: ExplosionEffect[] = [];
@@ -1521,7 +1526,7 @@ export default function App() {
       if (gameStateRef.current === 'DEATH_SCREEN') return;
       gameStateRef.current = 'DEATH_SCREEN';
       stopWeaponAudio();
-      player.fireHeld = false; player.aiming = false; for(const key of Object.keys(keys))keys[key]=false;
+      clearGameplayInput();
       AUDIO.laserBeam.stop(); AUDIO.minigunFire.stop();
       AUDIO.arSpray.stop();
       updateAdrenalineHeartbeat(false);
@@ -2018,8 +2023,7 @@ export default function App() {
       botIdCounter = 0; zombieTypeIndex = 0;
       currentWave = 1; zombiesRemaining = 0; waveIntermission = false; intermissionTimer = 0;
       recoilPitch = recoilKick = bobPhase = 0; lastGrenadeThrow = -1;
-      isMouseDown = false;
-      for (const key of Object.keys(keys)) keys[key] = false;
+      clearGameplayInput();
       radarPingsRef.current.length = 0; focusTargetIDRef.current = null;
       setTargetingPhase(false); setSquadDirectiveBanner(null); setMatchRewards(null);
       setEndResult({ victory: false, title: 'DEFEAT', sub: '' });
@@ -2609,36 +2613,64 @@ export default function App() {
       }
     };
 
+    function gameplayControlsActive() {
+      return gameStateRef.current === 'playing' && player.alive && !world.facility?.controlsLocked
+        && world.offshore?.phase !== 'DEPARTING' && world.offshore?.phase !== 'COMPLETE';
+    }
+
+    function updateHeldControls() {
+      input.applyHeld(player, gameplayControlsActive(), currentSlot().type === 'weapon', !!currentSlotState().reloading);
+    }
+
+    function clearGameplayInput() {
+      input.clear(player);
+      player.vel.x = player.vel.z = 0;
+      player.continuousShots = 0;
+      const ws = currentSlotState();
+      ws.charging = false; ws.chargeTimer = 0; ws.spinWarmup = 0;
+      vmManager.setRailgunChargeProgress(0);
+      // Release fire/charge voices while preserving paused reload cursors.
+      releaseMinigunAudio(0); updateRailgunWeaponAudio(false, 0);
+      AUDIO.brBurst.stop();
+      AUDIO.arSpray.stop(); AUDIO.lmgAuto.stop(); AUDIO.smgAuto.stop();
+      AUDIO.laserBeam.stop(); AUDIO.minigunFire.stop(); AUDIO.minigunWindup.stop(); AUDIO.railgunCharge.stop();
+      laserBeamMesh.visible = railgunAimLaserMesh.visible = false;
+    }
+
+    const pauseHandler = () => {
+      if (gameStateRef.current !== 'playing') return;
+      gameStateRef.current = 'paused';
+      clearGameplayInput();
+      setGameState('paused');
+      if (document.pointerLockElement) { try { document.exitPointerLock?.(); } catch {} }
+    };
+
     // Input listeners
     const onKeyDown = (e: KeyboardEvent) => {
-      keys[e.code] = true;
-
-      // Escape or P to toggle pause menu cleanly
-      if (e.code === 'Escape' || e.code === 'KeyP') {
-        if (gameStateRef.current === 'playing') {
-          setGameState('paused');
-          AUDIO.arSpray.stop();
-          player.continuousShots = 0;
-          if (document.pointerLockElement) {
-            try { document.exitPointerLock?.(); } catch {}
-          }
-        } else if (gameStateRef.current === 'paused') {
-          setGameState('playing');
-          requestGamePointerLock();
-        }
+      const action = KEY_ACTIONS[e.code as keyof typeof KEY_ACTIONS];
+      if (!action) return;
+      if (action !== 'pause' && e.target instanceof HTMLElement && e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (gameStateRef.current !== 'playing' && gameStateRef.current !== 'paused') return;
+      e.preventDefault();
+      if (!input.keyDown(e.code, e.repeat)) return;
+      if (action === 'pause') {
+        if (gameStateRef.current === 'playing') pauseHandler();
+        else resumeHandler();
         return;
       }
+      if (!gameplayControlsActive()) { input.keyUp(e.code); return; }
+      updateHeldControls();
+      if (action === 'jump' && player.onGround) {
+        player.vel.y = JUMP_SPEED;
+        player.onGround = false;
+        updateHeldControls();
+      }
+      if (action === 'perspective') { thirdPerson=!thirdPerson; pushKillFeed(thirdPerson?'THIRD-PERSON VIEW':'FIRST-PERSON VIEW'); }
+      if (action === 'reload') { reloadWeapon(); updateHeldControls(); }
+      if (action === 'grenade') throwGrenade();
 
-      if (gameStateRef.current !== 'playing') return;
-      if (e.code === 'ShiftLeft') player.aiming = true;
-      if (e.code === 'ControlLeft') player.crouching = true;
-      if (e.code === 'Space' && player.onGround) player.vel.y = JUMP_SPEED;
-      if (e.code === 'KeyV' && !e.repeat) { thirdPerson=!thirdPerson; pushKillFeed(thirdPerson?'THIRD-PERSON VIEW':'FIRST-PERSON VIEW'); }
-      if (e.code === 'KeyR') reloadWeapon();
-      if (e.code === 'KeyG') throwGrenade();
-      
       // Squad Controls
-      if (e.code === 'KeyZ') {
+      if (action === 'squadFollowHold') {
         const nextDirective = squadDirectiveRef.current === 'follow_lead' ? 'hold_position' : 'follow_lead';
         squadDirectiveRef.current = nextDirective;
         setSquadDirective(nextDirective);
@@ -2651,7 +2683,7 @@ export default function App() {
         AUDIO.sniperReload.play(0.65);
       }
       
-      if (e.code === 'KeyX') {
+      if (action === 'squadFocus') {
         // Toggle targeting phase
         if (targetingPhaseRef.current) {
            targetingPhaseRef.current = false;
@@ -2662,7 +2694,7 @@ export default function App() {
         }
       }
       
-      if (e.code === 'KeyC') {
+      if (action === 'squadPush') {
         const nextDirective = 'push_objective';
         squadDirectiveRef.current = nextDirective;
         setSquadDirective(nextDirective);
@@ -2675,11 +2707,12 @@ export default function App() {
         AUDIO.sniperReload.play(0.65);
       }
 
-      // Melee: Key 'F' (and fallback 'V') - 'E' is preserved strictly for Interact!
-      if (e.code === 'KeyF' || e.code === 'KeyV') {
+      // F is exclusively melee; E remains the campaign interaction latch.
+      if (action === 'melee') {
         if (!player.isMeleeing && player.alive) {
           player.isMeleeing = true;
           player.meleeTimer = 0.38;
+          updateHeldControls();
           playKnifeSlashWhoosh();
           vmManager.triggerKnifeSlash();
           const raycaster = new THREE.Raycaster();
@@ -2705,30 +2738,31 @@ export default function App() {
           }
         }
       }
-      if (e.code === 'Digit1') switchSlot(0);
-      if (e.code === 'Digit2') switchSlot(1);
-      if (e.code === 'Digit3') switchSlot(2);
-      if (e.code === 'Digit4') switchSlot(3);
+      if (action === 'slot1') switchSlot(0);
+      if (action === 'slot2') switchSlot(1);
+      if (action === 'slot3') switchSlot(2);
+      if (action === 'slot4') switchSlot(3);
       
       // Digits 1–4 select the four loadout slots; higher digits remain unused.
     };
 
     const onKeyUp = (e: KeyboardEvent) => {
-      keys[e.code] = false;
-      if (e.code === 'ShiftLeft') player.aiming = false;
-      if (e.code === 'ControlLeft') player.crouching = false;
+      input.keyUp(e.code);
+      updateHeldControls();
     };
 
-    let isMouseDown = false;
     const onMouseDown = (e: MouseEvent) => {
-      isMouseDown = true;
-      if (gameStateRef.current !== 'playing') return;
+      if (!gameplayControlsActive()) return;
+      if (e.button !== MOUSE_BUTTONS.fire && e.button !== MOUSE_BUTTONS.aim) return;
+      e.preventDefault();
+      if (!input.mouseDown(e.button)) return;
+      updateHeldControls();
 
       if (document.pointerLockElement !== renderer.domElement) {
         requestGamePointerLock();
       }
 
-      if (e.button === 0) {
+      if (e.button === MOUSE_BUTTONS.fire) {
         if (targetingPhaseRef.current) {
           // X Key: Focus Target Lock Phase
           const raycaster = new THREE.Raycaster();
@@ -2768,8 +2802,9 @@ export default function App() {
     };
 
     const onMouseUp = (e: MouseEvent) => {
-      isMouseDown = false;
-      if (e.button === 0) {
+      input.mouseUp(e.button);
+      updateHeldControls();
+      if (e.button === MOUSE_BUTTONS.fire) {
         player.fireHeld = false;
         if (currentSlot().id === 'minigun') releaseMinigunAudio(currentSlotState().spinSpeed ?? 0);
         AUDIO.lmgAuto.stop();
@@ -2794,10 +2829,10 @@ export default function App() {
     };
 
     const onMouseMove = (e: MouseEvent) => {
-      if (gameStateRef.current !== 'playing' || world.facility?.controlsLocked) return;
+      if (!gameplayControlsActive()) return;
       const isLocked = document.pointerLockElement === renderer.domElement;
       // Allow aiming when pointer locked, OR when dragging with mouse if pointer lock is restricted
-      if (!isLocked && !isMouseDown) return;
+      if (!isLocked && !input.dragging) return;
 
       const sens = (sensitivityValRef.current || 11) / 5000;
       player.yaw -= e.movementX * sens;
@@ -2806,7 +2841,8 @@ export default function App() {
     };
 
     const onWheel = (e: WheelEvent) => {
-      if (gameStateRef.current !== 'playing') return;
+      if (!gameplayControlsActive() || e.deltaY === 0) return;
+      e.preventDefault();
       const dir = e.deltaY > 0 ? 1 : -1;
       const next = (player.slotIndex + dir + playerLoadout.length) % playerLoadout.length;
       switchSlot(next);
@@ -2817,17 +2853,23 @@ export default function App() {
     renderer.domElement.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mouseup', onMouseUp);
     document.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('wheel', onWheel);
+    renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
 
+    let pointerWasLocked = document.pointerLockElement === renderer.domElement;
     const onPointerLockChange = () => {
-      // NOTE: We deliberately DO NOT force pause when pointer lock is released!
-      // In web previews/iframes, browser pointer lock focus jitter was causing
-      // the game to rapid-toggle between playing and paused (flashing the screen).
-      if (document.pointerLockElement !== renderer.domElement) {
-        AUDIO.arSpray.stop();
-        player.continuousShots = 0;
-      }
+      const locked = document.pointerLockElement === renderer.domElement;
+      // Clear only a real lock loss; rejected lock requests retain drag fallback.
+      if (pointerWasLocked && !locked) clearGameplayInput();
+      pointerWasLocked = locked;
     };
+    const onContextMenu = (e: MouseEvent) => {
+      if (gameStateRef.current === 'playing') e.preventDefault();
+    };
+    const onBlur = () => clearGameplayInput();
+    const onVisibilityChange = () => { if (document.hidden) clearGameplayInput(); };
+    window.addEventListener('blur', onBlur);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    renderer.domElement.addEventListener('contextmenu', onContextMenu);
     document.addEventListener('pointerlockchange', onPointerLockChange);
 
     const rendererSize = renderer.getSize(new THREE.Vector2());
@@ -2964,6 +3006,7 @@ export default function App() {
 
     const resumeHandler = () => {
       if (gameStateRef.current !== 'paused' || pendingDeployment) return;
+      clearGameplayInput();
       gameStateRef.current = 'playing'; setGameState('playing'); requestGamePointerLock();
     };
 
@@ -2974,10 +3017,8 @@ export default function App() {
     };
 
     function stopMatchInput() {
-      player.fireHeld = player.aiming = false;
+      clearGameplayInput();
       player.vel.set(0, 0, 0);
-      isMouseDown = false;
-      for (const key of Object.keys(keys)) keys[key] = false;
       for (const sound of Object.values(AUDIO)) sound.stop();
       stopWeaponAudio(); updateRailgunWeaponAudio(false, 0);
       updateAdrenalineHeartbeat(false); audioManager.stop();
@@ -2999,6 +3040,8 @@ export default function App() {
     };
 
     deployHandlerRef.current = deployHandler;
+    pauseHandlerRef.current = pauseHandler;
+    clearInputRef.current = clearGameplayInput;
     resumeHandlerRef.current = resumeHandler;
     restartHandlerRef.current = restartHandler;
     lobbyHandlerRef.current = lobbyHandler;
@@ -3009,6 +3052,7 @@ export default function App() {
     const aiDifficulty = { accuracy: 0, damageMultiplier: 1, fireRateMultiplier: 1 };
 
     // Main Game Loop
+    let controlsWereActive = false;
     const clock = new THREE.Clock();
     let animId = 0;
 
@@ -3028,7 +3072,10 @@ export default function App() {
         combatLightGroup.visible = !world.offshore && !world.facility;
         if (world.lobbyGroup) world.lobbyGroup.visible = false;
         world.updateWorld(dt, clock.elapsedTime, matchConfig.mode);
-        if(world.facility?.controlsLocked){player.fireHeld=false;player.vel.set(0,0,0);player.aiming=false;}
+        const controlsActive = gameplayControlsActive();
+        if (controlsWereActive && !controlsActive) { clearGameplayInput(); player.vel.set(0,0,0); }
+        controlsWereActive = controlsActive;
+        updateHeldControls();
         if (matchConfig.mode === 'extraction') for (const hit of updateHeliDefenses(dt, bots)) damageBot(hit.bot, hit.damage, false, 'player');
         
         if (!world.offshore && !world.facility && selectedMapStateRef.current === 'area51') {
@@ -3039,7 +3086,7 @@ export default function App() {
            // Gameplay fog is owned by the active world.
         }
         // 1. Player movement & physics
-        if (player.alive && world.offshore?.phase !== 'DEPARTING' && !world.facility?.controlsLocked) {
+        if (gameplayControlsActive()) {
           const eyeHeight = player.crouching ? PLAYER_EYE_CROUCH : PLAYER_EYE;
           let speed = player.crouching ? CROUCH_SPEED : (player.sprinting ? SPRINT_SPEED : WALK_SPEED);
           speed *= player.classSpeedMultiplier; // Recon: +20% (1.20), Juggernaut: -15% (0.85)
@@ -3082,6 +3129,7 @@ export default function App() {
             player.onGround = false;
           }
 
+          updateHeldControls();
           if (moveLen > 0.001 && player.onGround) {
             bobPhase += dt * (player.sprinting ? 14 : 9);
           } else {
@@ -4245,13 +4293,16 @@ export default function App() {
       stopWeaponAudio();
       cancelAnimationFrame(animId);
       stopMatchInput();
-      deployHandlerRef.current = resumeHandlerRef.current = restartHandlerRef.current = lobbyHandlerRef.current = undefined;
+      deployHandlerRef.current = pauseHandlerRef.current = clearInputRef.current = resumeHandlerRef.current = restartHandlerRef.current = lobbyHandlerRef.current = undefined;
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       renderer.domElement.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mouseup', onMouseUp);
       document.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('wheel', onWheel);
+      renderer.domElement.removeEventListener('wheel', onWheel);
+      window.removeEventListener('blur', onBlur);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      renderer.domElement.removeEventListener('contextmenu', onContextMenu);
       document.removeEventListener('pointerlockchange', onPointerLockChange);
       window.removeEventListener('resize', onResize);
       resizeObserver?.disconnect();
@@ -4299,13 +4350,7 @@ export default function App() {
           {/* Tactical Pause Quick Button */}
           <div className="absolute top-4 left-6 z-40 flex items-center gap-2 pointer-events-auto">
             <button
-              onClick={() => {
-                setGameState('paused');
-                AUDIO.arSpray.stop();
-                if (document.pointerLockElement) {
-                  try { document.exitPointerLock?.(); } catch {}
-                }
-              }}
+              onClick={() => pauseHandlerRef.current?.()}
               className="px-3 py-1 text-xs text-[#2de2e6] bg-black/80 hover:bg-[#2de2e6]/20 cursor-pointer flex items-center gap-1.5 border border-[#2de2e6]/50 rounded-xs shadow-lg backdrop-blur-md transition-colors"
             >
               <span>⏸ PAUSE</span>
@@ -4480,6 +4525,13 @@ export default function App() {
         <div className="overlay-box panel" style={{ width: '420px' }}>
           <div className="overlay-title" style={{ fontSize: '22px' }}>PAUSED</div>
           <div className="overlay-sub">SYSTEM STANDBY</div>
+          <details className="my-3 text-xs" data-testid="controls-guide">
+            <summary className="cursor-pointer">CONTROLS</summary>
+            <dl className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-left">
+              {CONTROLS_GUIDE.map(([binding, label]) => <div key={binding} className="contents"><dt className="text-[#57d1c9]">{binding}</dt><dd>{label}</dd></div>)}
+            </dl>
+            <p className="mt-2">Right mouse overrides sprint. If pointer lock is unavailable, hold either mouse button and drag to look.</p>
+          </details>
           <div className="cfg-row mb-4">
             <label>SENSITIVITY</label>
             <input

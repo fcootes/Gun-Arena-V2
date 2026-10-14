@@ -1,3 +1,4 @@
+import { GameplayInput, KEY_ACTIONS } from '../src/gameplayInput';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
@@ -103,19 +104,20 @@ function visit(node: ts.Node): void {
 visit(appAst);
 assert.equal(handlers.size, 3);
 const inputPlayer = { slotIndex: 0 };
+const input = new GameplayInput();
 const gameStateRef = { current: 'playing' };
 const keyHandler = vm.runInNewContext(ts.transpile(`(${handlers.get('onKeyDown')})`), {
- keys: {}, gameStateRef, player: inputPlayer, switchSlot: (index: number) => { inputPlayer.slotIndex = index; }
+ KEY_ACTIONS, input, HTMLElement: class {}, gameplayControlsActive: () => gameStateRef.current === 'playing', updateHeldControls() {}, gameStateRef, player: inputPlayer, switchSlot: (index: number) => { inputPlayer.slotIndex = index; }
 });
 const wheelHandler = vm.runInNewContext(ts.transpile(`(${handlers.get('onWheel')})`), {
- gameStateRef, player: inputPlayer, playerLoadout: loadout, switchSlot: (index: number) => { inputPlayer.slotIndex = index; }
+ gameplayControlsActive: () => gameStateRef.current === 'playing', gameStateRef, player: inputPlayer, playerLoadout: loadout, switchSlot: (index: number) => { inputPlayer.slotIndex = index; }
 });
-for(let i=0;i<4;i++) { keyHandler({ code: `Digit${i+1}` }); assert.equal(inputPlayer.slotIndex, i); }
-wheelHandler({ deltaY: 1 }); assert.equal(inputPlayer.slotIndex, 0);
-wheelHandler({ deltaY: -1 }); assert.equal(inputPlayer.slotIndex, 3);
-wheelHandler({ deltaY: -1 }); assert.equal(inputPlayer.slotIndex, 2);
+for(let i=0;i<4;i++) { keyHandler({ code: `Digit${i+1}`, preventDefault() {} }); assert.equal(inputPlayer.slotIndex, i); }
+wheelHandler({ deltaY: 1, preventDefault() {} }); assert.equal(inputPlayer.slotIndex, 0);
+wheelHandler({ deltaY: -1, preventDefault() {} }); assert.equal(inputPlayer.slotIndex, 3);
+wheelHandler({ deltaY: -1, preventDefault() {} }); assert.equal(inputPlayer.slotIndex, 2);
 gameStateRef.current = 'paused';
-keyHandler({ code: 'Digit1' }); wheelHandler({ deltaY: 1 }); assert.equal(inputPlayer.slotIndex, 2);
+keyHandler({ code: 'Digit1', preventDefault() {} }); wheelHandler({ deltaY: 1, preventDefault() {} }); assert.equal(inputPlayer.slotIndex, 2);
 console.log('PASS: keyboard slots 1–4, wheel wrap in both directions and paused input guard');
 
 const kitPlayer = { health: 100, maxHealth: 100, shield: 100, maxShield: 100, isDrinking: false, drinkTimer: 0 };

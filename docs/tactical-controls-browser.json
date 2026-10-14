@@ -1,0 +1,19 @@
+{
+  "browser": "153.0.8010.0",
+  "viewport": {
+    "width": 960,
+    "height": 540
+  },
+  "results": [
+    "DOM events: F/V, RMB ADS, grounded Shift, multi-button release, sandbox drag, pause/resume, editable guard, context menu and blur",
+    "Actual App/Training: deployment, sprint speed, ADS priority, F/V, slots, firing/reload, keyboard and button pause, guide, death, redeployment and fresh lobby"
+  ],
+  "errors": [],
+  "scope": "Bounded controls checks; no performance benchmark or native hardware acceptance",
+  "base": "55523e929977b493efe999c9ab7ca1dadfc50594",
+  "implementationCommit": "7b17ef813add595bb6b29847595c933577051a06",
+  "implementationTree": "150ef81817b5790e6e80bf0f57e74f3c251f2373",
+  "pointerLock": "Rejected requests intentionally exercised in browser; acquisition/loss transitions exercised in Node",
+  "wholeRunDeadlineSeconds": 120,
+  "readinessDeadlineSeconds": 45
+}
