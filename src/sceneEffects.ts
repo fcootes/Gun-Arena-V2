@@ -6,7 +6,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import type { WorldMapId } from './types';
 import type { DeploymentPipeline } from './deployment';
-import { PreparationVisibility, waitForGpu, waitForPrograms, aimPreparationCamera } from './renderPreparation';
+import { PreparationVisibility, waitForGpu, waitForPrograms, aimPreparationCamera, createCombatPreparationScene } from './renderPreparation';
 
 export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) {
   const composer = new EffectComposer(renderer);
@@ -54,15 +54,17 @@ export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.S
       const cameraFov = camera instanceof THREE.PerspectiveCamera ? camera.fov : 0;
       const shadowAutoUpdate = renderer.shadowMap.autoUpdate;
       const litPrograms = new THREE.Group();
+      let combatScene: THREE.Scene | undefined;
       const representatives = new Map<WebGLProgram, Map<string, THREE.Object3D>>();
       const callbacks = new Map<THREE.Object3D, THREE.Object3D['onAfterRender']>();
       const gl = renderer.getContext();
-      const submitBatch = (objects: readonly THREE.Object3D[]) => {
-        const hide = visibility.showBatch(objects);
+      const submitBatch = (objects: readonly THREE.Object3D[], drawScene = scene) => {
+        const hide = drawScene === scene ? visibility.showBatch(objects) : () => objects.forEach(object => { object.visible = false; });
+        if (drawScene !== scene) objects.forEach(object => { object.visible = true; });
         try {
           target.scissor.set(0, 0, 1, 1); target.scissorTest = true;
           renderer.setRenderTarget(target);
-          renderer.render(scene, camera);
+          renderer.render(drawScene, camera);
         } finally {
           hide();
           if (!gl.isContextLost()) renderer.setRenderTarget(originalTarget);
@@ -163,12 +165,13 @@ export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.S
           litPrograms.add(clone);
         }
         renderer.shadowMap.autoUpdate = false;
-        scene.add(litPrograms);
+        combatScene = createCombatPreparationScene(scene, camera);
+        combatScene.add(litPrograms);
         for (let count = 0; count <= extraPointLights; count++) {
           await pipeline.stage(`Lighting programs ${count}/${extraPointLights}`, async () => {
-            if (count > 0) { const light = new THREE.PointLight(0xffffff, 0); scene.add(light); lights.push(light); }
+            if (count > 0) { const light = new THREE.PointLight(0xffffff, 0); combatScene!.add(light); lights.push(light); }
             renderer.setRenderTarget(target);
-            try { renderer.compile(litPrograms, camera, scene); await waitForPrograms(renderer, pipeline.signal); }
+            try { renderer.compile(litPrograms, camera, combatScene); await waitForPrograms(renderer, pipeline.signal); }
             finally { if (!gl.isContextLost()) renderer.setRenderTarget(originalTarget); }
           });
           // Each representative still gets its own aimed, real draw. A fence
@@ -184,11 +187,11 @@ export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.S
               const object = litPrograms.children[offset++];
               aimPreparationCamera(projectionCamera, object as THREE.Mesh);
               target.viewport.set(0, 0, 1, 1);
-              submitBatch([object]);
+              submitBatch([object], combatScene);
               submitted++;
             } while (offset < litPrograms.children.length && submitted < 8 && performance.now() < deadline);
             await waitForGpu(renderer, pipeline.signal);
-          });
+          }, `${Math.floor(100 * (count * litPrograms.children.length + offset) / ((extraPointLights + 1) * litPrograms.children.length))}% complete`);
         }
         litPrograms.removeFromParent();
         camera.position.copy(cameraPosition); camera.quaternion.copy(cameraQuaternion);
@@ -209,6 +212,8 @@ export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.S
         litPrograms.removeFromParent();
         for (const object of litPrograms.children) if (object instanceof THREE.InstancedMesh) object.dispose();
         litPrograms.clear();
+        // Cloned lights borrow shadows; clearing drops CPU references only.
+        combatScene?.clear();
         restoreTargetRectangle(target.scissor, targetScissor); target.scissorTest = targetScissorTest;
         restoreTargetRectangle(target.viewport, targetViewport);
         camera.position.copy(cameraPosition); camera.quaternion.copy(cameraQuaternion);

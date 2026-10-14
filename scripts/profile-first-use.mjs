@@ -14,6 +14,28 @@ function replaceOnce(code, needle, replacement) {
 }
 const server = await createServer({ root, logLevel: 'error', server: { host: '127.0.0.1', port: 3094, strictPort: true }, plugins: [{
   name: 'first-use-profile', enforce: 'pre', transform(code, id) {
+    // Count submissions and sync work without adding production instrumentation.
+    if (id.endsWith('/src/sceneEffects.ts')) {
+      code = replaceOnce(code, 'renderer.render(drawScene, camera);', `
+        if (window.__probe) {
+          const p = window.__probe;
+          p.preparation.submissions++;
+          if (drawScene.name === 'CombatPreparation') p.preparation.combatSubmissions++;
+          if (!p.preparation.scenes.has(drawScene)) {
+            let nodes = 0; drawScene.traverse(() => nodes++);
+            p.preparation.sceneSizes.push({ name: drawScene.name || 'World', nodes });
+            p.preparation.scenes.add(drawScene);
+          }
+        }
+        renderer.render(drawScene, camera);`);
+      return code;
+    }
+    if (id.endsWith('/src/renderPreparation.ts')) {
+      code = replaceOnce(code, 'const fence = gl.fenceSync', 'const waitStarted = performance.now(); const fence = gl.fenceSync');
+      code = replaceOnce(code, 'const status = gl.clientWaitSync', 'if (window.__probe) window.__probe.preparation.gpuPolls++; const status = gl.clientWaitSync');
+      return replaceOnce(code, 'gl.deleteSync(fence);', `gl.deleteSync(fence);
+        if (window.__probe) { const p = window.__probe.preparation; p.fences++; p.gpuWaitMs += performance.now() - waitStarted; }`);
+    }
     if (!id.endsWith('/src/App.tsx')) return;
     if (process.env.PROFILE_SCOPE === '1') code = replaceOnce(code,
       "const [selectedSecondary, setSelectedSecondary] = useState<string>('pistol');",
@@ -24,10 +46,14 @@ const server = await createServer({ root, logLevel: 'error', server: { host: '12
         get renderer() { return renderer; }, get player() { return player; },
         get world() { return world; }, get director() { return extractionDirector; },
         get bots() { return bots; }, keys, frames: [], operations: [], programEvents: [], knownPrograms: new Set(), phase: 'first frames', turn: false,
+        progress: [], preparation: { submissions: 0, combatSubmissions: 0, fences: 0, gpuPolls: 0, gpuWaitMs: 0, scenes: new WeakSet(), sceneSizes: [] },
         failMission() { applyDamageToPlayer(999999, true, true, null); },
         get preparedCount() { return preparedMissionVisuals.length; },
       };
       async function runDeployment() {`);
+    code = replaceOnce(code, 'const labels: Record<string, string> = {', `
+      window.__probe?.progress.push({ stage, detail, at: performance.now() });
+      const labels: Record<string, string> = {`);
     code = replaceOnce(code, 'const visuals = buildBotVisuals({\n        campaignEntity,',
       'const visualStart = performance.now(); const visuals = buildBotVisuals({\n        campaignEntity,');
     code = replaceOnce(code, 'const rootGroup = visuals.rootGroup;', `window.__probe?.operations.push({ name: 'bot construction', duration: performance.now() - visualStart, type: zType }); const rootGroup = visuals.rootGroup;`);
@@ -50,6 +76,10 @@ const server = await createServer({ root, logLevel: 'error', server: { host: '12
 }] });
 let browser;
 const results = [], cancellations = [], errors = [];
+const deadline = setTimeout(() => {
+  console.error('FAIL: first-use profile exceeded its whole-run deadline');
+  void browser?.close(); void server.close(); process.exitCode = 1;
+}, Number(process.env.PROFILE_DEADLINE_MS ?? 600000));
 const save = () => writeFileSync(output, JSON.stringify({ browser: browser.version(), viewport: '640x360', renderer: 'see per-run GL renderer', results, cancellations, errors }, null, 2) + '\n');
 try {
   await server.listen();
@@ -103,6 +133,7 @@ try {
     const runs = ['cold', ...(process.env.PROFILE_WARM === '1' ? ['warm'] : []), ...(process.env.PROFILE_REPLAY === '1' ? ['replay'] : [])];
     for (const run of runs) {
       let started;
+      await page.evaluate(() => { if (window.__probe) { window.__probe.progress.length = 0; window.__probe.programEvents.length = 0; window.__probe.knownPrograms.clear(); } });
       if (run !== 'replay') {
         await select(map, faction); await page.keyboard.press('F3');
         started = await page.evaluate(() => performance.now());
@@ -113,14 +144,25 @@ try {
         started = await page.evaluate(() => performance.now());
         await page.getByRole('button', { name: '[ PLAY AGAIN ]', exact: true }).click();
       }
-      await page.waitForFunction(() => window.__probe?.state === 'playing');
+      try { await page.waitForFunction(() => window.__probe?.state === 'playing', null, { timeout: 240000 }); }
+      catch (error) {
+        const diagnostic = await page.evaluate(() => ({ state: window.__probe?.state, progress: window.__probe?.progress?.slice(-5), preparation: window.__probe?.preparation,
+          body: document.body.innerText.slice(-1800) }));
+        writeFileSync(output + '.failure.json', JSON.stringify({ map, faction, run, diagnostic, errors }, null, 2));
+        console.error('Deployment deadline diagnostic', diagnostic); throw error;
+      }
       const ready = await page.evaluate(() => performance.now());
       await frames(run === 'cold' ? 16 : await page.evaluate(() => window.__probe.frames.filter(f => f.state === 'playing').length + 16));
       const firstCount = await page.evaluate(() => window.__probe.frames.filter(f => f.state === 'playing').length);
       // Exercise the actual input/fire handler and ADS, rather than only compiling.
       await page.evaluate(() => { window.__probe.phase = 'turn ADS fire'; window.__probe.turn = true; });
+      const beforeMovement = await page.evaluate(() => window.__probe.player.pos.toArray());
+      await page.keyboard.down('w');
       await page.locator('#viewport canvas').dispatchEvent('mousedown', { button: 0 });
       await frames(firstCount + 12);
+      await page.keyboard.up('w');
+      const afterMovement = await page.evaluate(() => window.__probe.player.pos.toArray());
+      assert.ok(afterMovement.some((value, index) => Math.abs(value - beforeMovement[index]) > .01), 'Player must respond to movement after readiness');
       await page.dispatchEvent('body', 'mouseup', { button: 0 });
       await page.keyboard.press('2'); await frames(firstCount + 15);
       let scopeVisible = await page.locator('#scope-overlay').evaluate(el => getComputedStyle(el).display !== 'none');
@@ -170,7 +212,8 @@ try {
       await page.evaluate(() => { window.__probe.turn = false; });
       const data = await page.evaluate(async start => {
         const p = window.__probe, gl = p.renderer.getContext(), debug = gl.getExtension('WEBGL_debug_renderer_info');
-        return { frames: p.frames, operations: p.operations, programEvents: p.programEvents,
+        return { frames: p.frames, operations: p.operations, programEvents: p.programEvents, progress: p.progress,
+          preparation: { ...p.preparation, scenes: undefined },
           programKeys: p.renderer.info.programs?.map(program => program.cacheKey), longTasks: window.__long.filter(t => t.start >= start),
           diagnostic: document.querySelector('[data-engine-profiler]')?.innerText,
           initialization: (await import('/src/performance.ts')).initialization.stages,
@@ -192,4 +235,4 @@ try {
     await cdp.detach();
   }
   assert.deepEqual(errors, []); save();
-} finally { await browser?.close(); await server.close(); }
+} finally { clearTimeout(deadline); await browser?.close(); await server.close(); }

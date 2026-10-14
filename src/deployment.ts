@@ -15,13 +15,13 @@ export function yieldForPaint(signal: AbortSignal): Promise<void> {
 }
 export class DeploymentPipeline {
   private controller = new AbortController();
-  constructor(private progress: (stage: string) => void) {}
+  constructor(private progress: (stage: string, detail?: string) => void) {}
   cancel() { this.controller.abort(); }
   get canceled() { return this.controller.signal.aborted; }
   get signal() { return this.controller.signal; }
-  async stage<T>(name: string, action: () => T | Promise<T>): Promise<T> {
+  async stage<T>(name: string, action: () => T | Promise<T>, detail?: string): Promise<T> {
     this.controller.signal.throwIfAborted();
-    this.progress(name);
+    this.progress(name, detail);
     await yieldForPaint(this.controller.signal);
     this.controller.signal.throwIfAborted();
     const start = performance.now();
