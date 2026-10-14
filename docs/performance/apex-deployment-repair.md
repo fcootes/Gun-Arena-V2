@@ -70,19 +70,65 @@ every base count 0–50 with every extra-light allowance 0–32, exact geometry-
 restoration including thrown submissions, multi-material groups, missing RAF
 delivery, timeout fence cleanup and existing preparation ownership.
 
-## Resume / outstanding work
+## Full-game validation
 
-1. Complete measured four-combination browser validation, with warm/replay,
-   first-fire/movement, later APEX actor first use and cancellation/redeployment.
-2. Compare the new full-game timings against the saved main baseline; revise the
-   implementation if compact traversal alone does not sufficiently reduce cost.
-3. Complete required existing tests and document results for the final commit.
-4. Push checkpoints and create a draft PR. Git read access works, but GitHub API
-   requests currently receive a proxy CONNECT 403. Required GitHub/Vercel API
-   domains have been added to the environment configuration draft; saving the
-   draft does not apply network policy to this running instance.
-5. Verify Vercel project/commit and obtain a real preview if access is available.
-   No production deployment or merge is authorized by this repair task.
+| Cold deployment | Click to playing | First gameplay CPU render |
+| --- | ---: | ---: |
+| Area 51 / USMC | 17.68 s | 10.3 ms |
+| Area 51 / APEX | 55.31 s | 11.4 ms |
+| Shattered Wall / USMC | 11.58 s | 16.3 ms |
+| Shattered Wall / APEX | 12.43 s | 14.2 ms |
+
+All four combinations passed actual movement/fire and rapid camera turning,
+return to lobby, and zero new gameplay shader programs/page errors. Both offshore
+runs exercised signal activation, first holdout wave and helicopter arrival. Area
+51 exercised fresh campaign archetypes; APEX additionally exercised 21 armed
+enemies. These are bounded renderer/gameplay fixtures, not full campaign playthroughs.
+The timing table uses the default loadout. Scoped cold/warm/replay checks are
+recorded separately, including actual RMB ADS and a cancel/redeploy sequence.
+
+`npm run lint`, `npm run build`, and all 12 non-browser `test:*` suites passed on
+the final implementation. `test:controls:browser` passed DOM input and actual Training
+deployment/replay/lobby with the existing reduced-count controls fixture.
+`test:preparation:browser` passed the real WebGL checks described above.
+The existing large-bundle build advisory remains.
+
+Completion has a per-wait 30 s timeout and a bounded whole-run profiling deadline.
+Loading progress still paints between batches and cancellation retains its
+abort/context teardown checks. Individual driver calls cannot be preempted: this
+software renderer recorded loading long tasks up to 1.59 s and an APEX progress
+gap up to 3.91 s. Maximum CPU submission in the forced 21-enemy first-use fixture
+was 119.8 ms, despite zero new shader programs. Native responsiveness, frame times,
+GPU timing, visual campaign acceptance and long-session memory remain unverified.
+
+The corrected scoped Area 51 APEX lifecycle run passed RMB ADS, firing/movement,
+scope visibility, actual archetype/max-light rendering and zero new shader
+programs/page errors after cancellation, cold, warm and replay. Loading times:
+54.20 / 77.78 / 65.58 s; first gameplay CPU submissions: 9.8 / 8.2 / 7.3 ms.
+Cancellation during combat preparation left zero prepared actors, an empty retired
+scene, a lost retired WebGL context and no stale playing frames. The forced
+maximum-enemy replay fixture had a **1.81 s CPU render submission outlier** even
+without new shader programs. This software-renderer stress result does not prove
+later native encounters are stutter-free; acceptance and a native trace remain
+required before merge. A previous scope assertion failure was isolated to the
+old profiling harness setting ADS directly; it now invokes the real RMB handler
+introduced by PR #13 and the scoped checks pass.
+
+## Publication / resume
+
+Both implementation checkpoints were pushed to the dedicated feature branch.
+GitHub API access recovered after the saved network-domain change propagated;
+API evidence confirms PR #13 is merged. The linked Vercel project is
+`fcootes/gun-arena-v2`; each feature-branch push creates a Preview deployment.
+The preview endpoint redirects anonymous requests to Vercel Login, so deployment
+success does not establish anonymous application access or remote gameplay checks.
+Do not disable protection or deploy production as part of this repair.
+
+Before merging, accept the repair on the user's laptop: test both APEX maps and
+USMC controls, loading cancellation/redeploy, actual first fire/ADS/movement,
+warm replay and later security/marine/Spartan or offshore helicopter encounters.
+Record native GPU/browser, loading times and a Performance trace; confirm the
+small dark-light padding overhead preserves the previously smooth gameplay.
 
 Raw browser output is currently under ignored `performance-results/`.
 Run from `/workspace/Gun-Arena-V2`, using system Chromium here:

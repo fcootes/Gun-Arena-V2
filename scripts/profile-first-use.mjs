@@ -59,7 +59,7 @@ const server = await createServer({ root, logLevel: 'error', server: { host: '12
     code = replaceOnce(code, 'const visuals = buildBotVisuals({\n        campaignEntity,',
       'const visualStart = performance.now(); const visuals = buildBotVisuals({\n        campaignEntity,');
     code = replaceOnce(code, 'const rootGroup = visuals.rootGroup;', `window.__probe?.operations.push({ name: 'bot construction', duration: performance.now() - visualStart, type: zType }); const rootGroup = visuals.rootGroup;`);
-    code = replaceOnce(code, 'const renderStart = profiler.enabled', `if (window.__probe?.turn && gameStateRef.current === 'playing') { player.yaw += .8; player.aiming = !player.aiming; }
+    code = replaceOnce(code, 'const renderStart = profiler.enabled', `if (window.__probe?.turn && gameStateRef.current === 'playing') { player.yaw += .8; }
       if (window.__probe && gameStateRef.current === 'playing' && window.__probe.knownPrograms.size === 0)
         renderer.info.programs?.forEach(program => window.__probe.knownPrograms.add(program.cacheKey));
       const renderStart = profiler.enabled`);
@@ -159,6 +159,7 @@ try {
       const firstCount = await page.evaluate(() => window.__probe.frames.filter(f => f.state === 'playing').length);
       // Exercise the actual input/fire handler and ADS, rather than only compiling.
       await page.evaluate(() => { window.__probe.phase = 'turn ADS fire'; window.__probe.turn = true; });
+      await page.locator('#viewport canvas').dispatchEvent('mousedown', { button: 2 });
       const beforeMovement = await page.evaluate(() => window.__probe.player.pos.toArray());
       const beforeAmmo = await page.evaluate(() => window.__probe.weaponState.ammo);
       await page.keyboard.down('w');
@@ -174,7 +175,7 @@ try {
       if (process.env.PROFILE_SCOPE === '1') {
         // Force an ADS frame after switching to the real scoped loadout slot.
         const scopedFrame = await page.evaluate(() => {
-          window.__probe.turn = false; window.__probe.player.aiming = true;
+          window.__probe.turn = false;
           return window.__probe.frames.filter(f => f.state === 'playing').length;
         });
         await frames(scopedFrame + 3);
@@ -182,6 +183,7 @@ try {
         scopeVisible = true;
         await page.evaluate(() => { window.__probe.turn = true; });
       }
+      await page.dispatchEvent('body', 'mouseup', { button: 2 });
       await page.keyboard.press('1');
       if (map === 'area51' && process.env.PROFILE_ENCOUNTERS === '1') {
         await page.evaluate(() => {
