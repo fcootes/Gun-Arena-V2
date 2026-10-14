@@ -94,6 +94,25 @@ try {
       restored(); const cornersAfterUploadResize = await fullViewport();
       check(batchSizes.every(size => size >= 1 && size <= 8), 'A preparation batch exceeded its draw limit');
       check(batchSizes.length < totalDraws, 'Preparation did not amortize any paint/fence boundary');
+      // Compare real lit pixels with one source light against that same light
+      // plus the runtime's three dark slots. Nothing may alter its illumination.
+      const pixelTarget = new THREE.WebGLRenderTarget(160, 100);
+      const realPoint = new THREE.PointLight(0xff8050, 4, 15); realPoint.position.set(1, 2, 3); scene.add(realPoint);
+      const readLitPixels = async () => {
+        renderer.setRenderTarget(pixelTarget); renderer.render(scene, camera);
+        await waitForGpu(renderer, new AbortController().signal);
+        const pixels = new Uint8Array(160 * 100 * 4);
+        renderer.readRenderTargetPixels(pixelTarget, 0, 0, 160, 100, pixels);
+        renderer.setRenderTarget(null); return pixels;
+      };
+      let maxPaddingPixelDifference = 0;
+      try {
+        const originalPixels = await readLitPixels();
+        effects.render(0, 'area51');
+        const paddedPixels = await readLitPixels();
+        for (let i = 0; i < originalPixels.length; i++) maxPaddingPixelDifference = Math.max(maxPaddingPixelDifference, Math.abs(originalPixels[i] - paddedPixels[i]));
+        check(maxPaddingPixelDifference <= 1, 'Dark padding changed actual light/shadow pixel output');
+      } finally { realPoint.removeFromParent(); realPoint.dispose(); pixelTarget.dispose(); effects.render(0, 'area51'); }
       // A newly constructed actor has fresh materials. Test first use at every
       // light count, including unlit custom shaders, rather than reuse only.
       const programCount = renderer.info.programs.length;
@@ -104,11 +123,14 @@ try {
         scene.add(fresh.root);
         if (count > 0) { freshMuzzle.trigger(); freshMuzzle.update(.01); }
         let visibleMuzzleLights = 0;
-        scene.traverseVisible(object => { if (object instanceof THREE.PointLight) visibleMuzzleLights++; });
+        scene.traverseVisible(object => { if (object instanceof THREE.PointLight && object.parent?.name !== 'CombatLightPadding') visibleMuzzleLights++; });
         check(visibleMuzzleLights === count, 'Fixture light count changed unexpectedly');
         renderer.setRenderTarget(null);
         // Gameplay scene resources are rendered through the linear composer.
         effects.render(0, 'area51'); await waitForGpu(renderer, new AbortController().signal);
+        let normalizedLights = 0;
+        scene.traverseVisible(object => { if (object instanceof THREE.PointLight) normalizedLights++; });
+        check(normalizedLights === Math.ceil(count / 4) * 4, 'Actual combat lights must remain intact within their prepared bucket');
         check(renderer.info.programs.length === programCount, `New first-use program at extra light count ${count}`);
         disposeBotVisuals(fresh.root);
       }
@@ -128,7 +150,7 @@ try {
       check(canceled, 'Preparation did not cancel'); restored(); const cornersAfterCancelResize = await fullViewport();
       check(gl.getError() === gl.NO_ERROR, 'WebGL error during preparation');
       return { glRenderer, fixtureMs: performance.now() - start, lightVariants: 22, totalDraws,
-        batchCount: batchSizes.length, maxBatchDraws: Math.max(...batchSizes), programCount,
+        batchCount: batchSizes.length, maxBatchDraws: Math.max(...batchSizes), programCount, maxPaddingPixelDifference,
         cornersAfterUploadResize, cornersAfterCombatResize, cornersAfterCancelResize,
         passed: ['fresh muzzle/particle first-use keys at every light count', 'upload resize', 'combat resize', 'resize then cancellation', 'state restoration', 'full-frame pixels', 'bounded batches'] };
     } finally {
