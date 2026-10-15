@@ -6,10 +6,23 @@ import {pathToFileURL} from 'node:url';
 const before = resolve(process.argv[2]), after = resolve('.');
 async function sample(root) {
   const {WEAPONS, createViewmodelManager} = await import(pathToFileURL(resolve(root, 'src/weapons.ts')));
+  const {createWeaponAssembly,disposeWeaponObject}=await import(pathToFileURL(resolve(root,'src/weaponModels.ts')));
   const {beginWeaponReload, advanceWeaponReload} = await import(pathToFileURL(resolve(root, 'src/weaponReload.ts')));
   const results = {};
   for (const w of WEAPONS.filter(w => w.type === 'weapon' && w.id !== 'shotgun')) {
     const hash = createHash('sha256'), vm = createViewmodelManager(); vm.prepare([w.id]);
+    function geometry(object) {
+      object.traverse(o=>{
+        if(o.geometry){
+          for(const [name,attr] of Object.entries(o.geometry.attributes)){hash.update(name);hash.update(Buffer.from(attr.array.buffer,attr.array.byteOffset,attr.array.byteLength));}
+          if(o.geometry.index)hash.update(Buffer.from(o.geometry.index.array.buffer));
+        }
+        for(const mat of o.material?Array.isArray(o.material)?o.material:[o.material]:[])
+          hash.update(JSON.stringify([mat.type,mat.color?.getHex(),mat.roughness,mat.metalness,mat.bumpScale]));
+      });
+    }
+    geometry(vm.root);
+    const bare=createWeaponAssembly(w.id);geometry(bare.root);disposeWeaponObject(bare.root);
     function capture() {
       vm.root.traverse(o => {
         hash.update(JSON.stringify([o.name, o.position.toArray(), o.quaternion.toArray(), o.scale.toArray(), o.visible]));
@@ -29,5 +42,5 @@ async function sample(root) {
   return results;
 }
 const baseline = await sample(before), current = await sample(after);
-assert.deepEqual(current, baseline, 'Every other weapon keeps identical frame-by-frame transforms, hand palettes and reload state');
+assert.deepEqual(current, baseline, 'Every other weapon keeps identical FP/actor geometry and materials, frame transforms, hand palettes and reload state');
 console.log(JSON.stringify({baselineCommit:'3778c568db1162d40822676d5d31ffc385b0681a',before:baseline,after:current,passed:true},null,2));

@@ -33,7 +33,7 @@ const server = await createServer({root:process.env.SHOTGUN_ROOT,logLevel:'error
           }
           for(let left=seconds;left>1e-8;){const dt=Math.min(1/144,left);left-=dt;advanceWeaponReload(w,s,dt);vmManager.update(dt,w,s,aim,false,true,false,false,false,0,true,true);}
           setHudData(old=>({...old,currentWeapon:w,weaponSlotState:{...s},playerLoadout:[...playerLoadout],playerLoadoutStates:playerWeaponState.map(s=>({...s}))}));
-          renderer.render(scene,camera);return {...this.sample(),calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,programs:renderer.info.programs.length};
+          renderer.info.reset();renderer.render(scene,camera);return {...this.sample(),calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,programs:renderer.info.programs.length};
         }
       };
 ${needle}`);

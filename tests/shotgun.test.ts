@@ -60,7 +60,7 @@ console.log('PASS: exact seating boundary, class speed, reserve exhaustion, repe
 
 // Before first shell, just before/after seating, later shell, last shell and
 // both sides of final pump initiation. Continue chambering instead of restarting.
-for (const ammo of [0, 2]) for (const time of [.1, .30 + .85 * .71, .30 + .85 * .73, 1.5, 2.5, .30 + (6 - ammo) * .85 + .10, .30 + (6 - ammo) * .85 + .30]) {
+for (const ammo of [0, 2]) for (const time of [.1, .30 + .85 * .71, .30 + .85 * .73, 1.5, 2.5, .30 + (6 - ammo) * .85 + .10, .30 + (6 - ammo) * .85 + .30, .30 + (5 - ammo) * .85 + .85 * .70, .30 + (5 - ammo) * .85 + .85 * .73, .30 + (6 - ammo) * .85 + .72, .30 + (6 - ammo) * .85 + .80]) {
   const ws: WeaponSlotState = {ammo, reserve: 20}, events: string[] = [];
   beginWeaponReload(gun, ws);
   advanceWeaponReload(gun, ws, time, undefined, e => events.push(e));

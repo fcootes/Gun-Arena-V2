@@ -106,3 +106,69 @@ These remain separate PR #15/backlog issues; no fix is included here:
 
 The accepted AR charging latch and pistol reload are preserved. Do not begin
 Heavy Sniper Fidelity (Batch 2) until the user visually approves this batch.
+
+## Validation and rendered evidence
+
+[Before/after gallery and continuous gameplay video](shotgun-fidelity/README.md).
+[Machine-readable results and event log](shotgun-fidelity/validation.json).
+Runtime code is checkpoint `76678dee48ec333c90fb22535e55f1110fe05c27`; later commits
+add harness/evidence/documentation only. Draft [PR #17](https://github.com/fcootes/Gun-Arena-V2/pull/17)
+is stacked against PR #15's feature branch.
+
+TypeScript and production build passed (the existing large-bundle advisory
+remains). Shotgun, weapon, tactical/reload, hand/viewmodel, audio, controls,
+runtime and preparation suites passed. The shotgun tests cover 30/60/144 Hz,
+three class speeds, partial/empty loads, one-shell reserves, invalid/large deltas,
+seat-boundary transfer, repeated reload input, before/after-first/later/final-shell
+and final-chamber interruption, exact hand/part tracking, actual shell-path
+clearance against receiver/trigger-guard geometry, and no per-frame geometry,
+material or scene-object allocation. Existing teardown tests release every new
+owned resource once.
+
+The eleven other weapon families match the baseline exactly for first-person
+and bare actor geometry/materials, per-frame poses, hand instance buffers and
+reload state. AR/pistol audio tests also pass. No world, AI decision logic,
+shader preparation, global sprint profile or camera recoil gameplay value changed.
+The shared shotgun reload helper gives shotgun users, including bots, the new
+longer shell-loading windows; this is an intentional reload-duration change.
+
+The live actual-input run passed all five checks with zero page errors: nine
+reports, ten pumps (one interrupted empty chamber) and nine committed seat cues;
+final ammo `6 / 27`. A separate browser control fixture and actual App deployment/
+lifecycle also passed. WebGL preparation passed all 22 light-count variants,
+98 draws in 43 bounded batches, 92 programs, full-frame resize/cancellation/state
+restoration and zero lighting-pixel difference. The 20 after-pose samples all
+retained 114 existing programs, with no first-action program addition in those
+samples. Production assets contain no test hooks.
+
+| Isolated cached shotgun + hands | Before mesh draws / triangles | After mesh draws / triangles |
+| --- | --- | --- |
+| Held | 15 / 16,908 | 15 / 17,556 |
+| Visible shell | 16 / 16,972 | 17 / 17,924 |
+
+These are visible mesh counts, not measured GPU timings. The extra shell draw
+separates the brass base from the hull; the held draw count is unchanged. The
+shared rig still has eight meshes and two reused 30-instance palettes.
+
+The continuous 97.4 s muted video is unretimed real gameplay, with full UI and
+actual input. Its software renderer sampled 345 frames across 97.64 s wall time
+(about 3.52 FPS); the existing 50 ms delta cap slows action in that footage.
+It must not be used to judge native-speed cadence or laptop performance. The
+phase table is simulation time, verified independently at 30/60/144 Hz. No native
+GPU measurement or real listening claim is made. Please playtest reload roll,
+contact weight, interruption and the shot/pump blend before accepting Batch 1.
+
+Reproduce the browser evidence with `PLAYWRIGHT_BROWSERS_PATH` pointing to the
+installed Playwright cache and `BENCHMARK_BROWSER=/usr/bin/chromium`. Run
+`npm run test:shotgun:browser`; export its continuous interval with
+`node scripts/export-shotgun-video.mjs performance-results/shotgun-after` (or
+supply the chosen `SHOTGUN_OUTPUT` path). Baseline comparison uses an archived
+PR #15 checkout via `SHOTGUN_ROOT`, `SHOTGUN_BASELINE=1` and a separate output path;
+`node --import tsx scripts/compare-shotgun-scope.mjs /path/to/archive` verifies the
+other families without editing that archive. Do not create a Git worktree for
+this environment unless the user requests one.
+
+The separate `node scripts/test-shotgun-switch-browser.mjs` run also passed:
+seven rendered pump/reload switching samples, event-time ammo conservation,
+chamber-only recovery and a valid shot on return. Those samples and state records
+are included in the gallery and validation JSON.
