@@ -213,7 +213,7 @@ export function createFirstPersonHands() {
           shotgunShellPose(Math.min(t, SHOTGUN.seat), shellPose);
           left.target.set(shellPose.x - .024, shellPose.y - .033, shellPose.z + .025);
           left.target.lerp(shotgunPickup, shotgunEase((t - .80) / .20));
-          curl = t < .80 ? .62 : .52;
+          curl = t < .80 ? .95 : .72;
         } else if (stage?.phase === 'chamber') {
           left.target.lerpVectors(shotgunPickup, supportGrip, shotgunEase(sequence!.elapsed / (stage.duration * SHOTGUN.recovery / SHOTGUN.cycle)));
           curl = config.left.curl;

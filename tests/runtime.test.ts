@@ -1,3 +1,5 @@
+import {cancelWeaponReload} from '../src/weaponReload';
+import {cancelShotgunCycle, beginShotgunCycle} from '../src/shotgunMechanics';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
@@ -49,8 +51,10 @@ console.log('PASS: actual SMG/LMG/BR/plasma reload handlers select dedicated aud
 for (const inspectorMode of [false, true]) {
   const player = { alive: true, health: inspectorMode ? INSPECTOR_HEALTH : 100, shield: 50 };
   let deaths = 0, audioStops = 0;
-  const apply = handler('applyDamageToPlayer', { player, world: {}, matchConfig: { inspectorMode, mode: 'extraction' }, AUDIO: { arSpray: sound, bulletHit: sound }, stopWeaponAudio() { audioStops++; }, flashVignette() {}, pushKillFeed() {}, triggerGameOver() { deaths++; } });
+  const shotgunState = {ammo: 2, reserve: 20, pendingReloadShot: true}; beginShotgunCycle(shotgunState); shotgunState.pendingReloadShot = true;
+  const apply = handler('applyDamageToPlayer', { playerWeaponState:[shotgunState],playerLoadout:[{id:'shotgun'}],cancelWeaponReload,cancelShotgunCycle, player, world: {}, matchConfig: { inspectorMode, mode: 'extraction' }, AUDIO: { arSpray: sound, bulletHit: sound }, stopWeaponAudio() { audioStops++; }, flashVignette() {}, pushKillFeed() {}, triggerGameOver() { deaths++; } });
   apply(1_000_000, true, false, null);
+  assert.equal(shotgunState.pendingReloadShot, inspectorMode, 'Only real death clears queued shotgun fire');
   assert.equal(player.health, inspectorMode ? INSPECTOR_HEALTH : 0);
   assert.equal(player.alive, inspectorMode);
   assert.equal(deaths, inspectorMode ? 0 : 1);

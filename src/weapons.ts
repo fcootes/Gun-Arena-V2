@@ -539,9 +539,9 @@ export function createViewmodelManager(): ViewmodelManager {
       const p = THREE.MathUtils.smoothstep(sequence.elapsed / phase.duration, 0, 1);
       const progress = 1 - (ws.reloadT ?? 0) / (ws.totalReloadT || 1);
       const lift = w.id === 'shotgun' ? phase.phase === 'open' ? p : phase.phase === 'close' ? 1 - p : 1 : Math.min(1, progress * 7, (1 - progress) * 7);
-      reloadRotation.setFromEuler(w.id === 'shotgun' ? reloadEuler.set(.08, -.12, -.50) : reloadEuler.set(.14, -.18, -.38));
+      reloadRotation.setFromEuler(w.id === 'shotgun' ? reloadEuler.set(.06, -.12, -1.25) : reloadEuler.set(.14, -.18, -.38));
       assembly.root.quaternion.slerp(reloadRotation, lift);
-      reloadPosition.copy(assembly.root.position); reloadPosition.x -= .02; reloadPosition.y += .05; reloadPosition.z += .025;
+      reloadPosition.copy(assembly.root.position); reloadPosition.x -= .02; reloadPosition.y += w.id === 'shotgun' ? .075 : .05; reloadPosition.z += .025;
       assembly.root.position.lerp(reloadPosition, lift);
       const removed = phase.phase === 'eject' ? p : phase.phase === 'insert' ? 1 - p : 0;
       if (parts.magazine && sequence.kind !== 'shell') {

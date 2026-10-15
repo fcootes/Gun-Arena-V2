@@ -32,6 +32,7 @@ const server = await createServer({root:process.env.SHOTGUN_ROOT,logLevel:'error
             seconds=q.phases[0].duration+(position.shell??0)*insert+(position.phase==='chamber' ? insert+position.fraction*q.phases.find(p=>p.phase==='chamber').duration : position.fraction*insert);
           }
           for(let left=seconds;left>1e-8;){const dt=Math.min(1/144,left);left-=dt;advanceWeaponReload(w,s,dt);vmManager.update(dt,w,s,aim,false,true,false,false,false,0,true,true);}
+          setHudData(old=>({...old,currentWeapon:w,weaponSlotState:{...s},playerLoadout:[...playerLoadout],playerLoadoutStates:playerWeaponState.map(s=>({...s}))}));
           renderer.render(scene,camera);return {...this.sample(),calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,programs:renderer.info.programs.length};
         }
       };
@@ -79,7 +80,7 @@ try {
     await page.evaluate(()=>{const g=window.__shotgunProbe;g.renderer.setSize(960,540);g.camera.aspect=16/9;g.camera.fov=74;g.camera.updateProjectionMatrix();g.equip('shotgun');g.hold=false;g.record=true;window.__shotgunAudio=[];});
     await page.waitForTimeout(200);
     await page.screenshot({path:resolve(output,'live-start.png')});
-    const click=async()=>{await page.mouse.down();await page.mouse.up();};
+    const click=async()=>{await page.mouse.move(480,260);await page.mouse.down();await page.mouse.up();};
     await click();await page.waitForFunction(()=>window.__shotgunProbe.ws.ammo===5);
     await page.waitForFunction(()=>!window.__shotgunProbe.ws.shotgunCycle);await page.waitForTimeout(900);
     await click();await page.waitForFunction(()=>window.__shotgunProbe.ws.ammo===4);
