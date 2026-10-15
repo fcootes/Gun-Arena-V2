@@ -61,7 +61,7 @@ room lighting, comparing an archive of main `794fdfd` with this branch:
 | Pistol | 9 / 4,208 | 19 / 13,340 |
 
 The totals include the weapon parts made visible by the corrected poses. The hand
-pair itself has eight meshes, six shared/owned geometry buffers and three materials;
+pair itself has eight meshes, six owned/shared BufferGeometry objects and three materials;
 two dynamic instance buffers total 3,840 bytes. Cached animation/switching creates
 no geometry, materials or scene objects. CPU pose-update p95 was approximately
 0.1 ms before and after, at the browser's coarse timer resolution. This is not a
@@ -72,6 +72,57 @@ comparisons and a compact validation record accompany this document. Native lapt
 frame times, long-session stability and subjective animation acceptance remain
 outstanding. Reloads reuse the existing phases/control transforms; complete
 weapon-specific choreography and the other roadmap batches are outside this change.
+
+Before/after captures use the same camera and lighting. The original hands sit
+mostly below the first-person viewport; the new profiles bring the grip into view.
+
+| Weapon | Main | Updated |
+| --- | --- | --- |
+| AR | ![Main AR](viewmodel-images/ar-before.png) | ![Updated AR](viewmodel-images/ar-after.png) |
+| Pistol | ![Main pistol](viewmodel-images/pistol-before.png) | ![Updated pistol](viewmodel-images/pistol-after.png) |
+
+Additional review: [grip detail](viewmodel-images/grip-detail.png),
+[AR ADS](viewmodel-images/ar-ads.png), [APEX pistol reload](viewmodel-images/apex-pistol-reload.png),
+[minigun spade grips](viewmodel-images/minigun-after.png),
+[actual USMC gameplay](viewmodel-images/game-usmc-ar.png) and
+[actual APEX gameplay](viewmodel-images/game-apex-pistol.png).
+Structured results: [first-person-hands-validation.json](first-person-hands-validation.json).
+
+Complete changed-file list:
+
+| File | Purpose |
+| --- | --- |
+| `src/viewmodelHands.ts` | Reusable hand mesh, articulation, reload reaches and ownership |
+| `src/viewmodelGrips.ts` | All twelve grip/pose profiles and live pump attachment |
+| `src/weapons.ts` | Shared rig integration and viewmodel pose/lifecycle controls |
+| `src/App.tsx` | Apply the chosen faction during deployment preparation |
+| `tests/viewmodel.test.ts` | Grip, animation, allocation and cleanup regressions |
+| `scripts/test-viewmodel-browser.mjs` | Optional isolated held preview and actual-game checks |
+| `scripts/test-preparation-browser.mjs` | Fresh hand rigs at all prepared light counts |
+| `package.json` | Viewmodel test commands; dependencies/lockfile unchanged |
+| `docs/first-person-hands.md` | Architecture, results, comparison gallery and acceptance |
+| `docs/first-person-hands-validation.json` | Current-run machine-readable evidence |
+| `docs/viewmodel-images/ar-before.png` | Original AR capture |
+| `docs/viewmodel-images/ar-after.png` | Updated AR capture |
+| `docs/viewmodel-images/pistol-before.png` | Original pistol capture |
+| `docs/viewmodel-images/pistol-after.png` | Updated pistol capture |
+| `docs/viewmodel-images/grip-detail.png` | Held grip close-up |
+| `docs/viewmodel-images/ar-ads.png` | Centre sight clearance |
+| `docs/viewmodel-images/apex-pistol-reload.png` | Independent reload support hand |
+| `docs/viewmodel-images/minigun-after.png` | Specialty rear handle placement |
+| `docs/viewmodel-images/game-usmc-ar.png` | Actual game, USMC |
+| `docs/viewmodel-images/game-apex-pistol.png` | Actual game, APEX |
+
+Manual laptop acceptance before merge:
+
+1. Compare main/preview at identical graphics, FOV and display scale; record native
+   GPU/browser and frame-time trace while walking, sprinting, ADS and firing.
+2. For both factions, inspect AR/pistol grip silhouettes and empty/tactical reloads;
+   pause mid-reload, resume, switch slots, toggle perspective, die and replay.
+3. Check sniper/BR scoped visibility, minigun rear grips and shotgun pump contact;
+   resize to 4:3 and ultrawide. Confirm the armory still shows bare weapons.
+4. Run a normal match/Extraction and confirm loading, first-fire and sustained
+   frame times remain acceptable on the target laptop.
 
 ```sh
 npm run test:viewmodel

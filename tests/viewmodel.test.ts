@@ -81,7 +81,9 @@ step(vm, 'ar', 1 / 60, {}, true); assert.notDeepEqual(pose(vm), frozen, 'Resume 
 for (let i = 0; i < 120; i++) step(vm, 'ar', 1 / 60, {}, true);
 assert.ok(Math.abs(weapon(vm, 'ar').position.x) < .001 && Math.abs(weapon(vm, 'ar').position.y - VIEWMODEL_GRIPS.ar.aim[1]) < .003);
 assert.ok(pair.visible, 'Unscoped AR ADS retains attached hands below sight line');
-step(vm, 'sniper', 1 / 60, {}, true); assert.equal(pair.visible, false, 'Existing scope overlay remains unobstructed');
+for (const id of ['sniper', 'br']) {
+  step(vm, id, 1 / 60, {}, true); assert.equal(pair.visible, false, `${id}: existing scope overlay remains unobstructed`);
+}
 step(vm, 'sniper', 1 / 60); assert.equal(pair.visible, true);
 step(vm, 'ar', 1 / 60, {}, false, false, false); assert.equal(vm.root.visible, false);
 vm.resetEffects(); step(vm, 'ar', 0); assert.equal(vm.root.visible, true);
