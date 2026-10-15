@@ -93,9 +93,9 @@ export function createFirstPersonHands() {
     details.push(rounded(.002, .035, .002, x, .023, .018));
   }
   const detailGeometry = merge(details);
-  const sleeveParts: THREE.BufferGeometry[] = [new THREE.CylinderGeometry(.029, .052, 1, 12, 1)];
+  const sleeveParts: THREE.BufferGeometry[] = [new THREE.CylinderGeometry(.033, .058, 1, 12, 1)];
   for (const y of [-.30, -.12, .10, .31]) {
-    const radius = .0405 - y * .023;
+    const radius = .0455 - y * .025;
     const fold = new THREE.TorusGeometry(radius, .0025, 4, 12); fold.rotateX(Math.PI / 2); fold.translate(.002, y, 0); sleeveParts.push(fold);
   }
   const sleeveGeometry = merge(sleeveParts);
@@ -192,9 +192,21 @@ export function createFirstPersonHands() {
         const targetCurl = side === 'left' ? curl : attachment.curl;
         hand.curl += (targetCurl - hand.curl) * alpha;
         end.set(0, -.047, 0).applyQuaternion(hand.wrist.quaternion).add(hand.wrist.position);
-        elbow.fromArray(config.elbows[side]).applyMatrix4(inverse);
+        // Bend toward a local torso target rather than reaching across the screen.
+        // The camera-space cuff supplies a floor for the elbow drop and bend.
+        attachmentPosition.copy(end).applyMatrix4(assembly.root.matrix);
+        elbow.fromArray(config.elbows[side]);
+        elbow.x = THREE.MathUtils.clamp(elbow.x, attachmentPosition.x - .12, attachmentPosition.x + .12);
+        elbow.y = Math.min(elbow.y, attachmentPosition.y - .30);
+        elbow.z = Math.min(-.14, Math.max(elbow.z, attachmentPosition.z + .22));
+        elbow.applyMatrix4(inverse);
+        // A distant body target determines direction, never cylinder length.
+        // Keep a bounded forearm while its broad end tucks down toward the torso.
+        direction.copy(elbow).sub(end);
+        direction.setLength(Math.min(config.sleeveLength, direction.length()));
+        elbow.copy(end).add(direction);
         hand.sleeve.position.copy(elbow).add(end).multiplyScalar(.5);
-        direction.copy(end).sub(elbow); hand.sleeve.scale.set(1, direction.length() + .01, 1);
+        direction.copy(end).sub(elbow); hand.sleeve.scale.set(1, direction.length() + .012, 1);
         hand.sleeve.quaternion.setFromUnitVectors(up, direction.normalize());
         for (const digit of hand.digits) for (let segment = 0; segment < 3; segment++) {
           const angle = (digit.thumb ? thumbAngles : digit.index && side === 'right' && attachment.triggerFinger !== false ? triggerAngles : gripAngles)[segment];

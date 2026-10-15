@@ -7,9 +7,11 @@ import assert from 'node:assert/strict';
 const output = resolve(process.env.VIEWMODEL_OUTPUT ?? 'performance-results/viewmodel');
 mkdirSync(output, { recursive: true });
 rmSync(resolve(output, 'results.json'), { force: true });
+const port = Number(process.env.VIEWMODEL_PORT ?? 3098);
+const origin = `http://127.0.0.1:${port}`;
 const startedAt = new Date().toISOString();
 const baseline = process.env.VIEWMODEL_BASELINE === '1';
-const server = await createServer({ root: process.env.VIEWMODEL_ROOT, logLevel: 'error', server: { host: '127.0.0.1', port: 3098, strictPort: true }, plugins: [{
+const server = await createServer({ root: process.env.VIEWMODEL_ROOT, logLevel: 'error', server: { host: '127.0.0.1', port, strictPort: true }, plugins: [{
   name: 'viewmodel-fixture', configureServer(server) {
     server.middlewares.use('/__viewmodel', (_req, res) => {
       res.setHeader('Content-Type', 'text/html');
@@ -28,14 +30,19 @@ const server = await createServer({ root: process.env.VIEWMODEL_ROOT, logLevel: 
         get state() { return gameStateRef.current; }, get manager() { return vmManager; },
         get renderer() { return renderer; }, get camera() { return camera; }, get player() { return player; },
         get thirdPerson() { return thirdPerson; }, get weapon() { return currentSlot(); }, get weaponState() { return currentSlotState(); },
+        equip(id) {
+          const w = WEAPONS.find(w => w.id === id);
+          playerLoadout[0] = w; playerWeaponState[0] = { ammo: w.mag, reserve: w.reserve, heat: 60 };
+          switchSlot(0); player.aiming = false;
+        },
         kill() { applyDamageToPlayer(999999, true, true, null); }
       };
       // Main Game Loop`);
   },
 }] });
 let browser;
-const deadline = setTimeout(() => { console.error('FAIL: viewmodel browser exceeded 300 seconds'); void browser?.close(); void server.close(); process.exitCode = 1; }, 300000);
-const errors = [], results = [];
+const deadline = setTimeout(() => { console.error('FAIL: viewmodel browser exceeded 480 seconds'); void browser?.close(); void server.close(); process.exitCode = 1; }, 480000);
+const errors = [], results = [], gameplay = [];
 try {
   await server.listen();
   browser = await chromium.launch({ headless: true,
@@ -44,7 +51,7 @@ try {
   });
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } }); page.setDefaultTimeout(30000);
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto('http://127.0.0.1:3098/__viewmodel');
+  await page.goto(`${origin}/__viewmodel`);
   await page.evaluate(async () => {
     const { THREE, RoomEnvironment } = await import('/@id/__x00__viewmodel-fixture');
     const { createViewmodelManager, WEAPONS } = await import('/src/weapons.ts');
@@ -173,7 +180,7 @@ try {
     await page.evaluate(() => window.fixture.dispose());
     await page.addInitScript(() => { HTMLCanvasElement.prototype.requestPointerLock = () => Promise.reject(new Error('sandbox fixture')); });
     for (const faction of ['usmc', 'apex']) {
-      await page.goto('http://127.0.0.1:3098');
+      await page.goto(origin);
       await page.getByRole('button', { name: 'BATTALION', exact: true }).click();
       await page.getByRole('slider', { name: 'Battalion size' }).press('Home');
       await page.getByRole('button', { name: '[ GAME MODE ]', exact: true }).click();
@@ -204,6 +211,41 @@ try {
       assert.deepEqual(await page.evaluate(known => window.__handsGame.renderer.info.programs.filter(p => !known.includes(p.cacheKey)).map(p => p.cacheKey), knownPrograms), [], 'Prepared first-person fire/reload/switch must not add shader programs');
       await page.keyboard.press('v'); assert.equal(await page.evaluate(() => window.__handsGame.thirdPerson), true);
       await page.keyboard.press('v'); assert.equal(await page.evaluate(() => window.__handsGame.thirdPerson), false);
+      // The same field-armory replacement path as gameplay, injected only in this test server.
+      for (const id of modelIds) {
+        await page.evaluate(id => window.__handsGame.equip(id), id);
+        await page.waitForTimeout(450);
+        await page.evaluate(() => { const g = window.__handsGame; g.camera.fov = 74; g.camera.updateProjectionMatrix(); });
+        await page.screenshot({ path: resolve(output, `game-${faction}-${id}-idle.png`) });
+        gameplay.push(await page.evaluate(({faction, id}) => {
+          const g = window.__handsGame, i = g.renderer.info;
+          return {faction, id, pose:'idle', fov:g.camera.fov, calls:i.render.calls, triangles:i.render.triangles, geometries:i.memory.geometries};
+        }, {faction,id}));
+        await page.mouse.down({ button: 'right' });
+        await page.waitForFunction(() => window.__handsGame.player.aiming);
+        await page.waitForTimeout(450);
+        await page.evaluate(() => { const g = window.__handsGame; g.camera.fov = g.weapon.adsFov; g.camera.updateProjectionMatrix(); });
+        await page.screenshot({ path: resolve(output, `game-${faction}-${id}-aim.png`) });
+        await page.mouse.up({ button: 'right' });
+        if (id === 'shotgun') {
+          const ammo = await page.evaluate(() => window.__handsGame.weaponState.ammo);
+          await page.mouse.click(600, 340);
+          await page.waitForFunction(ammo => window.__handsGame.weaponState.ammo === ammo - 1, ammo);
+        }
+        await page.keyboard.down('w'); await page.keyboard.down('Shift');
+        await page.waitForTimeout(400);
+        await page.screenshot({ path: resolve(output, `game-${faction}-${id}-sprint.png`) });
+        await page.keyboard.up('Shift'); await page.keyboard.up('w');
+        if (['ar', 'shotgun', 'lmg', 'minigun'].includes(id)) {
+          await page.evaluate(() => { const s = window.__handsGame.weaponState; s.ammo = 0; s.heat = 80; });
+          await page.keyboard.press('r');
+          await page.waitForFunction(() => window.__handsGame.weaponState.reloading);
+          await page.waitForTimeout(650);
+          await page.screenshot({ path: resolve(output, `game-${faction}-${id}-reload-pose.png`) });
+          await page.keyboard.press('p'); await page.locator('#btn-resume').click();
+        }
+      }
+      checks.push(`${faction}: actual field-armory all twelve idle/ADS captures and four reload poses`);
       await page.evaluate(() => window.__handsGame.kill());
       await page.getByRole('button', { name: '[ PLAY AGAIN ]', exact: true }).click();
       await page.waitForFunction(() => window.__handsGame.state === 'playing', null, { timeout: 60000 });
@@ -215,7 +257,7 @@ try {
     }
   }
   assert.deepEqual(errors, []);
-  writeFileSync(resolve(output, 'results.json'), JSON.stringify({ startedAt, browser: browser.version(), viewport: '1280x720', results, timing, checks, errors }, null, 2) + '\n');
+  writeFileSync(resolve(output, 'results.json'), JSON.stringify({ startedAt, browser: browser.version(), viewport: '1280x720', results, gameplay, timing, checks, errors }, null, 2) + '\n');
   await page.evaluate(() => window.fixture?.dispose());
   console.log('PASS: held viewmodel browser captures', results);
 } finally { clearTimeout(deadline); await browser?.close(); await server.close(); }

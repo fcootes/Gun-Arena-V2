@@ -85,7 +85,7 @@ function finishTexture(polymer: boolean) {
 }
 
 /** Metre scale, breech at origin, muzzle along -Z. Used by studio, FPS, lobby and actors. */
-export function createWeaponAssembly(id: string): WeaponAssembly {
+export function createWeaponAssembly(id: string, options: { firstPerson?: boolean } = {}): WeaponAssembly {
   if (!WEAPON_MODEL_IDS.includes(id as WeaponModelId))
     throw new RangeError(`Unknown weapon model: ${id}`);
   const root = new THREE.Group();
@@ -199,7 +199,7 @@ export function createWeaponAssembly(id: string): WeaponAssembly {
   ) {
     const m = mesh(
       name,
-      new THREE.CylinderGeometry(radius, endRadius, length, 16),
+      new THREE.CylinderGeometry(radius, endRadius, length, 16, 1, !!options.firstPerson && (name === 'Scope tube' || name === 'Scope bell')),
       mat,
       x,
       y,
@@ -343,8 +343,8 @@ export function createWeaponAssembly(id: string): WeaponAssembly {
     ).rotation.x = -0.35;
   }
   function stock(folding = false, sniper = false) {
-    tube('Buffer tube', 0.018, 0.2, 0, 0.015, 0.22, steel);
     const s = group('stock', 0, 0, 0.32);
+    tube('Buffer tube', 0.018, 0.2, 0, 0.015, options.firstPerson ? -.10 : .22, steel, options.firstPerson ? s : body);
     silhouette(
       folding ? 'Folding stock frame' : 'Collapsible stock',
       [
@@ -471,6 +471,7 @@ export function createWeaponAssembly(id: string): WeaponAssembly {
     for (const z of large ? [-0.195, 0.11] : [-0.12, 0.025]) {
       tube('Scope bell', bell, 0.046, 0, 0.145, z, steel, g, bell * 0.75);
       ring('Optic retaining ring', bell, 0.003, 0, 0.145, z - 0.024, dark, g);
+      if (!options.firstPerson) {
       const lensMat = new THREE.ShaderMaterial({
         uniforms: { tint: { value: new THREE.Color(0x539aad) } },
         vertexShader:
@@ -488,6 +489,7 @@ export function createWeaponAssembly(id: string): WeaponAssembly {
         z - 0.026,
         g,
       );
+      }
     }
     for (const [x, y] of [
       [0, 0.18],
@@ -764,7 +766,7 @@ export function createWeaponAssembly(id: string): WeaponAssembly {
           folding,
         );
         for (const side of [-1, 1])
-          tube('Wire stock strut', 0.006, 0.3, side * 0.023, 0.03, 0.3, edge);
+          tube('Wire stock strut', 0.006, 0.3, side * 0.023, 0.03, options.firstPerson ? -.02 : .3, edge, options.firstPerson ? parts.stock : body);
       }
       if (id === 'br') {
         silhouette(
@@ -963,18 +965,28 @@ export function createWeaponAssembly(id: string): WeaponAssembly {
     }
     for (const z of [-0.09, -0.32, -0.52])
       ring('Cluster clamp ring', 0.075, 0.01, 0, 0, z, dark, rotor);
-    box('Spade grip crossbar', 0.22, 0.025, 0.027, 0, 0.017, 0.24, steel);
-    for (const side of [-1, 1])
-      box(
-        'Dual spade handgrip',
-        0.032,
-        0.12,
-        0.037,
-        side * 0.095,
-        -0.027,
-        0.24,
-        polymer,
-      );
+    if (options.firstPerson) {
+      // Limited handheld control kit; actor/studio spades retain their original geometry.
+      grip(.04);
+      const cradle = group('supportCradle', -.08, -.085, -.14);
+      tube('Stationary underslung support grip', .027, .14, 0, 0, 0, polymer, cradle).rotation.y = Math.PI / 2;
+      box('Cradle mounting bridge', .16, .018, .045, .02, .06, 0, steel, cradle);
+      for (const side of [-1, 1])
+        box('Cradle motor bracket', .018, .065, .045, side * .065, .027, 0, steel, cradle);
+    } else {
+      box('Spade grip crossbar', 0.22, 0.025, 0.027, 0, 0.017, 0.24, steel);
+      for (const side of [-1, 1])
+        box(
+          'Dual spade handgrip',
+          0.032,
+          0.12,
+          0.037,
+          side * 0.095,
+          -0.027,
+          0.24,
+          polymer,
+        );
+    }
     const belt = new THREE.CatmullRomCurve3([
       new THREE.Vector3(-0.065, 0, 0.07),
       new THREE.Vector3(-0.16, -0.04, 0.11),
@@ -1076,10 +1088,10 @@ export function createWeaponAssembly(id: string): WeaponAssembly {
     tube(
       'Composite launch tube',
       0.052,
-      0.89,
+      options.firstPerson ? .65 : .89,
       0,
       0.025,
-      -0.02,
+      options.firstPerson ? -.14 : -.02,
       polymer,
       body,
       0.041,
@@ -1095,14 +1107,14 @@ export function createWeaponAssembly(id: string): WeaponAssembly {
       body,
       0.06,
     );
-    tube('Flared exhaust cone', 0.09, 0.15, 0, 0.025, 0.48, steel, body, 0.046);
+    if (!options.firstPerson) tube('Flared exhaust cone', 0.09, 0.15, 0, 0.025, 0.48, steel, body, 0.046);
     for (let i = 0; i < 11; i++)
       ring('Heat shield band', 0.055, 0.003, 0, 0.025, -0.2 + i * 0.042, dark);
     grip(0.1);
     grip(-0.22);
     box('Scope mount', 0.075, 0.025, 0.07, -0.04, 0.071, -0.05, steel);
     optic();
-    for (const z of [-0.42, 0.25]) {
+    for (const z of options.firstPerson ? [] : [-0.42, 0.25]) {
       box('Flip up sight stem', 0.012, 0.05, 0.018, 0, 0.092, z, steel);
       ring('Flip up iron sight', 0.014, 0.003, 0, 0.13, z, dark);
     }

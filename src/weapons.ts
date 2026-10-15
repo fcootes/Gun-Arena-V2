@@ -413,7 +413,7 @@ export function createViewmodelManager(): ViewmodelManager {
   function getModel(id: string) {
     let model = models.get(id);
     if (model) return model;
-    const assembly = createWeaponAssembly(id),
+    const assembly = createWeaponAssembly(id, { firstPerson: true }),
       effects = createWeaponMuzzleEffect(assembly);
     orientHeldWeapon(assembly, 'negative-z');
     root.add(assembly.root);

@@ -33,7 +33,12 @@ for (const id of WEAPON_MODEL_IDS) {
   assert.equal(assembly.root.getObjectByName('FirstPersonHands'), undefined, 'Bare studio/actor contract has no hands');
   disposeWeaponObject(assembly.root);
 }
-assert.ok(VIEWMODEL_GRIPS.minigun.right.position[0] > .10 && VIEWMODEL_GRIPS.minigun.left.position[0] < -.10, 'Both rear spade handles have distinct anchors');
+const handheld = createWeaponAssembly('minigun', { firstPerson: true });
+assert.ok(handheld.parts.supportCradle, 'Handheld minigun has a stationary physical support surface');
+const studioMinigun = createWeaponAssembly('minigun');
+assert.equal(studioMinigun.parts.supportCradle, undefined, 'Actor/studio minigun keeps its spades');
+disposeWeaponObject(studioMinigun.root);
+disposeWeaponObject(handheld.root);
 const utilityOnly = createViewmodelManager();
 step(utilityOnly, 'grenade'); assert.equal(rig(utilityOnly).visible, false, 'A utility-first update cannot reveal an unposed hand palette'); utilityOnly.dispose();
 console.log('PASS: twelve explicit metre-scale grip configurations, palm orientation, specialty handles and unchanged bare assemblies');
@@ -111,7 +116,7 @@ for (const id of WEAPON_MODEL_IDS) {
     for (const side of ['right', 'left'] as const) {
       const sleeve = pair.getObjectByName(`${side}Forearm`)!;
       sleeveEnd.set(0, -.5, 0).applyMatrix4(sleeve.matrixWorld);
-      assert.ok(sleeveEnd.distanceTo(new THREE.Vector3(...VIEWMODEL_GRIPS[id].elbows[side])) < .006, `${id}: elbow stays body-anchored while receiver tilts`);
+      assert.ok(sleeve.scale.y <= VIEWMODEL_GRIPS[id].sleeveLength + .012001, `${id}: anatomical forearm never stretches to a remote elbow`);
       assert.ok(sleeveEnd.project(acceptanceCamera).y < -1, `${id}: capped sleeve end never swings into the viewport during reload`);
     }
     reached ||= left.position.distanceTo(startLeft) > .025;
@@ -143,3 +148,39 @@ resources.forEach(resource => assert.equal(releases.get(resource), 1, 'Legacy te
 assert.equal(vm.root.children.length, 0);
 vm.prepare(['ar']); vm.triggerMuzzleFlash(); step(vm, 'ar'); assert.equal(vm.root.children.length, 0, 'A disposed manager never allocates another model');
 console.log('PASS: legacy and explicit teardown release shared geometry/material/texture and instanced buffers exactly once');
+
+// Check visible weapon geometry as well as palms: a rear housing can clip even
+// when every hand vertex is safe. Scope mode deliberately hides the full receiver.
+const boundsVm = createViewmodelManager(); boundsVm.prepare(WEAPON_MODEL_IDS);
+const vertex = new THREE.Vector3(), instanceMatrix = new THREE.Matrix4(), transform = new THREE.Matrix4();
+function assertNear(id: string) {
+  boundsVm.root.updateMatrixWorld(true);
+  boundsVm.root.traverseVisible(object => {
+    if (!(object instanceof THREE.Mesh)) return;
+    const positions = object.geometry.attributes.position;
+    for (let n = 0; n < (object instanceof THREE.InstancedMesh ? object.count : 1); n++) {
+      if (object instanceof THREE.InstancedMesh) { object.getMatrixAt(n, instanceMatrix); transform.multiplyMatrices(object.matrixWorld, instanceMatrix); }
+      else transform.copy(object.matrixWorld);
+      for (let i = 0; i < positions.count; i++) {
+        vertex.fromBufferAttribute(positions, i).applyMatrix4(transform);
+        assert.ok(vertex.z < -.05, `${id}/${object.name}: visible weapon/hand must stay beyond near plane (${vertex.z})`);
+      }
+    }
+  });
+}
+for (const id of WEAPON_MODEL_IDS) {
+  for (const [aim, sprint] of [[false, false], [true, false], [false, true]]) {
+    boundsVm.resetEffects(); step(boundsVm, id, 0, {}, aim, sprint); assertNear(id);
+    if (aim && ['ar', 'smg', 'railgun', 'rocket'].includes(id)) {
+      const visible: THREE.Mesh[] = [];
+      boundsVm.root.traverseVisible(o => { if (o instanceof THREE.Mesh) visible.push(o); });
+      const ray = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, 0, -1));
+      assert.equal(ray.intersectObjects(visible, false).length, 0, `${id}: open first-person optic clears the actual centre sight ray`);
+    }
+  }
+  const def = WEAPONS.find(w => w.id === id)!, state: WeaponSlotState = { ammo: 0, reserve: 100, heat: 80 };
+  boundsVm.resetEffects(); step(boundsVm, id, 0); beginWeaponReload(def, state);
+  while (state.reloading) { advanceWeaponReload(def, state, .1); step(boundsVm, id, .1, state); assertNear(id); }
+}
+boundsVm.dispose();
+console.log('PASS: full visible weapon/instanced-hand vertex bounds across all twelve hip/ADS/sprint and full reload sequences');
