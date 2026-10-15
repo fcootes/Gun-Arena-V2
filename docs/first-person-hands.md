@@ -1,5 +1,10 @@
 # Tactical Fidelity: first-person hands
 
+> Original PR #15 implementation record at `2bbc982`. Current holding, sleeve,
+> optic and minigun corrections and new comparisons are documented in
+> [the visual acceptance repair](first-person-visual-repair.md). Historical
+> measurements and screenshots below are retained for comparison.
+
 Branch: `feat/procedural-first-person-hands-20261015`, based on main
 `794fdfd` with merged controls PR #13 and combat preparation PR #14.
 

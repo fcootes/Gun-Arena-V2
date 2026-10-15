@@ -1,0 +1,1295 @@
+{
+  "baselineCommit": "2bbc9821d39fc81b3cbcd0ff7c95866eb0fb77db",
+  "codeCommit": "56d9050a61e462c9a2f6e46a8d2e24295d0b1c5c",
+  "before": {
+    "startedAt": "2026-10-15T06:13:35.349Z",
+    "browser": "154.0.8037.57",
+    "viewport": "1280x720",
+    "results": [
+      {
+        "id": "ar",
+        "calls": 26,
+        "triangles": 24544,
+        "geometries": 24,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.2460564830961209,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "pistol",
+        "calls": 19,
+        "triangles": 13340,
+        "geometries": 35,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.23803679315567217,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "sniper",
+        "calls": 22,
+        "triangles": 23820,
+        "geometries": 49,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.24788083318781556,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "br",
+        "calls": 21,
+        "triangles": 23096,
+        "geometries": 62,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.2460616557023343,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "minigun",
+        "calls": 16,
+        "triangles": 13388,
+        "geometries": 70,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.1977847558129341,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "shotgun",
+        "calls": 16,
+        "triangles": 16972,
+        "geometries": 78,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.24606194456578057,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "smg",
+        "calls": 23,
+        "triangles": 22596,
+        "geometries": 93,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.24605699800339195,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "lmg",
+        "calls": 19,
+        "triangles": 25560,
+        "geometries": 104,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.24779912346326238,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "laser",
+        "calls": 17,
+        "triangles": 12420,
+        "geometries": 113,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.2286153048018294,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "railgun",
+        "calls": 24,
+        "triangles": 15506,
+        "geometries": 129,
+        "programs": 7,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.24779178909290517,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "rocket",
+        "calls": 17,
+        "triangles": 15648,
+        "geometries": 138,
+        "programs": 7,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.24787116106375406,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "grenade_launcher",
+        "calls": 18,
+        "triangles": 12988,
+        "geometries": 148,
+        "programs": 7,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.23804559432681874,
+          "centralHits": 0
+        }
+      }
+    ],
+    "gameplay": [
+      {
+        "faction": "usmc",
+        "id": "ar",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 459,
+        "triangles": 108736,
+        "geometries": 305
+      },
+      {
+        "faction": "usmc",
+        "id": "pistol",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 438,
+        "triangles": 86200,
+        "geometries": 305
+      },
+      {
+        "faction": "usmc",
+        "id": "sniper",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 442,
+        "triangles": 107132,
+        "geometries": 319
+      },
+      {
+        "faction": "usmc",
+        "id": "br",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 441,
+        "triangles": 105792,
+        "geometries": 333
+      },
+      {
+        "faction": "usmc",
+        "id": "minigun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 428,
+        "triangles": 86244,
+        "geometries": 341
+      },
+      {
+        "faction": "usmc",
+        "id": "shotgun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 428,
+        "triangles": 93724,
+        "geometries": 350
+      },
+      {
+        "faction": "usmc",
+        "id": "smg",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 432,
+        "triangles": 104516,
+        "geometries": 368
+      },
+      {
+        "faction": "usmc",
+        "id": "lmg",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 424,
+        "triangles": 110444,
+        "geometries": 379
+      },
+      {
+        "faction": "usmc",
+        "id": "laser",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 420,
+        "triangles": 84164,
+        "geometries": 388
+      },
+      {
+        "faction": "usmc",
+        "id": "railgun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 434,
+        "triangles": 90336,
+        "geometries": 404
+      },
+      {
+        "faction": "usmc",
+        "id": "rocket",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 420,
+        "triangles": 90620,
+        "geometries": 413
+      },
+      {
+        "faction": "usmc",
+        "id": "grenade_launcher",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 422,
+        "triangles": 85300,
+        "geometries": 423
+      },
+      {
+        "faction": "apex",
+        "id": "ar",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 453,
+        "triangles": 106168,
+        "geometries": 293
+      },
+      {
+        "faction": "apex",
+        "id": "pistol",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 434,
+        "triangles": 83700,
+        "geometries": 293
+      },
+      {
+        "faction": "apex",
+        "id": "sniper",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 438,
+        "triangles": 104636,
+        "geometries": 307
+      },
+      {
+        "faction": "apex",
+        "id": "br",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 437,
+        "triangles": 103296,
+        "geometries": 321
+      },
+      {
+        "faction": "apex",
+        "id": "minigun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 426,
+        "triangles": 83772,
+        "geometries": 329
+      },
+      {
+        "faction": "apex",
+        "id": "shotgun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 426,
+        "triangles": 91352,
+        "geometries": 338
+      },
+      {
+        "faction": "apex",
+        "id": "smg",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 429,
+        "triangles": 102036,
+        "geometries": 356
+      },
+      {
+        "faction": "apex",
+        "id": "lmg",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 420,
+        "triangles": 107928,
+        "geometries": 367
+      },
+      {
+        "faction": "apex",
+        "id": "laser",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 416,
+        "triangles": 81648,
+        "geometries": 376
+      },
+      {
+        "faction": "apex",
+        "id": "railgun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 430,
+        "triangles": 87820,
+        "geometries": 392
+      },
+      {
+        "faction": "apex",
+        "id": "rocket",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 416,
+        "triangles": 88104,
+        "geometries": 401
+      },
+      {
+        "faction": "apex",
+        "id": "grenade_launcher",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 418,
+        "triangles": 82784,
+        "geometries": 411
+      }
+    ],
+    "timing": {
+      "medianUpdateMs": 0,
+      "p95UpdateMs": 0.10000000149011612,
+      "maxUpdateMs": 1.5,
+      "note": "CPU pose update only; no GPU/FPS claim"
+    },
+    "checks": [
+      "12 held configurations; both faction palettes; AR/pistol hip, ADS, reload and sprint; close-up; 4:3 and 21:9",
+      "usmc: actual field-armory all twelve idle/ADS captures and four reload poses",
+      "usmc: actual Training preparation/fire/ADS/reload/pause/pistol/perspective/death/replay/lobby; one rig; no first-use program additions",
+      "apex: actual field-armory all twelve idle/ADS captures and four reload poses",
+      "apex: actual Training preparation/fire/ADS/reload/pause/pistol/perspective/death/replay/lobby; one rig; no first-use program additions"
+    ],
+    "errors": []
+  },
+  "after": {
+    "startedAt": "2026-10-15T06:12:44.747Z",
+    "browser": "154.0.8037.57",
+    "viewport": "1280x720",
+    "results": [
+      {
+        "id": "ar",
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 18,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.08380629192144912,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "pistol",
+        "calls": 19,
+        "triangles": 13340,
+        "geometries": 30,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.09787250016124768,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "sniper",
+        "calls": 17,
+        "triangles": 21664,
+        "geometries": 41,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.08688144945490878,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "br",
+        "calls": 15,
+        "triangles": 20140,
+        "geometries": 50,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.0856881350648904,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "minigun",
+        "calls": 19,
+        "triangles": 14556,
+        "geometries": 61,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.12894990919893057,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "shotgun",
+        "calls": 14,
+        "triangles": 15060,
+        "geometries": 69,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.08380712302612044,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "smg",
+        "calls": 18,
+        "triangles": 20312,
+        "geometries": 81,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.08244447601979327,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "lmg",
+        "calls": 17,
+        "triangles": 23648,
+        "geometries": 92,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.08826939640721877,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "laser",
+        "calls": 14,
+        "triangles": 9924,
+        "geometries": 100,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.0838064202289321,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "railgun",
+        "calls": 18,
+        "triangles": 12682,
+        "geometries": 112,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.09609259987697857,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "rocket",
+        "calls": 13,
+        "triangles": 12904,
+        "geometries": 119,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.09170161565320768,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "grenade_launcher",
+        "calls": 16,
+        "triangles": 11076,
+        "geometries": 129,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.08380656082867789,
+          "centralHits": 0
+        }
+      }
+    ],
+    "gameplay": [
+      {
+        "faction": "usmc",
+        "id": "ar",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 374,
+        "triangles": 84760,
+        "geometries": 299
+      },
+      {
+        "faction": "usmc",
+        "id": "pistol",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 366,
+        "triangles": 64920,
+        "geometries": 299
+      },
+      {
+        "faction": "usmc",
+        "id": "sniper",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 364,
+        "triangles": 83512,
+        "geometries": 311
+      },
+      {
+        "faction": "usmc",
+        "id": "br",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 362,
+        "triangles": 81372,
+        "geometries": 323
+      },
+      {
+        "faction": "usmc",
+        "id": "minigun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 364,
+        "triangles": 67328,
+        "geometries": 334
+      },
+      {
+        "faction": "usmc",
+        "id": "shotgun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 354,
+        "triangles": 70400,
+        "geometries": 343
+      },
+      {
+        "faction": "usmc",
+        "id": "smg",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 355,
+        "triangles": 80652,
+        "geometries": 359
+      },
+      {
+        "faction": "usmc",
+        "id": "lmg",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 352,
+        "triangles": 87216,
+        "geometries": 370
+      },
+      {
+        "faction": "usmc",
+        "id": "laser",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 347,
+        "triangles": 60416,
+        "geometries": 379
+      },
+      {
+        "faction": "usmc",
+        "id": "railgun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 356,
+        "triangles": 66060,
+        "geometries": 393
+      },
+      {
+        "faction": "usmc",
+        "id": "rocket",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 344,
+        "triangles": 65728,
+        "geometries": 400
+      },
+      {
+        "faction": "usmc",
+        "id": "grenade_launcher",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 350,
+        "triangles": 62072,
+        "geometries": 410
+      },
+      {
+        "faction": "apex",
+        "id": "ar",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 445,
+        "triangles": 106068,
+        "geometries": 294
+      },
+      {
+        "faction": "apex",
+        "id": "pistol",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 438,
+        "triangles": 86240,
+        "geometries": 294
+      },
+      {
+        "faction": "apex",
+        "id": "sniper",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 437,
+        "triangles": 104844,
+        "geometries": 306
+      },
+      {
+        "faction": "apex",
+        "id": "br",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 435,
+        "triangles": 102704,
+        "geometries": 318
+      },
+      {
+        "faction": "apex",
+        "id": "minigun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 439,
+        "triangles": 88840,
+        "geometries": 331
+      },
+      {
+        "faction": "apex",
+        "id": "shotgun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 366,
+        "triangles": 84650,
+        "geometries": 338
+      },
+      {
+        "faction": "apex",
+        "id": "smg",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 357,
+        "triangles": 82798,
+        "geometries": 354
+      },
+      {
+        "faction": "apex",
+        "id": "lmg",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 354,
+        "triangles": 89362,
+        "geometries": 365
+      },
+      {
+        "faction": "apex",
+        "id": "laser",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 349,
+        "triangles": 62562,
+        "geometries": 374
+      },
+      {
+        "faction": "apex",
+        "id": "railgun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 358,
+        "triangles": 68206,
+        "geometries": 388
+      },
+      {
+        "faction": "apex",
+        "id": "rocket",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 346,
+        "triangles": 67874,
+        "geometries": 395
+      },
+      {
+        "faction": "apex",
+        "id": "grenade_launcher",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 352,
+        "triangles": 64218,
+        "geometries": 405
+      }
+    ],
+    "timing": {
+      "medianUpdateMs": 0,
+      "p95UpdateMs": 0.10000000149011612,
+      "maxUpdateMs": 0.30000000074505806,
+      "note": "CPU pose update only; no GPU/FPS claim"
+    },
+    "checks": [
+      "12 held configurations; both faction palettes; AR/pistol hip, ADS, reload and sprint; close-up; 4:3 and 21:9",
+      "usmc: actual field-armory all twelve idle/ADS captures and four reload poses",
+      "usmc: actual Training preparation/fire/ADS/reload/pause/pistol/perspective/death/replay/lobby; one rig; no first-use program additions",
+      "apex: actual field-armory all twelve idle/ADS captures and four reload poses",
+      "apex: actual Training preparation/fire/ADS/reload/pause/pistol/perspective/death/replay/lobby; one rig; no first-use program additions"
+    ],
+    "errors": []
+  },
+  "comparison": [
+    {
+      "id": "ar",
+      "beforeCalls": 26,
+      "afterCalls": 19,
+      "beforeTriangles": 24544,
+      "afterTriangles": 22252
+    },
+    {
+      "id": "pistol",
+      "beforeCalls": 19,
+      "afterCalls": 19,
+      "beforeTriangles": 13340,
+      "afterTriangles": 13340
+    },
+    {
+      "id": "sniper",
+      "beforeCalls": 22,
+      "afterCalls": 17,
+      "beforeTriangles": 23820,
+      "afterTriangles": 21664
+    },
+    {
+      "id": "br",
+      "beforeCalls": 21,
+      "afterCalls": 15,
+      "beforeTriangles": 23096,
+      "afterTriangles": 20140
+    },
+    {
+      "id": "minigun",
+      "beforeCalls": 16,
+      "afterCalls": 19,
+      "beforeTriangles": 13388,
+      "afterTriangles": 14556
+    },
+    {
+      "id": "shotgun",
+      "beforeCalls": 16,
+      "afterCalls": 14,
+      "beforeTriangles": 16972,
+      "afterTriangles": 15060
+    },
+    {
+      "id": "smg",
+      "beforeCalls": 23,
+      "afterCalls": 18,
+      "beforeTriangles": 22596,
+      "afterTriangles": 20312
+    },
+    {
+      "id": "lmg",
+      "beforeCalls": 19,
+      "afterCalls": 17,
+      "beforeTriangles": 25560,
+      "afterTriangles": 23648
+    },
+    {
+      "id": "laser",
+      "beforeCalls": 17,
+      "afterCalls": 14,
+      "beforeTriangles": 12420,
+      "afterTriangles": 9924
+    },
+    {
+      "id": "railgun",
+      "beforeCalls": 24,
+      "afterCalls": 18,
+      "beforeTriangles": 15506,
+      "afterTriangles": 12682
+    },
+    {
+      "id": "rocket",
+      "beforeCalls": 17,
+      "afterCalls": 13,
+      "beforeTriangles": 15648,
+      "afterTriangles": 12904
+    },
+    {
+      "id": "grenade_launcher",
+      "beforeCalls": 18,
+      "afterCalls": 16,
+      "beforeTriangles": 12988,
+      "afterTriangles": 11076
+    }
+  ],
+  "preparation": {
+    "glRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "fixtureMs": 13053.800000000745,
+    "lightVariants": 22,
+    "totalDraws": 98,
+    "batchCount": 46,
+    "maxBatchDraws": 8,
+    "programCount": 92,
+    "maxPaddingPixelDifference": 0,
+    "cornersAfterUploadResize": [
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ]
+    ],
+    "cornersAfterCombatResize": [
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ]
+    ],
+    "cornersAfterCancelResize": [
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ]
+    ],
+    "passed": [
+      "fresh muzzle/particle first-use keys at every light count",
+      "upload resize",
+      "combat resize",
+      "resize then cancellation",
+      "state restoration",
+      "full-frame pixels",
+      "bounded batches"
+    ]
+  },
+  "defaultAssemblyParity": [
+    {
+      "id": "ar",
+      "hash": "273ee9357fecd6a30e2a8ae3d9e802fb0f4dc64d41e927a49374e95c1e4f1554",
+      "calls": 20,
+      "vertices": 52444,
+      "muzzle": [
+        0,
+        0.015,
+        -0.6050000000000001
+      ]
+    },
+    {
+      "id": "shotgun",
+      "hash": "54d1adb83373563ddbf6a6d8c59195ceb77d9f977b2b638fd3cf0595069a3694",
+      "calls": 11,
+      "vertices": 30072,
+      "muzzle": [
+        0,
+        0.023,
+        -0.56
+      ]
+    },
+    {
+      "id": "sniper",
+      "hash": "b4ac8e9439bcd3b75355e7f38c71295bb5499e9dc23c4227c5dfd928ecf6e8f4",
+      "calls": 17,
+      "vertices": 51056,
+      "muzzle": [
+        0,
+        0.015,
+        -0.805
+      ]
+    },
+    {
+      "id": "pistol",
+      "hash": "dd7a66986017679fa33e660708daefe13e62d97b78c12a7de87084f04f19f85f",
+      "calls": 10,
+      "vertices": 15540,
+      "muzzle": [
+        0,
+        0.035,
+        -0.13
+      ]
+    },
+    {
+      "id": "smg",
+      "hash": "801a93153ad7b7ef35dcdcca5438ed36825fde744b13ffbfaf9a202b9eeb1272",
+      "calls": 17,
+      "vertices": 46676,
+      "muzzle": [
+        0,
+        0.015,
+        -0.455
+      ]
+    },
+    {
+      "id": "lmg",
+      "hash": "0b3c55d3f79bf478391bcd698bd6ba1cedc0747d91609adf57bcd49ed0200e3c",
+      "calls": 13,
+      "vertices": 55644,
+      "muzzle": [
+        0,
+        0.015,
+        -0.675
+      ]
+    },
+    {
+      "id": "br",
+      "hash": "d66cefd2cbe64044c3b761f9f4e6d7c6c14ae2901e186e68b6956dffc3af323e",
+      "calls": 16,
+      "vertices": 48500,
+      "muzzle": [
+        0,
+        0.015,
+        -0.6050000000000001
+      ]
+    },
+    {
+      "id": "laser",
+      "hash": "45dcd833e478f28ccc93c0fc8db88319608ff571fd0752df63b11b3c6bd7e3dc",
+      "calls": 8,
+      "vertices": 12780,
+      "muzzle": [
+        0,
+        0.015,
+        -0.515
+      ]
+    },
+    {
+      "id": "minigun",
+      "hash": "f8895cd4bd26d92b9b1e0a5c3df1c8c342c45fb75f8a4c553e442ede69e71e53",
+      "calls": 7,
+      "vertices": 15684,
+      "muzzle": [
+        0,
+        0,
+        -0.64
+      ]
+    },
+    {
+      "id": "railgun",
+      "hash": "8803398c6c54e1220bebebd944f5140aa340d65749beaeae45553f90b1e4267e",
+      "calls": 18,
+      "vertices": 25404,
+      "muzzle": [
+        0,
+        0.01,
+        -0.74
+      ]
+    },
+    {
+      "id": "rocket",
+      "hash": "8430b49d1a1fd1a53aca96ff93a984e995699dd184eb6ecbf12b3747904830ba",
+      "calls": 9,
+      "vertices": 22580,
+      "muzzle": [
+        0,
+        0.025,
+        -0.57
+      ]
+    },
+    {
+      "id": "grenade_launcher",
+      "hash": "423bd086761c9524d052302c4741391b450fd9bf86c761d00c0e8c35439b9095",
+      "calls": 12,
+      "vertices": 17928,
+      "muzzle": [
+        0,
+        0.035,
+        -0.4
+      ]
+    }
+  ],
+  "idleSleeveLengthsMetres": [
+    {
+      "id": "ar",
+      "before": {
+        "right": 0.2881240730321631,
+        "left": 0.4921047603996459
+      },
+      "after": {
+        "right": 0.312,
+        "left": 0.312
+      }
+    },
+    {
+      "id": "shotgun",
+      "before": {
+        "right": 0.2881240730321631,
+        "left": 0.45225445164520395
+      },
+      "after": {
+        "right": 0.312,
+        "left": 0.312
+      }
+    },
+    {
+      "id": "sniper",
+      "before": {
+        "right": 0.28937072144374754,
+        "left": 0.5511561696959576
+      },
+      "after": {
+        "right": 0.31199999999999994,
+        "left": 0.312
+      }
+    },
+    {
+      "id": "pistol",
+      "before": {
+        "right": 0.3347891623807666,
+        "left": 0.403916234750486
+      },
+      "after": {
+        "right": 0.31200000000000006,
+        "left": 0.31200000000000006
+      }
+    },
+    {
+      "id": "smg",
+      "before": {
+        "right": 0.2881240730321631,
+        "left": 0.4279892343111243
+      },
+      "after": {
+        "right": 0.312,
+        "left": 0.312
+      }
+    },
+    {
+      "id": "lmg",
+      "before": {
+        "right": 0.2898356660613511,
+        "left": 0.5146127227884767
+      },
+      "after": {
+        "right": 0.312,
+        "left": 0.312
+      }
+    },
+    {
+      "id": "br",
+      "before": {
+        "right": 0.2881240730321631,
+        "left": 0.5060090724976711
+      },
+      "after": {
+        "right": 0.312,
+        "left": 0.312
+      }
+    },
+    {
+      "id": "laser",
+      "before": {
+        "right": 0.2904157627523816,
+        "left": 0.47970735570139844
+      },
+      "after": {
+        "right": 0.312,
+        "left": 0.312
+      }
+    },
+    {
+      "id": "minigun",
+      "before": {
+        "right": 0.2988892521365238,
+        "left": 0.36854846255422713
+      },
+      "after": {
+        "right": 0.312,
+        "left": 0.312
+      }
+    },
+    {
+      "id": "railgun",
+      "before": {
+        "right": 0.29065637352463597,
+        "left": 0.5007647094076753
+      },
+      "after": {
+        "right": 0.312,
+        "left": 0.312
+      }
+    },
+    {
+      "id": "rocket",
+      "before": {
+        "right": 0.2745902492534447,
+        "left": 0.46448102270611924
+      },
+      "after": {
+        "right": 0.312,
+        "left": 0.31200000000000006
+      }
+    },
+    {
+      "id": "grenade_launcher",
+      "before": {
+        "right": 0.2890931744059678,
+        "left": 0.43020233221627885
+      },
+      "after": {
+        "right": 0.312,
+        "left": 0.312
+      }
+    }
+  ],
+  "passedCommands": [
+    "npm run lint",
+    "npm run build",
+    "npm run test:viewmodel",
+    "npm run test:weapons",
+    "npm run test:tactical",
+    "npm run test:runtime",
+    "npm run test:preparation",
+    "npm run test:controls",
+    "test:viewmodel:browser (both baseline and repaired code)",
+    "test:preparation:browser",
+    "default actor/studio assembly parity against original PR"
+  ],
+  "changedFiles": [
+    "docs/first-person-hands.md",
+    "docs/first-person-visual-repair-validation.json",
+    "docs/first-person-visual-repair.md",
+    "docs/viewmodel-repair-images/ar-after.png",
+    "docs/viewmodel-repair-images/ar-before.png",
+    "docs/viewmodel-repair-images/ar-grip-detail.png",
+    "docs/viewmodel-repair-images/br-after.png",
+    "docs/viewmodel-repair-images/br-before.png",
+    "docs/viewmodel-repair-images/game-apex-ar-reload-pose.png",
+    "docs/viewmodel-repair-images/game-apex-lmg-reload-pose.png",
+    "docs/viewmodel-repair-images/game-apex-minigun-idle.png",
+    "docs/viewmodel-repair-images/game-apex-pistol-idle.png",
+    "docs/viewmodel-repair-images/game-ar-aim-after.png",
+    "docs/viewmodel-repair-images/game-ar-aim-before.png",
+    "docs/viewmodel-repair-images/game-ar-idle-after.png",
+    "docs/viewmodel-repair-images/game-ar-idle-before.png",
+    "docs/viewmodel-repair-images/game-shotgun-aim-after.png",
+    "docs/viewmodel-repair-images/game-shotgun-aim-before.png",
+    "docs/viewmodel-repair-images/game-shotgun-idle-after.png",
+    "docs/viewmodel-repair-images/game-shotgun-idle-before.png",
+    "docs/viewmodel-repair-images/game-usmc-br-idle.png",
+    "docs/viewmodel-repair-images/game-usmc-lmg-idle.png",
+    "docs/viewmodel-repair-images/game-usmc-shotgun-reload-pose.png",
+    "docs/viewmodel-repair-images/game-usmc-shotgun-sprint.png",
+    "docs/viewmodel-repair-images/game-usmc-sniper-aim.png",
+    "docs/viewmodel-repair-images/game-usmc-sniper-idle.png",
+    "docs/viewmodel-repair-images/grenade_launcher-after.png",
+    "docs/viewmodel-repair-images/grenade_launcher-before.png",
+    "docs/viewmodel-repair-images/laser-after.png",
+    "docs/viewmodel-repair-images/laser-before.png",
+    "docs/viewmodel-repair-images/lmg-after.png",
+    "docs/viewmodel-repair-images/lmg-before.png",
+    "docs/viewmodel-repair-images/minigun-after.png",
+    "docs/viewmodel-repair-images/minigun-before.png",
+    "docs/viewmodel-repair-images/pistol-after.png",
+    "docs/viewmodel-repair-images/pistol-before.png",
+    "docs/viewmodel-repair-images/railgun-after.png",
+    "docs/viewmodel-repair-images/railgun-before.png",
+    "docs/viewmodel-repair-images/rocket-after.png",
+    "docs/viewmodel-repair-images/rocket-before.png",
+    "docs/viewmodel-repair-images/shotgun-after.png",
+    "docs/viewmodel-repair-images/shotgun-before.png",
+    "docs/viewmodel-repair-images/smg-after.png",
+    "docs/viewmodel-repair-images/smg-before.png",
+    "docs/viewmodel-repair-images/sniper-after.png",
+    "docs/viewmodel-repair-images/sniper-before.png",
+    "scripts/test-viewmodel-browser.mjs",
+    "src/viewmodelGrips.ts",
+    "src/viewmodelHands.ts",
+    "src/weaponModels.ts",
+    "src/weapons.ts",
+    "tests/viewmodel.test.ts"
+  ],
+  "limitations": [
+    "SwiftShader only; native laptop GPU timing and manual visual acceptance outstanding",
+    "Generic reload choreography retained; shotgun/sniper/BR/LMG diagnosis is next-batch work",
+    "Live scenery differs due to world generation and player movement; fixture camera/lighting are identical",
+    "Gallery settles presentation with 90 CPU updates; gameplay/reload/ammo state is not advanced",
+    "CPU timings are coarse timer measurements with no GPU/FPS inference"
+  ]
+}
