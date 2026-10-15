@@ -88,6 +88,9 @@ console.log('PASS: before/after-seat, later/last shell and final-chamber interru
 const vm = createViewmodelManager(); vm.prepare(['shotgun']);
 const ws: WeaponSlotState = {ammo: 2, reserve: 20}; beginWeaponReload(gun, ws);
 const shell = vm.root.getObjectByName('reloadRound')!, left = vm.root.getObjectByName('leftHand')!;
+const modelDuring = vm.root.getObjectByName('Weapon_shotgun')!, bodyDuring = modelDuring.getObjectByName('receiver')!;
+const clearance = new THREE.Raycaster(), shellAxis = new THREE.Vector3();
+const sentinelGeometry = new THREE.BufferGeometry(), sentinelMaterial = new THREE.MeshStandardMaterial(), sentinelObject = new THREE.Object3D();
 while (ws.reloading) {
   advanceWeaponReload(gun, ws, 1 / 144);
   vm.update(1 / 144, gun, ws, false, false, true, false, false, false, 0, true, true);
@@ -97,9 +100,18 @@ while (ws.reloading) {
     if (seq!.elapsed / stage.duration >= .52) {
       assert.ok(Math.abs(shell.position.x) < .009 && shell.position.y < -.019, 'Shell approaches through open underside');
       near(shell.rotation.x, 0);
+      for (const dx of [-.008, 0, .008]) {
+        clearance.ray.origin.set(shell.position.x + dx, shell.position.y, shell.position.z + .029).applyMatrix4(modelDuring.matrixWorld);
+        shellAxis.set(0,0,-1).transformDirection(modelDuring.matrixWorld); clearance.ray.direction.copy(shellAxis); clearance.near = 0; clearance.far = .0565;
+        const solid = clearance.intersectObject(bodyDuring, true).filter(h=>h.object instanceof THREE.Mesh && h.object.parent === bodyDuring);
+        assert.equal(solid.length, 0, 'Shell volume must clear the real trigger guard and receiver throughout the press');
+      }
     }
   }
 }
+const nextGeometry = new THREE.BufferGeometry(), nextMaterial = new THREE.MeshStandardMaterial(), nextObject = new THREE.Object3D();
+assert.equal(nextGeometry.id, sentinelGeometry.id + 1); assert.equal(Reflect.get(nextMaterial,'id'), Reflect.get(sentinelMaterial,'id') + 1); assert.equal(nextObject.id, sentinelObject.id + 1);
+sentinelGeometry.dispose();nextGeometry.dispose();sentinelMaterial.dispose();nextMaterial.dispose();
 // Real receiver geometry, rather than just a marker named "loadingPort".
 const model = vm.root.getObjectByName('Weapon_shotgun')!, receiver = model.getObjectByName('receiver')!;
 model.position.set(0, 0, 0); model.quaternion.identity(); vm.root.updateMatrixWorld(true);

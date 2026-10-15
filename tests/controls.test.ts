@@ -101,3 +101,7 @@ console.log('PASS: pause/resume, death, restart, lobby, blur/hidden, real lock l
 
 h=create(deps);h.playerLoadout[0].id='shotgun';beginShotgunCycle(h.ws);h.ws.pendingReloadShot=true;h.pauseHandler();assert.ok(h.ws.shotgunCycle);h.resumeHandler();assert.ok(h.ws.shotgunCycle);h.stopMatchInput();assert.equal(h.ws.shotgunCycle,undefined);assert.equal(h.ws.pendingReloadShot,false);assert.equal(h.ws.needsChamber,true);
 console.log('PASS: pause preserves shotgun action while lobby/restart cleanup cancels queued fire without silently chambering');
+
+h=create(deps);h.ws.reloading=true;mouse(h,0);assert.equal(h.counters.fire,0,'Magazine weapons still block reload fire');h.onMouseUp({button:0});
+h.playerLoadout[0].id='shotgun';mouse(h,0);assert.equal(h.counters.fire,1,'Shotgun fire input reaches shell interruption while reloading');assert.equal(h.player.fireHeld,true);
+console.log('PASS: shotgun-only mouse reload-interrupt routing; other weapon input unchanged');

@@ -47,7 +47,8 @@ const errors=[],screens=[],checks=[];
 const deadline=setTimeout(()=>{console.error('FAIL: shotgun acceptance exceeded 600 seconds');void browser?.close();void server.close();process.exitCode=1;},600000);
 try {
   await server.listen();browser=await chromium.launch({headless:true,executablePath:process.env.BENCHMARK_BROWSER??'/usr/bin/chromium',args:['--no-sandbox','--single-process','--no-zygote','--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required']});
-  const page=await browser.newPage({viewport:{width:1280,height:720},...(!baseline?{recordVideo:{dir:resolve(output,'raw-video'),size:{width:1280,height:720}}}:{})});video=page.video();page.setDefaultTimeout(60000);
+  async function boot(record=false) {
+  const page=await browser.newPage({viewport:{width:1280,height:720},...(record?{recordVideo:{dir:resolve(output,'raw-video'),size:{width:1280,height:720}}}:{})});if(record)video=page.video();page.setDefaultTimeout(60000);
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{
     HTMLCanvasElement.prototype.requestPointerLock=()=>Promise.reject(Error('embedded acceptance probe'));
@@ -60,6 +61,9 @@ try {
   await page.getByRole('button',{name:'Select TEAM DEATHMATCH',exact:true}).click();await page.getByRole('button',{name:/OUTDOOR ARENA TRAINING FIELD/}).click();
   await page.locator('input[type="range"][min="1"][max="20"]').press('Home');await page.getByRole('button',{name:'DEPLOY SELECTED SCENARIO',exact:true}).click();
   await page.waitForFunction(()=>window.__shotgunProbe?.state==='playing');
+    return page;
+  }
+  let page=await boot();
   async function snapshot(name,action,position,aim=false) {
     const sample=await page.evaluate(({action,position,aim})=>window.__shotgunProbe.snapshot(action,position,aim),{action,position,aim});
     await page.screenshot({path:resolve(output,name+'.png')});screens.push({name,...sample});
@@ -74,10 +78,11 @@ try {
   checks.push('20 real-scene camera/UI pose samples; 16:9 and 21:9; deterministic presentation clock, not live pacing');
   console.log('PASS: shotgun rendered pose samples',baseline?'before':'after');
   if(!baseline && process.env.SHOTGUN_SKIP_LIVE!=='1') {
-    // A smaller actual game viewport improves software throughput; no changes
-    // to simulation time, weapon speed or production rendering configuration.
-    await page.setViewportSize({width:960,height:540});
-    await page.evaluate(()=>{const g=window.__shotgunProbe;g.renderer.setSize(960,540);g.camera.aspect=16/9;g.camera.fov=74;g.camera.updateProjectionMatrix();g.equip('shotgun');g.hold=false;g.record=true;window.__shotgunAudio=[];});
+    // Record a fresh fixed-viewport page. Changing the viewport during a
+    // screencast can crop frames in Chromium. Lower only this test's backing
+    // resolution for software throughput; the App clock is untouched.
+    await page.close();page=await boot(true);
+    await page.evaluate(()=>{const g=window.__shotgunProbe;g.renderer.setPixelRatio(.65);g.renderer.setSize(1280,720);g.camera.aspect=16/9;g.camera.fov=74;g.camera.updateProjectionMatrix();g.equip('shotgun');g.hold=false;g.record=true;window.__shotgunAudio=[];});
     await page.waitForTimeout(200);
     await page.screenshot({path:resolve(output,'live-start.png')});
     const click=async()=>{await page.mouse.move(480,260);await page.mouse.down();await page.mouse.up();};
@@ -105,6 +110,13 @@ try {
     checks.push('Continuous actual input: two shots, partial reload, six dry shots, empty shell reload, held-fire interruption and reload finish; conserved ammo');
     console.log('PASS: live shotgun input/reload/interrupt recording');
     // Lifecycle checks outside the continuous acceptance interval.
+    await page.evaluate(()=>window.__shotgunProbe.equip('shotgun',0));
+    await page.keyboard.press('r');await page.mouse.down();
+    await page.waitForFunction(()=>window.__shotgunProbe.ws.shotgunCycle?.kind==='fire');await page.mouse.up();
+    assert.deepEqual(await page.evaluate(()=>{const s=window.__shotgunProbe.ws;return[s.ammo,s.reserve];}),[0,35]);
+    await page.waitForFunction(()=>!window.__shotgunProbe.ws.shotgunCycle);
+    checks.push('Holding fire before first empty shell waits for seating and chambering, then fires exactly once');
+    await page.evaluate(()=>window.__shotgunProbe.equip('shotgun'));
     await click();await page.waitForFunction(()=>!!window.__shotgunProbe.ws.shotgunCycle);
     await page.keyboard.press('2');await page.waitForFunction(()=>window.__shotgunProbe.weapon.id!=='shotgun');
     await page.keyboard.press('1');assert.equal(await page.evaluate(()=>window.__shotgunProbe.ws.pendingReloadShot),false);
@@ -120,4 +132,4 @@ try {
   assert.deepEqual(errors,[]);
   writeFileSync(resolve(output,'results.json'),JSON.stringify({completedAt:new Date().toISOString(),baseline,codeCommit:process.env.SHOTGUN_COMMIT,softwareRenderer:'Chromium SwiftShader',screens,checks,errors,...live},null,2)+'\n');
 } finally {clearTimeout(deadline);await browser?.close();await server.close();}
-if(video)writeFileSync(resolve(output,'video-source.json'),JSON.stringify({path:await video.path(),note:'Raw browser recording; static fixture samples precede the continuous live input interval. No recorded audio.'},null,2)+'\n');
+if(video)writeFileSync(resolve(output,'video-source.json'),JSON.stringify({path:await video.path(),note:'Raw fixed-viewport actual App recording; static pose samples are in a separate page. No recorded audio.'},null,2)+'\n');

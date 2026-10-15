@@ -52,6 +52,6 @@ export function shotgunShellPose(progress: number, out: { x: number; y: number; 
   const carry = shotgunEase((progress - .16) / .36), press = shotgunEase((progress - .52) / .20);
   out.x = -.11 + .102 * carry + .008 * press;
   out.y = -.13 + .047 * carry + .063 * press;
-  out.z = -.045 + .033 * carry - .024 * press;
+  out.z = -.045 - .015 * press;
   out.angle = -.35 * (1 - carry);
 }

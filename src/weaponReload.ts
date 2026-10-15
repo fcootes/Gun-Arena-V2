@@ -119,6 +119,7 @@ export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, d
 
 export function interruptShellReload(weapon: WeaponDef, state: WeaponSlotState): boolean {
   if (weapon.id !== 'shotgun' || !state.reloading || (state.ammo ?? 0) <= 0 || (state.reloadSequence?.empty && state.reloadSequence.inserted === 0)) return false;
+  state.pendingReloadShot = true;
   if (state.needsChamber) {
     const sequence = state.reloadSequence!, stage = sequence.phases[sequence.index];
     const continuing = stage.phase === 'chamber';

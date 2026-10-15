@@ -806,7 +806,7 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       box('Shotgun receiver crown', .07, .048, .26, 0, .0245, .035, dark);
       for (const x of [-.026, .026]) box('Loading port side wall', .018, .037, .26, x, -.018, .035, dark);
       box('Loading port rear wall', .034, .037, .075, 0, -.018, .1275, dark);
-      box('Loading port front wall', .034, .037, .02, 0, -.018, -.085, dark);
+      box('Loading port front wall', .034, .037, .005, 0, -.018, -.0925, dark);
       group('loadingPort', 0, -.0365, -.025);
       for (const x of [-.018, .018]) box('Loading port lip', .003, .004, .14, x, -.037, -.005, edge);
     } else box('Shotgun receiver', 0.07, 0.085, 0.26, 0, 0.006, 0.035, dark);

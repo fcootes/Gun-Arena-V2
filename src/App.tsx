@@ -2262,6 +2262,7 @@ export default function App() {
       }
 
       ws.lastFired = now;
+      if (w.id === 'shotgun') ws.pendingReloadShot = false;
       if (w.id !== 'laser') {
         ws.ammo = (ws.ammo ?? 1) - 1;
       }
@@ -2794,7 +2795,7 @@ export default function App() {
         }
         
         player.fireHeld = true;
-        if (!currentSlotState()?.reloading) {
+        if (!currentSlotState()?.reloading || currentSlot().id === 'shotgun') {
           fireWeapon();
         }
       }
@@ -3216,7 +3217,13 @@ export default function App() {
 
         const curW = currentSlot();
         const curWs = currentSlotState();
-        if (curWs.pendingReloadShot && (curWs.boltCycleT ?? 0) <= 0) { curWs.pendingReloadShot=false; if(player.fireHeld)fireWeapon(); }
+        // A held shotgun trigger retries only the interrupt, never auto-fires.
+        // Before the first seated shell the reload continues without a grant.
+        if (player.fireHeld && curW.id === 'shotgun' && curWs.reloading) fireWeapon();
+        if (curWs.pendingReloadShot && (curWs.boltCycleT ?? 0) <= 0 &&
+          (!player.fireHeld || performance.now() / 1000 - (curWs.lastFired ?? 0) >= (curW.fireRate ?? .2))) {
+          curWs.pendingReloadShot = false; if (player.fireHeld) fireWeapon();
+        }
         if (player.fireHeld && curW.auto && curW.type === 'weapon' && !curWs.reloading) {
           fireWeapon();
         }
