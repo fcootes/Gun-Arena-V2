@@ -327,7 +327,7 @@ export function createViewmodelManager(): ViewmodelManager {
     radioTimer = 0,
     radioHold = false;
   const reloadRotation = new THREE.Quaternion(), reloadEuler = new THREE.Euler(), reloadPosition = new THREE.Vector3();
-  const hands = createFirstPersonHands(); root.add(hands.root);
+  const hands = createFirstPersonHands(); hands.root.visible = false; root.add(hands.root);
   const viewPosition = new THREE.Vector3(), targetPosition = new THREE.Vector3();
   const viewRotation = new THREE.Quaternion(), targetRotation = new THREE.Quaternion(), targetEuler = new THREE.Euler();
   let poseInitialized = false, previousId = '', walkBlend = 0, equip = 0, disposed = false;
@@ -467,6 +467,7 @@ export function createViewmodelManager(): ViewmodelManager {
     recoil = Math.max(0, recoil - dt * 0.55);
     recoilRotation = Math.max(0, recoilRotation - dt * 3.8);
     currentId = w.id;
+    if (w.id !== 'minigun') venting = false;
     selected = w.type === 'weapon' ? getModel(w.id) : null;
     for (const [id, model] of models) {
       model.assembly.root.visible = id === w.id && !melee && radioTimer === 0;
@@ -495,7 +496,7 @@ export function createViewmodelManager(): ViewmodelManager {
       utility.position.set(-0.16, -0.06, -0.35);
       screenMaterial.emissiveIntensity = radioHold ? 1.9 : 1.2;
     }
-    if (!selected) return;
+    if (!selected) { hands.root.visible = false; previousId = w.id; return; }
     const { assembly, pose } = selected,
       parts = assembly.parts;
     if (hands.root.parent !== assembly.root) assembly.root.add(hands.root);
@@ -575,9 +576,9 @@ export function createViewmodelManager(): ViewmodelManager {
       }
     }
     assembly.update(dt, charge, spin);
-    hands.update(w.id as WeaponModelId, dt, assembly, ws, aiming);
     spin = 0;
     if (venting) assembly.root.rotation.z += Math.sin(time * 16) * 0.014;
+    hands.update(w.id as WeaponModelId, dt, assembly, ws, aiming);
   }
   return {
     root,
@@ -626,6 +627,7 @@ export function createViewmodelManager(): ViewmodelManager {
     resetEffects() {
       models.forEach((model) => model.effects.reset());
       recoil = recoilRotation = slideTimer = pumpTimer = boltTimer = equip = walkBlend = time = bob = 0;
+      charge = spin = radioTimer = 0; venting = radioHold = false;
       poseInitialized = false; previousId = '';
     },
   };

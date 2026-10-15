@@ -1,11 +1,13 @@
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import assert from 'node:assert/strict';
 
 const output = resolve(process.env.VIEWMODEL_OUTPUT ?? 'performance-results/viewmodel');
 mkdirSync(output, { recursive: true });
+rmSync(resolve(output, 'results.json'), { force: true });
+const startedAt = new Date().toISOString();
 const baseline = process.env.VIEWMODEL_BASELINE === '1';
 const server = await createServer({ root: process.env.VIEWMODEL_ROOT, logLevel: 'error', server: { host: '127.0.0.1', port: 3098, strictPort: true }, plugins: [{
   name: 'viewmodel-fixture', configureServer(server) {
@@ -13,6 +15,10 @@ const server = await createServer({ root: process.env.VIEWMODEL_ROOT, logLevel: 
       res.setHeader('Content-Type', 'text/html');
       res.end('<!doctype html><html><head><style>body{margin:0;background:#111a22}canvas{display:block}</style></head><body></body></html>');
     });
+  },
+  resolveId(id) { if (id === 'viewmodel-fixture' || id === '\0viewmodel-fixture') return '\0viewmodel-fixture'; },
+  load(id) {
+    if (id === '\0viewmodel-fixture') return `export * as THREE from 'three'; export {RoomEnvironment} from 'three/examples/jsm/environments/RoomEnvironment.js';`;
   },
   enforce: 'pre', transform(code, id) {
     if (!id.endsWith('/src/App.tsx')) return;
@@ -40,11 +46,10 @@ try {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('http://127.0.0.1:3098/__viewmodel');
   await page.evaluate(async () => {
-    const THREE = await import('/node_modules/.vite/deps/three.js');
+    const { THREE, RoomEnvironment } = await import('/@id/__x00__viewmodel-fixture');
     const { createViewmodelManager, WEAPONS } = await import('/src/weapons.ts');
     const { beginWeaponReload, advanceWeaponReload } = await import('/src/weaponReload.ts');
     const { disposeBotVisuals } = await import('/src/botBuilder.ts');
-    const { RoomEnvironment } = await import('/node_modules/three/examples/jsm/environments/RoomEnvironment.js');
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setSize(1280, 720); renderer.setPixelRatio(1);
     renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1;
@@ -57,15 +62,41 @@ try {
     scene.add(new THREE.HemisphereLight(0xddeaff, 0x3f4140, 2.2));
     const key = new THREE.DirectionalLight(0xffe6ce, 3); key.position.set(-2, 3, 2); scene.add(key);
     const fill = new THREE.DirectionalLight(0x89bde0, 1.2); fill.position.set(2, 1, -2); scene.add(fill);
-    const manager = createViewmodelManager(); camera.add(manager.root);
+    const manager = createViewmodelManager(); manager.prepare(WEAPONS.filter(w => w.type === 'weapon').map(w => w.id)); camera.add(manager.root);
     const state = { id: 'ar', ws: { ammo: 20, reserve: 100 }, aiming: false, sprinting: false, moving: false };
-    const frame = (dt = 1 / 60) => {
+    const frame = (dt = 1 / 60, draw = true) => {
       const weapon = WEAPONS.find(w => w.id === state.id);
       manager.update(dt, weapon, state.ws, state.aiming, state.sprinting, true, state.moving, false, false, 0, true, true);
       camera.fov = state.aiming ? weapon.adsFov : 74; camera.updateProjectionMatrix();
-      renderer.render(scene, camera);
+      if (draw) renderer.render(scene, camera);
     };
-    window.fixture = { THREE, renderer, scene, camera, manager, state, frame, WEAPONS, beginWeaponReload, advanceWeaponReload,
+    const point = new THREE.Vector3(), instance = new THREE.Matrix4(), transform = new THREE.Matrix4();
+    const ray = new THREE.Raycaster();
+    const validateHands = () => {
+      const hands = manager.root.getObjectByName('FirstPersonHands');
+      if (!hands?.visible) return { visible: false };
+      scene.updateMatrixWorld(true); camera.matrixWorldInverse.copy(camera.matrixWorld).invert();
+      let nearestZ = -Infinity;
+      const meshes = [];
+      hands.traverseVisible(object => {
+        if (!(object instanceof THREE.Mesh)) return;
+        meshes.push(object);
+        const positions = object.geometry.attributes.position;
+        if (object.isInstancedMesh) object.computeBoundingSphere();
+        for (let i = 0; i < (object.isInstancedMesh ? object.count : 1); i++) {
+          if (object.isInstancedMesh) { object.getMatrixAt(i, instance); transform.multiplyMatrices(object.matrixWorld, instance); }
+          else transform.copy(object.matrixWorld);
+          transform.premultiply(camera.matrixWorldInverse);
+          for (let vertex = 0; vertex < positions.count; vertex++) nearestZ = Math.max(nearestZ, point.fromBufferAttribute(positions, vertex).applyMatrix4(transform).z);
+        }
+      });
+      if (nearestZ >= -camera.near) throw new Error(`Hands cross the near plane: z=${nearestZ}, near=${camera.near}`);
+      ray.setFromCamera(new THREE.Vector2(0, 0), camera);
+      const centralHits = ray.intersectObjects(meshes, false).length;
+      if (state.aiming && centralHits) throw new Error('A hand obscures the centre sight ray');
+      return { visible: true, nearestZ, centralHits };
+    };
+    window.fixture = { THREE, renderer, scene, camera, manager, state, frame, WEAPONS, beginWeaponReload, advanceWeaponReload, validateHands,
       snapshot() { const info = renderer.info; return { calls: info.render.calls, triangles: info.render.triangles, geometries: info.memory.geometries, programs: info.programs.length }; },
       dispose() { disposeBotVisuals(manager.root); environment.dispose(); renderer.dispose(); renderer.forceContextLoss(); },
     };
@@ -74,11 +105,13 @@ try {
   for (const id of modelIds) {
     const result = await page.evaluate(id => {
       const f = window.fixture; f.state.id = id; f.state.aiming = f.state.sprinting = false;
-      for (let i = 0; i < 40; i++) f.frame();
-      return { id, ...f.snapshot() };
+      for (let i = 0; i < 40; i++) f.frame(1 / 60, false);
+      f.renderer.render(f.scene, f.camera);
+      return { id, ...f.snapshot(), hands: f.validateHands() };
     }, id);
     await page.screenshot({ path: resolve(output, `${id}-hip.png`) });
     results.push(result);
+    console.log('CHECK: held configuration', id);
   }
   const checks = [];
   if (!baseline) {
@@ -86,25 +119,32 @@ try {
       await page.evaluate(({ faction, id }) => {
         const f = window.fixture; f.manager.setFaction(faction); f.state.id = id;
         f.state.aiming = f.state.sprinting = false; f.state.ws = { ammo: 0, reserve: 100 };
-        f.manager.resetEffects(); for (let i = 0; i < 40; i++) f.frame();
+        f.manager.resetEffects(); for (let i = 0; i < 40; i++) f.frame(1 / 60, false);
+        f.renderer.render(f.scene, f.camera);
       }, { faction, id });
       await page.screenshot({ path: resolve(output, `${faction}-${id}-hip.png`) });
-      await page.evaluate(() => { const f = window.fixture; f.state.aiming = true; for (let i = 0; i < 60; i++) f.frame(); });
+      await page.evaluate(() => window.fixture.validateHands());
+      await page.evaluate(() => { const f = window.fixture; f.state.aiming = true; for (let i = 0; i < 60; i++) f.frame(1 / 60, false); f.renderer.render(f.scene, f.camera); });
       await page.screenshot({ path: resolve(output, `${faction}-${id}-ads.png`) });
+      await page.evaluate(() => window.fixture.validateHands());
       await page.evaluate(() => {
         const f = window.fixture; f.state.aiming = false;
         const w = f.WEAPONS.find(w => w.id === f.state.id);
         if (!f.beginWeaponReload(w, f.state.ws)) throw new Error('Reload fixture did not start');
-        for (let i = 0; i < 60; i++) { f.advanceWeaponReload(w, f.state.ws, 1 / 60); f.frame(); }
+        for (let i = 0; i < 60; i++) { f.advanceWeaponReload(w, f.state.ws, 1 / 60); f.frame(1 / 60, false); }
+        f.renderer.render(f.scene, f.camera);
       });
       await page.screenshot({ path: resolve(output, `${faction}-${id}-reload.png`) });
-      await page.evaluate(() => { const f = window.fixture; f.state.ws = {}; f.state.sprinting = true; for (let i = 0; i < 60; i++) f.frame(); });
+      await page.evaluate(() => window.fixture.validateHands());
+      await page.evaluate(() => { const f = window.fixture; f.state.ws = {}; f.state.sprinting = true; for (let i = 0; i < 60; i++) f.frame(1 / 60, false); f.renderer.render(f.scene, f.camera); });
       await page.screenshot({ path: resolve(output, `${faction}-${id}-sprint.png`) });
+      await page.evaluate(() => window.fixture.validateHands());
+      console.log('CHECK: faction pose captures', faction, id);
     }
     // A held close-up is a test-only camera, not a change to the armory.
     await page.evaluate(() => {
       const f = window.fixture; f.state.id = 'ar'; f.state.sprinting = f.state.aiming = false; f.manager.setFaction('usmc');
-      for (let i = 0; i < 60; i++) f.frame();
+      for (let i = 0; i < 60; i++) f.frame(1 / 60, false);
       f.scene.attach(f.manager.root); f.camera.position.set(.52, -.20, -.74); f.camera.lookAt(.17, -.23, -.39);
       f.camera.fov = 44; f.camera.updateProjectionMatrix(); f.renderer.render(f.scene, f.camera);
     });
@@ -175,7 +215,7 @@ try {
     }
   }
   assert.deepEqual(errors, []);
-  writeFileSync(resolve(output, 'results.json'), JSON.stringify({ browser: browser.version(), viewport: '1280x720', results, timing, checks, errors }, null, 2) + '\n');
+  writeFileSync(resolve(output, 'results.json'), JSON.stringify({ startedAt, browser: browser.version(), viewport: '1280x720', results, timing, checks, errors }, null, 2) + '\n');
   await page.evaluate(() => window.fixture?.dispose());
   console.log('PASS: held viewmodel browser captures', results);
 } finally { clearTimeout(deadline); await browser?.close(); await server.close(); }

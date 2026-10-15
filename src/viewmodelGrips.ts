@@ -7,10 +7,13 @@ export interface HandAttachment {
   rotation: Triple;
   curl: number;
   triggerFinger?: boolean;
+  followPart?: string;
+  partOffset?: Triple;
 }
 export interface ViewmodelGrip {
   right: HandAttachment;
   left: HandAttachment;
+  /** Camera-local sleeve anchors, kept below the frame during receiver poses. */
   elbows: { right: Triple; left: Triple };
   hip: Triple;
   aim: Triple;
@@ -28,7 +31,7 @@ const vertical = (z: number, x = -.038, y = -.10): HandAttachment => ({ position
 function grip(right: HandAttachment, left: HandAttachment, options: Partial<ViewmodelGrip> = {}): ViewmodelGrip {
   return {
     right, left,
-    elbows: { right: [.19, -.26, .08], left: [-.23, -.24, .04] },
+    elbows: { right: [.36, -.46, -.30], left: [-.18, -.46, -.42] },
     hip: [.16, -.135, -.47], aim: [0, -.105, -.45],
     sprint: [.19, -.20, -.48], sprintRotation: [.22, -.16, -.28],
     reloadReach: [-.04, -.045, .065], ...options,
@@ -38,12 +41,12 @@ function grip(right: HandAttachment, left: HandAttachment, options: Partial<View
 /** Absolute attachments, never incremental holding rotations. Inspection and
  * third-person assemblies deliberately do not contain this first-person rig. */
 export const VIEWMODEL_GRIPS: Readonly<Record<WeaponModelId, ViewmodelGrip>> = {
-  ar: grip(primary(), under(-.28)),
+  ar: grip(primary(), under(-.28), { aim: [0, -.078, -.45] }),
   pistol: grip(primary(.105), vertical(.088, -.039, -.108), {
     hip: [.13, -.10, -.42], aim: [0, -.045, -.42],
     sprintRotation: [.35, -.16, -.23],
   }),
-  shotgun: grip(primary(), under(-.23, -.067)),
+  shotgun: grip(primary(), { ...under(-.23, -.067), followPart: 'pump', partOffset: [-.068, -.042, .05] }),
   sniper: grip(primary(), under(-.34), { hip: [.15, -.14, -.50] }),
   smg: grip(primary(), vertical(-.18, -.039, -.10)),
   lmg: grip(primary(), under(-.29, -.067), { hip: [.15, -.14, -.51] }),
@@ -54,7 +57,7 @@ export const VIEWMODEL_GRIPS: Readonly<Record<WeaponModelId, ViewmodelGrip>> = {
   grenade_launcher: grip(primary(.175), vertical(-.165, -.039, -.10), { hip: [.16, -.135, -.49] }),
   minigun: grip({ ...primary(.292, .13, -.034), triggerFinger: false }, vertical(.292, -.13, -.034), {
     hip: [.12, -.18, -.61], aim: [0, -.16, -.61], sprint: [.16, -.24, -.63],
-    elbows: { right: [.24, -.27, .37], left: [-.24, -.27, .37] },
+    elbows: { right: [.40, -.46, -.25], left: [-.27, -.46, -.25] },
     reloadReach: [-.12, -.01, .20],
   }),
 };

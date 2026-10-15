@@ -10,6 +10,7 @@ interface Digit { joints: THREE.Object3D[]; lengths: number[]; radius: number; t
 interface Hand {
   wrist: THREE.Group; sleeve: THREE.Mesh; digits: Digit[];
   target: THREE.Vector3; orientation: THREE.Quaternion; phaseStart: THREE.Vector3;
+  curl: number;
 }
 const thumbAngles = [.20, .35, .30], triggerAngles = [.10, .50, .65], gripAngles = [.5, .9, .65];
 
@@ -46,6 +47,7 @@ export function createFirstPersonHands() {
   const scratch = new THREE.Object3D(), inverse = new THREE.Matrix4(), matrix = new THREE.Matrix4(), instanceTransform = new THREE.Matrix4();
   const direction = new THREE.Vector3(), end = new THREE.Vector3(), elbow = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
   const targetRotation = new THREE.Quaternion(), euler = new THREE.Euler(), attachmentPosition = new THREE.Vector3();
+  const supportGrip = new THREE.Vector3();
   let selected: WeaponModelId = 'ar', phase = '', disposed = false, initialized = false;
 
   function merge(parts: THREE.BufferGeometry[]) {
@@ -71,6 +73,16 @@ export function createFirstPersonHands() {
   for (const x of [-.029, -.010, .010, .028])
     palmParts.push(at(new THREE.SphereGeometry(1, 8, 6).scale(.0115, .021, .017), x, .052, 0));
   const palmGeometry = merge(palmParts);
+  // Mirror once in the owned buffer, with matching winding. A negative mesh
+  // scale would introduce a separate front-face driver state during first use.
+  const leftPalmGeometry = palmGeometry.clone().scale(-1, 1, 1);
+  for (const value of Object.values(leftPalmGeometry.attributes)) {
+    const attribute = value as THREE.BufferAttribute, array = attribute.array;
+    for (let vertex = 0; vertex < attribute.count; vertex += 3) for (let component = 0; component < attribute.itemSize; component++) {
+      const a = vertex * attribute.itemSize + component, b = (vertex + 1) * attribute.itemSize + component;
+      const temporary = array[a]; array[a] = array[b]; array[b] = temporary;
+    }
+  }
   const details: THREE.BufferGeometry[] = [
     rounded(.052, .042, .007, 0, .029, .019),
     rounded(.040, .013, .006, 0, -.015, .023),
@@ -90,9 +102,9 @@ export function createFirstPersonHands() {
   function makeHand(side: 'right' | 'left'): Hand {
     const sign = side === 'right' ? 1 : -1;
     const wrist = new THREE.Group(); wrist.name = `${side}Hand`; root.add(wrist);
-    const body = new THREE.Mesh(palmGeometry, cloth); body.name = `${side}GlovePalm`;
+    const body = new THREE.Mesh(side === 'right' ? palmGeometry : leftPalmGeometry, cloth); body.name = `${side}GlovePalm`;
     const detail = new THREE.Mesh(detailGeometry, rubber); detail.name = `${side}GloveSeamsAndCuff`;
-    body.scale.x = detail.scale.x = sign; wrist.add(body, detail);
+    wrist.add(body, detail);
     const sleeve = new THREE.Mesh(sleeveGeometry, sleeveMaterial); sleeve.name = `${side}Forearm`; root.add(sleeve);
     const digits: Digit[] = [];
     for (let digit = 0; digit < 5; digit++) {
@@ -109,7 +121,7 @@ export function createFirstPersonHands() {
       }
       digits.push({ joints, lengths, radius: thumb ? .0095 : digit === 3 ? .0072 : .0085, thumb, index: digit === 0, spread: thumb ? sign * .18 : sign * (digit - 1.5) * -.015 });
     }
-    return { wrist, sleeve, digits, target: new THREE.Vector3(), orientation: new THREE.Quaternion(), phaseStart: new THREE.Vector3() };
+    return { wrist, sleeve, digits, target: new THREE.Vector3(), orientation: new THREE.Quaternion(), phaseStart: new THREE.Vector3(), curl: 1 };
   }
   const right = makeHand('right'), left = makeHand('left');
   const hands = [right, left], sides = [['right', right], ['left', left]] as const;
@@ -135,6 +147,13 @@ export function createFirstPersonHands() {
       const changed = !initialized || selected !== id; selected = id;
       const config = VIEWMODEL_GRIPS[id];
       setAttachment(right, config.right); setAttachment(left, config.left);
+      const tracked = config.left.followPart ? assembly.parts[config.left.followPart] : undefined;
+      if (tracked && config.left.partOffset) {
+        tracked.updateWorldMatrix(true, false); assembly.root.updateWorldMatrix(true, false);
+        inverse.copy(assembly.root.matrixWorld).invert(); matrix.multiplyMatrices(inverse, tracked.matrixWorld);
+        left.target.fromArray(config.left.partOffset).applyMatrix4(matrix);
+      }
+      supportGrip.copy(left.target);
       const sequence = state?.reloading ? state.reloadSequence : undefined;
       const stage = sequence?.phases[sequence.index];
       const nextPhase = stage?.phase ?? '';
@@ -154,25 +173,32 @@ export function createFirstPersonHands() {
         left.orientation.copy(targetRotation);
         if (stage.phase === 'open' || stage.phase === 'vent') left.target.lerpVectors(left.phaseStart, left.target, p);
         if (stage.phase === 'close') {
-          left.target.fromArray(config.left.position).lerpVectors(left.phaseStart, left.target, p);
+          left.target.lerpVectors(left.phaseStart, supportGrip, p);
           left.orientation.setFromEuler(euler.set(...config.left.rotation));
         }
         curl = stage.phase === 'chamber' ? .65 : stage.phase === 'vent' ? .45 : .8;
+        if (tracked && stage.phase === 'chamber') {
+          left.target.copy(supportGrip); left.orientation.setFromEuler(euler.set(...config.left.rotation)); curl = config.left.curl;
+        }
       }
       const alpha = changed || dt === 0 ? 1 : 1 - Math.exp(-24 * dt);
       right.wrist.position.copy(right.target); right.wrist.quaternion.copy(right.orientation);
       left.wrist.position.lerp(left.target, alpha); left.wrist.quaternion.slerp(left.orientation, alpha);
+      // Receiver tilt must not rotate a cut-off sleeve end into the viewport.
+      // Convert stable camera-local elbow anchors into the moving weapon frame.
+      assembly.root.updateMatrix(); inverse.copy(assembly.root.matrix).invert();
       for (const [side, hand] of sides) {
         const attachment = config[side];
+        const targetCurl = side === 'left' ? curl : attachment.curl;
+        hand.curl += (targetCurl - hand.curl) * alpha;
         end.set(0, -.047, 0).applyQuaternion(hand.wrist.quaternion).add(hand.wrist.position);
-        elbow.fromArray(config.elbows[side]);
+        elbow.fromArray(config.elbows[side]).applyMatrix4(inverse);
         hand.sleeve.position.copy(elbow).add(end).multiplyScalar(.5);
         direction.copy(end).sub(elbow); hand.sleeve.scale.set(1, direction.length() + .01, 1);
         hand.sleeve.quaternion.setFromUnitVectors(up, direction.normalize());
         for (const digit of hand.digits) for (let segment = 0; segment < 3; segment++) {
-          const fingerCurl = side === 'left' ? curl : attachment.curl;
           const angle = (digit.thumb ? thumbAngles : digit.index && side === 'right' && attachment.triggerFinger !== false ? triggerAngles : gripAngles)[segment];
-          digit.joints[segment].rotation.set(-angle * (fingerCurl + (aiming ? .025 : 0)), 0, segment === 0 ? digit.spread : 0);
+          digit.joints[segment].rotation.set(-angle * (hand.curl + (aiming ? .025 : 0)), 0, segment === 0 ? digit.spread : 0);
         }
       }
       root.updateWorldMatrix(true, true); inverse.copy(root.matrixWorld).invert();

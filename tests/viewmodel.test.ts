@@ -18,6 +18,7 @@ function pose(vm: ViewmodelManager) {
   return result;
 }
 assert.deepEqual(Object.keys(VIEWMODEL_GRIPS).sort(), [...WEAPON_MODEL_IDS].sort());
+const acceptanceCamera = new THREE.PerspectiveCamera(74, 1280 / 720, .05, 100), sleeveEnd = new THREE.Vector3();
 for (const id of WEAPON_MODEL_IDS) {
   const config = VIEWMODEL_GRIPS[id];
   for (const side of ['right', 'left'] as const) {
@@ -33,6 +34,8 @@ for (const id of WEAPON_MODEL_IDS) {
   disposeWeaponObject(assembly.root);
 }
 assert.ok(VIEWMODEL_GRIPS.minigun.right.position[0] > .10 && VIEWMODEL_GRIPS.minigun.left.position[0] < -.10, 'Both rear spade handles have distinct anchors');
+const utilityOnly = createViewmodelManager();
+step(utilityOnly, 'grenade'); assert.equal(rig(utilityOnly).visible, false, 'A utility-first update cannot reveal an unposed hand palette'); utilityOnly.dispose();
 console.log('PASS: twelve explicit metre-scale grip configurations, palm orientation, specialty handles and unchanged bare assemblies');
 
 const vm = createViewmodelManager(); vm.prepare(WEAPON_MODEL_IDS);
@@ -40,6 +43,11 @@ const pair = rig(vm), right = pair.getObjectByName('rightHand')!, left = pair.ge
 const instances: THREE.InstancedMesh[] = [];
 pair.traverse(o => { if (o instanceof THREE.InstancedMesh) instances.push(o); });
 assert.equal(instances.length, 2); assert.ok(instances.every(mesh => mesh.count === 30));
+for (const mesh of instances) {
+  const p = mesh.geometry.attributes.position, index = mesh.geometry.index!;
+  const a = new THREE.Vector3().fromBufferAttribute(p, index.getX(0)), b = new THREE.Vector3().fromBufferAttribute(p, index.getX(1)), c = new THREE.Vector3().fromBufferAttribute(p, index.getX(2));
+  assert.ok(b.sub(a).cross(c.sub(a)).lengthSq() > 1e-12, 'The first preparation triangle has nonzero area');
+}
 let handMeshes = 0;
 pair.traverse(o => { if (o instanceof THREE.Mesh) { handMeshes++; assert.equal(o.castShadow, false); assert.equal(o.receiveShadow, false); } });
 assert.equal(handMeshes, 8, 'All articulated hands/forearms use eight meshes per pair');
@@ -71,7 +79,7 @@ assert.deepEqual(pose(vm), frozen, 'Pause freezes full pose');
 instances.forEach((mesh, index) => assert.deepEqual(Array.from(mesh.instanceMatrix.array), palette[index]));
 step(vm, 'ar', 1 / 60, {}, true); assert.notDeepEqual(pose(vm), frozen, 'Resume advances the existing pose');
 for (let i = 0; i < 120; i++) step(vm, 'ar', 1 / 60, {}, true);
-assert.ok(Math.abs(weapon(vm, 'ar').position.x) < .001 && weapon(vm, 'ar').position.y < -.09);
+assert.ok(Math.abs(weapon(vm, 'ar').position.x) < .001 && Math.abs(weapon(vm, 'ar').position.y - VIEWMODEL_GRIPS.ar.aim[1]) < .003);
 assert.ok(pair.visible, 'Unscoped AR ADS retains attached hands below sight line');
 step(vm, 'sniper', 1 / 60, {}, true); assert.equal(pair.visible, false, 'Existing scope overlay remains unobstructed');
 step(vm, 'sniper', 1 / 60); assert.equal(pair.visible, true);
@@ -94,16 +102,29 @@ for (const id of WEAPON_MODEL_IDS) {
   const startLeft = left.position.clone(), anchoredRight = right.position.clone(); let reached = false;
   while (state.reloading) {
     advanceWeaponReload(def, state, 1 / 60);
+    if (id === 'minigun') vm.setMinigunSpin(.02, true);
     const serialized = JSON.stringify(state); step(vm, id, 1 / 60, state);
     assert.equal(JSON.stringify(state), serialized, 'Presentation never changes reload/ammo/audio state');
     assert.ok(right.position.distanceTo(anchoredRight) < 1e-8, `${id}: firing hand stays attached during reload`);
+    for (const side of ['right', 'left'] as const) {
+      const sleeve = pair.getObjectByName(`${side}Forearm`)!;
+      sleeveEnd.set(0, -.5, 0).applyMatrix4(sleeve.matrixWorld);
+      assert.ok(sleeveEnd.distanceTo(new THREE.Vector3(...VIEWMODEL_GRIPS[id].elbows[side])) < .006, `${id}: elbow stays body-anchored while receiver tilts`);
+      assert.ok(sleeveEnd.project(acceptanceCamera).y < -1, `${id}: capped sleeve end never swings into the viewport during reload`);
+    }
     reached ||= left.position.distanceTo(startLeft) > .025;
   }
   assert.ok(reached, `${id}: support hand independently reaches the loading control`);
+  vm.setMinigunSpin(0, false);
   for (let i = 0; i < 60; i++) step(vm, id);
   assert.ok(left.position.distanceTo(startLeft) < .001, `${id}: support hand recovers after reload`);
 }
 console.log('PASS: independent support-hand reaches and recovery across all reload families without changing their state machines');
+vm.resetEffects(); step(vm, 'shotgun', 0);
+const pumpGrip = left.position.clone(); vm.triggerShotgunPump(); step(vm, 'shotgun', .1);
+assert.ok(left.position.z > pumpGrip.z + .02, 'Support hand follows the animated pump after a shot');
+for (let i = 0; i < 60; i++) step(vm, 'shotgun');
+assert.ok(left.position.distanceTo(pumpGrip) < .001, 'Pump hand recovers without accumulated offset');
 
 const resources = new Set<THREE.EventDispatcher<any>>();
 vm.root.traverse((object: any) => {
