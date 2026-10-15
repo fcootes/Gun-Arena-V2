@@ -1,3 +1,5 @@
+import {cancelWeaponReload} from '../src/weaponReload';
+import {cancelShotgunCycle, beginShotgunCycle} from '../src/shotgunMechanics';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import * as THREE from 'three';
@@ -7,7 +9,7 @@ import { controlHarnessSource } from './inputHarness.mjs';
 const canvas = {};
 const document = { pointerLockElement: null as unknown, hidden: false, querySelector: () => canvas, exitPointerLock() { this.pointerLockElement = null; } };
 const create = vm.runInNewContext(controlHarnessSource(), { document, HTMLElement: class {}, THREE, console });
-const deps = { THREE, GameplayInput, KEY_ACTIONS, MOUSE_BUTTONS };
+const deps = { THREE, GameplayInput, KEY_ACTIONS, MOUSE_BUTTONS, cancelWeaponReload, cancelShotgunCycle };
 const key = (h: any, code: string, repeat = false) => h.onKeyDown({ code, repeat, preventDefault() {} });
 const release = (h: any, code: string) => h.onKeyUp({ code });
 const press = (h: any, code: string) => { key(h, code); release(h, code); };
@@ -96,3 +98,6 @@ h.gameStateRef.current='start';h.onContextMenu({preventDefault(){prevented++;}})
 h=create(deps);h.world.facility={controlsLocked:true};key(h,'ShiftLeft');mouse(h,2);assert.equal(h.player.sprinting,false);assert.equal(h.player.aiming,false);
 h.world.facility.controlsLocked=false;h.player.alive=false;key(h,'KeyF');mouse(h,0);assert.equal(h.counters.melee+h.counters.fire,0);
 console.log('PASS: pause/resume, death, restart, lobby, blur/hidden, real lock loss, rejected lock/drag fallback and locked/dead guards');
+
+h=create(deps);h.playerLoadout[0].id='shotgun';beginShotgunCycle(h.ws);h.ws.pendingReloadShot=true;h.pauseHandler();assert.ok(h.ws.shotgunCycle);h.resumeHandler();assert.ok(h.ws.shotgunCycle);h.stopMatchInput();assert.equal(h.ws.shotgunCycle,undefined);assert.equal(h.ws.pendingReloadShot,false);assert.equal(h.ws.needsChamber,true);
+console.log('PASS: pause preserves shotgun action while lobby/restart cleanup cancels queued fire without silently chambering');

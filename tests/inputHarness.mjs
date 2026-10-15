@@ -21,7 +21,7 @@ export function controlHarnessSource() {
   const start = text.indexOf('        // 1. Player movement & physics');
   const end = text.indexOf('          const bobY', start);
   const movement = text.slice(start, end);
-  return ts.transpile(`(function({THREE, GameplayInput, KEY_ACTIONS, MOUSE_BUTTONS}) {
+  return ts.transpile(`(function({THREE, GameplayInput, KEY_ACTIONS, MOUSE_BUTTONS, cancelWeaponReload, cancelShotgunCycle}) {
     const noop = () => {};
     const sound = {stop: noop, play: noop};
     const AUDIO = Object.fromEntries(['arSpray','lmgAuto','smgAuto','laserBeam','minigunFire','minigunWindup','railgunCharge','sniperReload','bulletHit','brBurst'].map(id=>[id,sound]));
@@ -34,6 +34,7 @@ export function controlHarnessSource() {
     let recoilKick=0,recoilPitch=0,bobPhase=0,currentWave=1,zombiesRemaining=0,playerPoints=0,teamScoreBlue=0,teamScoreRed=0;
     const playerLoadout=[{id:'ar',type:'weapon'},{id:'pistol',type:'weapon'},{id:'grenade',type:'grenade'},{id:'medkit',type:'consumable'}];
     const ws={reloading:false,charging:false,chargeTimer:0,spinWarmup:0};
+    const playerWeaponState=[ws, {}, {}, {}];
     const currentSlot=()=>playerLoadout[player.slotIndex], currentSlotState=()=>ws;
     const switchSlot=index=>{player.slotIndex=index;};
     const reloadWeapon=()=>{counters.reload++; ws.reloading=true;};
