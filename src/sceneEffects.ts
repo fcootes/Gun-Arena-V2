@@ -6,7 +6,14 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import type { WorldMapId } from './types';
 import type { DeploymentPipeline } from './deployment';
-import { PreparationVisibility, waitForGpu, waitForPrograms, aimPreparationCamera } from './renderPreparation';
+import { PreparationVisibility, waitForGpu, waitForPrograms, aimPreparationCamera, createCombatPreparationScene, withPreparationPrimitive } from './renderPreparation';
+
+/** Adjacent transient-light counts share one shader state by adding at most
+ * three zero-intensity, non-shadowing lights. All real lights remain intact. */
+export function combatPointLightCounts(base: number, extra: number, step = 4): number[] {
+  const first = Math.ceil(base / step) * step, last = Math.ceil((base + extra) / step) * step;
+  return Array.from({ length: (last - first) / step + 1 }, (_, index) => first + index * step);
+}
 
 export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) {
   const composer = new EffectComposer(renderer);
@@ -18,8 +25,30 @@ export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.S
   const initialSize = renderer.getSize(new THREE.Vector2());
   let lastWidth = initialSize.x, lastHeight = initialSize.y, lastRatio = renderer.getPixelRatio();
   renderer.info.autoReset = false;
+  let lightStep = 1;
+  const padding = new THREE.Group(); padding.name = 'CombatLightPadding';
+  padding.visible = false;
+  for (let i = 0; i < 3; i++) {
+    const light = new THREE.PointLight(0xffffff, 0); light.position.set(10000, 10000, 10000);
+    padding.add(light);
+  }
+  scene.add(padding);
+  const pointLightCount = () => {
+    let count = 0;
+    scene.traverseVisible(object => {
+      if (object instanceof THREE.PointLight && object.parent !== padding && object.layers.test(camera.layers)) count++;
+    });
+    return count;
+  };
+  const updateLightPadding = () => {
+    const count = pointLightCount(), padded = Math.ceil(count / lightStep) * lightStep;
+    padding.visible = lightStep > 1;
+    padding.children.forEach((light, index) => { light.visible = index < padded - count; light.layers.mask = camera.layers.mask; });
+    return count;
+  };
   const render = (delta: number, map: WorldMapId) => {
     if (disposed) return;
+    if (lightStep > 1) updateLightPadding();
     bloom.strength = GRAPHICS.bloomStrength[map]; renderer.info.reset(); composer.render(delta);
   };
   return {
@@ -35,6 +64,9 @@ export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.S
     },
     render,
     async prepare(pipeline: DeploymentPipeline, map: WorldMapId, extraPointLights: number, excluded: readonly THREE.Object3D[] = []) {
+      lightStep = map === 'training' ? 1 : 4;
+      const basePointLights = updateLightPadding();
+      const lightCounts = combatPointLightCounts(basePointLights, extraPointLights, lightStep);
       const visibility = new PreparationVisibility(scene, camera, excluded);
       const originalTarget = renderer.getRenderTarget();
       const originalScissor = renderer.getScissor(new THREE.Vector4());
@@ -54,15 +86,19 @@ export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.S
       const cameraFov = camera instanceof THREE.PerspectiveCamera ? camera.fov : 0;
       const shadowAutoUpdate = renderer.shadowMap.autoUpdate;
       const litPrograms = new THREE.Group();
-      const representatives = new Map<WebGLProgram, Map<string, THREE.Object3D>>();
+      let combatScene: THREE.Scene | undefined;
+      type Representative = { object: THREE.Object3D; material: THREE.Material; start: number };
+      const representatives = new Map<WebGLProgram, Map<string, Representative>>();
+      const primitiveStarts = new Map<THREE.Object3D, number>();
       const callbacks = new Map<THREE.Object3D, THREE.Object3D['onAfterRender']>();
       const gl = renderer.getContext();
-      const submitBatch = (objects: readonly THREE.Object3D[]) => {
-        const hide = visibility.showBatch(objects);
+      const submitBatch = (objects: readonly THREE.Object3D[], drawScene = scene) => {
+        const hide = drawScene === scene ? visibility.showBatch(objects) : () => objects.forEach(object => { object.visible = false; });
+        if (drawScene !== scene) objects.forEach(object => { object.visible = true; });
         try {
           target.scissor.set(0, 0, 1, 1); target.scissorTest = true;
           renderer.setRenderTarget(target);
-          renderer.render(scene, camera);
+          renderer.render(drawScene, camera);
         } finally {
           hide();
           if (!gl.isContextLost()) renderer.setRenderTarget(originalTarget);
@@ -139,7 +175,8 @@ export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.S
                 material.polygonOffset, material.alphaToCoverage].join('/');
               let states = representatives.get(program);
               if (!states) { states = new Map(); representatives.set(program, states); }
-              if (!states.has(state)) states.set(state, object);
+              const group = args[5] as unknown as THREE.GeometryGroup | null;
+              if (!states.has(state)) states.set(state, { object, material, start: group?.start ?? (object as THREE.Mesh).geometry.drawRange.start });
             }
           };
         }
@@ -154,21 +191,26 @@ export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.S
         // unlit ShaderMaterial. Existing unlit materials reuse their program on
         // light changes, but a newly spawned actor gets a new key on first use.
         // Prepare every captured format, including muzzle/particle shaders.
-        const draws = [...new Set([...representatives.values()].flatMap(states => [...states.values()]))];
-        for (const object of draws) {
+        const draws = [...representatives.values()].flatMap(states => [...states.values()]);
+        for (const { object, material, start } of draws) {
           const clone = object.clone(false) as THREE.Mesh;
+          clone.material = material;
+          primitiveStarts.set(clone, start);
           clone.matrix.copy(object.matrixWorld); clone.matrixAutoUpdate = false;
           clone.visible = false; clone.frustumCulled = false; clone.castShadow = false;
           if (clone instanceof THREE.InstancedMesh) clone.count = 1;
           litPrograms.add(clone);
         }
         renderer.shadowMap.autoUpdate = false;
-        scene.add(litPrograms);
-        for (let count = 0; count <= extraPointLights; count++) {
-          await pipeline.stage(`Lighting programs ${count}/${extraPointLights}`, async () => {
-            if (count > 0) { const light = new THREE.PointLight(0xffffff, 0); scene.add(light); lights.push(light); }
+        combatScene = createCombatPreparationScene(scene, camera);
+        combatScene.add(litPrograms);
+        for (let variant = 0; variant < lightCounts.length; variant++) {
+          await pipeline.stage(`Lighting programs ${variant}/${lightCounts.length - 1}`, async () => {
+            if (variant > 0) for (let i = 0; i < lightStep; i++) {
+              const light = new THREE.PointLight(0xffffff, 0); combatScene!.add(light); lights.push(light);
+            }
             renderer.setRenderTarget(target);
-            try { renderer.compile(litPrograms, camera, scene); await waitForPrograms(renderer, pipeline.signal); }
+            try { renderer.compile(litPrograms, camera, combatScene); await waitForPrograms(renderer, pipeline.signal); }
             finally { if (!gl.isContextLost()) renderer.setRenderTarget(originalTarget); }
           });
           // Each representative still gets its own aimed, real draw. A fence
@@ -182,13 +224,15 @@ export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.S
             do {
               pipeline.signal.throwIfAborted();
               const object = litPrograms.children[offset++];
-              aimPreparationCamera(projectionCamera, object as THREE.Mesh);
-              target.viewport.set(0, 0, 1, 1);
-              submitBatch([object]);
+              withPreparationPrimitive(object as THREE.Mesh, primitiveStarts.get(object)!, () => {
+                aimPreparationCamera(projectionCamera, object as THREE.Mesh);
+                target.viewport.set(0, 0, 1, 1);
+                submitBatch([object], combatScene);
+              });
               submitted++;
             } while (offset < litPrograms.children.length && submitted < 8 && performance.now() < deadline);
             await waitForGpu(renderer, pipeline.signal);
-          });
+          }, `${Math.floor(100 * (variant * litPrograms.children.length + offset) / (lightCounts.length * litPrograms.children.length))}% complete`);
         }
         litPrograms.removeFromParent();
         camera.position.copy(cameraPosition); camera.quaternion.copy(cameraQuaternion);
@@ -209,6 +253,8 @@ export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.S
         litPrograms.removeFromParent();
         for (const object of litPrograms.children) if (object instanceof THREE.InstancedMesh) object.dispose();
         litPrograms.clear();
+        // Cloned lights borrow shadows; clearing drops CPU references only.
+        combatScene?.clear();
         restoreTargetRectangle(target.scissor, targetScissor); target.scissorTest = targetScissorTest;
         restoreTargetRectangle(target.viewport, targetViewport);
         camera.position.copy(cameraPosition); camera.quaternion.copy(cameraQuaternion);
@@ -229,6 +275,10 @@ export function createSceneEffects(renderer: THREE.WebGLRenderer, scene: THREE.S
         await waitForGpu(renderer, pipeline.signal);
       });
     },
-    dispose() { if (disposed) return; disposed = true; bloom.dispose(); output.dispose(); renderPass.dispose(); composer.dispose(); }
+    dispose() {
+      if (disposed) return; disposed = true;
+      padding.removeFromParent(); padding.children.forEach(light => (light as THREE.PointLight).dispose()); padding.clear();
+      bloom.dispose(); output.dispose(); renderPass.dispose(); composer.dispose();
+    }
   };
 }

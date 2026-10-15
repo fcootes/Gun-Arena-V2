@@ -2915,7 +2915,7 @@ export default function App() {
       setDeploymentError(null);
       gameStateRef.current = 'loading';
       setGameState('loading');
-      const pipeline = new DeploymentPipeline(stage => {
+      const pipeline = new DeploymentPipeline((stage, detail) => {
         const labels: Record<string, string> = {
           'Lobby teardown': 'Preparing deployment', 'Old world cleanup': 'Clearing the previous operation',
           'World construction (includes navigation)': 'Building the environment',
@@ -2928,7 +2928,8 @@ export default function App() {
           'Geometry, textures and shadows': 'Uploading environment and equipment', 'First complete render': 'Preparing the first frame',
           'Deployment ready': 'Ready to deploy',
         };
-        setDeploymentStage(labels[stage] ?? (stage.startsWith('Lighting programs') ? 'Preparing combat lighting' : stage.startsWith('Facility') || stage.startsWith('Offshore') || stage === 'World construction' ? 'Building the environment' : 'Preparing environment textures'));
+        const label = labels[stage] ?? (stage.startsWith('Lighting programs') ? 'Preparing combat lighting' : stage.startsWith('Facility') || stage.startsWith('Offshore') || stage === 'World construction' ? 'Building the environment' : 'Preparing environment textures');
+        setDeploymentStage(detail ? `${label} — ${detail}` : label);
       });
       pendingDeployment = pipeline;
       // Keep the cursor available for loading cancellation; capture it only when ready.

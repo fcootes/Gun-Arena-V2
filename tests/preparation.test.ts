@@ -1,13 +1,23 @@
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { aimPreparationCamera, PreparationVisibility, waitForGpu, waitForPrograms } from '../src/renderPreparation';
+import { aimPreparationCamera, PreparationVisibility, waitForGpu, waitForPrograms, createCombatPreparationScene, withPreparationPrimitive } from '../src/renderPreparation';
 import { buildBotVisuals, disposeBotVisuals, disposeBotTextureCache } from '../src/botBuilder';
 import { createViewmodelManager } from '../src/weapons';
 import { audioManager } from '../src/campaignAudio';
-import { createSceneEffects } from '../src/sceneEffects';
+import { createSceneEffects, combatPointLightCounts } from '../src/sceneEffects';
 import { DeploymentPipeline } from '../src/deployment';
 
 const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(85, 1, .05, 500);
+for (let base = 0; base <= 50; base++) for (let extra = 0; extra <= 32; extra++) {
+  const variants = combatPointLightCounts(base, extra);
+  for (let actual = base; actual <= base + extra; actual++) {
+    const padded = Math.ceil(actual / 4) * 4;
+    assert.ok(variants.includes(padded), 'Every real simultaneous-light count maps to a prepared shader state');
+    assert.ok(padded >= actual && padded - actual <= 3, 'No real light is removed and at most three dark slots are added');
+  }
+  assert.ok(variants.length <= Math.ceil(extra / 4) + 1);
+}
+assert.deepEqual(combatPointLightCounts(7, 2, 1), [7, 8, 9], 'Training keeps its existing shader count policy');
 const hidden = new THREE.Group(); hidden.visible = false; scene.add(hidden);
 const mesh = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial()); hidden.add(mesh);
 const muzzle = new THREE.PointLight(); mesh.add(muzzle);
@@ -29,6 +39,33 @@ for (const [object, visible, culled, layers] of states) {
 }
 console.log('PASS: hidden mission geometry, frozen light counts, excluded lobby and exact visibility/layer restoration');
 
+const lightingScene = new THREE.Scene(); lightingScene.fog = new THREE.FogExp2(0x123456, .01);
+lightingScene.environment = new THREE.Texture(); lightingScene.environmentIntensity = .7;
+lightingScene.environmentRotation.set(.1, .2, .3);
+const lightParent = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial());
+lightParent.position.set(4, 5, 6); lightingScene.add(lightParent);
+const shadowLight = new THREE.DirectionalLight(0xabcdef, 2); shadowLight.castShadow = true;
+shadowLight.position.set(1, 2, 3); lightParent.add(shadowLight);
+shadowLight.target.position.set(3, 2, 1); lightingScene.add(shadowLight.target);
+const hiddenLights = new THREE.Group(); hiddenLights.visible = false;
+hiddenLights.add(new THREE.PointLight()); lightingScene.add(hiddenLights);
+const otherLayer = new THREE.PointLight(); otherLayer.layers.set(3); lightingScene.add(otherLayer);
+lightingScene.updateMatrixWorld(true);
+const compact = createCombatPreparationScene(lightingScene, camera);
+compact.updateMatrixWorld(true);
+const copiedLight = compact.children.find(object => object instanceof THREE.DirectionalLight) as THREE.DirectionalLight;
+assert.ok(copiedLight && copiedLight !== shadowLight);
+assert.deepEqual(copiedLight.matrixWorld, shadowLight.matrixWorld);
+assert.deepEqual(copiedLight.target.matrixWorld, shadowLight.target.matrixWorld);
+assert.equal(copiedLight.shadow, shadowLight.shadow, 'Reuse prepared shadow maps without acquiring their ownership');
+assert.equal(copiedLight.castShadow, true); assert.equal(copiedLight.intensity, 2);
+assert.equal(compact.fog, lightingScene.fog); assert.equal(compact.environment, lightingScene.environment);
+assert.equal(compact.environmentIntensity, .7); assert.deepEqual(compact.environmentRotation, lightingScene.environmentRotation);
+assert.equal(compact.children.length, 2, 'Only the effective light and its target enter combat draws; no world geometry, hidden lights or other layers');
+compact.clear(); assert.equal(shadowLight.parent, lightParent, 'Gameplay light hierarchy is untouched');
+lightParent.geometry.dispose(); (lightParent.material as THREE.Material).dispose(); lightingScene.environment.dispose();
+console.log('PASS: compact combat scene preserves transformed lighting, shadows and environment without traversing world geometry');
+
 const instance = new THREE.InstancedMesh(new THREE.BoxGeometry(2, 3, 4), new THREE.MeshStandardMaterial(), 1);
 instance.setMatrixAt(0, new THREE.Matrix4().makeTranslation(20, 10, -30)); scene.add(instance); scene.updateMatrixWorld(true);
 aimPreparationCamera(camera, instance);
@@ -37,6 +74,14 @@ for (let i = 0; i < 3; i++) center.add(a.fromBufferAttribute(instance.geometry.a
 center.multiplyScalar(1 / 3).project(camera);
 assert.ok(Math.abs(center.x) < 1e-6 && Math.abs(center.y) < 1e-6 && center.z > -1 && center.z < 1, 'The real instance triangle covers the preparation pixel');
 console.log('PASS: representative draw camera covers actual instance geometry');
+const originalRange = { ...instance.geometry.drawRange };
+withPreparationPrimitive(instance, 6, () => {
+  assert.deepEqual(instance.geometry.drawRange, { start: 6, count: 3 });
+  aimPreparationCamera(camera, instance);
+});
+assert.deepEqual(instance.geometry.drawRange, originalRange);
+assert.throws(() => withPreparationPrimitive(instance, 3, () => { throw new Error('driver failed'); }), /driver failed/);
+assert.deepEqual(instance.geometry.drawRange, originalRange, 'A thrown submission cannot leave gameplay geometry truncated');
 
 (globalThis as any).document = { hidden: true, createElement: () => ({ getContext: () => new Proxy({}, { get: (_, key) => String(key).includes('Gradient') ? () => ({ addColorStop() {} }) : () => {} }) }) };
 let polls = 0, deleted = 0, flushed = 0;
@@ -51,12 +96,25 @@ assert.equal(deleted, 2, 'Canceled GPU wait deletes its sync exactly once');
 gl.clientWaitSync = () => 4;
 await assert.rejects(waitForGpu({ getContext: () => gl } as any, new AbortController().signal), /lost its WebGL context/);
 assert.equal(deleted, 3);
+gl.clientWaitSync = () => 0;
+await assert.rejects(waitForGpu({ getContext: () => gl } as any, new AbortController().signal, 0), /GPU fence preparation timed out/);
+assert.equal(deleted, 4, 'Expired fence is still released');
+await assert.rejects(waitForPrograms({ info: { programs: [{ program: 'never-completes' }] }, getContext: () => ({
+  getExtension: () => ({ COMPLETION_STATUS_KHR: 1 }), isContextLost: () => false, getProgramParameter: () => false,
+}) } as any, new AbortController().signal, 0), /shader preparation timed out/);
 let shaderPolls = 0;
 await waitForPrograms({ info: { programs: [{ program: 'front' }, { program: 'back' }] }, getContext: () => ({
   getExtension: () => ({ COMPLETION_STATUS_KHR: 1 }), isContextLost: () => false,
   getProgramParameter: (program: string) => program === 'front' || ++shaderPolls >= 2,
 }) } as any, new AbortController().signal);
 assert.equal(shaderPolls, 2, 'Wait includes the back-side program that compileAsync does not track');
+let requestedFrames = 0;
+(globalThis as any).document.hidden = false;
+(globalThis as any).requestAnimationFrame = () => { requestedFrames++; return 1; };
+polls = 0; gl.clientWaitSync = () => ++polls < 3 ? 0 : 3;
+await waitForGpu({ getContext: () => gl } as any, new AbortController().signal);
+assert.equal(requestedFrames, 0, 'Completion polling finishes even if the compositor never delivers RAF');
+(globalThis as any).document.hidden = true;
 console.log('PASS: real completion polling, cancellation/context failure cleanup and all shader-program completion');
 
 // Exercise the real preparation orchestration: Three keys new unlit materials
@@ -94,21 +152,23 @@ const fakeRenderer = {
 const originalCamera = preparationCamera.matrixWorld.clone(), originalProjection = preparationCamera.projectionMatrix.clone();
 const effects = createSceneEffects(fakeRenderer as any, preparationScene, preparationCamera);
 await effects.prepare(new DeploymentPipeline(() => {}), 'area51', 2);
-assert.deepEqual([...new Set(submissions)].sort(), [0, 1, 2], 'Unlit mission particle shaders are really drawn at every possible light count');
+assert.deepEqual([...new Set(submissions)].sort(), [0, 4], 'Unlit mission particle shaders are drawn for every reachable normalized combat light state');
 assert.equal(particles.visible, false); assert.equal(particles.frustumCulled, true);
 assert.deepEqual(preparationCamera.matrixWorld, originalCamera); assert.deepEqual(preparationCamera.projectionMatrix, originalProjection);
 assert.equal(renderTarget, null); assert.equal(scissorTest, false); assert.deepEqual(scissor.toArray(), [0, 0, 320, 180]);
-assert.equal(fakeRenderer.shadowMap.autoUpdate, true); assert.equal(preparationScene.children.length, 1);
+assert.equal(fakeRenderer.shadowMap.autoUpdate, true); assert.equal(preparationScene.children.length, 2);
 let resized = false;
 await effects.prepare(new DeploymentPipeline(name => {
   if (!resized && name === 'Geometry, textures and shadows') { resized = true; effects.resize(640, 360); }
 }), 'area51', 2);
 assert.deepEqual(completeViewport, [0, 0, 640, 360], 'A resize during uploads retains the new composer viewport in the final frame');
+let secondLightState = false;
 const canceledPreparation = new DeploymentPipeline(name => {
-  if (name === 'Combat lighting draws' && preparationScene.children.some(object => object instanceof THREE.PointLight)) canceledPreparation.cancel();
+  if (name === 'Lighting programs 1/1') secondLightState = true;
+  if (name === 'Combat lighting draws' && secondLightState) canceledPreparation.cancel();
 });
 await assert.rejects(effects.prepare(canceledPreparation, 'area51', 2), { name: 'AbortError' });
-assert.equal(preparationScene.children.length, 1, 'Canceled preparation removes temporary lights and representative clones');
+assert.equal(preparationScene.children.length, 2, 'Canceled preparation retains only the original object and owned padding pool');
 assert.equal(particles.visible, false); assert.equal(renderTarget, null); assert.equal(scissorTest, false);
 assert.deepEqual(preparationCamera.matrixWorld, originalCamera); assert.deepEqual(preparationCamera.projectionMatrix, originalProjection);
 assert.equal(fakeRenderer.shadowMap.autoUpdate, true);
@@ -116,20 +176,40 @@ assert.equal(fakeRenderer.shadowMap.autoUpdate, true);
 const batchMaterials = Array.from({ length: 17 }, () => new THREE.MeshBasicMaterial());
 const batchMeshes = batchMaterials.map(material => new THREE.Mesh(new THREE.BoxGeometry(), material));
 preparationScene.add(...batchMeshes);
+const groupedGeometry = new THREE.BoxGeometry(); groupedGeometry.clearGroups();
+groupedGeometry.addGroup(0, 3, 0); groupedGeometry.addGroup(3, 3, 1);
+const groupedMaterials = [new THREE.MeshBasicMaterial(), new THREE.MeshBasicMaterial()];
+const groupedMesh = new THREE.Mesh(groupedGeometry, groupedMaterials); preparationScene.add(groupedMesh);
 const batchSubmissions = new Map(batchMaterials.map(material => [material, new Set<number>()]));
+groupedMaterials.forEach(material => batchSubmissions.set(material, new Set()));
+const groupedStarts = new Map(groupedMaterials.map(material => [material, new Set<number>()]));
 const originalRender = fakeRenderer.render;
 let currentProgram: THREE.Material = unlit, fences = 0, batches = 0, inBatch = false, drawsInBatch = 0;
 const batchSizes: number[] = [];
+let combatSceneNodes = 0;
 completeGl.getParameter = () => currentProgram as typeof unlit;
 completeGl.fenceSync = () => { fences++; return {}; };
 fakeRenderer.render = (s, c) => {
   if (inBatch) drawsInBatch++;
+  if (inBatch) {
+    assert.equal((s as THREE.Scene).name, 'CombatPreparation');
+    let nodes = 0; s.traverse(() => nodes++); combatSceneNodes = Math.max(combatSceneNodes, nodes);
+    assert.ok(!s.children.includes(particles), 'Combat submits representatives rather than live world objects');
+  }
   let lights = 0; s.traverseVisible(object => { if (object instanceof THREE.PointLight) lights++; });
   s.traverseVisible((object: any) => {
     if (!object.geometry || !object.material) return;
-    currentProgram = object.material;
-    batchSubmissions.get(object.material)?.add(lights);
-    object.onAfterRender(fakeRenderer, s, c, object.geometry, object.material, null);
+    const groups = Array.isArray(object.material) ? object.geometry.groups : [null];
+    for (const group of groups) {
+      const material = group ? object.material[group.materialIndex] : object.material;
+      currentProgram = material;
+      batchSubmissions.get(material)?.add(lights);
+      if (inBatch) {
+        assert.ok(object.geometry.drawRange.count <= 3, 'Specialization draws at most one primitive from the already-uploaded buffer');
+        groupedStarts.get(material)?.add(object.geometry.drawRange.start);
+      }
+      object.onAfterRender(fakeRenderer, s, c, object.geometry, material, group);
+    }
   });
 };
 await effects.prepare(new DeploymentPipeline(name => {
@@ -137,9 +217,14 @@ await effects.prepare(new DeploymentPipeline(name => {
   inBatch = name === 'Combat lighting draws'; drawsInBatch = 0;
   if (inBatch) batches++;
 }), 'area51', 2);
-for (const counts of batchSubmissions.values()) assert.deepEqual([...counts].sort(), [0, 1, 2]);
+for (const counts of batchSubmissions.values()) assert.deepEqual([...counts].sort(), [0, 4]);
 assert.ok(batchSizes.every(size => size > 0 && size <= 8), 'Each paint batch is capped at eight real submissions');
 assert.ok(batches < 17 * 3 && fences < 17 * 3, 'Formats share stages and GPU fences without skipping variants');
+assert.ok(combatSceneNodes <= 26, 'Combat scene contains only representatives and the prepared light states');
+assert.deepEqual([...groupedStarts.get(groupedMaterials[0])!], [0]);
+assert.deepEqual([...groupedStarts.get(groupedMaterials[1])!], [3], 'Each material group gets its own correctly aimed primitive');
+assert.deepEqual(groupedGeometry.drawRange, { start: 0, count: Infinity });
+groupedMesh.removeFromParent(); groupedGeometry.dispose(); groupedMaterials.forEach(material => material.dispose());
 let canceledDraws = 0;
 let combatDraw = false;
 const duringDraw = new DeploymentPipeline(name => { combatDraw = name === 'Combat lighting draws'; });
@@ -149,7 +234,7 @@ fakeRenderer.render = (s, c) => {
 };
 await assert.rejects(effects.prepare(duringDraw, 'area51', 2), { name: 'AbortError' });
 assert.equal(canceledDraws, 1);
-assert.equal(preparationScene.children.length, 18); assert.equal(renderTarget, null); assert.equal(scissorTest, false);
+assert.equal(preparationScene.children.length, 19); assert.equal(renderTarget, null); assert.equal(scissorTest, false);
 assert.deepEqual(preparationCamera.matrixWorld, originalCamera); assert.equal(fakeRenderer.shadowMap.autoUpdate, true);
 fakeRenderer.render = originalRender;
 batchMeshes.forEach(mesh => { mesh.removeFromParent(); mesh.geometry.dispose(); }); batchMaterials.forEach(material => material.dispose());

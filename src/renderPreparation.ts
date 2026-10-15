@@ -1,29 +1,51 @@
 import * as THREE from 'three';
-import { yieldForPaint } from './deployment';
+
+const COMPLETION_TIMEOUT_MS = 30_000;
+function checkCompletionDeadline(start: number, kind: string, timeoutMs: number) {
+  if (performance.now() - start >= timeoutMs)
+    throw new Error(`Deployment ${kind} preparation timed out after ${timeoutMs} ms; WebGL completion made no progress`);
+}
+
+/** A GPU status poll must not wait for compositor vsync. On a busy renderer,
+ * RAF delivery can be throttled by the very commands whose fence we are polling.
+ * Batches still yield for paint through DeploymentPipeline; this timer only
+ * schedules nonblocking completion queries and remains immediately cancelable.
+ */
+function yieldForCompletion(signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    signal.throwIfAborted();
+    const cancel = () => { clearTimeout(timer); reject(signal.reason); };
+    const timer = setTimeout(() => { signal.removeEventListener('abort', cancel); resolve(); }, 4);
+    signal.addEventListener('abort', cancel, { once: true });
+  });
+}
 
 /** Three 0.185 compileAsync waits each material's current program. Transparent
  * DoubleSide materials have another program; wait for both via the GL extension.
  */
-export async function waitForPrograms(renderer: THREE.WebGLRenderer, signal: AbortSignal): Promise<void> {
+export async function waitForPrograms(renderer: THREE.WebGLRenderer, signal: AbortSignal, timeoutMs = COMPLETION_TIMEOUT_MS): Promise<void> {
   signal.throwIfAborted();
   const gl = renderer.getContext();
   const extension = gl.getExtension('KHR_parallel_shader_compile');
   if (!extension) return;
+  const start = performance.now();
   for (;;) {
     signal.throwIfAborted();
     if (gl.isContextLost()) throw new Error('Deployment shader preparation lost its WebGL context');
     if ((renderer.info.programs ?? []).every(program => gl.getProgramParameter(program.program as WebGLProgram, extension.COMPLETION_STATUS_KHR))) return;
-    await yieldForPaint(signal);
+    checkCompletionDeadline(start, 'shader', timeoutMs);
+    await yieldForCompletion(signal);
   }
 }
 
 /** Wait for submitted uploads/draws without a blocking finish or a guessed delay. */
-export async function waitForGpu(renderer: THREE.WebGLRenderer, signal: AbortSignal): Promise<void> {
+export async function waitForGpu(renderer: THREE.WebGLRenderer, signal: AbortSignal, timeoutMs = COMPLETION_TIMEOUT_MS): Promise<void> {
   signal.throwIfAborted();
   const gl = renderer.getContext();
   if (!('fenceSync' in gl)) throw new Error('Deployment preparation requires WebGL 2');
   const fence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
   if (!fence) throw new Error('Unable to fence deployment rendering');
+  const start = performance.now();
   try {
     gl.flush();
     for (;;) {
@@ -31,9 +53,52 @@ export async function waitForGpu(renderer: THREE.WebGLRenderer, signal: AbortSig
       const status = gl.clientWaitSync(fence, 0, 0);
       if (status === gl.ALREADY_SIGNALED || status === gl.CONDITION_SATISFIED) return;
       if (status === gl.WAIT_FAILED || gl.isContextLost()) throw new Error('Deployment rendering lost its WebGL context');
-      await yieldForPaint(signal);
+      checkCompletionDeadline(start, 'GPU fence', timeoutMs);
+      await yieldForCompletion(signal);
     }
   } finally { gl.deleteSync(fence); }
+}
+
+/** Combat specialization needs the gameplay lighting, not another traversal of
+ * every world object for every representative/light-count pair. Borrow the live
+ * shadow maps without moving lights or owning/disposal of their GPU resources.
+ */
+export function createCombatPreparationScene(scene: THREE.Scene, camera: THREE.Camera): THREE.Scene {
+  const combat = new THREE.Scene();
+  combat.name = 'CombatPreparation';
+  combat.fog = scene.fog;
+  combat.environment = scene.environment;
+  combat.environmentIntensity = scene.environmentIntensity;
+  combat.environmentRotation.copy(scene.environmentRotation);
+  combat.overrideMaterial = scene.overrideMaterial;
+  scene.traverseVisible(object => {
+    if (!(object instanceof THREE.Light) || !object.layers.test(camera.layers)) return;
+    const light = object.clone(false);
+    light.matrix.copy(object.matrixWorld); light.matrixAutoUpdate = false;
+    const source = object as THREE.DirectionalLight | THREE.SpotLight;
+    const shadowLight = light as typeof source;
+    if (source.shadow) shadowLight.shadow = source.shadow;
+    if (source.target) {
+      const target = new THREE.Object3D();
+      target.matrix.copy(source.target.matrixWorld); target.matrixAutoUpdate = false;
+      shadowLight.target = target; combat.add(target);
+    }
+    combat.add(light);
+  });
+  return combat;
+}
+
+/** Uploads already transferred the complete original buffers. A specialization
+ * draw needs one real primitive, not every vertex in its representative mesh.
+ * Restore the shared range synchronously, before yielding or another render.
+ */
+export function withPreparationPrimitive<T>(object: THREE.Mesh, start: number, action: () => T): T {
+  const geometry = object.geometry;
+  const { start: originalStart, count: originalCount } = geometry.drawRange;
+  const count = object instanceof THREE.Points ? 1 : object instanceof THREE.Line ? 2 : 3;
+  geometry.setDrawRange(start, count);
+  try { return action(); }
+  finally { geometry.setDrawRange(originalStart, originalCount); }
 }
 
 /** Reveal draw resources without accidentally enabling hidden lobby/muzzle lights. */
@@ -91,7 +156,11 @@ export function aimPreparationCamera(camera: THREE.PerspectiveCamera | THREE.Ort
   const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
   const normal = new THREE.Vector3(), edge = new THREE.Vector3();
   const count = geometry.index?.count ?? positions.count;
-  for (let i = geometry.drawRange.start; i + 2 < Math.min(count, geometry.drawRange.start + 96); i += 3) {
+  if (mesh instanceof THREE.Points || mesh instanceof THREE.Line) {
+    a.fromBufferAttribute(positions, geometry.index?.getX(geometry.drawRange.start) ?? geometry.drawRange.start).applyMatrix4(matrix);
+    b.copy(a); c.copy(a);
+  }
+  for (let i = geometry.drawRange.start; i + 2 < Math.min(count, geometry.drawRange.start + geometry.drawRange.count, geometry.drawRange.start + 96); i += 3) {
     a.fromBufferAttribute(positions, geometry.index?.getX(i) ?? i).applyMatrix4(matrix);
     b.fromBufferAttribute(positions, geometry.index?.getX(i + 1) ?? i + 1).applyMatrix4(matrix);
     c.fromBufferAttribute(positions, geometry.index?.getX(i + 2) ?? i + 2).applyMatrix4(matrix);
