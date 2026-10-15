@@ -4,7 +4,7 @@ import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import assert from 'node:assert/strict';
 import {captureAcceptanceSequence,captureLiveArCycle} from './viewmodel-acceptance-sequence.mjs';
-import {spawnSync} from 'node:child_process';
+import {exportLiveCycle} from './viewmodel-video-clip.mjs';
 
 const output = resolve(process.env.VIEWMODEL_OUTPUT ?? 'performance-results/viewmodel');
 mkdirSync(output, { recursive: true });
@@ -283,8 +283,7 @@ try {
 
 if(recordVideo && liveRecording) {
   const path=await video.path();
-  const duration=liveRecording.endSeconds-liveRecording.startSeconds+2;
-  const result=spawnSync('ffmpeg',['-y','-ss',String(Math.max(0,liveRecording.startSeconds-1)),'-i',path,'-t',String(duration),'-an','-c:v','libvpx-vp9','-b:v','0','-crf','34',resolve(output,'live-ar-fire-empty-reload.webm')],{stdio:'pipe'});
-  if(result.status!==0)throw new Error('Could not export uninterrupted browser clip: '+result.stderr.toString().slice(-1000));
+  const clip=exportLiveCycle(path,output);
+  writeFileSync(resolve(output,'video-validation.json'),JSON.stringify(clip,null,2)+'\n');
   console.log('PASS: exported continuous live AR last-shot and empty reload (software renderer; no recorded audio)');
 }

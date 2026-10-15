@@ -1,5 +1,9 @@
 # PR #15 visual acceptance repair
 
+> Historical repair checkpoint at `4e3bab4`. The later
+> [final grip/sprint/AR acceptance repair](final-viewmodel-acceptance.md) supersedes
+> its underhand basis, sprint profiles and generic AR chamber reach.
+
 Continues `feat/procedural-first-person-hands-20261015` from `2bbc982` (the original
 PR #15 checkpoint). Main remains `794fdfd`; controls #13 and preparation #14 are
 preserved. Original commits, screenshots and validation remain in the repository.
