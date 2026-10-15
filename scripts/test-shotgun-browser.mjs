@@ -1,12 +1,12 @@
 import {chromium} from 'playwright';
 import {createServer} from 'vite';
-import {mkdirSync, writeFileSync} from 'node:fs';
+import {mkdirSync, writeFileSync, rmSync} from 'node:fs';
 import {resolve} from 'node:path';
 import assert from 'node:assert/strict';
 
 const baseline = process.env.SHOTGUN_BASELINE === '1';
 const output = resolve(process.env.SHOTGUN_OUTPUT ?? 'performance-results/shotgun-after');
-mkdirSync(output,{recursive:true});
+mkdirSync(output,{recursive:true});rmSync(resolve(output,'results.json'),{force:true});
 const port = Number(process.env.SHOTGUN_PORT ?? 3103);
 const server = await createServer({root:process.env.SHOTGUN_ROOT,logLevel:'error',server:{host:'127.0.0.1',port,strictPort:true},plugins:[{
   name:'shotgun-acceptance-probe', enforce:'pre', transform(code,id) {
@@ -42,11 +42,12 @@ ${needle}`);
     return code;
   }
 }]});
-let browser,video;
+let browser,video,live={frames:[],audio:[]};
 const errors=[],screens=[],checks=[];
 const deadline=setTimeout(()=>{console.error('FAIL: shotgun acceptance exceeded 600 seconds');void browser?.close();void server.close();process.exitCode=1;},600000);
 try {
-  await server.listen();browser=await chromium.launch({headless:true,executablePath:process.env.BENCHMARK_BROWSER??'/usr/bin/chromium',args:['--no-sandbox','--single-process','--no-zygote','--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required']});
+  const launch=()=>chromium.launch({headless:true,executablePath:process.env.BENCHMARK_BROWSER??'/usr/bin/chromium',args:['--no-sandbox','--single-process','--no-zygote','--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required']});
+  await server.listen();browser=await launch();
   async function boot(record=false) {
   const page=await browser.newPage({viewport:{width:1280,height:720},...(record?{recordVideo:{dir:resolve(output,'raw-video'),size:{width:1280,height:720}}}:{})});if(record)video=page.video();page.setDefaultTimeout(60000);
   page.on('pageerror',e=>errors.push(e.message));
@@ -81,7 +82,7 @@ try {
     // Record a fresh fixed-viewport page. Changing the viewport during a
     // screencast can crop frames in Chromium. Lower only this test's backing
     // resolution for software throughput; the App clock is untouched.
-    await page.close();page=await boot(true);
+    await browser.close();browser=await launch();page=await boot(true);
     await page.evaluate(()=>{const g=window.__shotgunProbe;g.renderer.setPixelRatio(.65);g.renderer.setSize(1280,720);g.camera.aspect=16/9;g.camera.fov=74;g.camera.updateProjectionMatrix();g.equip('shotgun');g.hold=false;g.record=true;window.__shotgunAudio=[];});
     await page.waitForTimeout(200);
     await page.screenshot({path:resolve(output,'live-start.png')});
@@ -107,6 +108,12 @@ try {
     await page.keyboard.press('r');await page.waitForFunction(()=>!window.__shotgunProbe.ws.reloading);
     await page.screenshot({path:resolve(output,'live-end.png')});
     await page.evaluate(()=>window.__shotgunProbe.record=false);
+    live=await page.evaluate(()=>({frames:window.__shotgunProbe.frames,audio:window.__shotgunAudio}));
+    const reports=live.audio.filter(e=>e.src.includes('fire_single')),pumps=live.audio.filter(e=>e.src.includes('shotgun_pump')),seats=live.audio.filter(e=>e.src.includes('shell_insert'));
+    assert.equal(reports.length,9);assert.equal(pumps.length,10);assert.equal(seats.length,9);
+    for(const report of reports){const pump=pumps.find(p=>p.at>report.at);assert.ok(pump&&pump.at-report.at>=120,'Live pump cue follows the report/recovery, never the shot frame');}
+    assert.deepEqual(await page.evaluate(()=>{const s=window.__shotgunProbe.ws;return[s.ammo,s.reserve];}),[6,27]);
+    checks.push('Live event log: 9 reports, 10 pumps (one interrupted empty chamber), 9 committed seating cues; final ammo 6/27');
     checks.push('Continuous actual input: two shots, partial reload, six dry shots, empty shell reload, held-fire interruption and reload finish; conserved ammo');
     console.log('PASS: live shotgun input/reload/interrupt recording');
     // Lifecycle checks outside the continuous acceptance interval.
@@ -128,7 +135,6 @@ try {
     await page.keyboard.press('p');await page.locator('#btn-to-lobby-pause').click();await page.getByRole('button',{name:'DEPLOY OPERATION',exact:true}).waitFor();
     checks.push('Actual weapon switch during pump; chamber-only return, pause/resume, repeated R, death/replay/lobby');
   }
-  const live=await page.evaluate(()=>({frames:window.__shotgunProbe?.frames??[],audio:window.__shotgunAudio??[]}));
   assert.deepEqual(errors,[]);
   writeFileSync(resolve(output,'results.json'),JSON.stringify({completedAt:new Date().toISOString(),baseline,codeCommit:process.env.SHOTGUN_COMMIT,softwareRenderer:'Chromium SwiftShader',screens,checks,errors,...live},null,2)+'\n');
 } finally {clearTimeout(deadline);await browser?.close();await server.close();}
