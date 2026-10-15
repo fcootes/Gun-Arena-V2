@@ -9,8 +9,9 @@ import { WorldResources } from './worldResources';
 import { Area51ExtractionGameLoop, AREA51_MAX_ARMED_ENCOUNTERS } from './area51Campaign';
 import { audioManager } from './campaignAudio';
 import { PostDeathMenu } from './PostDeathMenu';
+import { beginShotgunCycle, cancelShotgunCycle } from './shotgunMechanics';
 import { beginWeaponReload, advanceWeaponReload, cancelWeaponReload, interruptShellReload } from './weaponReload';
-import { prepareWeaponAudio, releaseWeaponAudio, playWeaponReloadAudio, playShotgunReloadPhase, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } from './weaponAudio';
+import { prepareWeaponAudio, releaseWeaponAudio, playWeaponReloadAudio, playShotgunMechanicalEvent, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } from './weaponAudio';
 import './ModePosters.css';
 import { createWeaponAssembly, disposeWeaponObject } from './weaponModels';
 import { useEffect, useRef, useState } from 'react';
@@ -1273,6 +1274,7 @@ export default function App() {
         player.health = 0;
         player.alive = false;
         stopWeaponAudio();
+        playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } });
 
         if (matchConfig.mode === 'extraction') {
           pushKillFeed('MISSION FAILED: OPERATOR KILLED');
@@ -2242,8 +2244,6 @@ export default function App() {
       const ws = currentSlotState();
       if (interruptShellReload(w, ws)) {
         stopWeaponReloadAudio();
-        AUDIO.shotgunPump.stop();
-        if (ws.pendingReloadShot) AUDIO.shotgunPump.play(1, true);
       }
       if (ws.reloading || (ws.boltCycleT ?? 0) > 0) return;
       if (ws.needsChamber) { reloadWeapon(); return; }
@@ -2307,10 +2307,8 @@ export default function App() {
         AUDIO.sniperBolt.play(1.0, true);
 
       } else if (w.id === 'shotgun') {
-        vmManager.addRecoil(0.075, 0.095);
-        vmManager.triggerShotgunPump();
+        beginShotgunCycle(ws);
         AUDIO.shotgunShot.play(1.0, true);
-        AUDIO.shotgunPump.play(1.0, true);
       } else {
         vmManager.addRecoil(0.038, 0.045);
         if (player.continuousShots <= 1) AUDIO.arSingle.play(1.0, true);
@@ -2586,6 +2584,7 @@ export default function App() {
         const oldWs = playerWeaponState[player.slotIndex];
         if (oldWs) {
           cancelWeaponReload(oldWs);
+          if (playerLoadout[player.slotIndex]?.id === 'shotgun') cancelShotgunCycle(oldWs);
           oldWs.charging = false;
           oldWs.chargeTimer = 0;
           oldWs.spinWarmup = 0;
@@ -3020,6 +3019,7 @@ export default function App() {
 
     function stopMatchInput() {
       clearGameplayInput();
+      playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } });
       player.vel.set(0, 0, 0);
       for (const sound of Object.values(AUDIO)) sound.stop();
       stopWeaponAudio(); updateRailgunWeaponAudio(false, 0);
@@ -3209,7 +3209,7 @@ export default function App() {
             }
           }
           const wasReloading = ws.reloading;
-          advanceWeaponReload(w, ws, dt, player.slotIndex === i && w.id === 'shotgun' ? playShotgunReloadPhase : undefined);
+          advanceWeaponReload(w, ws, dt, undefined, player.slotIndex === i && w.id === 'shotgun' ? playShotgunMechanicalEvent : undefined);
           if (player.slotIndex === i && w.id === 'laser') updatePlasmaReloadAudio(ws);
           if (wasReloading && !ws.reloading && player.slotIndex === i) stopWeaponReloadAudio();
         });
@@ -3492,7 +3492,7 @@ export default function App() {
             if(supply){
               extPromptResult={interactionPrompt:supply.kind==='ammo'?'[E] REFILL LOADOUT AMMO':`[E] EQUIP ${WEAPONS[supply.weaponIndex!].name}`,isPromptObjective:false};
               if(keys.KeyE){keys.KeyE=false;
-                if(supply.kind==='ammo'){playerLoadout.forEach((w,i)=>{if(w.type==='weapon'){cancelWeaponReload(playerWeaponState[i]);if(i===player.slotIndex)stopWeaponAudio();playerWeaponState[i].ammo=w.mag;playerWeaponState[i].reserve=w.reserve;playerWeaponState[i].needsChamber=false;playerWeaponState[i].pendingReloadShot=false;playerWeaponState[i].boltCycleT=0;}});pushKillFeed('FIELD AMMO REFILLED');}
+                if(supply.kind==='ammo'){playerLoadout.forEach((w,i)=>{if(w.type==='weapon'){cancelWeaponReload(playerWeaponState[i]);cancelShotgunCycle(playerWeaponState[i]);if(i===player.slotIndex)stopWeaponAudio();playerWeaponState[i].ammo=w.mag;playerWeaponState[i].reserve=w.reserve;playerWeaponState[i].needsChamber=false;playerWeaponState[i].pendingReloadShot=false;playerWeaponState[i].boltCycleT=0;}});pushKillFeed('FIELD AMMO REFILLED');}
                 else{stopWeaponAudio();cancelWeaponReload(playerWeaponState[0]);const w=WEAPONS[supply.weaponIndex!];playerLoadout[0]=w;playerWeaponState[0]={ammo:w.mag,reserve:w.reserve};switchSlot(0);pushKillFeed(`FIELD ARMORY: ${w.name}`);}
               }
             }

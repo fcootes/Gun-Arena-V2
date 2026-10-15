@@ -4,6 +4,7 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import { createWeaponAssembly, orientHeldWeapon, disposeWeaponObject, type WeaponAssembly, type WeaponModelId } from './weaponModels';
 import { createFirstPersonHands } from './viewmodelHands';
 import { VIEWMODEL_GRIPS, arChargingStroke } from './viewmodelGrips';
+import { SHOTGUN, shotgunEase, shotgunPumpStroke, shotgunShellPose } from './shotgunMechanics';
 import type { FactionType } from './lobbyAvatar';
 import {
   createWeaponMuzzleEffect,
@@ -284,7 +285,6 @@ export interface ViewmodelManager {
     isPlaying: boolean,
   ) => void;
   triggerPistolSlideFire: () => void;
-  triggerShotgunPump: () => void;
   triggerSmgBoltFire: () => void;
   setRailgunChargeProgress: (progress: number) => void;
   setMinigunSpin: (deltaAngle: number, isVenting: boolean) => void;
@@ -319,13 +319,13 @@ export function createViewmodelManager(): ViewmodelManager {
     time = 0,
     bob = 0;
   let slideTimer = 0,
-    pumpTimer = 0,
     boltTimer = 0,
     charge = 0,
     spin = 0,
     venting = false,
     radioTimer = 0,
     radioHold = false;
+  const shellPose = { x: 0, y: 0, z: 0, angle: 0 };
   const reloadRotation = new THREE.Quaternion(), reloadEuler = new THREE.Euler(), reloadPosition = new THREE.Vector3();
   const hands = createFirstPersonHands(); hands.root.visible = false; root.add(hands.root);
   const viewPosition = new THREE.Vector3(), targetPosition = new THREE.Vector3();
@@ -461,7 +461,6 @@ export function createViewmodelManager(): ViewmodelManager {
     time += dt;
     bob += dt * (sprinting ? 14 : 9.5);
     slideTimer = Math.max(0, slideTimer - dt);
-    pumpTimer = Math.max(0, pumpTimer - dt);
     boltTimer = Math.max(0, boltTimer - dt);
     radioTimer = Math.max(0, radioTimer - dt);
     recoil = Math.max(0, recoil - dt * 0.55);
@@ -539,8 +538,8 @@ export function createViewmodelManager(): ViewmodelManager {
       const phase = sequence.phases[sequence.index];
       const p = THREE.MathUtils.smoothstep(sequence.elapsed / phase.duration, 0, 1);
       const progress = 1 - (ws.reloadT ?? 0) / (ws.totalReloadT || 1);
-      const lift = Math.min(1, progress * 7, (1 - progress) * 7);
-      reloadRotation.setFromEuler(reloadEuler.set(.14, -.18, -.38));
+      const lift = w.id === 'shotgun' ? phase.phase === 'open' ? p : phase.phase === 'close' ? 1 - p : 1 : Math.min(1, progress * 7, (1 - progress) * 7);
+      reloadRotation.setFromEuler(w.id === 'shotgun' ? reloadEuler.set(.08, -.12, -.50) : reloadEuler.set(.14, -.18, -.38));
       assembly.root.quaternion.slerp(reloadRotation, lift);
       reloadPosition.copy(assembly.root.position); reloadPosition.x -= .02; reloadPosition.y += .05; reloadPosition.z += .025;
       assembly.root.position.lerp(reloadPosition, lift);
@@ -555,13 +554,21 @@ export function createViewmodelManager(): ViewmodelManager {
       const opened = phase.phase === 'open' ? p : phase.phase === 'close' ? 1 - p : 1;
       if (parts.feedTray) { reloadRotation.setFromEuler(reloadEuler.set(-.9, 0, 0)); parts.feedTray.quaternion.slerp(reloadRotation, opened); }
       if (parts.vent) { reloadRotation.setFromEuler(reloadEuler.set(0, 0, -.95)); parts.vent.quaternion.slerp(reloadRotation, phase.phase === 'close' ? 1-p : opened); }
-      if ((phase.phase === 'chamber' && sequence.empty) || (w.id === 'shotgun' && phase.phase === 'close' && !sequence.empty)) {
+      if (phase.phase === 'chamber' && sequence.empty) {
         const pull = Math.sin(p * Math.PI);
         if (parts.bolt) parts.bolt.position.z += w.id === 'ar' ? arChargingStroke(sequence.elapsed / phase.duration) : pull * (w.id === 'br' ? .07 : .045);
         if (parts.slide) parts.slide.position.z += pull * .048;
-        if (parts.pump) parts.pump.position.z += pull * .08;
+        if (parts.pump) parts.pump.position.z += w.id === 'shotgun' ? shotgunPumpStroke(sequence.elapsed, phase.duration) : pull * .08;
       }
-      if (parts.reloadRound && phase.phase === 'insert') {
+      if (w.id === 'shotgun' && phase.phase === 'insert' && parts.reloadRound) {
+        const t = sequence.elapsed / phase.duration;
+        shotgunShellPose(t, shellPose);
+        parts.reloadRound.position.set(shellPose.x, shellPose.y, shellPose.z);
+        parts.reloadRound.rotation.x = shellPose.angle;
+        parts.reloadRound.visible = t >= .10 && !sequence.shellSeated;
+        // A short receiver response to firm seating, not a camera kick.
+        assembly.root.position.y += .004 * Math.sin(Math.PI * Math.max(0, Math.min(1, (t - .68) / .13)));
+      } else if (parts.reloadRound && phase.phase === 'insert') {
         const base = pose.get(parts.reloadRound)!;
         reloadPosition.copy(base.position); reloadPosition.x -= .15; reloadPosition.y -= .12; reloadPosition.z += w.id === 'rocket' ? -.2 : .08;
         parts.reloadRound.position.lerpVectors(reloadPosition, base.position, p);
@@ -570,8 +577,19 @@ export function createViewmodelManager(): ViewmodelManager {
     } else {
       if (parts.slide) parts.slide.position.z += Math.sin((slideTimer / .12) * Math.PI) * .045;
       if (parts.bolt) parts.bolt.position.z += Math.sin((boltTimer / .07) * Math.PI) * .025;
-      if (parts.pump) parts.pump.position.z += Math.sin((pumpTimer / .42) * Math.PI) * .075;
-      if (w.id === 'shotgun' && (ws?.boltCycleT ?? 0) > 0 && parts.pump) parts.pump.position.z += Math.sin((1-ws!.boltCycleT!/.42)*Math.PI)*.08;
+      if (w.id === 'shotgun' && ws?.shotgunCycle && parts.pump) {
+        const cycle = ws.shotgunCycle, t = cycle.elapsed * SHOTGUN.cycle / cycle.duration;
+        parts.pump.position.z += shotgunPumpStroke(cycle.elapsed, cycle.duration);
+        if (cycle.kind === 'fire') {
+          const mass = t < .035 ? shotgunEase(t / .035) : Math.pow(1 - shotgunEase((t - .035) / .145), 1.3);
+          assembly.root.position.z += mass * .038;
+          assembly.root.rotation.x += mass * .070;
+        }
+        const rearStop = Math.max(0, 1 - Math.abs(t - .435) / .035);
+        const lock = t >= .66 ? Math.sin((t - .66) / .08 * Math.PI) * Math.exp(-(t - .66) * 28) : 0;
+        assembly.root.position.z += rearStop * .0035 - lock * .002;
+        assembly.root.rotation.x += rearStop * .008 - lock * .004;
+      }
       if (w.id === 'sniper' && (ws?.boltCycleT ?? 0) > 0 && parts.bolt) {
         const p = 1 - ws!.boltCycleT! / .85;
         parts.bolt.position.z += Math.sin(p * Math.PI) * .085;
@@ -593,9 +611,7 @@ export function createViewmodelManager(): ViewmodelManager {
     triggerPistolSlideFire() {
       slideTimer = 0.12;
     },
-    triggerShotgunPump() {
-      pumpTimer = 0.42;
-    },
+
     triggerSmgBoltFire() {
       boltTimer = 0.07;
     },
@@ -630,7 +646,7 @@ export function createViewmodelManager(): ViewmodelManager {
     },
     resetEffects() {
       models.forEach((model) => model.effects.reset());
-      recoil = recoilRotation = slideTimer = pumpTimer = boltTimer = equip = walkBlend = runBlend = time = bob = 0;
+      recoil = recoilRotation = slideTimer = boltTimer = equip = walkBlend = runBlend = time = bob = 0;
       charge = spin = radioTimer = 0; venting = radioHold = false;
       poseInitialized = false; previousId = '';
     },

@@ -801,7 +801,15 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       }
     }
   } else if (id === 'shotgun') {
-    box('Shotgun receiver', 0.07, 0.085, 0.26, 0, 0.006, 0.035, dark);
+    if (options.firstPerson) {
+      // An actual underside aperture: no solid box under the insertion path.
+      box('Shotgun receiver crown', .07, .048, .26, 0, .0245, .035, dark);
+      for (const x of [-.026, .026]) box('Loading port side wall', .018, .037, .26, x, -.018, .035, dark);
+      box('Loading port rear wall', .034, .037, .075, 0, -.018, .1275, dark);
+      box('Loading port front wall', .034, .037, .02, 0, -.018, -.085, dark);
+      group('loadingPort', 0, -.0365, -.025);
+      for (const x of [-.018, .018]) box('Loading port lip', .003, .004, .14, x, -.037, -.005, edge);
+    } else box('Shotgun receiver', 0.07, 0.085, 0.26, 0, 0.006, 0.035, dark);
     grip();
     stock();
     rail(0.02, 0.25, 0.062);
@@ -1198,10 +1206,20 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     const vent = group('vent', .052, .03, .02);
     box('Articulated coolant vent', .009, .037, .095, 0, 0, 0, steel, vent);
   }
-  if (id === 'shotgun' || id === 'rocket') {
-    const round = group('reloadRound', 0, -.07, id === 'rocket' ? -.55 : .04);
-    const shell = tube(id === 'rocket' ? 'Tube-loaded rocket' : 'Inserted shotgun shell', id === 'rocket' ? .036 : .012, id === 'rocket' ? .25 : .05, 0, 0, 0, id === 'rocket' ? dark : purple, round);
-    shell.rotation.x = id === 'shotgun' ? Math.PI / 2 : 0;
+  if (id === 'shotgun') {
+    const round = group('reloadRound', 0, -.13, -.045);
+    // Cylinder helper already points along the bore (-Z). The old second X
+    // rotation stood the shell vertically, sideways across the receiver.
+    const hull = new THREE.MeshStandardMaterial({ color: 0x96392c, roughness: .65 });
+    const brass = new THREE.MeshStandardMaterial({ color: 0xb28b45, metalness: .85, roughness: .32 });
+    materials.push(hull, brass);
+    tube('Shotgun shell hull', .0115, .049, 0, 0, -.003, hull, round);
+    tube('Shell brass base', .012, .009, 0, 0, .024, brass, round);
+    ring('Shell rim', .012, .0013, 0, 0, .029, brass, round);
+    round.visible = false;
+  } else if (id === 'rocket') {
+    const round = group('reloadRound', 0, -.07, -.55);
+    tube('Tube-loaded rocket', .036, .25, 0, 0, 0, dark, round).rotation.x = 0;
     round.visible = false;
   }
   // Bake static components by material within each moving assembly. Rails/fasteners

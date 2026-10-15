@@ -4,6 +4,7 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import type { WeaponAssembly, WeaponModelId } from './weaponModels';
 import type { WeaponSlotState } from './types';
 import type { FactionType } from './lobbyAvatar';
+import { SHOTGUN, shotgunEase, shotgunShellPose } from './shotgunMechanics';
 import { VIEWMODEL_GRIPS, arChamberReach, arChamberRelease, type HandAttachment } from './viewmodelGrips';
 
 interface Digit { joints: THREE.Object3D[]; lengths: number[]; radius: number; thumb: boolean; index: boolean; spread: number; }
@@ -47,7 +48,8 @@ export function createFirstPersonHands() {
   const scratch = new THREE.Object3D(), inverse = new THREE.Matrix4(), matrix = new THREE.Matrix4(), instanceTransform = new THREE.Matrix4();
   const direction = new THREE.Vector3(), end = new THREE.Vector3(), elbow = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
   const targetRotation = new THREE.Quaternion(), euler = new THREE.Euler(), attachmentPosition = new THREE.Vector3();
-  const supportGrip = new THREE.Vector3();
+  const supportGrip = new THREE.Vector3(), shotgunPickup = new THREE.Vector3(-.134, -.163, -.020);
+  const shellPose = { x: 0, y: 0, z: 0, angle: 0 };
   let selected: WeaponModelId = 'ar', phase = '', disposed = false, initialized = false;
 
   function merge(parts: THREE.BufferGeometry[]) {
@@ -196,12 +198,39 @@ export function createFirstPersonHands() {
         left.orientation.slerp(targetRotation, arChamberRelease(progress));
         curl = arChamber.curl;
       }
+      if (id === 'shotgun') {
+        // Same shared hand palette; exact contact follows the transformed pump
+        // or shell, with no exponential lag during mechanical operation.
+        left.orientation.setFromEuler(euler.set(...config.left.rotation));
+        if (stage?.phase === 'open') {
+          const t = sequence!.elapsed / stage.duration;
+          attachmentPosition.set(-.024, -.090, -.005);
+          left.target.lerpVectors(supportGrip, attachmentPosition, shotgunEase(t / .45));
+          left.target.lerp(shotgunPickup, shotgunEase((t - .45) / .55));
+          curl = .55;
+        } else if (stage?.phase === 'insert') {
+          const t = sequence!.elapsed / stage.duration;
+          shotgunShellPose(Math.min(t, SHOTGUN.seat), shellPose);
+          left.target.set(shellPose.x - .024, shellPose.y - .033, shellPose.z + .025);
+          left.target.lerp(shotgunPickup, shotgunEase((t - .80) / .20));
+          curl = t < .80 ? .62 : .52;
+        } else if (stage?.phase === 'chamber') {
+          left.target.lerpVectors(shotgunPickup, supportGrip, shotgunEase(sequence!.elapsed / (stage.duration * SHOTGUN.recovery / SHOTGUN.cycle)));
+          curl = config.left.curl;
+        } else if (stage?.phase === 'close') {
+          left.target.lerpVectors(sequence!.empty ? supportGrip : shotgunPickup, supportGrip, p);
+          curl = config.left.curl;
+        } else {
+          left.target.copy(supportGrip);
+          if (state?.shotgunCycle?.kind === 'chamber') left.target.lerpVectors(left.phaseStart, supportGrip, shotgunEase(state.shotgunCycle.elapsed / (state.shotgunCycle.duration * SHOTGUN.recovery / SHOTGUN.cycle)));
+        }
+      }
       const alpha = changed || dt === 0 ? 1 : 1 - Math.exp(-24 * dt);
       right.wrist.position.copy(right.target); right.wrist.quaternion.copy(right.orientation);
       // AR control contact is authored against the current moving part, without
       // an exponential lag that would leave fingers behind the charging latch.
-      left.wrist.position.lerp(left.target, arChamber ? 1 : alpha);
-      left.wrist.quaternion.slerp(left.orientation, arChamber ? 1 : alpha);
+      left.wrist.position.lerp(left.target, arChamber || id === 'shotgun' ? 1 : alpha);
+      left.wrist.quaternion.slerp(left.orientation, arChamber || id === 'shotgun' ? 1 : alpha);
       // Solve the sleeve from its posed cuff toward a camera-local torso bend.
       // Receiver tilt must not rotate a cut-off sleeve end into the viewport.
       assembly.root.updateMatrix(); inverse.copy(assembly.root.matrix).invert();

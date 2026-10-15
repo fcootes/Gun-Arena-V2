@@ -1,3 +1,4 @@
+import { beginShotgunCycle } from '../src/shotgunMechanics';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { createViewmodelManager, WEAPONS, type ViewmodelManager } from '../src/weapons';
@@ -128,8 +129,11 @@ for (const id of WEAPON_MODEL_IDS) {
 }
 console.log('PASS: independent support-hand reaches and recovery across all reload families without changing their state machines');
 vm.resetEffects(); step(vm, 'shotgun', 0);
-const pumpGrip = left.position.clone(); vm.triggerShotgunPump(); step(vm, 'shotgun', .1);
-assert.ok(left.position.z > pumpGrip.z + .02, 'Support hand follows the animated pump after a shot');
+const pumpGrip = left.position.clone(), pumpState: WeaponSlotState = {ammo: 5, reserve: 20};
+beginShotgunCycle(pumpState); advanceWeaponReload(WEAPONS.find(w=>w.id==='shotgun')!, pumpState, .1); step(vm, 'shotgun', .1, pumpState);
+assert.ok(left.position.distanceTo(pumpGrip) < 1e-9, 'Pump stays still through initial recoil recovery');
+advanceWeaponReload(WEAPONS.find(w=>w.id==='shotgun')!, pumpState, .32); step(vm, 'shotgun', .1, pumpState);
+assert.ok(Math.abs(left.position.z - pumpGrip.z - .075) < 1e-9, 'Support hand exactly follows the full rearward pump stroke');
 for (let i = 0; i < 60; i++) step(vm, 'shotgun');
 assert.ok(left.position.distanceTo(pumpGrip) < .001, 'Pump hand recovers without accumulated offset');
 

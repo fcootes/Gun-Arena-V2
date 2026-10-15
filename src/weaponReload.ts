@@ -1,4 +1,5 @@
 import type { WeaponDef, WeaponSlotState } from './types';
+import { SHOTGUN, advanceShotgunCycle, beginShotgunCycle, type ShotgunEventListener } from './shotgunMechanics';
 
 export type ReloadPhase = 'open' | 'eject' | 'insert' | 'chamber' | 'close' | 'vent';
 export type ReloadPhaseListener = (phase: ReloadPhase, duration: number, empty: boolean) => void;
@@ -10,6 +11,7 @@ export interface ReloadSequence {
   empty: boolean;
   shellsRemaining: number;
   inserted: number;
+  shellSeated?: boolean;
 }
 
 export function cancelWeaponReload(state: WeaponSlotState) {
@@ -27,9 +29,16 @@ export function beginWeaponReload(weapon: WeaponDef, state: WeaponSlotState, mul
   let kind: ReloadSequence['kind'] = 'magazine';
   const add = (phase: ReloadPhase, fraction: number) => phases.push({ phase, duration: duration * fraction });
   const missing = Math.min((weapon.mag ?? 0) - (state.ammo ?? 0), state.reserve ?? 0);
-  if (chamberOnly) { add('chamber', .25); add('close', .15); }
-  else if (weapon.id === 'shotgun') {
-    kind = 'shell'; add('open', .16); add('insert', .24); if (empty) add('chamber', .18); add('close', .12);
+  if (weapon.id === 'shotgun') {
+    const speed = Math.max(.1, Number.isFinite(multiplier) ? multiplier : 1);
+    const timed = (phase: ReloadPhase, seconds: number) => phases.push({ phase, duration: seconds * speed });
+    if (chamberOnly) { timed('chamber', SHOTGUN.cycle); timed('close', .18); }
+    else {
+      kind = 'shell'; timed('open', SHOTGUN.open); timed('insert', SHOTGUN.shell);
+      if (empty) timed('chamber', SHOTGUN.cycle);
+      timed('close', empty ? .18 : SHOTGUN.close);
+    }
+  } else if (chamberOnly) { add('chamber', .25); add('close', .15);
   } else if (vent) {
     kind = weapon.id === 'laser' ? 'battery' : 'vent'; add('vent', .25);
     if (kind === 'battery') { add('eject', .2); add('insert', .35); }
@@ -56,23 +65,34 @@ export function beginWeaponReload(weapon: WeaponDef, state: WeaponSlotState, mul
 }
 
 /** Advance through phase boundaries without losing shell events on slow frames. */
-export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, delta: number, onPhaseStart?: ReloadPhaseListener): number {
+export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, delta: number, onPhaseStart?: ReloadPhaseListener, onShotgunEvent?: ShotgunEventListener): number {
   if (!Number.isFinite(delta) || delta <= 0) return 0;
-  state.boltCycleT = Math.max(0, (state.boltCycleT ?? 0) - delta);
+  if (weapon.id === 'shotgun' && state.shotgunCycle) advanceShotgunCycle(state, delta, onShotgunEvent);
+  else state.boltCycleT = Math.max(0, (state.boltCycleT ?? 0) - delta);
   const sequence = state.reloadSequence;
   if (!state.reloading || !sequence) return 0;
   let remaining = delta, inserts = 0;
   while (remaining > 0 && state.reloading) {
     const stage = sequence.phases[sequence.index];
-    const step = Math.min(remaining, stage.duration - sequence.elapsed);
+    // Seat and pump cues are boundary events on this very clock, not timers in
+    // the renderer/audio layer. A slow frame can cross multiple real transfers.
+    const seat = sequence.kind === 'shell' && stage.phase === 'insert' && !sequence.shellSeated;
+    const pumpStart = weapon.id === 'shotgun' && stage.phase === 'chamber' && sequence.elapsed < stage.duration * SHOTGUN.recovery / SHOTGUN.cycle - 1e-8;
+    const boundary = seat ? stage.duration * SHOTGUN.seat : pumpStart ? stage.duration * SHOTGUN.recovery / SHOTGUN.cycle : stage.duration;
+    const step = Math.min(remaining, Math.max(0, boundary - sequence.elapsed));
     sequence.elapsed += step; remaining -= step; state.reloadT = Math.max(0, (state.reloadT ?? 0) - step);
-    if (sequence.elapsed + 1e-8 < stage.duration) break;
+    if (seat && sequence.elapsed + 1e-8 >= boundary) {
+      sequence.shellSeated = true;
+      if ((state.reserve ?? 0) > 0 && (state.ammo ?? 0) < (weapon.mag ?? 0)) {
+        state.ammo = (state.ammo ?? 0) + 1; state.reserve = (state.reserve ?? 0) - 1; sequence.inserted++; inserts++;
+        onShotgunEvent?.('seat', stage.duration * .48 / SHOTGUN.shell, sequence.empty, remaining);
+      }
+    }
+    if (pumpStart && sequence.elapsed + 1e-8 >= boundary) onShotgunEvent?.('pump', stage.duration * .48 / SHOTGUN.cycle, sequence.empty, remaining);
+    if (sequence.elapsed + 1e-8 < stage.duration) { if (remaining > 1e-8) continue; break; }
     if (stage.phase === 'insert') {
       if (sequence.kind === 'shell') {
-        if ((state.reserve ?? 0) > 0 && (state.ammo ?? 0) < (weapon.mag ?? 0)) {
-          state.ammo = (state.ammo ?? 0) + 1; state.reserve = (state.reserve ?? 0) - 1; sequence.inserted++; inserts++;
-        }
-        sequence.shellsRemaining--;
+        sequence.shellsRemaining--; sequence.shellSeated = false;
         if (sequence.shellsRemaining > 0 && (state.reserve ?? 0) > 0) {
           sequence.elapsed = 0;
           onPhaseStart?.(stage.phase, stage.duration, sequence.empty);
@@ -99,6 +119,13 @@ export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, d
 
 export function interruptShellReload(weapon: WeaponDef, state: WeaponSlotState): boolean {
   if (weapon.id !== 'shotgun' || !state.reloading || (state.ammo ?? 0) <= 0 || (state.reloadSequence?.empty && state.reloadSequence.inserted === 0)) return false;
-  if (state.needsChamber) { state.boltCycleT = .42; state.needsChamber=false; state.pendingReloadShot=true; }
+  if (state.needsChamber) {
+    const sequence = state.reloadSequence!, stage = sequence.phases[sequence.index];
+    const continuing = stage.phase === 'chamber';
+    const duration = continuing ? stage.duration : SHOTGUN.cycle * sequence.phases[0].duration / SHOTGUN.open;
+    const elapsed = continuing ? sequence.elapsed : 0;
+    beginShotgunCycle(state, 'chamber', duration, elapsed, elapsed >= duration * SHOTGUN.recovery / SHOTGUN.cycle);
+    state.pendingReloadShot = true;
+  }
   cancelWeaponReload(state); return true;
 }

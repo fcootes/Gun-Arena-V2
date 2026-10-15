@@ -56,6 +56,7 @@ export interface WeaponSlotState {
   totalReloadT?: number;
   isTacticalReload?: boolean;
   reloadSequence?: import('./weaponReload').ReloadSequence;
+  shotgunCycle?: import('./shotgunMechanics').ShotgunCycle;
   boltCycleT?: number;
   needsChamber?: boolean;
   pendingReloadShot?: boolean;
