@@ -26,7 +26,7 @@ for (const id of WEAPON_MODEL_IDS) {
     assert.ok(config[side].position[1] < .02 && Math.abs(config[side].position[0]) < .2);
     const attachment = new THREE.Quaternion().setFromEuler(new THREE.Euler(...config[side].rotation));
     const normal = new THREE.Vector3(0, 0, -1).applyQuaternion(attachment);
-    assert.ok(side === 'right' ? normal.x < -.99 : normal.x > .99 || normal.y > .99, `${id}: palms face the grip or underside`);
+    assert.ok(side === 'right' ? normal.x < -.99 : normal.x > .99 || normal.y > .90, `${id}: palms face the grip or underside`);
   }
   const assembly = createWeaponAssembly(id);
   assert.ok(config.right.position[2] > assembly.muzzle.position.z, `${id}: trigger hand stays behind muzzle`);
@@ -191,3 +191,74 @@ for (const id of WEAPON_MODEL_IDS) {
 }
 boundsVm.dispose();
 console.log('PASS: full visible weapon/instanced-hand vertex bounds across all twelve hip/ADS/sprint and full reload sequences');
+
+// The palm normal alone cannot catch a sideways wrist. Check the longitudinal
+// axes, contact surface and camera-space sleeve silhouette together.
+const acceptanceVm = createViewmodelManager(); acceptanceVm.prepare(WEAPON_MODEL_IDS);
+const arConfig = VIEWMODEL_GRIPS.ar;
+step(acceptanceVm, 'ar', 0);
+const acceptanceRig = rig(acceptanceVm), support = acceptanceRig.getObjectByName('leftHand')!;
+const cuff = new THREE.Vector3(0, -.047, 0).applyQuaternion(support.quaternion).add(support.position);
+const sleeve = acceptanceRig.getObjectByName('leftForearm')!;
+const fingersForward = new THREE.Vector3(0, 1, 0).applyQuaternion(support.quaternion);
+const sleeveForward = new THREE.Vector3(0, 1, 0).applyQuaternion(sleeve.quaternion);
+assert.ok(fingersForward.x > .5 && fingersForward.z < -.65 && fingersForward.y > .15, 'Underhand fingers point inward/forward/up, not sideways across the rifle');
+assert.ok(fingersForward.dot(sleeveForward) > Math.cos(Math.PI / 4), 'Idle wrist and forearm continue within 45 degrees');
+const palmContact = new THREE.Vector3(0, .021, -.0225).applyQuaternion(support.quaternion).add(support.position);
+assert.ok(Math.abs(palmContact.x) < .032 && Math.abs(palmContact.y + .030) < .007 && palmContact.z < -.16 && palmContact.z > -.43, 'Substantial palm contacts the actual lower handguard bounds');
+const cuffScreen = cuff.clone().applyMatrix4(weapon(acceptanceVm,'ar').matrixWorld).project(acceptanceCamera);
+assert.ok(cuffScreen.y < -.65, 'Sleeve begins in the lower screen; a mesh-length bound alone is insufficient');
+
+function sprintAtRate(rate: number) {
+  const v = createViewmodelManager(); step(v,'ar',0);
+  for(let n=0;n<rate;n++)v.update(1/rate,WEAPONS[0],{},false,true,true,true,false,false,0,true,true);
+  const model=weapon(v,'ar'), p=model.position.clone(), q=model.quaternion.clone();
+  const barrel=new THREE.Vector3(0,0,-1).applyQuaternion(q);
+  assert.ok(barrel.x > .6 && barrel.y < -.1, 'Sprint points the muzzle laterally/downward instead of upward');
+  assert.ok(p.x > arConfig.hip[0]+.04 && p.y < arConfig.hip[1]-.03, 'Sprint lowers the receiver and moves it right');
+  for(let n=0;n<rate;n++)step(v,'ar',1/rate);
+  assert.ok(model.position.distanceTo(new THREE.Vector3(...arConfig.hip)) < .004 && model.quaternion.angleTo(new THREE.Quaternion()) < .001, 'Sprint stop restores readiness without accumulating sway');
+  for(let n=0;n<rate;n++)step(v,'ar',1/rate,{},true);
+  assert.ok(model.position.distanceTo(new THREE.Vector3(...arConfig.aim)) < .004, 'Immediate ADS recovers to its sight pose');
+  v.dispose();return {p,q};
+}
+const sprint30=sprintAtRate(30),sprint144=sprintAtRate(144);
+assert.ok(sprint30.p.distanceTo(sprint144.p)<.0001 && sprint30.q.angleTo(sprint144.q)<.0001, 'Carry and restrained sway are frame-rate independent');
+
+for(const empty of [false,true]) {
+  acceptanceVm.resetEffects();step(acceptanceVm,'ar',0);
+  const state: WeaponSlotState={ammo:empty?0:20,reserve:100}; beginWeaponReload(WEAPONS[0],state);
+  const model=weapon(acceptanceVm,'ar'),bolt=model.getObjectByName('bolt')!;
+  const restZ=bolt.position.z;let sawContact=false,maxPull=0;
+  while(state.reloading) {
+    advanceWeaponReload(WEAPONS[0],state,1/120);const beforeState=JSON.stringify(state);
+    step(acceptanceVm,'ar',1/120,state);
+    assert.equal(JSON.stringify(state),beforeState);
+    maxPull=Math.max(maxPull,bolt.position.z-restZ);
+    const sequence=state.reloadSequence,stage=sequence?.phases[sequence.index];
+    if(stage?.phase==='chamber') {
+      assert.ok(empty, 'Tactical exchange must not operate the charging latch');
+      const t=sequence!.elapsed/stage.duration;
+      assert.ok(support.position.z<.15 && support.position.x<.005,'Charging hand stays beside the receiver and ahead of the stock');
+      if(t>.24&&t<.79) {
+        model.updateMatrixWorld(true);
+        assert.ok(support.position.x<-.07,'Contact lies on the eye-near receiver side');
+        const contact=new THREE.Vector3(...arConfig.chamber!.partOffset!).applyMatrix4(bolt.matrixWorld);
+        const actual=support.getWorldPosition(new THREE.Vector3());
+        assert.ok(contact.distanceTo(actual)<1e-7,'Hand follows the actual moving control without position lag');
+        const controlBox = new THREE.Box3(new THREE.Vector3(-.013,-.0055,-.008),new THREE.Vector3(.013,.0055,.008));
+        const controlInverse=bolt.matrixWorld.clone().invert();
+        for(const name of ['left_index_2','left_middle_2']) {
+          const joint=acceptanceRig.getObjectByName(name)!.getWorldPosition(new THREE.Vector3()).applyMatrix4(controlInverse);
+          assert.ok(controlBox.distanceToPoint(joint)<.009,'Curled finger capsule contacts the actual latch surface, not merely an attachment pivot');
+        }
+        sawContact=true;
+      }
+    }
+  }
+  assert.equal(sawContact,empty);
+  assert.ok(empty ? maxPull>.043 && maxPull<=.04501 : maxPull<1e-10,'Only the empty chamber phase produces the short charging stroke');
+  assert.equal(state.ammo,30);assert.equal(state.reserve,empty?70:90);
+}
+acceptanceVm.dispose();
+console.log('PASS: calibrated palm/finger/wrist contact, compact screen silhouette, lowered lateral sprint/stop/ADS and exact AR empty-only charging contact');

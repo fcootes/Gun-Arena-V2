@@ -3,7 +3,7 @@ import { WeaponDef, WeaponSlotState, ARSENAL } from './types';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { createWeaponAssembly, orientHeldWeapon, disposeWeaponObject, type WeaponAssembly, type WeaponModelId } from './weaponModels';
 import { createFirstPersonHands } from './viewmodelHands';
-import { VIEWMODEL_GRIPS } from './viewmodelGrips';
+import { VIEWMODEL_GRIPS, arChargingStroke } from './viewmodelGrips';
 import type { FactionType } from './lobbyAvatar';
 import {
   createWeaponMuzzleEffect,
@@ -330,7 +330,7 @@ export function createViewmodelManager(): ViewmodelManager {
   const hands = createFirstPersonHands(); hands.root.visible = false; root.add(hands.root);
   const viewPosition = new THREE.Vector3(), targetPosition = new THREE.Vector3();
   const viewRotation = new THREE.Quaternion(), targetRotation = new THREE.Quaternion(), targetEuler = new THREE.Euler();
-  let poseInitialized = false, previousId = '', walkBlend = 0, equip = 0, disposed = false;
+  let poseInitialized = false, previousId = '', walkBlend = 0, runBlend = 0, equip = 0, disposed = false;
   root.userData.cleanupWeaponEffect = () => { disposed = true; hands.releaseInstances(); models.clear(); selected = null; };
   const gloveMaterial = new THREE.MeshStandardMaterial({
     color: 0x20282b,
@@ -523,14 +523,16 @@ export function createViewmodelManager(): ViewmodelManager {
     if (previousId && previousId !== w.id) equip = 1;
     previousId = w.id; equip *= Math.exp(-18 * dt);
     walkBlend += ((moving && onGround ? 1 : 0) - walkBlend) * (1 - Math.exp(-12 * dt));
-    const walk = walkBlend * (aiming ? .18 : 1);
+    runBlend += ((sprinting && !aiming && moving && onGround ? 1 : 0) - runBlend) * (1 - Math.exp(-12 * dt));
+    const walk = walkBlend * (aiming ? .18 : 1) * (1 - runBlend);
     assembly.root.position.copy(viewPosition);
     assembly.root.position.z += recoil + equip * .025;
     assembly.root.position.y -= equip * .06;
-    assembly.root.position.x += Math.cos(bob * 0.5) * 0.008 * walk;
+    assembly.root.position.x += Math.cos(bob * 0.5) * 0.008 * walk + Math.sin(bob * .5) * .0045 * runBlend;
     assembly.root.position.y +=
-      Math.abs(Math.sin(bob)) * 0.012 * walk + Math.sin(time * 1.5) * 0.002;
+      Math.abs(Math.sin(bob)) * 0.012 * walk + Math.cos(bob) * .003 * runBlend + Math.sin(time * 1.5) * 0.002;
     assembly.root.quaternion.copy(viewRotation); assembly.root.rotation.x += recoilRotation;
+    assembly.root.rotation.z += Math.sin(bob * .5) * .004 * runBlend;
     if (parts.reloadRound) parts.reloadRound.visible = false;
     const sequence = ws?.reloadSequence;
     if (ws?.reloading && sequence) {
@@ -555,7 +557,7 @@ export function createViewmodelManager(): ViewmodelManager {
       if (parts.vent) { reloadRotation.setFromEuler(reloadEuler.set(0, 0, -.95)); parts.vent.quaternion.slerp(reloadRotation, phase.phase === 'close' ? 1-p : opened); }
       if ((phase.phase === 'chamber' && sequence.empty) || (w.id === 'shotgun' && phase.phase === 'close' && !sequence.empty)) {
         const pull = Math.sin(p * Math.PI);
-        if (parts.bolt) parts.bolt.position.z += pull * (w.id === 'br' ? .07 : .045);
+        if (parts.bolt) parts.bolt.position.z += w.id === 'ar' ? arChargingStroke(sequence.elapsed / phase.duration) : pull * (w.id === 'br' ? .07 : .045);
         if (parts.slide) parts.slide.position.z += pull * .048;
         if (parts.pump) parts.pump.position.z += pull * .08;
       }
@@ -628,7 +630,7 @@ export function createViewmodelManager(): ViewmodelManager {
     },
     resetEffects() {
       models.forEach((model) => model.effects.reset());
-      recoil = recoilRotation = slideTimer = pumpTimer = boltTimer = equip = walkBlend = time = bob = 0;
+      recoil = recoilRotation = slideTimer = pumpTimer = boltTimer = equip = walkBlend = runBlend = time = bob = 0;
       charge = spin = radioTimer = 0; venting = radioHold = false;
       poseInitialized = false; previousId = '';
     },

@@ -555,7 +555,10 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       rubber,
     );
     box('Bolt carrier', 0.003, 0.011, 0.051, 0.036, 0.025, -0.015, edge);
-    const bolt = group('bolt', 0.039, 0.017, 0.075);
+    // The first-person AR exposes its receiver charging latch on the eye-near
+    // side. Other weapons and actor/studio assemblies retain their original part.
+    const heldAr = id === 'ar' && options.firstPerson;
+    const bolt = group('bolt', heldAr ? -.045 : .039, heldAr ? .048 : .017, heldAr ? .025 : .075);
     box('Charging handle', 0.026, 0.011, 0.016, 0, 0, 0, steel, bolt);
     grip();
     screws(-0.1);

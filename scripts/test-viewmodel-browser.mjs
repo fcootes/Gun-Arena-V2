@@ -3,6 +3,8 @@ import { createServer } from 'vite';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import assert from 'node:assert/strict';
+import {captureAcceptanceSequence,captureLiveArCycle} from './viewmodel-acceptance-sequence.mjs';
+import {spawnSync} from 'node:child_process';
 
 const output = resolve(process.env.VIEWMODEL_OUTPUT ?? 'performance-results/viewmodel');
 mkdirSync(output, { recursive: true });
@@ -46,8 +48,10 @@ const server = await createServer({ root: process.env.VIEWMODEL_ROOT, logLevel: 
       // Main Game Loop`);
   },
 }] });
-let browser;
-const deadline = setTimeout(() => { console.error('FAIL: viewmodel browser exceeded 480 seconds'); void browser?.close(); void server.close(); process.exitCode = 1; }, 480000);
+let browser, video, videoOriginMs, liveRecording;
+const acceptanceSequence = process.env.VIEWMODEL_ACCEPTANCE_SEQUENCE === '1';
+const recordVideo = process.env.VIEWMODEL_RECORD_VIDEO === '1';
+const deadline = setTimeout(() => { console.error('FAIL: viewmodel browser exceeded 900 seconds'); void browser?.close(); void server.close(); process.exitCode = 1; }, 900000);
 const errors = [], results = [], gameplay = [];
 try {
   await server.listen();
@@ -55,7 +59,9 @@ try {
     ...(process.env.BENCHMARK_BROWSER ? { executablePath: process.env.BENCHMARK_BROWSER } : {}),
     args: process.env.BENCHMARK_SINGLE_PROCESS === '1' ? ['--no-sandbox', '--single-process', '--no-zygote', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : [],
   });
-  const page = await browser.newPage({ viewport: { width: 1280, height: 720 } }); page.setDefaultTimeout(30000);
+  videoOriginMs=Date.now();
+  const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, ...(recordVideo ? {recordVideo:{dir:resolve(output,'raw-video'),size:{width:1280,height:720}}}: {}) });
+  video=page.video(); page.setDefaultTimeout(30000);
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(`${origin}/__viewmodel`);
   await page.evaluate(async () => {
@@ -171,6 +177,7 @@ try {
     await page.setViewportSize({ width: 1280, height: 720 });
     checks.push('12 held configurations; both faction palettes; AR/pistol hip, ADS, reload and sprint; close-up; 4:3 and 21:9');
   }
+  const sequence = acceptanceSequence ? await captureAcceptanceSequence(page,output) : [];
   const timing = await page.evaluate(() => {
     const f = window.fixture; f.state.id = 'ar'; f.state.ws = {}; f.state.aiming = f.state.sprinting = false;
     const samples = [];
@@ -217,6 +224,11 @@ try {
       assert.deepEqual(await page.evaluate(known => window.__handsGame.renderer.info.programs.filter(p => !known.includes(p.cacheKey)).map(p => p.cacheKey), knownPrograms), [], 'Prepared first-person fire/reload/switch must not add shader programs');
       await page.keyboard.press('v'); assert.equal(await page.evaluate(() => window.__handsGame.thirdPerson), true);
       await page.keyboard.press('v'); assert.equal(await page.evaluate(() => window.__handsGame.thirdPerson), false);
+      if(acceptanceSequence) {
+        const cycle=await captureLiveArCycle(page,output,faction,videoOriginMs);
+        if(faction==='usmc')liveRecording=cycle;
+        checks.push(`${faction}: uninterrupted live last-shot/empty-reload with sampled insert/chamber/close and conserved ammo`);
+      }
       // The same field-armory replacement path as gameplay, injected only in this test server.
       for (const id of modelIds) {
         await page.evaluate(id => window.__handsGame.equip(id), id);
@@ -264,7 +276,15 @@ try {
     }
   }
   assert.deepEqual(errors, []);
-  writeFileSync(resolve(output, 'results.json'), JSON.stringify({ startedAt, browser: browser.version(), viewport: '1280x720', results, gameplay, timing, checks, errors }, null, 2) + '\n');
+  writeFileSync(resolve(output, 'results.json'), JSON.stringify({ startedAt, browser: browser.version(), viewport: '1280x720', results, gameplay, sequence, liveRecording, timing, checks, errors }, null, 2) + '\n');
   await page.evaluate(() => window.fixture?.dispose());
   console.log('PASS: held viewmodel browser captures', results);
 } finally { clearTimeout(deadline); await browser?.close(); await server.close(); }
+
+if(recordVideo && liveRecording) {
+  const path=await video.path();
+  const duration=liveRecording.endSeconds-liveRecording.startSeconds+2;
+  const result=spawnSync('ffmpeg',['-y','-ss',String(Math.max(0,liveRecording.startSeconds-1)),'-i',path,'-t',String(duration),'-an','-c:v','libvpx-vp9','-b:v','0','-crf','34',resolve(output,'live-ar-fire-empty-reload.webm')],{stdio:'pipe'});
+  if(result.status!==0)throw new Error('Could not export uninterrupted browser clip: '+result.stderr.toString().slice(-1000));
+  console.log('PASS: exported continuous live AR last-shot and empty reload (software renderer; no recorded audio)');
+}

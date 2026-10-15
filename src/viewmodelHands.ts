@@ -4,12 +4,12 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import type { WeaponAssembly, WeaponModelId } from './weaponModels';
 import type { WeaponSlotState } from './types';
 import type { FactionType } from './lobbyAvatar';
-import { VIEWMODEL_GRIPS, type HandAttachment } from './viewmodelGrips';
+import { VIEWMODEL_GRIPS, arChamberReach, arChamberRelease, type HandAttachment } from './viewmodelGrips';
 
 interface Digit { joints: THREE.Object3D[]; lengths: number[]; radius: number; thumb: boolean; index: boolean; spread: number; }
 interface Hand {
   wrist: THREE.Group; sleeve: THREE.Mesh; digits: Digit[];
-  target: THREE.Vector3; orientation: THREE.Quaternion; phaseStart: THREE.Vector3;
+  target: THREE.Vector3; orientation: THREE.Quaternion; phaseStart: THREE.Vector3; phaseRotation: THREE.Quaternion;
   curl: number;
 }
 const thumbAngles = [.20, .35, .30], triggerAngles = [.10, .50, .65], gripAngles = [.5, .9, .65];
@@ -66,7 +66,7 @@ export function createFirstPersonHands() {
     return at(new RoundedBoxGeometry(w, h, d, 1, Math.min(w, h, d) * .23), x, y, z);
   }
   const palmParts = [
-    at(new THREE.SphereGeometry(1, 12, 8).scale(.037, .047, .021), 0, .021, 0),
+    at(new THREE.SphereGeometry(1, 12, 8).scale(.0395, .047, .0225), 0, .021, 0),
     at(new THREE.SphereGeometry(1, 10, 6).scale(.026, .031, .023), 0, -.023, 0),
     at(new THREE.SphereGeometry(1, 10, 6).scale(.021, .029, .018), -.024, .012, -.004),
   ];
@@ -121,7 +121,7 @@ export function createFirstPersonHands() {
       }
       digits.push({ joints, lengths, radius: thumb ? .0095 : digit === 3 ? .0072 : .0085, thumb, index: digit === 0, spread: thumb ? sign * .18 : sign * (digit - 1.5) * -.015 });
     }
-    return { wrist, sleeve, digits, target: new THREE.Vector3(), orientation: new THREE.Quaternion(), phaseStart: new THREE.Vector3(), curl: 1 };
+    return { wrist, sleeve, digits, target: new THREE.Vector3(), orientation: new THREE.Quaternion(), phaseStart: new THREE.Vector3(), phaseRotation: new THREE.Quaternion(), curl: 1 };
   }
   const right = makeHand('right'), left = makeHand('left');
   const hands = [right, left], sides = [['right', right], ['left', left]] as const;
@@ -158,7 +158,7 @@ export function createFirstPersonHands() {
       const stage = sequence?.phases[sequence.index];
       const nextPhase = stage?.phase ?? '';
       if (changed) { left.wrist.position.copy(left.target); left.wrist.quaternion.copy(left.orientation); phase = ''; }
-      if (phase !== nextPhase) { left.phaseStart.copy(left.wrist.position); phase = nextPhase; }
+      if (phase !== nextPhase) { left.phaseStart.copy(left.wrist.position); left.phaseRotation.copy(left.wrist.quaternion); phase = nextPhase; }
       const p = stage ? THREE.MathUtils.smoothstep(sequence!.elapsed / stage.duration, 0, 1) : 0;
       let curl = config.left.curl;
       if (stage) {
@@ -181,9 +181,27 @@ export function createFirstPersonHands() {
           left.target.copy(supportGrip); left.orientation.setFromEuler(euler.set(...config.left.rotation)); curl = config.left.curl;
         }
       }
+      const arChamber = id === 'ar' && stage?.phase === 'chamber' && sequence?.empty && config.chamber;
+      if (arChamber) {
+        const control = assembly.parts[arChamber.followPart!];
+        control.updateWorldMatrix(true, false); assembly.root.updateWorldMatrix(true, false);
+        inverse.copy(assembly.root.matrixWorld).invert(); matrix.multiplyMatrices(inverse, control.matrixWorld);
+        left.target.fromArray(arChamber.partOffset!).applyMatrix4(matrix);
+        targetRotation.setFromEuler(euler.set(...arChamber.rotation));
+        const progress = sequence!.elapsed / stage!.duration;
+        left.orientation.slerpQuaternions(left.phaseRotation, targetRotation, arChamberReach(progress));
+        left.target.lerpVectors(left.phaseStart, left.target, arChamberReach(progress));
+        left.target.lerp(supportGrip, arChamberRelease(progress));
+        targetRotation.setFromEuler(euler.set(...config.left.rotation));
+        left.orientation.slerp(targetRotation, arChamberRelease(progress));
+        curl = arChamber.curl;
+      }
       const alpha = changed || dt === 0 ? 1 : 1 - Math.exp(-24 * dt);
       right.wrist.position.copy(right.target); right.wrist.quaternion.copy(right.orientation);
-      left.wrist.position.lerp(left.target, alpha); left.wrist.quaternion.slerp(left.orientation, alpha);
+      // AR control contact is authored against the current moving part, without
+      // an exponential lag that would leave fingers behind the charging latch.
+      left.wrist.position.lerp(left.target, arChamber ? 1 : alpha);
+      left.wrist.quaternion.slerp(left.orientation, arChamber ? 1 : alpha);
       // Solve the sleeve from its posed cuff toward a camera-local torso bend.
       // Receiver tilt must not rotate a cut-off sleeve end into the viewport.
       assembly.root.updateMatrix(); inverse.copy(assembly.root.matrix).invert();
@@ -209,7 +227,7 @@ export function createFirstPersonHands() {
         direction.copy(end).sub(elbow); hand.sleeve.scale.set(1, direction.length() + .012, 1);
         hand.sleeve.quaternion.setFromUnitVectors(up, direction.normalize());
         for (const digit of hand.digits) for (let segment = 0; segment < 3; segment++) {
-          const angle = (digit.thumb ? thumbAngles : digit.index && side === 'right' && attachment.triggerFinger !== false ? triggerAngles : gripAngles)[segment];
+          const angle = (digit.thumb ? attachment.thumbAngles ?? thumbAngles : digit.index && side === 'right' && attachment.triggerFinger !== false ? triggerAngles : attachment.fingerAngles ?? gripAngles)[segment];
           digit.joints[segment].rotation.set(-angle * (hand.curl + (aiming ? .025 : 0)), 0, segment === 0 ? digit.spread : 0);
         }
       }
