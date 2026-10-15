@@ -35,6 +35,12 @@ const server = await createServer({ root: process.env.VIEWMODEL_ROOT, logLevel: 
           playerLoadout[0] = w; playerWeaponState[0] = { ammo: w.mag, reserve: w.reserve, heat: 60 };
           switchSlot(0); player.aiming = false;
         },
+        settlePose(aiming = false, sprinting = false) {
+          // Software WebGL advances very few live frames during wall-clock waits.
+          // Settle presentation only; ammo, reload, input and world state are untouched.
+          for (let i = 0; i < 90; i++) vmManager.update(1 / 60, currentSlot(), currentSlotState(), aiming, sprinting, player.onGround, sprinting, false, false, 0, true, true);
+          camera.fov = aiming ? currentSlot().adsFov : HIP_FOV; camera.updateProjectionMatrix();
+        },
         kill() { applyDamageToPlayer(999999, true, true, null); }
       };
       // Main Game Loop`);
@@ -215,7 +221,7 @@ try {
       for (const id of modelIds) {
         await page.evaluate(id => window.__handsGame.equip(id), id);
         await page.waitForTimeout(450);
-        await page.evaluate(() => { const g = window.__handsGame; g.camera.fov = 74; g.camera.updateProjectionMatrix(); });
+        await page.evaluate(() => { window.__handsGame.settlePose(); });
         await page.screenshot({ path: resolve(output, `game-${faction}-${id}-idle.png`) });
         gameplay.push(await page.evaluate(({faction, id}) => {
           const g = window.__handsGame, i = g.renderer.info;
@@ -224,7 +230,7 @@ try {
         await page.mouse.down({ button: 'right' });
         await page.waitForFunction(() => window.__handsGame.player.aiming);
         await page.waitForTimeout(450);
-        await page.evaluate(() => { const g = window.__handsGame; g.camera.fov = g.weapon.adsFov; g.camera.updateProjectionMatrix(); });
+        await page.evaluate(() => { window.__handsGame.settlePose(true); });
         await page.screenshot({ path: resolve(output, `game-${faction}-${id}-aim.png`) });
         await page.mouse.up({ button: 'right' });
         if (id === 'shotgun') {
@@ -234,7 +240,8 @@ try {
         }
         await page.keyboard.down('w'); await page.keyboard.down('Shift');
         await page.waitForTimeout(400);
-        await page.screenshot({ path: resolve(output, `game-${faction}-${id}-sprint.png`) });
+        await page.evaluate(() => window.__handsGame.settlePose(false, true));
+        if (['ar', 'shotgun', 'minigun'].includes(id)) await page.screenshot({ path: resolve(output, `game-${faction}-${id}-sprint.png`) });
         await page.keyboard.up('Shift'); await page.keyboard.up('w');
         if (['ar', 'shotgun', 'lmg', 'minigun'].includes(id)) {
           await page.evaluate(() => { const s = window.__handsGame.weaponState; s.ammo = 0; s.heat = 80; });

@@ -13,12 +13,13 @@ export interface HandAttachment {
 export interface ViewmodelGrip {
   right: HandAttachment;
   left: HandAttachment;
-  /** Camera-local sleeve anchors, kept below the frame during receiver poses. */
+  /** Camera-local torso bend targets; sleeve length remains independently bounded. */
   elbows: { right: Triple; left: Triple };
   /** Maximum anatomical cuff-to-elbow length, independent of weapon reach. */
   sleeveLength: number;
   hip: Triple;
   aim: Triple;
+  aimRotation: Triple;
   sprint: Triple;
   sprintRotation: Triple;
   reloadReach: Triple;
@@ -34,7 +35,7 @@ function grip(right: HandAttachment, left: HandAttachment, options: Partial<View
   return {
     right, left,
     elbows: { right: [.36, -.56, -.24], left: [-.10, -.53, -.32] },
-    sleeveLength: .30,
+    sleeveLength: .30, aimRotation: [0, 0, 0],
     hip: [.15, -.215, -.36], aim: [0, -.105, -.36],
     sprint: [.19, -.27, -.39], sprintRotation: [.22, -.16, -.28],
     reloadReach: [-.04, -.045, .065], ...options,
@@ -46,10 +47,10 @@ function grip(right: HandAttachment, left: HandAttachment, options: Partial<View
 export const VIEWMODEL_GRIPS: Readonly<Record<WeaponModelId, ViewmodelGrip>> = {
   ar: grip(primary(), under(-.28), { hip: [.145, -.205, -.36], aim: [0, -.145, -.36] }),
   pistol: grip(primary(.105), vertical(.088, -.039, -.108), {
-    hip: [.13, -.125, -.39], aim: [0, -.045, -.39],
+    hip: [.13, -.125, -.39], aim: [0, -.0725, -.39],
     sprintRotation: [.35, -.16, -.23],
   }),
-  shotgun: grip(primary(), { ...under(-.23, -.067), followPart: 'pump', partOffset: [-.055, -.035, .025] }, { hip: [.15, -.225, -.36], aim: [0, -.065, -.36] }),
+  shotgun: grip(primary(), { ...under(-.23, -.067), followPart: 'pump', partOffset: [-.055, -.035, .025] }, { hip: [.15, -.225, -.36], aim: [0, -.08375, -.36], aimRotation: [.0306, 0, 0] }),
   sniper: grip(primary(), under(-.28), { hip: [.155, -.22, -.39], aim: [0, -.105, -.39] }),
   smg: grip(primary(), vertical(-.18, -.039, -.10), { hip: [.135, -.205, -.34], aim: [0, -.145, -.34] }),
   lmg: grip(primary(), under(-.27, -.067), { hip: [.17, -.245, -.40], aim: [0, -.105, -.40] }),

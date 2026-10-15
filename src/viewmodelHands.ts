@@ -184,8 +184,8 @@ export function createFirstPersonHands() {
       const alpha = changed || dt === 0 ? 1 : 1 - Math.exp(-24 * dt);
       right.wrist.position.copy(right.target); right.wrist.quaternion.copy(right.orientation);
       left.wrist.position.lerp(left.target, alpha); left.wrist.quaternion.slerp(left.orientation, alpha);
+      // Solve the sleeve from its posed cuff toward a camera-local torso bend.
       // Receiver tilt must not rotate a cut-off sleeve end into the viewport.
-      // Convert stable camera-local elbow anchors into the moving weapon frame.
       assembly.root.updateMatrix(); inverse.copy(assembly.root.matrix).invert();
       for (const [side, hand] of sides) {
         const attachment = config[side];

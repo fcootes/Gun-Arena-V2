@@ -514,7 +514,9 @@ export function createViewmodelManager(): ViewmodelManager {
     const grip = VIEWMODEL_GRIPS[w.id as WeaponModelId];
     const alpha = 1 - Math.exp(-14 * dt);
     targetPosition.fromArray(aiming ? grip.aim : sprinting ? grip.sprint : grip.hip);
-    if (sprinting && !aiming) targetEuler.set(...grip.sprintRotation); else targetEuler.set(0, 0, 0);
+    if (aiming) targetEuler.set(...grip.aimRotation);
+    else if (sprinting) targetEuler.set(...grip.sprintRotation);
+    else targetEuler.set(0, 0, 0);
     targetRotation.setFromEuler(targetEuler);
     if (!poseInitialized) { viewPosition.copy(targetPosition); viewRotation.copy(targetRotation); poseInitialized = true; }
     else { viewPosition.lerp(targetPosition, alpha); viewRotation.slerp(targetRotation, alpha); }

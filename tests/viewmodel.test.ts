@@ -171,6 +171,13 @@ function assertNear(id: string) {
 for (const id of WEAPON_MODEL_IDS) {
   for (const [aim, sprint] of [[false, false], [true, false], [false, true]]) {
     boundsVm.resetEffects(); step(boundsVm, id, 0, {}, aim, sprint); assertNear(id);
+    if (aim && id === 'shotgun') {
+      const model = weapon(boundsVm, id);
+      for (const sight of [[0, .087, .105], [0, .0685, -.5]]) {
+        const point = new THREE.Vector3(...sight).applyMatrix4(model.matrixWorld).project(acceptanceCamera);
+        assert.ok(Math.abs(point.x) < 1e-6 && Math.abs(point.y) < .001, 'Shotgun front post and rear ring share the centre sight line');
+      }
+    }
     if (aim && ['ar', 'smg', 'railgun', 'rocket'].includes(id)) {
       const visible: THREE.Mesh[] = [];
       boundsVm.root.traverseVisible(o => { if (o instanceof THREE.Mesh) visible.push(o); });
