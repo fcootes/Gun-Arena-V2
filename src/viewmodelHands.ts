@@ -1,3 +1,4 @@
+import { PISTOL, pistolEase, pistolPickup, pistolSprintWrist } from './pistolMechanics';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
@@ -15,6 +16,7 @@ interface Hand {
   target: THREE.Vector3; orientation: THREE.Quaternion; phaseStart: THREE.Vector3; phaseRotation: THREE.Quaternion;
   curl: number;
 }
+const pistolFingerAngles = [.85, 1.20, .90], pistolThumbAngles = [.25, .55, .45];
 const thumbAngles = [.20, .35, .30], triggerAngles = [.10, .50, .65], gripAngles = [.5, .9, .65];
 
 /** One pair per manager. All 30 phalanges share two instanced draws. Static
@@ -50,6 +52,7 @@ export function createFirstPersonHands() {
   const scratch = new THREE.Object3D(), inverse = new THREE.Matrix4(), matrix = new THREE.Matrix4(), instanceTransform = new THREE.Matrix4();
   const direction = new THREE.Vector3(), end = new THREE.Vector3(), elbow = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
   const targetRotation = new THREE.Quaternion(), euler = new THREE.Euler(), attachmentPosition = new THREE.Vector3();
+  const inverseWeaponRotation = new THREE.Quaternion();
   const supportGrip = new THREE.Vector3(), shotgunPickup = new THREE.Vector3(-.078, -.170, -.03536);
   const shellPose = { x: 0, y: 0, z: 0, angle: 0 };
   let selected: WeaponModelId = 'ar', phase = '', disposed = false, initialized = false;
@@ -146,7 +149,8 @@ export function createFirstPersonHands() {
       sleeveMaterial.color.setHex(faction === 'apex' ? 0x394b59 : 0x535a45);
     },
     releaseInstances,
-    update(id: WeaponModelId, dt: number, assembly: WeaponAssembly, state: WeaponSlotState | null | undefined, aiming: boolean) {
+    reset() { initialized = false; phase = ''; },
+    update(id: WeaponModelId, dt: number, assembly: WeaponAssembly, state: WeaponSlotState | null | undefined, aiming: boolean, pistolSprintBlend = 0, sprintPhase = 0) {
       if (disposed) return;
       const changed = !initialized || selected !== id; selected = id;
       const config = VIEWMODEL_GRIPS[id];
@@ -165,8 +169,8 @@ export function createFirstPersonHands() {
       if (phase !== nextPhase) { left.phaseStart.copy(left.wrist.position); left.phaseRotation.copy(left.wrist.quaternion); phase = nextPhase; }
       const p = stage ? THREE.MathUtils.smoothstep(sequence!.elapsed / stage.duration, 0, 1) : 0;
       let curl = config.left.curl;
-      let shellGrip = 0, shellPress = 0, brGrip = 0;
-      if (stage && id !== 'br') {
+      let shellGrip = 0, shellPress = 0, brGrip = 0, pistolContact = 0;
+      if (stage && id !== 'br' && id !== 'pistol') {
         const part = stage.phase === 'chamber' ? assembly.parts.bolt ?? assembly.parts.slide ?? assembly.parts.pump :
           sequence!.kind === 'vent' ? assembly.parts.feedTray ?? assembly.parts.receiver :
           assembly.parts.magazine ?? assembly.parts.reloadRound ?? assembly.parts.vent ?? assembly.parts.receiver;
@@ -296,12 +300,44 @@ export function createFirstPersonHands() {
           if (state?.shotgunCycle?.kind === 'chamber') left.target.lerpVectors(left.phaseStart, supportGrip, shotgunEase(state.shotgunCycle.elapsed / (state.shotgunCycle.duration * SHOTGUN.recovery / SHOTGUN.cycle)));
         }
       }
+      if (id === 'pistol') {
+        left.target.copy(supportGrip); left.orientation.setFromEuler(euler.set(...config.left.rotation));
+        if (stage) {
+          const t = sequence!.elapsed / stage.duration;
+          const old = assembly.parts.magazine, fresh = assembly.parts.freshMagazine;
+          const part = stage.phase === 'eject' || (stage.phase === 'insert' && t < pistolPickup(sequence!.empty).appear - .005) ? old : fresh;
+          part.updateMatrix();
+          attachmentPosition.fromArray(PISTOL.magazineGrip).applyMatrix4(part.matrix);
+          targetRotation.setFromEuler(euler.set(...PISTOL.magazineRotation)).premultiply(part.quaternion);
+          left.target.copy(attachmentPosition); left.orientation.copy(targetRotation);
+          pistolContact = 1; curl = .95;
+          if (stage.phase === 'eject') {
+            const reach = pistolEase(t / .20);
+            left.target.lerpVectors(supportGrip, attachmentPosition, reach);
+            left.orientation.setFromEuler(euler.set(...config.left.rotation)).slerp(targetRotation, reach);
+            pistolContact = reach;
+          } else if (stage.phase === 'chamber') {
+            // Thumb reaches the actual slide-release paddle. The slide return
+            // follows the same normalized phase, after the mag transfer.
+            const reach = pistolEase(t / .16);
+            left.target.lerp(attachmentPosition.fromArray(PISTOL.releaseGrip), reach);
+            targetRotation.setFromEuler(euler.set(...PISTOL.releaseRotation)); left.orientation.slerp(targetRotation, reach);
+            pistolContact = 1 - reach;
+          } else if (stage.phase === 'close') {
+            if (sequence!.empty) { left.target.fromArray(PISTOL.releaseGrip); left.orientation.setFromEuler(euler.set(...PISTOL.releaseRotation)); }
+            const recover = pistolEase(t);
+            left.target.lerp(supportGrip, recover);
+            targetRotation.setFromEuler(euler.set(...config.left.rotation)); left.orientation.slerp(targetRotation, recover);
+            pistolContact = 1 - recover; curl = config.left.curl;
+          }
+        }
+      }
       const alpha = changed || dt === 0 ? 1 : 1 - Math.exp(-24 * dt);
       right.wrist.position.copy(right.target); right.wrist.quaternion.copy(right.orientation);
       // AR control contact is authored against the current moving part, without
       // an exponential lag that would leave fingers behind the charging latch.
-      left.wrist.position.lerp(left.target, arChamber || id === 'shotgun' || id === 'sniper' || id === 'br' ? 1 : alpha);
-      left.wrist.quaternion.slerp(left.orientation, arChamber || id === 'shotgun' || id === 'sniper' || id === 'br' ? 1 : alpha);
+      left.wrist.position.lerp(left.target, arChamber || id === 'shotgun' || id === 'sniper' || id === 'br' || (id === 'pistol' && (!!stage || pistolSprintBlend > 1e-5)) ? 1 : alpha);
+      left.wrist.quaternion.slerp(left.orientation, arChamber || id === 'shotgun' || id === 'sniper' || id === 'br' || (id === 'pistol' && (!!stage || pistolSprintBlend > 1e-5)) ? 1 : alpha);
       // Solve the sleeve from its posed cuff toward a camera-local torso bend.
       // Receiver tilt must not rotate a cut-off sleeve end into the viewport.
       assembly.root.updateMatrix(); inverse.copy(assembly.root.matrix).invert();
@@ -336,6 +372,10 @@ export function createFirstPersonHands() {
             const load = config.shellLoad, gripAngle = (digit.thumb ? load.grip.thumbAngles! : load.grip.fingerAngles!)[segment];
             const pressAngle = (digit.thumb ? load.press.thumbAngles! : load.press.fingerAngles!)[segment];
             angle += (gripAngle + (pressAngle - gripAngle) * shellPress - angle) * shellGrip;
+          }
+          if (side === 'left' && pistolContact > 0) {
+            const contactAngle = (digit.thumb ? pistolThumbAngles : pistolFingerAngles)[segment];
+            angle += (contactAngle - angle) * pistolContact;
           }
           digit.joints[segment].rotation.set(-angle * (hand.curl + (aiming ? .025 : 0)), 0, segment === 0 ? digit.spread : 0);
           if (side === 'left' && config.magazineGrip && brGrip > 0 && digit.thumb && segment === 0) {

@@ -1,3 +1,4 @@
+import { createPistolAnimator } from './pistolMechanics';
 import * as THREE from 'three';
 import { WeaponDef, WeaponSlotState, ARSENAL } from './types';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
@@ -309,6 +310,7 @@ export function createViewmodelManager(): ViewmodelManager {
       assembly: WeaponAssembly;
       effects: WeaponMuzzleEffect;
       brReload?: ReturnType<typeof createBattleRifleAnimator>;
+      pistolAnimation?: ReturnType<typeof createPistolAnimator>;
       pose: Map<
         THREE.Object3D,
         { position: THREE.Vector3; quaternion: THREE.Quaternion }
@@ -334,6 +336,8 @@ export function createViewmodelManager(): ViewmodelManager {
   const viewPosition = new THREE.Vector3(), targetPosition = new THREE.Vector3();
   const viewRotation = new THREE.Quaternion(), targetRotation = new THREE.Quaternion(), targetEuler = new THREE.Euler();
   let poseInitialized = false, previousId = '', walkBlend = 0, runBlend = 0, equip = 0, disposed = false;
+  let pistolSprintBlend = 0;
+  function resetPistolMotion() { pistolSprintBlend = 0; hands.reset(); }
   root.userData.cleanupWeaponEffect = () => { disposed = true; hands.releaseInstances(); models.clear(); selected = null; };
   const gloveMaterial = new THREE.MeshStandardMaterial({
     color: 0x20282b,
@@ -431,7 +435,7 @@ export function createViewmodelManager(): ViewmodelManager {
         quaternion: part.quaternion.clone(),
       }),
     );
-    model = { assembly, effects, pose, brReload:id === 'br' ? createBattleRifleAnimator(assembly) : undefined };
+    model = { assembly, effects, pose, brReload:id === 'br' ? createBattleRifleAnimator(assembly) : undefined, pistolAnimation:id === 'pistol' ? createPistolAnimator(assembly) : undefined };
     models.set(id, model);
     return model;
   }
@@ -450,7 +454,7 @@ export function createViewmodelManager(): ViewmodelManager {
     playing: boolean,
   ) {
     if (disposed) return;
-    if (!alive) { root.visible = false; return; }
+    if (!alive) { root.visible = false; resetPistolMotion(); return; }
     if (!playing) return; // Pausing freezes pose, joints, timers and recoil.
     dt = Number.isFinite(dt) ? THREE.MathUtils.clamp(dt, 0, .1) : 0;
     const w =
@@ -498,7 +502,7 @@ export function createViewmodelManager(): ViewmodelManager {
       utility.position.set(-0.16, -0.06, -0.35);
       screenMaterial.emissiveIntensity = radioHold ? 1.9 : 1.2;
     }
-    if (!selected) { hands.root.visible = false; previousId = w.id; return; }
+    if (!selected) { hands.root.visible = false; resetPistolMotion(); previousId = w.id; return; }
     const { assembly, pose } = selected,
       parts = assembly.parts;
     if (hands.root.parent !== assembly.root) assembly.root.add(hands.root);
@@ -522,7 +526,7 @@ export function createViewmodelManager(): ViewmodelManager {
     targetRotation.setFromEuler(targetEuler);
     if (!poseInitialized) { viewPosition.copy(targetPosition); viewRotation.copy(targetRotation); poseInitialized = true; }
     else { viewPosition.lerp(targetPosition, alpha); viewRotation.slerp(targetRotation, alpha); }
-    if (previousId && previousId !== w.id) equip = 1;
+    if (previousId !== w.id) { equip = previousId ? 1 : 0; resetPistolMotion(); }
     previousId = w.id; equip *= Math.exp(-18 * dt);
     walkBlend += ((moving && onGround ? 1 : 0) - walkBlend) * (1 - Math.exp(-12 * dt));
     runBlend += ((sprinting && !aiming && moving && onGround ? 1 : 0) - runBlend) * (1 - Math.exp(-12 * dt));
@@ -538,7 +542,8 @@ export function createViewmodelManager(): ViewmodelManager {
     if (parts.reloadRound) parts.reloadRound.visible = false;
     if (parts.freshMagazine) parts.freshMagazine.visible = false;
     const sequence = ws?.reloadSequence;
-    if (ws?.reloading && sequence && selected.brReload) selected.brReload(sequence);
+    if (selected.pistolAnimation) selected.pistolAnimation(ws, Math.sin((slideTimer / .12) * Math.PI));
+    else if (ws?.reloading && sequence && selected.brReload) selected.brReload(sequence);
     else if (ws?.reloading && sequence) {
       const phase = sequence.phases[sequence.index];
       const p = THREE.MathUtils.smoothstep(sequence.elapsed / phase.duration, 0, 1);
@@ -669,7 +674,7 @@ export function createViewmodelManager(): ViewmodelManager {
       models.forEach((model) => model.effects.reset());
       recoil = recoilRotation = slideTimer = boltTimer = equip = walkBlend = runBlend = time = bob = 0;
       charge = spin = radioTimer = 0; venting = radioHold = false;
-      poseInitialized = false; previousId = '';
+      poseInitialized = false; previousId = ''; resetPistolMotion();
     },
   };
 }
