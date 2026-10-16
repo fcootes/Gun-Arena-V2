@@ -1,0 +1,488 @@
+{
+  "units": "simulation seconds; observed frame quantization shown separately from exact boundaries",
+  "before": {
+    "recovery": 0.18,
+    "rearward": 0.23,
+    "rearStop": 0.03,
+    "forward": 0.22,
+    "settle": 0.08,
+    "cycle": 0.74,
+    "fireInterval": 0.85,
+    "rollRadians": -1.25
+  },
+  "after": {
+    "recovery": 0.32,
+    "rearward": 0.2,
+    "rearStop": 0.02,
+    "forward": 0.22,
+    "settle": 0.08,
+    "rearEnd": 0.52,
+    "forwardStart": 0.54,
+    "pumpEnd": 0.76,
+    "pumpDuration": 0.44,
+    "cycle": 0.84,
+    "stroke": 0.075,
+    "open": 0.3,
+    "shell": 0.85,
+    "seat": 0.72,
+    "close": 0.26,
+    "fireInterval": 0.85,
+    "rollRadians": -0.52
+  },
+  "strokeSamples": [
+    {
+      "seconds": 0,
+      "metres": 0
+    },
+    {
+      "seconds": 0.18,
+      "metres": 0
+    },
+    {
+      "seconds": 0.31,
+      "metres": 0
+    },
+    {
+      "seconds": 0.32,
+      "metres": 0
+    },
+    {
+      "seconds": 0.42,
+      "metres": 0.03749999999999996
+    },
+    {
+      "seconds": 0.52,
+      "metres": 0.075
+    },
+    {
+      "seconds": 0.53,
+      "metres": 0.075
+    },
+    {
+      "seconds": 0.54,
+      "metres": 0.075
+    },
+    {
+      "seconds": 0.65,
+      "metres": 0.037500000000000006
+    },
+    {
+      "seconds": 0.76,
+      "metres": 0
+    },
+    {
+      "seconds": 0.8,
+      "metres": 0
+    },
+    {
+      "seconds": 0.84,
+      "metres": 0
+    }
+  ],
+  "rates": [
+    {
+      "hz": 30,
+      "events": [
+        {
+          "event": "pump",
+          "simulationBoundary": 0.32,
+          "observedFrame": 0.3333333333333333,
+          "late": 0.013333333333333308,
+          "duration": 0.44
+        }
+      ],
+      "firstReadyFrame": 0.8666666666666666,
+      "firstFireIntervalFrame": 0.8666666666666667,
+      "ammo": 5,
+      "reserve": 14,
+      "needsChamber": false
+    },
+    {
+      "hz": 60,
+      "events": [
+        {
+          "event": "pump",
+          "simulationBoundary": 0.32,
+          "observedFrame": 0.3333333333333333,
+          "late": 0.013333333333333308,
+          "duration": 0.44
+        }
+      ],
+      "firstReadyFrame": 0.850000000000001,
+      "firstFireIntervalFrame": 0.85,
+      "ammo": 5,
+      "reserve": 14,
+      "needsChamber": false
+    },
+    {
+      "hz": 144,
+      "events": [
+        {
+          "event": "pump",
+          "simulationBoundary": 0.32,
+          "observedFrame": 0.3263888888888887,
+          "late": 0.006388888888888666,
+          "duration": 0.44
+        }
+      ],
+      "firstReadyFrame": 0.8402777777777758,
+      "firstFireIntervalFrame": 0.8541666666666666,
+      "ammo": 5,
+      "reserve": 14,
+      "needsChamber": false
+    }
+  ],
+  "reloads": [
+    {
+      "speed": 1,
+      "initialAmmo": 0,
+      "duration": 6.42,
+      "events": [
+        {
+          "event": "seat",
+          "simulationBoundary": 0.911999999999999,
+          "observedFrame": 0.9166666666666644,
+          "clipWindow": 0.48,
+          "ammo": 1,
+          "reserve": 13,
+          "needsChamber": true
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 1.761999999999998,
+          "observedFrame": 1.7638888888888837,
+          "clipWindow": 0.48,
+          "ammo": 2,
+          "reserve": 12,
+          "needsChamber": true
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 2.6120000000000125,
+          "observedFrame": 2.618055555555567,
+          "clipWindow": 0.48,
+          "ammo": 3,
+          "reserve": 11,
+          "needsChamber": true
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 3.4620000000000384,
+          "observedFrame": 3.465277777777813,
+          "clipWindow": 0.48,
+          "ammo": 4,
+          "reserve": 10,
+          "needsChamber": true
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 4.312000000000064,
+          "observedFrame": 4.3125000000000595,
+          "clipWindow": 0.48,
+          "ammo": 5,
+          "reserve": 9,
+          "needsChamber": true
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 5.1620000000000905,
+          "observedFrame": 5.1666666666667505,
+          "clipWindow": 0.48,
+          "ammo": 6,
+          "reserve": 8,
+          "needsChamber": true
+        },
+        {
+          "event": "pump",
+          "simulationBoundary": 5.720000000000108,
+          "observedFrame": 5.722222222222322,
+          "clipWindow": 0.44,
+          "ammo": 6,
+          "reserve": 8,
+          "needsChamber": true
+        }
+      ],
+      "finalAmmo": 6,
+      "reserve": 8
+    },
+    {
+      "speed": 1,
+      "initialAmmo": 2,
+      "duration": 3.96,
+      "events": [
+        {
+          "event": "seat",
+          "simulationBoundary": 0.911999999999999,
+          "observedFrame": 0.9166666666666644,
+          "clipWindow": 0.48,
+          "ammo": 3,
+          "reserve": 13,
+          "needsChamber": false
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 1.761999999999998,
+          "observedFrame": 1.7638888888888837,
+          "clipWindow": 0.48,
+          "ammo": 4,
+          "reserve": 12,
+          "needsChamber": false
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 2.6120000000000125,
+          "observedFrame": 2.618055555555567,
+          "clipWindow": 0.48,
+          "ammo": 5,
+          "reserve": 11,
+          "needsChamber": false
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 3.4620000000000384,
+          "observedFrame": 3.465277777777813,
+          "clipWindow": 0.48,
+          "ammo": 6,
+          "reserve": 10,
+          "needsChamber": false
+        }
+      ],
+      "finalAmmo": 6,
+      "reserve": 10
+    },
+    {
+      "speed": 0.75,
+      "initialAmmo": 0,
+      "duration": 4.8149999999999995,
+      "events": [
+        {
+          "event": "seat",
+          "simulationBoundary": 0.683999999999999,
+          "observedFrame": 0.6874999999999986,
+          "clipWindow": 0.36,
+          "ammo": 1,
+          "reserve": 13,
+          "needsChamber": true
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 1.3214999999999981,
+          "observedFrame": 1.3263888888888853,
+          "clipWindow": 0.36,
+          "ammo": 2,
+          "reserve": 12,
+          "needsChamber": true
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 1.9589999999999947,
+          "observedFrame": 1.965277777777772,
+          "clipWindow": 0.36,
+          "ammo": 3,
+          "reserve": 11,
+          "needsChamber": true
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 2.5965000000000127,
+          "observedFrame": 2.597222222222233,
+          "clipWindow": 0.36,
+          "ammo": 4,
+          "reserve": 10,
+          "needsChamber": true
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 3.234000000000032,
+          "observedFrame": 3.23611111111114,
+          "clipWindow": 0.36,
+          "ammo": 5,
+          "reserve": 9,
+          "needsChamber": true
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 3.8715000000000512,
+          "observedFrame": 3.875000000000047,
+          "clipWindow": 0.36,
+          "ammo": 6,
+          "reserve": 8,
+          "needsChamber": true
+        },
+        {
+          "event": "pump",
+          "simulationBoundary": 4.290000000000064,
+          "observedFrame": 4.291666666666726,
+          "clipWindow": 0.33,
+          "ammo": 6,
+          "reserve": 8,
+          "needsChamber": true
+        }
+      ],
+      "finalAmmo": 6,
+      "reserve": 8
+    },
+    {
+      "speed": 0.75,
+      "initialAmmo": 2,
+      "duration": 2.9699999999999998,
+      "events": [
+        {
+          "event": "seat",
+          "simulationBoundary": 0.683999999999999,
+          "observedFrame": 0.6874999999999986,
+          "clipWindow": 0.36,
+          "ammo": 3,
+          "reserve": 13,
+          "needsChamber": false
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 1.3214999999999981,
+          "observedFrame": 1.3263888888888853,
+          "clipWindow": 0.36,
+          "ammo": 4,
+          "reserve": 12,
+          "needsChamber": false
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 1.9589999999999947,
+          "observedFrame": 1.965277777777772,
+          "clipWindow": 0.36,
+          "ammo": 5,
+          "reserve": 11,
+          "needsChamber": false
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 2.5965000000000127,
+          "observedFrame": 2.597222222222233,
+          "clipWindow": 0.36,
+          "ammo": 6,
+          "reserve": 10,
+          "needsChamber": false
+        }
+      ],
+      "finalAmmo": 6,
+      "reserve": 10
+    },
+    {
+      "speed": 0.9,
+      "initialAmmo": 0,
+      "duration": 5.7780000000000005,
+      "events": [
+        {
+          "event": "seat",
+          "simulationBoundary": 0.820799999999999,
+          "observedFrame": 0.826388888888887,
+          "clipWindow": 0.432,
+          "ammo": 1,
+          "reserve": 13,
+          "needsChamber": true
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 1.585799999999998,
+          "observedFrame": 1.5902777777777732,
+          "clipWindow": 0.432,
+          "ammo": 2,
+          "reserve": 12,
+          "needsChamber": true
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 2.350800000000008,
+          "observedFrame": 2.3541666666666705,
+          "clipWindow": 0.432,
+          "ammo": 3,
+          "reserve": 11,
+          "needsChamber": true
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 3.1158000000000317,
+          "observedFrame": 3.118055555555581,
+          "clipWindow": 0.432,
+          "ammo": 4,
+          "reserve": 10,
+          "needsChamber": true
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 3.880800000000055,
+          "observedFrame": 3.8819444444444917,
+          "clipWindow": 0.432,
+          "ammo": 5,
+          "reserve": 9,
+          "needsChamber": true
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 4.6458000000000785,
+          "observedFrame": 4.645833333333402,
+          "clipWindow": 0.432,
+          "ammo": 6,
+          "reserve": 8,
+          "needsChamber": true
+        },
+        {
+          "event": "pump",
+          "simulationBoundary": 5.148000000000094,
+          "observedFrame": 5.152777777777861,
+          "clipWindow": 0.396,
+          "ammo": 6,
+          "reserve": 8,
+          "needsChamber": true
+        }
+      ],
+      "finalAmmo": 6,
+      "reserve": 8
+    },
+    {
+      "speed": 0.9,
+      "initialAmmo": 2,
+      "duration": 3.564,
+      "events": [
+        {
+          "event": "seat",
+          "simulationBoundary": 0.820799999999999,
+          "observedFrame": 0.826388888888887,
+          "clipWindow": 0.432,
+          "ammo": 3,
+          "reserve": 13,
+          "needsChamber": false
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 1.585799999999998,
+          "observedFrame": 1.5902777777777732,
+          "clipWindow": 0.432,
+          "ammo": 4,
+          "reserve": 12,
+          "needsChamber": false
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 2.350800000000008,
+          "observedFrame": 2.3541666666666705,
+          "clipWindow": 0.432,
+          "ammo": 5,
+          "reserve": 11,
+          "needsChamber": false
+        },
+        {
+          "event": "seat",
+          "simulationBoundary": 3.1158000000000317,
+          "observedFrame": 3.118055555555581,
+          "clipWindow": 0.432,
+          "ammo": 6,
+          "reserve": 10,
+          "needsChamber": false
+        }
+      ],
+      "finalAmmo": 6,
+      "reserve": 10
+    }
+  ]
+}

@@ -3208,9 +3208,9 @@ export function updateClassCombatBot(bot: Bot, dt: number, ctx: CombatSystemsCon
   if (ws.reloading) { if (def.id !== 'shotgun' || !interruptShellReload(def,ws)) return; }
   if ((ws.boltCycleT ?? 0) > 0) return;
   ws.pendingReloadShot = false;
-  if ((ws.ammo ?? 0) <= 0) { beginWeaponReload(def,ws); return; }
+  if ((ws.ammo ?? 0) <= 0) { beginWeaponReload(def,ws,1,false); return; }
   ws.ammo = (ws.ammo ?? 0) - 1;
-  if(def.id==='laser'||def.id==='minigun'){ws.heat=Math.min(100,(ws.heat??0)+(def.id==='laser'?2:3));if(ws.heat>=100)beginWeaponReload(def,ws);}
+  if(def.id==='laser'||def.id==='minigun'){ws.heat=Math.min(100,(ws.heat??0)+(def.id==='laser'?2:3));if(ws.heat>=100)beginWeaponReload(def,ws,1,false);}
   if (def.id === 'sniper') ws.boltCycleT = .85;
   bot.fireTimer = (def.id==='smg'?.35:def.id==='lmg'?.55:def.id==='pistol'?.7:def.id==='shotgun'?1.4:def.id==='sniper'?1.6:def.id==='br'?.8:def.id==='laser'?.3:def.id==='minigun'?.15:def.id==='railgun'?2:1)*tuning.fireRateMultiplier*(role==='support'?.65:1);
   bot.weaponEffects?.trigger(); ctx.onBotShot?.(bot,def);

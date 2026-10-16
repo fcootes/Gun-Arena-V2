@@ -51,13 +51,13 @@ export const MUZZLE_PROFILES: Record<WeaponModelId, MuzzleProfile> = {
     rear: false,
   },
   sniper: {
-    life: 0.16,
-    width: 0.24,
-    length: 0.95,
-    light: 15,
-    radius: 14,
-    smoke: 11,
-    sparks: 5,
+    life: 0.075,
+    width: 0.14,
+    length: 0.30,
+    light: 4,
+    radius: 5,
+    smoke: 4,
+    sparks: 3,
     star: 4,
     energy: false,
     rear: false,
@@ -364,7 +364,7 @@ export function createWeaponMuzzleEffect(
       coneMaterial.opacity = k * 0.65;
       light.intensity = p.light * k;
       pivot.visible = k > 0;
-      shock.visible = (id === 'railgun' || id === 'sniper') && k > 0;
+      shock.visible = id === 'railgun' && k > 0;
       shock.scale.setScalar(1 + (1 - k) * 8);
       shockMaterial.uniforms.age.value = f;
       if (live === 0) return;

@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { WEAPONS } from '../src/weapons';
 import { beginWeaponReload, advanceWeaponReload, interruptShellReload } from '../src/weaponReload';
 import type { WeaponSlotState } from '../src/types';
+import { SNIPER, beginSniperCycle, requireSniperBolt } from '../src/sniperMechanics';
+import { beginShotgunCycle } from '../src/shotgunMechanics';
 
 function wavDuration(url: string): number {
   const bytes = readFileSync(fileURLToPath(url));
@@ -39,7 +41,7 @@ class MockAudio {
 }
 (globalThis as any).Audio = MockAudio;
 const { AUDIO, FIRST_BATCH_AUDIO_URLS, SECOND_BATCH_AUDIO_URLS, THIRD_BATCH_AUDIO_URLS } = await import('../src/audio');
-const { playWeaponReloadAudio, playShotgunReloadPhase, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } = await import('../src/weaponAudio');
+const { playWeaponReloadAudio, playShotgunMechanicalEvent, playSniperBoltEvent, updateSniperReloadAudio, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } = await import('../src/weaponAudio');
 for (const track of Object.values(AUDIO)) track.prepare();
 const latest = (track: typeof AUDIO.arSingle) => track.pool[(track.index + track.poolSize - 1) % track.poolSize] as unknown as MockAudio;
 const plays = (track: typeof AUDIO.arSingle) => track.pool.reduce((n, audio) => n + (audio as unknown as MockAudio).plays, 0);
@@ -64,7 +66,6 @@ console.log('PASS: all 40 real PCM assets, source selection and sustained AR loo
 for (const [id, tactical, empty] of [
   ['ar', AUDIO.arReloadTactical, AUDIO.arReloadEmpty],
   ['pistol', AUDIO.pistolReloadTactical, AUDIO.pistolReloadEmpty],
-  ['sniper', AUDIO.sniperReloadTactical, AUDIO.sniperReloadEmpty],
   ['smg', AUDIO.smgReloadTactical, AUDIO.smgReloadEmpty],
   ['lmg', AUDIO.lmgReloadTactical, AUDIO.lmgReloadEmpty],
   ['br', AUDIO.brReloadTactical, AUDIO.brReloadEmpty],
@@ -92,6 +93,19 @@ assert.equal(playWeaponReloadAudio(weapon('railgun'), laterBatch), false, 'Other
 console.log('PASS: tactical/empty selection, class reload duration, ammo preservation and chamber-only resume');
 
 const shotgun = weapon('shotgun');
+for (const hz of [30, 60, 144]) {
+  stopWeaponAudio();
+  const ws: WeaponSlotState = {ammo: 5, reserve: 20}; beginShotgunCycle(ws);
+  AUDIO.shotgunShot.play(1, true);
+  const report = latest(AUDIO.shotgunShot), pumps = plays(AUDIO.shotgunPump);
+  advanceWeaponReload(shotgun, ws, .15, undefined, playShotgunMechanicalEvent);
+  assert.equal(plays(AUDIO.shotgunPump), pumps, 'No pump audio during report/recovery');
+  for (let i = 0; i < hz; i++) advanceWeaponReload(shotgun, ws, 1 / hz, undefined, playShotgunMechanicalEvent);
+  assert.equal(plays(AUDIO.shotgunPump), pumps + 1);
+  assert.equal(report.paused, false, 'Delayed mechanical cue leaves the shot tail playing');
+  assert.ok(Math.abs(latest(AUDIO.shotgunPump).duration / latest(AUDIO.shotgunPump).playbackRate - .44)<1e-8, 'Existing pump clip fits the physical moving stroke');
+}
+stopWeaponAudio();
 for (const ammo of [0, 2, 5]) for (const reserve of [1, 20]) for (const multiplier of [1, .75]) {
   const ws: WeaponSlotState = { ammo, reserve }, empty = ammo === 0;
   const selected = empty ? AUDIO.shotgunReloadEmpty : AUDIO.shotgunReload;
@@ -101,23 +115,24 @@ for (const ammo of [0, 2, 5]) for (const reserve of [1, 20]) for (const multipli
   playWeaponReloadAudio(shotgun, ws);
   assert.equal(plays(selected), before, 'No shell sound during initial open phase');
   const insertDuration = ws.reloadSequence!.phases[1].duration;
-  const inserted = advanceWeaponReload(shotgun, ws, 100, playShotgunReloadPhase);
-  assert.equal(inserted, missing); assert.equal(plays(selected) - before, missing, 'Exactly one start event per actual shell phase');
-  assert.equal(plays(AUDIO.shotgunPump) - pumpBefore, 1, 'One final pump for both empty and partial reloads');
-  assert.ok(Math.abs(latest(selected).duration / latest(selected).playbackRate - insertDuration) < 1e-9);
+  let inserted = 0;
+  while (ws.reloading) inserted += advanceWeaponReload(shotgun, ws, 1 / 144, undefined, playShotgunMechanicalEvent);
+  assert.equal(inserted, missing); assert.equal(plays(selected) - before, missing, 'Exactly one seating cue per transferred shell');
+  assert.equal(plays(AUDIO.shotgunPump) - pumpBefore, empty ? 1 : 0, 'Only an empty reload requires a final pump');
+  assert.ok(Math.abs(latest(selected).duration / latest(selected).playbackRate - insertDuration * .48 / .85) < 1e-9);
   assert.equal(ws.ammo, ammo + missing); assert.equal(ws.reserve, reserve - missing);
   stopWeaponAudio();
 }
 const interrupted: WeaponSlotState = { ammo: 0, reserve: 20 };
 beginWeaponReload(shotgun, interrupted); playWeaponReloadAudio(shotgun, interrupted);
 const phases = interrupted.reloadSequence!.phases;
-advanceWeaponReload(shotgun, interrupted, phases[0].duration + phases[1].duration, playShotgunReloadPhase);
+advanceWeaponReload(shotgun, interrupted, phases[0].duration + phases[1].duration, undefined, playShotgunMechanicalEvent);
 assert.equal(interrupted.ammo, 1); assert.equal(interruptShellReload(shotgun, interrupted), true);
 stopWeaponReloadAudio(); const n = plays(AUDIO.shotgunReloadEmpty);
-advanceWeaponReload(shotgun, interrupted, 20, playShotgunReloadPhase);
+advanceWeaponReload(shotgun, interrupted, 20, undefined, playShotgunMechanicalEvent);
 assert.equal(plays(AUDIO.shotgunReloadEmpty), n, 'Interrupted reload cannot emit future shell sounds');
 assert.equal(interrupted.ammo, 1); assert.ok(AUDIO.shotgunReloadEmpty.pool.every(a => a.paused));
-console.log('PASS: exact shell counts, phase-start timing through large deltas, final pump and interruption');
+console.log('PASS: exact shell counts, seat-boundary timing, distinct tactical/empty finish and interruption');
 
 AUDIO.pistolReloadEmpty.play(1, true, 1.25);
 const paused = latest(AUDIO.pistolReloadEmpty); paused.currentTime = .41;
@@ -273,3 +288,30 @@ assert.equal(latest(AUDIO.railgunCharge).currentTime, .24); stopWeaponAudio();
 assert.ok(!/updateRailgunChargeAudio|playRailgunSlugBlast/.test(app), 'Gameplay cannot double synthesized railgun tracks');
 assert.ok(!/AUDIO\.laserVent\.play\(/.test(app), 'Overheat dispatch cannot directly double the fitted reload hiss');
 console.log('PASS: one railgun charge, cursor preservation, early cancellation, slug transition and no synthetic doubling');
+
+// Sniper shot and manual bolt are separate recordings/events. Both magazine
+// exchanges use the owned bolt-free clip; the empty composite stays unused.
+for (const hz of [30,60,144]) {
+  stopWeaponAudio();
+  const ws: WeaponSlotState = {ammo:4,reserve:20};
+  const before=plays(AUDIO.sniperBolt);
+  AUDIO.sniperShot.play(1,true); requireSniperBolt(ws);
+  const report=latest(AUDIO.sniperShot);
+  advanceWeaponReload(weapon('sniper'),ws,2,undefined,undefined,playSniperBoltEvent);
+  assert.equal(plays(AUDIO.sniperBolt),before); assert.equal(report.paused,false);
+  assert.ok(beginSniperCycle(ws));
+  while(ws.sniperCycle) advanceWeaponReload(weapon('sniper'),ws,1/hz,undefined,undefined,playSniperBoltEvent);
+  assert.equal(plays(AUDIO.sniperBolt),before+1);
+  assert.ok(Math.abs(latest(AUDIO.sniperBolt).duration/latest(AUDIO.sniperBolt).playbackRate-SNIPER.mechanical)<1e-8);
+}
+for (const ammo of [0,2]) for(const multiplier of [1,.75,.9]) {
+  stopWeaponAudio(); const ws:WeaponSlotState={ammo,reserve:20};
+  const emptyBefore=plays(AUDIO.sniperReloadEmpty),boltBefore=plays(AUDIO.sniperBolt),magBefore=plays(AUDIO.sniperReloadTactical);
+  assert.ok(beginWeaponReload(weapon('sniper'),ws,multiplier)); playWeaponReloadAudio(weapon('sniper'),ws);
+  assert.equal(plays(AUDIO.sniperReloadTactical),magBefore);
+  while(ws.reloading) {advanceWeaponReload(weapon('sniper'),ws,1/144);updateSniperReloadAudio(ws);}
+  assert.equal(plays(AUDIO.sniperReloadTactical),magBefore+1);
+  assert.equal(plays(AUDIO.sniperReloadEmpty),emptyBefore); assert.equal(plays(AUDIO.sniperBolt),boltBefore);
+  assert.equal(ws.needsChamber,ammo===0);
+}
+console.log('PASS: sniper report only on shot, one delayed manual bolt cue, bolt-free mag reloads and class-fitted clips');

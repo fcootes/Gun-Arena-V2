@@ -22,7 +22,7 @@ for(const id of ['ar','pistol','smg','lmg','br','sniper','railgun','rocket','gre
     assert.ok(beginWeaponReload(w,ws));
     if(['ar','pistol','smg','lmg','br'].includes(id)) assert.equal(ws.reloadSequence!.phases.some(p=>p.phase==='chamber'),ammo===0);
     const total=ammo+100; advanceWeaponReload(w,ws,100);
-    assert.equal(ws.ammo,w.mag);assert.equal(ws.ammo!+ws.reserve!,total);assert.equal(ws.reloading,false);assert.equal(ws.needsChamber,false);
+    assert.equal(ws.ammo,w.mag);assert.equal(ws.ammo!+ws.reserve!,total);assert.equal(ws.reloading,false);assert.equal(ws.needsChamber,id==='sniper'&&ammo===0);
   }
 }
 const ar=WEAPONS[0], empty:WeaponSlotState={ammo:0,reserve:30};

@@ -26,7 +26,11 @@
     "test:controls": "node --import tsx tests/controls.test.ts",
     "test:controls:browser": "node scripts/test-controls-browser.mjs",
     "test:viewmodel": "node --import tsx tests/viewmodel.test.ts",
-    "test:viewmodel:browser": "node scripts/test-viewmodel-browser.mjs"
+    "test:viewmodel:browser": "node scripts/test-viewmodel-browser.mjs",
+    "test:sniper": "node --import tsx tests/sniper.test.ts",
+    "test:sniper:browser": "node scripts/test-sniper-browser.mjs",
+    "test:shotgun": "node --import tsx tests/shotgun.test.ts",
+    "test:shotgun:browser": "node scripts/test-shotgun-browser.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",
