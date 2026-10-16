@@ -1,5 +1,7 @@
 # Shotgun fidelity — Batch 1
 
+> Current timing, roll, loading-hand and sprint acceptance are superseded by [16 October final polish](final-shotgun-acceptance/README.md). This report preserves the original Batch 1 evidence.
+
 Stacked on unmerged draft [PR #15](https://github.com/fcootes/Gun-Arena-V2/pull/15),
 base `3778c568db1162d40822676d5d31ffc385b0681a`. Branch:
 `feat/shotgun-fidelity-batch1-20261015`; PR target:
