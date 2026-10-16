@@ -12,7 +12,7 @@ export const CONTROLS_GUIDE = [
   ['W / A / S / D', 'Move'], ['LEFT MOUSE', 'Fire / use selected item'],
   ['HOLD RIGHT MOUSE', 'Aim down sights'], ['HOLD LEFT SHIFT', 'Sprint'],
   ['HOLD LEFT CTRL', 'Crouch'], ['SPACE', 'Jump'], ['F', 'Knife melee'],
-  ['E', 'Interact'], ['R', 'Reload'], ['G', 'Grenade'],
+  ['E', 'Interact'], ['R', 'Reload / cycle sniper bolt'], ['G', 'Grenade'],
   ['Z', 'Squad follow / hold'], ['C', 'Squad push objective'],
   ['X + LEFT MOUSE', 'Select squad focus target'], ['V', 'First / third person'],
   ['1–4 / MOUSE WHEEL', 'Select / cycle loadout slots'], ['ESC / P', 'Pause / resume'],
@@ -28,6 +28,11 @@ interface HeldPlayer {
   fireHeld: boolean;
   isMeleeing: boolean;
   isDrinking: boolean;
+}
+
+/** Shared by trigger, burst, charge, beam and motor-driven firing paths. */
+export function canPlayerFire(player: Pick<HeldPlayer, 'alive' | 'sprinting' | 'isMeleeing' | 'isDrinking'>): boolean {
+  return player.alive && !player.sprinting && !player.isMeleeing && !player.isDrinking;
 }
 
 /** Keeps physical presses separate from the campaign's consumable E latch. */

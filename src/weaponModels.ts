@@ -558,8 +558,17 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     // The first-person AR exposes its receiver charging latch on the eye-near
     // side. Other weapons and actor/studio assemblies retain their original part.
     const heldAr = id === 'ar' && options.firstPerson;
-    const bolt = group('bolt', heldAr ? -.045 : .039, heldAr ? .048 : .017, heldAr ? .025 : .075);
-    box('Charging handle', 0.026, 0.011, 0.016, 0, 0, 0, steel, bolt);
+    const heldSniper = id === 'sniper' && options.firstPerson;
+    const bolt = group('bolt', heldSniper ? 0 : heldAr ? -.045 : .039,
+      heldSniper ? .025 : heldAr ? .048 : .017, heldSniper ? -.015 : heldAr ? .025 : .075);
+    if (heldSniper) {
+      // Slide along the bore; rotate this local pivot to lift the near-side handle.
+      box('Bolt cylinder', .028, .028, .09, 0, 0, -.025, edge, bolt);
+      box('Bolt handle shank', .052, .012, .014, -.049, -.012, .008, steel, bolt);
+      const knob = group('boltKnob', -.075, -.012, .008); bolt.add(knob);
+      mesh('Bolt knob', new THREE.SphereGeometry(.016, 12, 8), dark, 0, 0, 0, knob);
+      box('Receiver bolt guide', .008, .014, .12, -.037, .025, .005, edge);
+    } else box('Charging handle', 0.026, 0.011, 0.016, 0, 0, 0, steel, bolt);
     grip();
     screws(-0.1);
     box('Bolt catch paddle', 0.007, 0.027, 0.018, -0.039, -0.002, -0.04, dark);

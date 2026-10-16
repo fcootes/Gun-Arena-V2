@@ -6,6 +6,7 @@ import type { WeaponSlotState } from './types';
 import type { FactionType } from './lobbyAvatar';
 import { SHOTGUN, shotgunEase, shotgunShellPose } from './shotgunMechanics';
 import { VIEWMODEL_GRIPS, arChamberReach, arChamberRelease, type HandAttachment } from './viewmodelGrips';
+import { sniperEase, sniperHandReach } from './sniperMechanics';
 
 interface Digit { joints: THREE.Object3D[]; lengths: number[]; radius: number; thumb: boolean; index: boolean; spread: number; }
 interface Hand {
@@ -199,6 +200,32 @@ export function createFirstPersonHands() {
         left.orientation.slerp(targetRotation, arChamberRelease(progress));
         curl = arChamber.curl;
       }
+      if (id === 'sniper') {
+        if (state?.sniperCycle && config.chamber) {
+          const control = assembly.parts.bolt, attachment = config.chamber;
+          control.updateWorldMatrix(true, false); assembly.root.updateWorldMatrix(true, false);
+          inverse.copy(assembly.root.matrixWorld).invert(); matrix.multiplyMatrices(inverse, control.matrixWorld);
+          attachmentPosition.fromArray(attachment.partOffset!).applyMatrix4(matrix);
+          const reach = sniperHandReach(state.sniperCycle.elapsed);
+          left.target.lerpVectors(supportGrip, attachmentPosition, reach);
+          targetRotation.setFromEuler(euler.set(...attachment.rotation));
+          // The grip rotates with the actual handle, including unlocking/locking.
+          targetRotation.premultiply(control.quaternion);
+          left.orientation.slerp(targetRotation, reach); curl = attachment.curl;
+        } else if (stage) {
+          const t = sequence!.elapsed / stage.duration;
+          if (stage.phase === 'open') {
+            left.target.lerpVectors(supportGrip, left.target, sniperEase(t));
+            targetRotation.setFromEuler(euler.set(...config.left.rotation));
+            left.orientation.slerpQuaternions(targetRotation, left.orientation, sniperEase(t));
+          } else if (stage.phase === 'close') {
+            left.target.lerpVectors(left.phaseStart, supportGrip, sniperEase(t));
+            targetRotation.setFromEuler(euler.set(...config.left.rotation));
+            left.orientation.slerpQuaternions(left.phaseRotation, targetRotation, sniperEase(t));
+          }
+          curl = .9;
+        }
+      }
       if (id === 'shotgun' && config.shellLoad) {
         const load = config.shellLoad;
         left.orientation.setFromEuler(euler.set(...config.left.rotation));
@@ -242,8 +269,8 @@ export function createFirstPersonHands() {
       right.wrist.position.copy(right.target); right.wrist.quaternion.copy(right.orientation);
       // AR control contact is authored against the current moving part, without
       // an exponential lag that would leave fingers behind the charging latch.
-      left.wrist.position.lerp(left.target, arChamber || id === 'shotgun' ? 1 : alpha);
-      left.wrist.quaternion.slerp(left.orientation, arChamber || id === 'shotgun' ? 1 : alpha);
+      left.wrist.position.lerp(left.target, arChamber || id === 'shotgun' || id === 'sniper' ? 1 : alpha);
+      left.wrist.quaternion.slerp(left.orientation, arChamber || id === 'shotgun' || id === 'sniper' ? 1 : alpha);
       // Solve the sleeve from its posed cuff toward a camera-local torso bend.
       // Receiver tilt must not rotate a cut-off sleeve end into the viewport.
       assembly.root.updateMatrix(); inverse.copy(assembly.root.matrix).invert();

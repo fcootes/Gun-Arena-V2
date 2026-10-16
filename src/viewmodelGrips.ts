@@ -72,7 +72,12 @@ export const VIEWMODEL_GRIPS: Readonly<Record<WeaponModelId, ViewmodelGrip>> = {
       press: { position: [.0221, -.115, -.0374], rotation: [2.695880341, 0, -3.06155919], curl: 1, fingerAngles: [1.65, 1.15, .70], thumbAngles: [.10, .25, .20], thumbOpposition: .65 },
     },
   }),
-  sniper: grip(primary(), under(-.28), { hip: [.155, -.22, -.39], sleeveLength: .25, aim: [0, -.105, -.39] }),
+  sniper: grip(primary(), under(-.28), {
+    hip: [.15, -.19, -.405], sleeveLength: .25, aim: [0, -.105, -.39],
+    chamber: { position: [-.075, -.060, .025], rotation: [0, 0, -.15], curl: .85,
+      followPart: 'bolt', partOffset: [-.075, -.060, .025] },
+    reloadReach: [-.048, -.045, .015],
+  }),
   smg: grip(primary(), vertical(-.18, -.039, -.10), { hip: [.135, -.205, -.34], aim: [0, -.145, -.34] }),
   lmg: grip(primary(), under(-.27), { hip: [.17, -.245, -.40], aim: [0, -.105, -.40], sprint: [-.035, -.30, -.48], sprintRotation: [-.12, .52, -.12] }),
   br: grip(primary(), under(-.27), { hip: [.145, -.215, -.38], sleeveLength: .25, aim: [0, -.105, -.38] }),

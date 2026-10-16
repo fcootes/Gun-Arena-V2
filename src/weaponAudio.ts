@@ -1,6 +1,7 @@
 import { AUDIO, SoundTrack, FIRST_BATCH_AUDIO_URLS, SECOND_BATCH_AUDIO_URLS, THIRD_BATCH_AUDIO_URLS } from './audio';
 import type { WeaponDef, WeaponSlotState } from './types';
 import type { ShotgunEventListener } from './shotgunMechanics';
+import type { SniperBoltListener } from './sniperMechanics';
 
 const reloadProfiles = {
   smg: { tactical: AUDIO.smgReloadTactical, empty: AUDIO.smgReloadEmpty, tacticalDuration: 1.1232083333333334, emptyDuration: 1.98, chamberStart: 1.287 },
@@ -37,6 +38,7 @@ export function releaseWeaponAudio(): void {
 }
 
 let plasmaReloads = new WeakMap<WeaponSlotState, { sequence: NonNullable<WeaponSlotState['reloadSequence']>; inserted: boolean }>();
+let sniperReloads = new WeakMap<WeaponSlotState, { sequence: NonNullable<WeaponSlotState['reloadSequence']>; started: boolean }>();
 
 function playFitted(track: SoundTrack, clipDuration: number, duration: number, volume = 1, offset = 0): void {
   if (!Number.isFinite(duration) || duration <= 0) return;
@@ -52,8 +54,35 @@ export const playShotgunMechanicalEvent: ShotgunEventListener = (event, duration
   playFitted(track, clip, duration, event === 'pump' ? 1 : .85, Math.max(0, late) * clip / duration);
 };
 
+export const playSniperBoltEvent: SniperBoltListener = (duration, late) => {
+  if (late >= duration) return;
+  const clip = AUDIO.sniperBolt.duration || .85;
+  playFitted(AUDIO.sniperBolt, clip, duration, 1, Math.max(0, late) * clip / duration);
+};
+
+/** The supplied tactical recording contains only mag out/in. The empty
+ * composite contains an automatic chamber cue, so it is deliberately not used. */
+export function updateSniperReloadAudio(state: WeaponSlotState): void {
+  const pending = sniperReloads.get(state);
+  if (!pending || pending.started || !state.reloading || state.reloadSequence !== pending.sequence) return;
+  const open = pending.sequence.phases[0].duration;
+  const elapsed = (state.totalReloadT ?? 0) - (state.reloadT ?? 0);
+  if (elapsed < open) return;
+  pending.started = true;
+  const duration = (state.totalReloadT ?? 0) - open, late = elapsed - open;
+  if (late < duration) {
+    const clip = AUDIO.sniperReloadTactical.duration || 1.6848;
+    playFitted(AUDIO.sniperReloadTactical, clip, duration, 1, late * clip / duration);
+  }
+}
+
 export function playWeaponReloadAudio(weapon: WeaponDef, state: WeaponSlotState): boolean {
   if (!state.reloading || !state.reloadSequence) return false;
+  if (weapon.id === 'sniper') {
+    stopWeaponReloadAudio();
+    sniperReloads.set(state, {sequence:state.reloadSequence,started:false});
+    return true;
+  }
   if (weapon.id === 'laser') {
     stopWeaponReloadAudio();
     AUDIO.laserBeam.stop();
@@ -86,6 +115,7 @@ export function playWeaponReloadAudio(weapon: WeaponDef, state: WeaponSlotState)
 export function stopWeaponReloadAudio(): void {
   reloadTracks.forEach(track => track.stop());
   plasmaReloads = new WeakMap();
+  sniperReloads = new WeakMap();
 }
 
 export function stopWeaponAudio(): void {
@@ -93,6 +123,7 @@ export function stopWeaponAudio(): void {
   minigunPhase = 'idle';
   partialBursts = new WeakSet<WeaponSlotState>();
   plasmaReloads = new WeakMap();
+  sniperReloads = new WeakMap();
   railgunCharging = false;
 }
 

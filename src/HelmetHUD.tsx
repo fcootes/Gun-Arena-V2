@@ -498,6 +498,11 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
         )}
 
         {/* Reloading / Overheating Status Tag */}
+        {currentWeapon.id === 'sniper' && !weaponSlotState.reloading && (weaponSlotState.needsChamber || weaponSlotState.sniperCycle) && (
+          <div className="mt-1 px-2 py-0.5 bg-yellow-500/20 border border-yellow-400 text-yellow-300 text-[9px] font-bold rounded-xs">
+            {weaponSlotState.sniperCycle ? 'CYCLING BOLT...' : (weaponSlotState.ammo ?? 0) > 0 ? 'BOLT ACTION REQUIRED — [R] CYCLE BOLT' : 'EMPTY — [R] RELOAD, THEN [R] CYCLE BOLT'}
+          </div>
+        )}
         {weaponSlotState.reloading && (
           <div className="mt-1 px-2 py-0.5 bg-yellow-500/20 border border-yellow-400 text-yellow-300 text-[9px] font-bold animate-pulse rounded-xs">
             {currentWeapon.id === 'shotgun' && !weaponSlotState.needsChamber

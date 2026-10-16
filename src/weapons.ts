@@ -5,6 +5,7 @@ import { createWeaponAssembly, orientHeldWeapon, disposeWeaponObject, type Weapo
 import { createFirstPersonHands } from './viewmodelHands';
 import { VIEWMODEL_GRIPS, arChargingStroke } from './viewmodelGrips';
 import { SHOTGUN, shotgunEase, shotgunPumpStroke, shotgunShellPose } from './shotgunMechanics';
+import { sniperEase, sniperBoltSlide, sniperBoltRoll, sniperHandReach, sniperMagazineDrop } from './sniperMechanics';
 import type { FactionType } from './lobbyAvatar';
 import {
   createWeaponMuzzleEffect,
@@ -539,7 +540,7 @@ export function createViewmodelManager(): ViewmodelManager {
       const p = THREE.MathUtils.smoothstep(sequence.elapsed / phase.duration, 0, 1);
       const progress = 1 - (ws.reloadT ?? 0) / (ws.totalReloadT || 1);
       const lift = w.id === 'shotgun' ? phase.phase === 'open' ? p : phase.phase === 'close' ? 1 - p : 1 : Math.min(1, progress * 7, (1 - progress) * 7);
-      reloadRotation.setFromEuler(w.id === 'shotgun' ? reloadEuler.set(-.06, .08, -.52) : reloadEuler.set(.14, -.18, -.38));
+      reloadRotation.setFromEuler(w.id === 'shotgun' ? reloadEuler.set(-.06, .08, -.52) : w.id === 'sniper' ? reloadEuler.set(-.08, .22, -.40) : reloadEuler.set(.14, -.18, -.38));
       assembly.root.quaternion.slerp(reloadRotation, lift);
       reloadPosition.copy(assembly.root.position); reloadPosition.x += w.id === 'shotgun' ? .07 : -.02; reloadPosition.y += w.id === 'shotgun' ? .06 : .05; reloadPosition.z += w.id === 'shotgun' ? -.025 : .025;
       assembly.root.position.lerp(reloadPosition, lift);
@@ -550,6 +551,16 @@ export function createViewmodelManager(): ViewmodelManager {
         parts.magazine.position.lerpVectors(base.position, reloadPosition, removed);
         reloadRotation.setFromEuler(reloadEuler.set(0, 0, sequence.kind === 'cylinder' ? .85 : -.18));
         parts.magazine.quaternion.slerp(reloadRotation, removed);
+        if (w.id === 'sniper') {
+          // Same local magwell path on removal/insertion; the hand follows this part.
+          parts.magazine.position.copy(base.position);
+          parts.magazine.position.y -= sniperMagazineDrop(phase.phase, sequence.elapsed / phase.duration);
+          parts.magazine.quaternion.copy(base.quaternion);
+          if (phase.phase === 'insert') {
+            const seat = Math.sin(Math.PI * THREE.MathUtils.clamp((sequence.elapsed / phase.duration - .90) / .10, 0, 1));
+            assembly.root.position.y += seat * .005; assembly.root.rotation.x -= seat * .012;
+          }
+        }
       }
       const opened = phase.phase === 'open' ? p : phase.phase === 'close' ? 1 - p : 1;
       if (parts.feedTray) { reloadRotation.setFromEuler(reloadEuler.set(-.9, 0, 0)); parts.feedTray.quaternion.slerp(reloadRotation, opened); }
@@ -590,12 +601,18 @@ export function createViewmodelManager(): ViewmodelManager {
         assembly.root.position.z += rearStop * .0035 - lock * .002;
         assembly.root.rotation.x += rearStop * .008 - lock * .004;
       }
-      if (w.id === 'sniper' && (ws?.boltCycleT ?? 0) > 0 && parts.bolt) {
-        const p = 1 - ws!.boltCycleT! / .85;
-        parts.bolt.position.z += Math.sin(p * Math.PI) * .085;
-        reloadRotation.setFromEuler(reloadEuler.set(0, 0, Math.sin(p * Math.PI) * .9));
-        parts.bolt.quaternion.slerp(reloadRotation, 1);
+      if (w.id === 'sniper' && ws?.sniperCycle && parts.bolt) {
+        const t = ws.sniperCycle.elapsed, handling = sniperHandReach(t);
+        parts.bolt.position.z += sniperBoltSlide(t);
+        parts.bolt.rotation.z += sniperBoltRoll(t);
+        assembly.root.rotation.y += handling * .18; assembly.root.rotation.z -= handling * .16;
+        assembly.root.position.y += handling * .018;
       }
+    }
+    if (w.id === 'sniper' && (ws?.sniperRecoveryT ?? 0) > 0) {
+      const t = .34 - ws!.sniperRecoveryT!;
+      const mass = t < .035 ? sniperEase(t / .035) : 1 - sniperEase((t - .035) / .305);
+      assembly.root.position.z += mass * .035; assembly.root.rotation.x += mass * .065;
     }
     assembly.update(dt, charge, spin);
     spin = 0;
