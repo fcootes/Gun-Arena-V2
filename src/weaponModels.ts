@@ -136,6 +136,15 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     metalness: 0.5,
     roughness: 0.22,
   });
+  if (id === 'br') {
+    // Owned per assembly: graphite alloy, matte composite and restrained steel
+    // remain readable under the existing low-light/inspection environments.
+    steel.color.setHex(0x454d54); steel.metalness = .65; steel.roughness = .50;
+    dark.color.setHex(0x252c33); dark.metalness = .45; dark.roughness = .60;
+    polymer.color.setHex(0x30383d); polymer.roughness = .87;
+    rubber.color.setHex(0x14191c);
+    edge.color.setHex(0x707a82); edge.metalness = .75; edge.roughness = .44;
+  }
   const materials = [steel, dark, polymer, rubber, edge, purple, glow];
   const body = new THREE.Group();
   body.name = 'receiver';
@@ -294,7 +303,8 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       }
   }
   function grip(z = 0.09, parent: THREE.Object3D = body) {
-    const g = box(
+    const g = id === 'br' ? silhouette('Contoured firing grip',
+      [[-.032,.067],[.030,.062],[.032,-.050],[.012,-.076],[-.027,-.066],[-.036,-.039]], .048, polymer, parent) : box(
       'Stippled pistol grip',
       id === 'br' ? .048 : 0.04,
       id === 'br' ? .145 : 0.13,
@@ -305,8 +315,15 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       polymer,
       parent,
     );
+    if (id === 'br') {
+      g.position.set(0,-.1,z);
+      box('Grip shoulder collar', .057, .025, .070, 0, -.043, z, dark, parent);
+    }
     g.rotation.x = -0.24;
-    for (let i = 0; i < 6; i++)
+    if (id === 'br') {
+      for (const side of [-1,1]) for (let i=0;i<5;i++)
+        box('Grip texture channel', .0015, .004, .033, side*.024, -.075-i*.015, z+i*.002, rubber, parent);
+    } else for (let i = 0; i < 6; i++)
       box(
         'Grip rib',
         0.041,
@@ -452,15 +469,15 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
   }
   function optic(large = false) {
     const g = group('optic');
-    box('Optic mount', 0.037, 0.025, 0.15, 0, 0.1, -0.03, dark, g);
+    box('Optic mount', id === 'br' ? .045 : 0.037, 0.025, 0.15, 0, 0.1, -0.03, dark, g);
     for (const z of [-0.09, 0.005]) {
-      box('Scope clamp pedestal', 0.025, 0.042, 0.018, 0, 0.12, z, steel, g);
+      box('Scope clamp pedestal', id === 'br' ? .031 : 0.025, 0.042, 0.018, 0, 0.12, z, steel, g);
       ring('Scope clamp ring', large ? 0.028 : 0.021, 0.004, 0, 0.145, z, steel, g);
     }
     tube(
       'Scope tube',
-      large ? 0.025 : 0.018,
-      large ? 0.28 : 0.13,
+      large ? 0.025 : id === 'br' ? .019 : 0.018,
+      large ? 0.28 : id === 'br' ? .15 : 0.13,
       0,
       0.145,
       -0.045,
@@ -505,7 +522,15 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
         dark,
         g,
       );
-      turret.rotation.x = x ? 0 : Math.PI / 2;
+      if (id === 'br') {
+        if (x) {
+          turret.rotation.set(0,0,Math.PI/2);
+          box('Optic side adjustment collar', .018, .022, .024, .022, .145, -.045, dark, g);
+        } else {
+          turret.rotation.x=0;
+          box('Optic elevation collar', .022, .016, .028, 0, .166, -.045, dark, g);
+        }
+      } else turret.rotation.x = x ? 0 : Math.PI / 2;
     }
   }
   const muzzle = new THREE.Object3D();
@@ -520,7 +545,9 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
   if (['ar', 'br', 'smg', 'sniper', 'lmg'].includes(id)) {
     const long = id === 'sniper',
       compact = id === 'smg';
-    box(
+    if (id === 'br') silhouette('Faceted upper receiver',
+      [[-.145,.028],[-.095,.060],[.135,.058],[.175,.039],[.175,-.018],[-.12,-.025]], .068, steel);
+    else box(
       'Upper receiver',
       0.066,
       0.085,
@@ -648,8 +675,18 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       -0.16 - handguardLen / 2,
       steel,
     );
-    rail(-0.17, handguardLen + 0.25, 0.063);
-    for (const side of [-1, 1]) {
+    if (id !== 'br') rail(-0.17, handguardLen + 0.25, 0.063);
+    if (id === 'br') {
+      // One purposeful vent/panel treatment instead of stacked accessory rails.
+      for (const side of [-1,1]) {
+        const panel = silhouette('Tapered handguard side panel',
+          [[-.415,.010],[-.365,.027],[-.15,.027],[-.125,-.014],[-.175,-.045],[-.370,-.045]], .005, dark);
+        panel.position.x=side*.035;
+        for(let i=0;i<5;i++) box('Recessed cooling slot', .0015, .012, .024,
+          side*.038, .006, -.365+i*.037, rubber).rotation.x=.23;
+        box('Fore-end service seam', .0015, .003, .145, side*.038, -.025, -.285, steel);
+      }
+    } else for (const side of [-1, 1]) {
       for (let i = 0; i < 9; i++)
         box(
           'Handguard vent',
@@ -673,21 +710,28 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     else {
       // Rear magwell has an actual underside opening, bounded by lips/webs.
       // The integrated upper housing joins the front chassis to the butt shell.
-      box('Bullpup receiver spine', .080, .070, .32, 0, .022, .11, polymer);
+      silhouette('Bullpup receiver spine',
+        [[-.060,.035],[-.025,.061],[.19,.064],[.26,.043],[.275,.012],[.263,-.014],[.08,-.014],[-.030,0]], .076, polymer);
       for (const x of [-.033, .033]) {
         box('Rear magwell lip', .014, .043, .112, x, -.045, .21, steel);
-        box('Rear housing plate', .007, .063, .28, x*1.29, .018, .12, dark);
+        const plate=silhouette('Segmented rear action plate',
+          [[.075,.046],[.19,.051],[.252,.031],[.256,.005],[.105,-.006],[.075,.008]], .006, dark);
+        plate.position.x=Math.sign(x)*.040;
+        const shoulder=silhouette('Reinforced magwell shoulder',
+          [[.145,-.008],[.157,-.053],[.258,-.053],[.275,-.008],[.260,.005],[.16,.005]], .009, polymer);
+        shoulder.position.x=Math.sign(x)*.042;
+        box('Rear action plate seam', .0015, .003, .11, Math.sign(x)*.0435, .025, .175, steel);
       }
       for (const z of [.145, .275]) box('Magwell joining web', .066, .040, .018, 0, -.040, z, polymer);
-      silhouette('Front chassis fairing', [[-.43,.018],[-.13,.026],[-.11,-.025],[-.18,-.063],[-.38,-.063],[-.43,-.040]], .074, polymer);
+      silhouette('Front chassis fairing', [[-.43,-.006],[-.385,.022],[-.15,.026],[-.11,-.020],[-.18,-.063],[-.355,-.063],[-.415,-.045]], .072, polymer);
       box('Chassis lower support pad', .060, .012, .23, 0, -.064, -.29, rubber);
       const rear = group('stock', 0, 0, .25);
-      silhouette('Integrated bullpup butt shell', [[-.008,.059],[.090,.052],[.10,-.087],[.068,-.095],[-.008,-.060]], .077, polymer, rear);
-      box('Rubber buttpad', .078, .15, .018, 0, -.021, .105, rubber, rear);
-      box('Connected cheek plate', .067, .016, .20, 0, .063, .17, polymer);
-      for (const x of [-.045,.045]) for (const z of [.08,.26])
+      silhouette('Integrated bullpup butt shell',
+        [[-.022,.055],[.065,.043],[.10,.018],[.10,-.060],[.060,-.074],[-.022,-.045]], .068, polymer, rear);
+      box('Rubber buttpad', .072, .125, .018, 0, -.014, .105, rubber, rear);
+      silhouette('Contoured cheek ridge', [[.055,.057],[.078,.072],[.215,.071],[.276,.047],[.25,.039],[.09,.052]], .064, dark);
+      for (const x of [-.0435,.0435]) for (const z of [.08,.25])
         box('Rear housing fastener', .003, .010, .010, x, .030, z, edge);
-      for (let i=0;i<5;i++) box('Fore-end panel seam', .076, .003, .003, 0, -.032, -.36+i*.035, dark);
     }
     if (id === 'ar') {
       optic();
@@ -803,21 +847,19 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       if (id === 'br') {
         parts.optic.position.y = .07;
         silhouette(
-          'BR55 carry bridge',
+          'BR55 integrated carry bridge',
           [
-            [-0.33, 0.073],
-            [-0.24, 0.17],
-            [0.08, 0.17],
-            [0.1, 0.09],
-            [0.065, 0.09],
-            [0.045, 0.14],
-            [-0.22, 0.14],
-            [-0.28, 0.073],
+            [-.320,.064],[-.292,.124],[-.263,.151],[-.236,.1575],
+            [.075,.1575],[.108,.131],[.130,.064],[.073,.064],
+            [.057,.117],[-.228,.117],[-.251,.089],[-.264,.064],
           ],
-          0.024,
+          0.056,
           dark,
         );
-        tube('Long stroke gas piston', 0.011, 0.43, 0, 0.06, -0.32, steel);
+        box('Carry bridge front attachment foot', .062, .018, .070, 0, .064, -.287, polymer);
+        box('Carry bridge rear attachment foot', .062, .018, .066, 0, .064, .098, polymer);
+        box('Optic saddle seat', .047, .007, .16, 0, .154, -.03, steel);
+        tube('Long stroke gas piston', .007, .31, 0, .050, -.30, steel);
         box(
           'Side charging lever',
           0.043,
