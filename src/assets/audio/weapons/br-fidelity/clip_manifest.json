@@ -1,0 +1,31 @@
+{
+  "clips": [
+    {
+      "filename": "br_mag_remove.wav",
+      "source": "../batch2/br_reload_empty.wav",
+      "start_sample": 0,
+      "end_sample": 11952,
+      "sample_rate": 48000,
+      "duration": 0.249,
+      "editing": "PCM crop only; existing owner-supplied BR recording; no synthesis, gain or tempo change"
+    },
+    {
+      "filename": "br_mag_insert.wav",
+      "source": "../batch2/br_reload_empty.wav",
+      "start_sample": 14064,
+      "end_sample": 40464,
+      "sample_rate": 48000,
+      "duration": 0.55,
+      "editing": "PCM crop only; existing owner-supplied BR recording; no synthesis, gain or tempo change"
+    },
+    {
+      "filename": "br_charge.wav",
+      "source": "../batch2/br_reload_empty.wav",
+      "start_sample": 41184,
+      "end_sample": 53136,
+      "sample_rate": 48000,
+      "duration": 0.249,
+      "editing": "PCM crop only; existing owner-supplied BR recording; no synthesis, gain or tempo change"
+    }
+  ]
+}

@@ -1,8 +1,9 @@
 import type { WeaponDef, WeaponSlotState } from './types';
 import { SHOTGUN, advanceShotgunCycle, beginShotgunCycle, type ShotgunEventListener } from './shotgunMechanics';
 import { SNIPER, advanceSniperAction, type SniperBoltListener } from './sniperMechanics';
+import { BATTLE_RIFLE, brCueTime, type BattleRifleListener } from './battleRifleMechanics';
 
-export type ReloadPhase = 'open' | 'eject' | 'insert' | 'chamber' | 'close' | 'vent';
+export type ReloadPhase = 'open' | 'eject' | 'pickup' | 'insert' | 'chamber' | 'close' | 'vent';
 export type ReloadPhaseListener = (phase: ReloadPhase, duration: number, empty: boolean) => void;
 export interface ReloadSequence {
   kind: 'magazine' | 'shell' | 'battery' | 'tube' | 'cylinder' | 'vent';
@@ -13,13 +14,14 @@ export interface ReloadSequence {
   shellsRemaining: number;
   inserted: number;
   shellSeated?: boolean;
+  brCuePlayed?: boolean;
 }
 
 export function cancelWeaponReload(state: WeaponSlotState) {
   state.reloading = false; state.reloadT = 0; state.reloadSequence = undefined;
 }
 
-export function beginWeaponReload(weapon: WeaponDef, state: WeaponSlotState, multiplier = 1, manualSniper = true): boolean {
+export function beginWeaponReload(weapon: WeaponDef, state: WeaponSlotState, multiplier = 1, playerHandling = true): boolean {
   if (weapon.type !== 'weapon' || state.reloading || (state.boltCycleT ?? 0) > 0) return false;
   const vent = weapon.id === 'laser' || weapon.id === 'minigun';
   const chamberOnly = !!state.needsChamber && (state.ammo ?? 0) > 0;
@@ -39,12 +41,19 @@ export function beginWeaponReload(weapon: WeaponDef, state: WeaponSlotState, mul
       if (empty) timed('chamber', SHOTGUN.cycle);
       timed('close', empty ? .18 : SHOTGUN.close);
     }
-  } else if (weapon.id === 'sniper' && manualSniper) {
+  } else if (weapon.id === 'sniper' && playerHandling) {
     // R cycles a pending bolt in App; a magazine exchange never chambers itself.
     if (chamberOnly) return false;
     const speed = Math.max(.1, Number.isFinite(multiplier) ? multiplier : 1);
     phases.push({phase:'open',duration:SNIPER.reloadOpen*speed}, {phase:'eject',duration:SNIPER.reloadEject*speed},
       {phase:'insert',duration:SNIPER.reloadInsert*speed}, {phase:'close',duration:SNIPER.reloadClose*speed});
+  } else if (weapon.id === 'br' && playerHandling) {
+    const speed = Math.max(.1, Number.isFinite(multiplier) ? multiplier : 1);
+    const timed = (phase: ReloadPhase, seconds: number) => phases.push({phase,duration:seconds*speed});
+    timed('open', chamberOnly ? .20 : BATTLE_RIFLE.lift);
+    if (!chamberOnly) { timed('eject', BATTLE_RIFLE.extract); timed('pickup', BATTLE_RIFLE.acquire); timed('insert', BATTLE_RIFLE.insert); }
+    if (empty || chamberOnly) timed('chamber', BATTLE_RIFLE.chamber);
+    timed('close', chamberOnly ? .35 : BATTLE_RIFLE.lower);
   } else if (chamberOnly) { add('chamber', .25); add('close', .15);
   } else if (vent) {
     kind = weapon.id === 'laser' ? 'battery' : 'vent'; add('vent', .25);
@@ -72,7 +81,7 @@ export function beginWeaponReload(weapon: WeaponDef, state: WeaponSlotState, mul
 }
 
 /** Advance through phase boundaries without losing shell events on slow frames. */
-export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, delta: number, onPhaseStart?: ReloadPhaseListener, onShotgunEvent?: ShotgunEventListener, onSniperBolt?: SniperBoltListener): number {
+export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, delta: number, onPhaseStart?: ReloadPhaseListener, onShotgunEvent?: ShotgunEventListener, onSniperBolt?: SniperBoltListener, onBattleRifle?: BattleRifleListener): number {
   if (!Number.isFinite(delta) || delta <= 0) return 0;
   if (weapon.id === 'sniper') advanceSniperAction(state, delta, onSniperBolt);
   else if (weapon.id === 'shotgun' && state.shotgunCycle) advanceShotgunCycle(state, delta, onShotgunEvent);
@@ -86,7 +95,8 @@ export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, d
     // the renderer/audio layer. A slow frame can cross multiple real transfers.
     const seat = sequence.kind === 'shell' && stage.phase === 'insert' && !sequence.shellSeated;
     const pumpStart = weapon.id === 'shotgun' && stage.phase === 'chamber' && sequence.elapsed < stage.duration * SHOTGUN.recovery / SHOTGUN.cycle - 1e-8;
-    const boundary = seat ? stage.duration * SHOTGUN.seat : pumpStart ? stage.duration * SHOTGUN.recovery / SHOTGUN.cycle : stage.duration;
+    const brCue = weapon.id === 'br' && !sequence.brCuePlayed ? brCueTime(stage.phase, stage.duration) : undefined;
+    const boundary = brCue ?? (seat ? stage.duration * SHOTGUN.seat : pumpStart ? stage.duration * SHOTGUN.recovery / SHOTGUN.cycle : stage.duration);
     const step = Math.min(remaining, Math.max(0, boundary - sequence.elapsed));
     sequence.elapsed += step; remaining -= step; state.reloadT = Math.max(0, (state.reloadT ?? 0) - step);
     if (seat && sequence.elapsed + 1e-8 >= boundary) {
@@ -97,6 +107,10 @@ export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, d
       }
     }
     if (pumpStart && sequence.elapsed + 1e-8 >= boundary) onShotgunEvent?.('pump', stage.duration * SHOTGUN.pumpDuration / SHOTGUN.cycle, sequence.empty, remaining);
+    if (brCue !== undefined && sequence.elapsed + 1e-8 >= boundary) {
+      sequence.brCuePlayed = true;
+      onBattleRifle?.(stage.phase === 'eject' ? 'extract' : stage.phase === 'insert' ? 'insert' : 'chamber', stage.duration / (stage.phase === 'eject' ? BATTLE_RIFLE.extract : stage.phase === 'insert' ? BATTLE_RIFLE.insert : BATTLE_RIFLE.chamber), remaining);
+    }
     if (sequence.elapsed + 1e-8 < stage.duration) { if (remaining > 1e-8) continue; break; }
     if (stage.phase === 'insert') {
       if (sequence.kind === 'shell') {
@@ -113,7 +127,7 @@ export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, d
       }
     }
     if (stage.phase === 'chamber') state.needsChamber = false;
-    sequence.index++; sequence.elapsed = 0;
+    sequence.index++; sequence.elapsed = 0; sequence.brCuePlayed = false;
     if (sequence.index === sequence.phases.length) {
       if (sequence.kind === 'battery' || sequence.kind === 'vent') { state.heat = 0; state.overheated = false; if(weapon.id==='minigun')state.ammo=weapon.mag; }
       cancelWeaponReload(state);

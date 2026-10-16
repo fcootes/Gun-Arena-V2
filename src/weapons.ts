@@ -6,6 +6,7 @@ import { createFirstPersonHands } from './viewmodelHands';
 import { VIEWMODEL_GRIPS, arChargingStroke } from './viewmodelGrips';
 import { SHOTGUN, shotgunEase, shotgunPumpStroke, shotgunShellPose } from './shotgunMechanics';
 import { sniperEase, sniperBoltSlide, sniperBoltRoll, sniperHandReach, sniperMagazineDrop } from './sniperMechanics';
+import { createBattleRifleAnimator } from './battleRifleMechanics';
 import type { FactionType } from './lobbyAvatar';
 import {
   createWeaponMuzzleEffect,
@@ -142,7 +143,7 @@ export const WEAPONS: WeaponDef[] = [
     burstRate: 0.075,
     mag: 36,
     reserve: 180,
-    reloadTime: 1.2,
+    reloadTime: 1.2, // Legacy bot cadence; player phases are in battleRifleMechanics.
     range: 220,
     auto: false,
     adsFov: 38, // Slight zoom-in scope optic view
@@ -307,6 +308,7 @@ export function createViewmodelManager(): ViewmodelManager {
     {
       assembly: WeaponAssembly;
       effects: WeaponMuzzleEffect;
+      brReload?: ReturnType<typeof createBattleRifleAnimator>;
       pose: Map<
         THREE.Object3D,
         { position: THREE.Vector3; quaternion: THREE.Quaternion }
@@ -429,7 +431,7 @@ export function createViewmodelManager(): ViewmodelManager {
         quaternion: part.quaternion.clone(),
       }),
     );
-    model = { assembly, effects, pose };
+    model = { assembly, effects, pose, brReload:id === 'br' ? createBattleRifleAnimator(assembly) : undefined };
     models.set(id, model);
     return model;
   }
@@ -534,8 +536,10 @@ export function createViewmodelManager(): ViewmodelManager {
     assembly.root.quaternion.copy(viewRotation); assembly.root.rotation.x += recoilRotation;
     assembly.root.rotation.z += Math.sin(bob * .5) * .004 * runBlend;
     if (parts.reloadRound) parts.reloadRound.visible = false;
+    if (parts.freshMagazine) parts.freshMagazine.visible = false;
     const sequence = ws?.reloadSequence;
-    if (ws?.reloading && sequence) {
+    if (ws?.reloading && sequence && selected.brReload) selected.brReload(sequence);
+    else if (ws?.reloading && sequence) {
       const phase = sequence.phases[sequence.index];
       const p = THREE.MathUtils.smoothstep(sequence.elapsed / phase.duration, 0, 1);
       const progress = 1 - (ws.reloadT ?? 0) / (ws.totalReloadT || 1);

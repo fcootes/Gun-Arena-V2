@@ -296,9 +296,9 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
   function grip(z = 0.09, parent: THREE.Object3D = body) {
     const g = box(
       'Stippled pistol grip',
-      0.04,
-      0.13,
-      0.055,
+      id === 'br' ? .048 : 0.04,
+      id === 'br' ? .145 : 0.13,
+      id === 'br' ? .066 : 0.055,
       0,
       -0.1,
       z,
@@ -558,9 +558,10 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     // The first-person AR exposes its receiver charging latch on the eye-near
     // side. Other weapons and actor/studio assemblies retain their original part.
     const heldAr = id === 'ar' && options.firstPerson;
+    const heldBr = id === 'br';
     const heldSniper = id === 'sniper' && options.firstPerson;
-    const bolt = group('bolt', heldSniper ? 0 : heldAr ? -.045 : .039,
-      heldSniper ? .025 : heldAr ? .048 : .017, heldSniper ? -.015 : heldAr ? .025 : .075);
+    const bolt = group('bolt', heldSniper ? 0 : heldAr || heldBr ? -.045 : .039,
+      heldSniper ? .025 : heldAr || heldBr ? .048 : .017, heldSniper ? -.015 : heldBr ? -.025 : heldAr ? .025 : .075);
     if (heldSniper) {
       // Slide along the bore; rotate this local pivot to lift the near-side handle.
       box('Bolt cylinder', .028, .028, .09, 0, 0, -.025, edge, bolt);
@@ -568,7 +569,7 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       const knob = group('boltKnob', -.075, -.012, .008); bolt.add(knob);
       mesh('Bolt knob', new THREE.SphereGeometry(.016, 12, 8), dark, 0, 0, 0, knob);
       box('Receiver bolt guide', .008, .014, .12, -.037, .025, .005, edge);
-    } else box('Charging handle', 0.026, 0.011, 0.016, 0, 0, 0, steel, bolt);
+    } else if (!heldBr) box('Charging handle', 0.026, 0.011, 0.016, 0, 0, 0, steel, bolt);
     grip();
     screws(-0.1);
     box('Bolt catch paddle', 0.007, 0.027, 0.018, -0.039, -0.002, -0.04, dark);
@@ -665,10 +666,29 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     magazine(
       id === 'ar' || compact,
       id === 'br' ? 0.14 : compact ? 0.2 : 0.17,
-      id === 'br' ? 0.15 : -0.058,
+      id === 'br' ? 0.21 : -0.058,
       id === 'br' ? 0.045 : 0.038,
     );
-    stock(id === 'br', long);
+    if (id !== 'br') stock(false, long);
+    else {
+      // Rear magwell has an actual underside opening, bounded by lips/webs.
+      // The integrated upper housing joins the front chassis to the butt shell.
+      box('Bullpup receiver spine', .080, .070, .32, 0, .022, .11, polymer);
+      for (const x of [-.033, .033]) {
+        box('Rear magwell lip', .014, .043, .112, x, -.045, .21, steel);
+        box('Rear housing plate', .007, .063, .28, x*1.29, .018, .12, dark);
+      }
+      for (const z of [.145, .275]) box('Magwell joining web', .066, .040, .018, 0, -.040, z, polymer);
+      silhouette('Front chassis fairing', [[-.43,.018],[-.13,.026],[-.11,-.025],[-.18,-.063],[-.38,-.063],[-.43,-.040]], .074, polymer);
+      box('Chassis lower support pad', .060, .012, .23, 0, -.064, -.29, rubber);
+      const rear = group('stock', 0, 0, .25);
+      silhouette('Integrated bullpup butt shell', [[-.008,.059],[.090,.052],[.10,-.087],[.068,-.095],[-.008,-.060]], .077, polymer, rear);
+      box('Rubber buttpad', .078, .15, .018, 0, -.021, .105, rubber, rear);
+      box('Connected cheek plate', .067, .016, .20, 0, .063, .17, polymer);
+      for (const x of [-.045,.045]) for (const z of [.08,.26])
+        box('Rear housing fastener', .003, .010, .010, x, .030, z, edge);
+      for (let i=0;i<5;i++) box('Fore-end panel seam', .076, .003, .003, 0, -.032, -.36+i*.035, dark);
+    }
     if (id === 'ar') {
       optic();
       body.userData.arOptic = 'ACOG';
@@ -781,6 +801,7 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
           tube('Wire stock strut', 0.006, 0.3, side * 0.023, 0.03, options.firstPerson ? -.02 : .3, edge, options.firstPerson ? parts.stock : body);
       }
       if (id === 'br') {
+        parts.optic.position.y = .07;
         silhouette(
           'BR55 carry bridge',
           [
@@ -802,10 +823,11 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
           0.043,
           0.018,
           0.022,
-          0.052,
-          0.023,
-          -0.04,
+          0,
+          0,
+          0,
           edge,
+          parts.bolt,
         );
       }
     }
@@ -1275,6 +1297,10 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     parent.userData.features = featureNames;
   }
   bake(body);
+  if (id === 'br' && options.firstPerson) {
+    const fresh = parts.magazine.clone(true); fresh.name = 'freshMagazine'; fresh.visible = false;
+    body.add(fresh); parts.freshMagazine = fresh;
+  }
   const used = new Set<THREE.Material>();
   root.traverse((o: any) => {
     if (o.material) used.add(o.material);

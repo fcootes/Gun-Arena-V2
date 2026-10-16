@@ -41,7 +41,7 @@ class MockAudio {
 }
 (globalThis as any).Audio = MockAudio;
 const { AUDIO, FIRST_BATCH_AUDIO_URLS, SECOND_BATCH_AUDIO_URLS, THIRD_BATCH_AUDIO_URLS } = await import('../src/audio');
-const { playWeaponReloadAudio, playShotgunMechanicalEvent, playSniperBoltEvent, updateSniperReloadAudio, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } = await import('../src/weaponAudio');
+const { playWeaponReloadAudio, playShotgunMechanicalEvent, playBattleRifleMechanicalEvent, playSniperBoltEvent, updateSniperReloadAudio, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } = await import('../src/weaponAudio');
 for (const track of Object.values(AUDIO)) track.prepare();
 const latest = (track: typeof AUDIO.arSingle) => track.pool[(track.index + track.poolSize - 1) % track.poolSize] as unknown as MockAudio;
 const plays = (track: typeof AUDIO.arSingle) => track.pool.reduce((n, audio) => n + (audio as unknown as MockAudio).plays, 0);
@@ -68,7 +68,6 @@ for (const [id, tactical, empty] of [
   ['pistol', AUDIO.pistolReloadTactical, AUDIO.pistolReloadEmpty],
   ['smg', AUDIO.smgReloadTactical, AUDIO.smgReloadEmpty],
   ['lmg', AUDIO.lmgReloadTactical, AUDIO.lmgReloadEmpty],
-  ['br', AUDIO.brReloadTactical, AUDIO.brReloadEmpty],
 ] as const) {
   for (const multiplier of [1, .75, .9]) for (const ammo of [0, 1]) {
     const w = weapon(id), ws: WeaponSlotState = { ammo, reserve: 100 };
@@ -145,7 +144,7 @@ console.log('PASS: pause/resume preserves cursor and speed; cancellation clears 
 
 
 for (const [id, track, offset] of [
-  ['smg', AUDIO.smgReloadEmpty, 1.287], ['lmg', AUDIO.lmgReloadEmpty, 3.696], ['br', AUDIO.brReloadEmpty, .858],
+  ['smg', AUDIO.smgReloadEmpty, 1.287], ['lmg', AUDIO.lmgReloadEmpty, 3.696],
 ] as const) {
   const ws: WeaponSlotState = { ammo: 10, reserve: 100, needsChamber: true };
   beginWeaponReload(weapon(id), ws); playWeaponReloadAudio(weapon(id), ws);
@@ -315,3 +314,23 @@ for (const ammo of [0,2]) for(const multiplier of [1,.75,.9]) {
   assert.equal(ws.needsChamber,ammo===0);
 }
 console.log('PASS: sniper report only on shot, one delayed manual bolt cue, bolt-free mag reloads and class-fitted clips');
+
+for(const hz of [30,60,144])for(const speed of [1,.75,.9])for(const ammo of [0,3]) {
+ stopWeaponAudio();const ws:WeaponSlotState={ammo,reserve:100};
+ const before=[plays(AUDIO.brMagazineOut),plays(AUDIO.brMagazineIn),plays(AUDIO.brCharge)];
+ const composites=[plays(AUDIO.brReloadTactical),plays(AUDIO.brReloadEmpty)];
+ assert.ok(beginWeaponReload(weapon('br'),ws,speed));assert.equal(playWeaponReloadAudio(weapon('br'),ws),true);
+ while(ws.reloading)advanceWeaponReload(weapon('br'),ws,1/hz,undefined,undefined,undefined,playBattleRifleMechanicalEvent);
+ assert.deepEqual([plays(AUDIO.brMagazineOut)-before[0],plays(AUDIO.brMagazineIn)-before[1],plays(AUDIO.brCharge)-before[2]],[1,1,ammo?0:1]);
+ assert.deepEqual([plays(AUDIO.brReloadTactical),plays(AUDIO.brReloadEmpty)],composites,'No composite/discrete doubling');
+ assert.ok(Math.abs(latest(AUDIO.brMagazineIn).playbackRate-1/speed)<1e-9);
+}
+console.log('PASS: BR discrete removal/insertion once, empty-only charging, class speed without whole-composite stretching');
+
+stopWeaponAudio();
+const brResume:WeaponSlotState={ammo:36,reserve:20,needsChamber:true};
+const brCounts=[plays(AUDIO.brMagazineOut),plays(AUDIO.brMagazineIn),plays(AUDIO.brCharge)];
+assert.ok(beginWeaponReload(weapon('br'),brResume));playWeaponReloadAudio(weapon('br'),brResume);
+while(brResume.reloading)advanceWeaponReload(weapon('br'),brResume,1/144,undefined,undefined,undefined,playBattleRifleMechanicalEvent);
+assert.deepEqual([plays(AUDIO.brMagazineOut)-brCounts[0],plays(AUDIO.brMagazineIn)-brCounts[1],plays(AUDIO.brCharge)-brCounts[2]],[0,0,1]);
+console.log('PASS: interrupted BR empty reload resumes chamber-only without replaying magazine cues');

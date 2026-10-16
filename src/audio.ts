@@ -205,6 +205,12 @@ export const FIRST_BATCH_AUDIO_URLS = {
   sniperReloadEmpty: new URL('./assets/audio/weapons/batch1/sniper_reload_empty.wav', import.meta.url).href,
 };
 
+export const BR_MECHANICAL_AUDIO_URLS = {
+  brMagazineOut: new URL('./assets/audio/weapons/br-fidelity/br_mag_remove.wav', import.meta.url).href,
+  brMagazineIn: new URL('./assets/audio/weapons/br-fidelity/br_mag_insert.wav', import.meta.url).href,
+  brCharge: new URL('./assets/audio/weapons/br-fidelity/br_charge.wav', import.meta.url).href,
+};
+
 export const SECOND_BATCH_AUDIO_URLS = {
   smgReloadEmpty: new URL('./assets/audio/weapons/batch2/smg_reload_empty.wav', import.meta.url).href,
   smgReloadTactical: new URL('./assets/audio/weapons/batch2/smg_reload_tactical.wav', import.meta.url).href,
@@ -308,6 +314,9 @@ export const AUDIO = {
   lmgReloadEmpty: new SoundTrack(SECOND_BATCH_AUDIO_URLS.lmgReloadEmpty, 2),
   brSingle: new SoundTrack(SECOND_BATCH_AUDIO_URLS.brSingle, 6),
   brReloadEmpty: new SoundTrack(SECOND_BATCH_AUDIO_URLS.brReloadEmpty, 2),
+  brMagazineOut: new SoundTrack(BR_MECHANICAL_AUDIO_URLS.brMagazineOut, 1),
+  brMagazineIn: new SoundTrack(BR_MECHANICAL_AUDIO_URLS.brMagazineIn, 1),
+  brCharge: new SoundTrack(BR_MECHANICAL_AUDIO_URLS.brCharge, 1),
   brReloadTactical: new SoundTrack(SECOND_BATCH_AUDIO_URLS.brReloadTactical, 2),
   minigunSpinDown: new SoundTrack(SECOND_BATCH_AUDIO_URLS.minigunSpinDown, 1),
   minigunCooling: new SoundTrack(SECOND_BATCH_AUDIO_URLS.minigunCooling, 1),
