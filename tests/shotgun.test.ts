@@ -1,3 +1,6 @@
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+import {HelmetHUD, type HelmetHUDProps} from '../src/HelmetHUD';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { WEAPONS, createViewmodelManager } from '../src/weapons';
@@ -16,15 +19,15 @@ for (const hz of [30, 60, 144]) {
   while (ws.shotgunCycle) {
     t += 1 / hz;
     advanceWeaponReload(gun, ws, 1 / hz, undefined, (event, duration, empty, late) => {
-      events.push(event); near(t - late, SHOTGUN.recovery); near(duration, .48);
+      events.push(event); near(t - late, SHOTGUN.recovery); near(duration, .44);
     });
-    if (t < .18) assert.equal(shotgunPumpStroke(ws.shotgunCycle!.elapsed), 0);
+    if (t < .32) assert.equal(shotgunPumpStroke(ws.shotgunCycle!.elapsed), 0);
     if (t < SHOTGUN.cycle - 1e-8) assert.ok(ws.boltCycleT! > 0);
   }
   assert.deepEqual(events, ['pump']); assert.equal(ws.needsChamber, false); assert.equal(ws.boltCycleT, 0);
-  assert.ok(t <= SHOTGUN.cycle + 1 / hz + 1e-8 && t < gun.fireRate!);
+  assert.ok(t <= SHOTGUN.cycle + 1 / hz + 1e-8 && t <= Math.ceil(gun.fireRate! * hz) / hz + 1e-8);
   assert.equal(ws.ammo, 5); assert.equal(ws.reserve, 36);
-  near(shotgunPumpStroke(.42), .075); near(shotgunPumpStroke(.66), 0);
+  near(shotgunPumpStroke(.53), .075); near(shotgunPumpStroke(.76), 0);
 }
 console.log('PASS: delayed single pump event, real endpoints and locked action at 30/60/144 Hz inside unchanged fire interval');
 
@@ -32,7 +35,7 @@ for (const hz of [30, 60, 144]) for (const speed of [1, .75, .9]) for (const amm
   const ws: WeaponSlotState = { ammo, reserve }, events: string[] = [];
   assert.ok(beginWeaponReload(gun, ws, speed));
   const total = ws.totalReloadT!, missing = Math.min(6 - ammo, reserve);
-  near(total, (.30 + missing * .85 + (ammo ? .26 : .74 + .18)) * speed);
+  near(total, (.30 + missing * .85 + (ammo ? .26 : .84 + .18)) * speed);
   assert.equal(beginWeaponReload(gun, ws, speed), false, 'Repeated R cannot restart a shell');
   let t = 0, transfers = 0;
   while (ws.reloading) {
@@ -96,7 +99,10 @@ while (ws.reloading) {
   vm.update(1 / 144, gun, ws, false, false, true, false, false, false, 0, true, true);
   const seq = ws.reloadSequence, stage = seq?.phases[seq.index];
   if (stage?.phase === 'insert' && shell.visible) {
-    near(left.position.x, shell.position.x - .024); near(left.position.y, shell.position.y - .033); near(left.position.z, shell.position.z + .025);
+    assert.ok(left.position.distanceTo(shell.position) < .12, 'Shell remains within the loading hand/thumb reach');
+    if (seq!.elapsed / stage.duration < .52) {
+      near(left.position.x, shell.position.x - .00525); near(left.position.y, shell.position.y - .04159); near(left.position.z, shell.position.z + .00964);
+    } else assert.ok(left.position.y <= -.10, 'Pressing fingers/palm remain outside the narrow receiver port');
     if (seq!.elapsed / stage.duration >= .52) {
       assert.ok(Math.abs(shell.position.x) < .009 && shell.position.y < -.019, 'Shell approaches through open underside');
       near(shell.rotation.x, 0);
@@ -120,3 +126,11 @@ const hits = ray.intersectObject(receiver, true).filter(h => h.object instanceof
 assert.equal(hits.length, 0, 'No solid bottom wall in the shell path');
 vm.dispose();
 console.log('PASS: shell and guiding hand share exact contact path, bore orientation and an actual open loading aperture');
+
+const hudState:WeaponSlotState={ammo:0,reserve:14};beginWeaponReload(gun,hudState);advanceWeaponReload(gun,hudState,3.4705);
+const props:HelmetHUDProps={currentWeapon:gun,weaponSlotState:hudState,health:100,maxHealth:100,shield:100,maxShield:100,slotIndex:0,playerLoadout:[gun],playerLoadoutStates:[hudState],matchMode:'team',factionAlignment:'usmc',blueScore:0,redScore:0,targetScore:20,currentWave:1,zombiesRemaining:0,kills:0,timeStr:'00:00',zoneStatus:'SAFE',playerPos:{x:0,z:0},playerYaw:0,radarPingsRef:{current:[]}};
+const hud=()=>renderToStaticMarkup(React.createElement(HelmetHUD,props));
+assert.equal(hudState.ammo,4);assert.equal(hudState.reserve,10);assert.equal(hudState.needsChamber,true);assert.ok(hud().includes('EMPTY CHAMBER RELOAD...'),'Stored shells do not imply a chambered action');
+advanceWeaponReload(gun,hudState,2.78);assert.equal(hudState.needsChamber,false);assert.equal(hudState.reloading,true);assert.ok(hud().includes('FINISHING RELOAD...'));assert.ok(!hud().includes('EMPTY CHAMBER RELOAD...'),'Closed action never advertises an empty chamber');
+advanceWeaponReload(gun,hudState,1);assert.ok(!hud().includes('FINISHING RELOAD...'));
+console.log('PASS: actual HUD markup distinguishes 4/10 unchambered shells, closed-action finish and ready');

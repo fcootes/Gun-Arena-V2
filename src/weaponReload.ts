@@ -88,7 +88,7 @@ export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, d
         onShotgunEvent?.('seat', stage.duration * .48 / SHOTGUN.shell, sequence.empty, remaining);
       }
     }
-    if (pumpStart && sequence.elapsed + 1e-8 >= boundary) onShotgunEvent?.('pump', stage.duration * .48 / SHOTGUN.cycle, sequence.empty, remaining);
+    if (pumpStart && sequence.elapsed + 1e-8 >= boundary) onShotgunEvent?.('pump', stage.duration * SHOTGUN.pumpDuration / SHOTGUN.cycle, sequence.empty, remaining);
     if (sequence.elapsed + 1e-8 < stage.duration) { if (remaining > 1e-8) continue; break; }
     if (stage.phase === 'insert') {
       if (sequence.kind === 'shell') {

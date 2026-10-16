@@ -48,7 +48,7 @@ export function createFirstPersonHands() {
   const scratch = new THREE.Object3D(), inverse = new THREE.Matrix4(), matrix = new THREE.Matrix4(), instanceTransform = new THREE.Matrix4();
   const direction = new THREE.Vector3(), end = new THREE.Vector3(), elbow = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
   const targetRotation = new THREE.Quaternion(), euler = new THREE.Euler(), attachmentPosition = new THREE.Vector3();
-  const supportGrip = new THREE.Vector3(), shotgunPickup = new THREE.Vector3(-.134, -.163, -.020);
+  const supportGrip = new THREE.Vector3(), shotgunPickup = new THREE.Vector3(-.08525, -.15659, -.03536);
   const shellPose = { x: 0, y: 0, z: 0, angle: 0 };
   let selected: WeaponModelId = 'ar', phase = '', disposed = false, initialized = false;
 
@@ -163,6 +163,7 @@ export function createFirstPersonHands() {
       if (phase !== nextPhase) { left.phaseStart.copy(left.wrist.position); left.phaseRotation.copy(left.wrist.quaternion); phase = nextPhase; }
       const p = stage ? THREE.MathUtils.smoothstep(sequence!.elapsed / stage.duration, 0, 1) : 0;
       let curl = config.left.curl;
+      let shellGrip = 0, shellPress = 0;
       if (stage) {
         const part = stage.phase === 'chamber' ? assembly.parts.bolt ?? assembly.parts.slide ?? assembly.parts.pump :
           sequence!.kind === 'vent' ? assembly.parts.feedTray ?? assembly.parts.receiver :
@@ -198,27 +199,39 @@ export function createFirstPersonHands() {
         left.orientation.slerp(targetRotation, arChamberRelease(progress));
         curl = arChamber.curl;
       }
-      if (id === 'shotgun') {
-        // Same shared hand palette; exact contact follows the transformed pump
-        // or shell, with no exponential lag during mechanical operation.
+      if (id === 'shotgun' && config.shellLoad) {
+        const load = config.shellLoad;
         left.orientation.setFromEuler(euler.set(...config.left.rotation));
         if (stage?.phase === 'open') {
           const t = sequence!.elapsed / stage.duration;
-          attachmentPosition.set(-.024, -.090, -.005);
-          left.target.lerpVectors(supportGrip, attachmentPosition, shotgunEase(t / .45));
-          left.target.lerp(shotgunPickup, shotgunEase((t - .45) / .55));
-          curl = .55;
+          attachmentPosition.set(-.024, -.090, -.040);
+          left.target.lerpVectors(supportGrip, attachmentPosition, shotgunEase(t / .40));
+          left.target.lerp(shotgunPickup, shotgunEase((t - .40) / .60));
+          targetRotation.setFromEuler(euler.set(...load.grip.rotation));
+          shellGrip = shotgunEase(t / .75);
+          left.orientation.slerp(targetRotation, shellGrip); curl = .85;
         } else if (stage?.phase === 'insert') {
           const t = sequence!.elapsed / stage.duration;
+          const press = shotgunEase((t - .52) / (SHOTGUN.seat - .52));
+          const release = shotgunEase((t - .80) / .20);
           shotgunShellPose(Math.min(t, SHOTGUN.seat), shellPose);
-          left.target.set(shellPose.x - .024, shellPose.y - .033, shellPose.z + .025);
-          left.target.lerp(shotgunPickup, shotgunEase((t - .80) / .20));
-          curl = t < .80 ? .95 : .72;
-        } else if (stage?.phase === 'chamber') {
-          left.target.lerpVectors(shotgunPickup, supportGrip, shotgunEase(sequence!.elapsed / (stage.duration * SHOTGUN.recovery / SHOTGUN.cycle)));
-          curl = config.left.curl;
-        } else if (stage?.phase === 'close') {
-          left.target.lerpVectors(sequence!.empty ? supportGrip : shotgunPickup, supportGrip, p);
+          left.target.set(shellPose.x, shellPose.y, shellPose.z).add(attachmentPosition.fromArray(load.grip.position));
+          // Fingers stay outside the narrow port. The opposed thumb guides the
+          // last rise/forward press instead of driving the whole palm inside.
+          left.target.lerp(attachmentPosition.fromArray(load.press.position), press);
+          if (t >= .52) left.target.y = Math.min(left.target.y, load.press.position[1]);
+          left.orientation.setFromEuler(euler.set(...load.grip.rotation));
+          targetRotation.setFromEuler(euler.set(...load.press.rotation)); left.orientation.slerp(targetRotation, press);
+          const last = sequence!.shellsRemaining === 1;
+          left.target.lerp(last ? supportGrip : shotgunPickup, release);
+          targetRotation.setFromEuler(euler.set(...(last ? config.left.rotation : load.grip.rotation))); left.orientation.slerp(targetRotation, release);
+          shellGrip = last ? 1 - release : 1; shellPress = press * (1 - release); curl = 1;
+        } else if (stage?.phase === 'chamber' || stage?.phase === 'close') {
+          // Start from the hand that actually ended the prior phase, including
+          // the last shell reset. Never snap back to the pickup position.
+          const reach = stage.phase === 'chamber' ? shotgunEase(sequence!.elapsed / (stage.duration * SHOTGUN.recovery / SHOTGUN.cycle)) : p;
+          left.target.lerpVectors(left.phaseStart, supportGrip, reach);
+          targetRotation.setFromEuler(euler.set(...config.left.rotation));left.orientation.slerpQuaternions(left.phaseRotation,targetRotation,reach);
           curl = config.left.curl;
         } else {
           left.target.copy(supportGrip);
@@ -256,8 +269,17 @@ export function createFirstPersonHands() {
         direction.copy(end).sub(elbow); hand.sleeve.scale.set(1, direction.length() + .012, 1);
         hand.sleeve.quaternion.setFromUnitVectors(up, direction.normalize());
         for (const digit of hand.digits) for (let segment = 0; segment < 3; segment++) {
-          const angle = (digit.thumb ? attachment.thumbAngles ?? thumbAngles : digit.index && side === 'right' && attachment.triggerFinger !== false ? triggerAngles : attachment.fingerAngles ?? gripAngles)[segment];
+          let angle = (digit.thumb ? attachment.thumbAngles ?? thumbAngles : digit.index && side === 'right' && attachment.triggerFinger !== false ? triggerAngles : attachment.fingerAngles ?? gripAngles)[segment];
+          if (side === 'left' && config.shellLoad && shellGrip > 0) {
+            const load = config.shellLoad, gripAngle = (digit.thumb ? load.grip.thumbAngles! : load.grip.fingerAngles!)[segment];
+            const pressAngle = (digit.thumb ? load.press.thumbAngles! : load.press.fingerAngles!)[segment];
+            angle += (gripAngle + (pressAngle - gripAngle) * shellPress - angle) * shellGrip;
+          }
           digit.joints[segment].rotation.set(-angle * (hand.curl + (aiming ? .025 : 0)), 0, segment === 0 ? digit.spread : 0);
+          if (side === 'left' && config.shellLoad && digit.thumb && segment === 0) {
+            digit.joints[segment].rotation.y = -.65 * shellGrip;
+            digit.joints[segment].rotation.z += .65 * shellGrip;
+          }
         }
       }
       root.updateWorldMatrix(true, true); inverse.copy(root.matrixWorld).invert();

@@ -1,8 +1,12 @@
 import type { WeaponSlotState } from './types';
 
-// Seconds at the standard class speed. The .74 s lock stays inside the existing
-// .85 s fire interval; only shell loading deliberately becomes more deliberate.
-export const SHOTGUN = Object.freeze({ recovery: .18, rearward: .23, rearStop: .03, forward: .22, settle: .08, cycle: .74, stroke: .075, open: .30, shell: .85, seat: .72, close: .26 });
+// One timeline, in seconds at standard class speed. Recovery is perceptibly
+// later; the .84 s mechanical lock remains inside the unchanged .85 s cadence.
+const recovery = .32, rearward = .20, rearStop = .02, forward = .22, settle = .08;
+const rearEnd = recovery + rearward, forwardStart = rearEnd + rearStop, pumpEnd = forwardStart + forward;
+export const SHOTGUN = Object.freeze({ recovery, rearward, rearStop, forward, settle, rearEnd, forwardStart, pumpEnd,
+  pumpDuration: rearward + rearStop + forward, cycle: pumpEnd + settle,
+  stroke: .075, open: .30, shell: .85, seat: .72, close: .26 });
 export interface ShotgunCycle { elapsed: number; duration: number; kind: 'fire' | 'chamber'; pumpStarted: boolean; }
 export type ShotgunEventListener = (event: 'pump' | 'seat', duration: number, empty: boolean, late: number) => void;
 export const shotgunEase = (v: number) => { const p = Math.max(0, Math.min(1, v)); return p * p * (3 - 2 * p); };
@@ -11,10 +15,10 @@ export const shotgunEase = (v: number) => { const p = Math.max(0, Math.min(1, v)
  * rather than a sine wave, shared by fire and reload chambering. */
 export function shotgunPumpStroke(elapsed: number, duration: number = SHOTGUN.cycle): number {
   const t = elapsed * SHOTGUN.cycle / duration;
-  if (t <= SHOTGUN.recovery || t >= .66) return 0;
-  if (t < .41) return SHOTGUN.stroke * shotgunEase((t - .18) / .23);
-  if (t < .44) return SHOTGUN.stroke;
-  return SHOTGUN.stroke * (1 - shotgunEase((t - .44) / .22));
+  if (t <= SHOTGUN.recovery || t >= SHOTGUN.pumpEnd) return 0;
+  if (t < SHOTGUN.rearEnd) return SHOTGUN.stroke * shotgunEase((t - SHOTGUN.recovery) / SHOTGUN.rearward);
+  if (t < SHOTGUN.forwardStart) return SHOTGUN.stroke;
+  return SHOTGUN.stroke * (1 - shotgunEase((t - SHOTGUN.forwardStart) / SHOTGUN.forward));
 }
 
 export function beginShotgunCycle(state: WeaponSlotState, kind: ShotgunCycle['kind'] = 'fire', duration: number = SHOTGUN.cycle, elapsed = 0, pumpStarted = false): void {
@@ -38,7 +42,7 @@ export function advanceShotgunCycle(state: WeaponSlotState, delta: number, onEve
   const scale = cycle.duration / SHOTGUN.cycle, start = SHOTGUN.recovery * scale;
   if (!cycle.pumpStarted && cycle.elapsed + 1e-8 >= start) {
     cycle.pumpStarted = true;
-    onEvent?.('pump', .48 * scale, true, cycle.elapsed - start);
+    onEvent?.('pump', SHOTGUN.pumpDuration * scale, true, cycle.elapsed - start);
   }
   state.boltCycleT = Math.max(0, cycle.duration - cycle.elapsed);
   if (state.boltCycleT < 1e-8) {
@@ -50,8 +54,8 @@ export function advanceShotgunCycle(state: WeaponSlotState, delta: number, onEve
  * before moving forward into the magazine. It never crosses a receiver wall. */
 export function shotgunShellPose(progress: number, out: { x: number; y: number; z: number; angle: number }): void {
   const carry = shotgunEase((progress - .16) / .36), press = shotgunEase((progress - .52) / .20);
-  out.x = -.11 + .102 * carry + .008 * press;
-  out.y = -.13 + .047 * carry + .063 * press;
+  out.x = -.08 + .074 * carry + .006 * press;
+  out.y = -.115 + .040 * carry + .055 * press;
   out.z = -.045 - .015 * press;
-  out.angle = -.35 * (1 - carry);
+  out.angle = -.20 * (1 - carry);
 }

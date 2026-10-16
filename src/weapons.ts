@@ -539,9 +539,9 @@ export function createViewmodelManager(): ViewmodelManager {
       const p = THREE.MathUtils.smoothstep(sequence.elapsed / phase.duration, 0, 1);
       const progress = 1 - (ws.reloadT ?? 0) / (ws.totalReloadT || 1);
       const lift = w.id === 'shotgun' ? phase.phase === 'open' ? p : phase.phase === 'close' ? 1 - p : 1 : Math.min(1, progress * 7, (1 - progress) * 7);
-      reloadRotation.setFromEuler(w.id === 'shotgun' ? reloadEuler.set(.06, -.12, -1.25) : reloadEuler.set(.14, -.18, -.38));
+      reloadRotation.setFromEuler(w.id === 'shotgun' ? reloadEuler.set(-.06, .08, -.52) : reloadEuler.set(.14, -.18, -.38));
       assembly.root.quaternion.slerp(reloadRotation, lift);
-      reloadPosition.copy(assembly.root.position); reloadPosition.x -= .02; reloadPosition.y += w.id === 'shotgun' ? .075 : .05; reloadPosition.z += .025;
+      reloadPosition.copy(assembly.root.position); reloadPosition.x += w.id === 'shotgun' ? .07 : -.02; reloadPosition.y += w.id === 'shotgun' ? .13 : .05; reloadPosition.z += w.id === 'shotgun' ? -.025 : .025;
       assembly.root.position.lerp(reloadPosition, lift);
       const removed = phase.phase === 'eject' ? p : phase.phase === 'insert' ? 1 - p : 0;
       if (parts.magazine && sequence.kind !== 'shell') {
@@ -581,12 +581,12 @@ export function createViewmodelManager(): ViewmodelManager {
         const cycle = ws.shotgunCycle, t = cycle.elapsed * SHOTGUN.cycle / cycle.duration;
         parts.pump.position.z += shotgunPumpStroke(cycle.elapsed, cycle.duration);
         if (cycle.kind === 'fire') {
-          const mass = t < .035 ? shotgunEase(t / .035) : Math.pow(1 - shotgunEase((t - .035) / .145), 1.3);
+          const mass = t < .035 ? shotgunEase(t / .035) : Math.pow(1 - shotgunEase((t - .035) / .25), 1.3);
           assembly.root.position.z += mass * .038;
           assembly.root.rotation.x += mass * .070;
         }
-        const rearStop = Math.max(0, 1 - Math.abs(t - .435) / .035);
-        const lock = t >= .66 ? Math.sin((t - .66) / .08 * Math.PI) * Math.exp(-(t - .66) * 28) : 0;
+        const rearStop = Math.max(0, 1 - Math.abs(t - (SHOTGUN.rearEnd + SHOTGUN.rearStop * .5)) / (SHOTGUN.rearStop + .01));
+        const lock = t >= SHOTGUN.pumpEnd ? Math.sin((t - SHOTGUN.pumpEnd) / SHOTGUN.settle * Math.PI) * Math.exp(-(t - SHOTGUN.pumpEnd) * 28) : 0;
         assembly.root.position.z += rearStop * .0035 - lock * .002;
         assembly.root.rotation.x += rearStop * .008 - lock * .004;
       }
