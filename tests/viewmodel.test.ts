@@ -218,8 +218,8 @@ function sprintAtRate(rate: number) {
   for(let n=0;n<rate;n++)v.update(1/rate,WEAPONS[0],{},false,true,true,true,false,false,0,true,true);
   const model=weapon(v,'ar'), p=model.position.clone(), q=model.quaternion.clone();
   const barrel=new THREE.Vector3(0,0,-1).applyQuaternion(q);
-  assert.ok(barrel.x > .6 && barrel.y < -.1, 'Sprint points the muzzle laterally/downward instead of upward');
-  assert.ok(p.x > arConfig.hip[0]+.04 && p.y < arConfig.hip[1]-.03, 'Sprint lowers the receiver and moves it right');
+  assert.ok(barrel.x < -.6 && barrel.y < 0, 'Sprint points the muzzle laterally/downward instead of upward');
+  assert.ok(p.x < -.03 && p.y < arConfig.hip[1]-.03, 'Sprint lowers the receiver and moves it screen-left');
   for(let n=0;n<rate;n++)step(v,'ar',1/rate);
   assert.ok(model.position.distanceTo(new THREE.Vector3(...arConfig.hip)) < .004 && model.quaternion.angleTo(new THREE.Quaternion()) < .001, 'Sprint stop restores readiness without accumulating sway');
   for(let n=0;n<rate;n++)step(v,'ar',1/rate,{},true);
@@ -266,3 +266,19 @@ for(const empty of [false,true]) {
 }
 acceptanceVm.dispose();
 console.log('PASS: calibrated palm/finger/wrist contact, compact screen silhouette, lowered lateral sprint/stop/ADS and exact AR empty-only charging contact');
+
+// Screen-space tests catch a sign-correct Euler that still leaves the gun on
+// the wrong side. Class-specific carry profiles preserve a downward muzzle.
+for (const id of WEAPON_MODEL_IDS) {
+  const v=createViewmodelManager();step(v,id,0);
+  v.update(0,WEAPONS.find(w=>w.id===id)!,{},false,true,true,true,false,false,0,true,true);
+  for(let i=0;i<120;i++)v.update(1/60,WEAPONS.find(w=>w.id===id)!,{},false,true,true,true,false,false,0,true,true);
+  const m=weapon(v,id),b=new THREE.Vector3(0,0,-1).applyQuaternion(m.quaternion);
+  const breech=m.position.clone().project(acceptanceCamera);
+  const muzzle=m.getObjectByName('muzzle')!.getWorldPosition(new THREE.Vector3()).project(acceptanceCamera);
+  assert.ok(breech.x<0&&muzzle.x<0,`${id}: receiver and actual muzzle project left of screen centre`);
+  assert.ok(b.y<.01,`${id}: muzzle remains controlled below horizontal`);
+  assert.ok(m.position.y<VIEWMODEL_GRIPS[id].hip[1],`${id}: lowered carry`);
+  v.dispose();
+}
+console.log('PASS: all twelve sprint profiles project receiver and muzzle screen-left with controlled downward pitch');
