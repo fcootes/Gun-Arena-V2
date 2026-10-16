@@ -1,0 +1,3121 @@
+{
+  "baselineCommit": "4e3bab4fad18209f00d1f55a909e2be63c2a801b",
+  "codeCommit": "0dcde7240735a8e89f8c79b6c7cc3c4b02ef15b8",
+  "before": {
+    "startedAt": "2026-10-15T07:24:39.883Z",
+    "browser": "154.0.8037.57",
+    "viewport": "1280x720",
+    "results": [
+      {
+        "id": "ar",
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 18,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.08380629192144912,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "pistol",
+        "calls": 19,
+        "triangles": 13340,
+        "geometries": 30,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.09787250016124768,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "sniper",
+        "calls": 17,
+        "triangles": 21664,
+        "geometries": 41,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.08688144945490878,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "br",
+        "calls": 15,
+        "triangles": 20140,
+        "geometries": 50,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.0856881350648904,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "minigun",
+        "calls": 19,
+        "triangles": 14556,
+        "geometries": 61,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.12894990919893057,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "shotgun",
+        "calls": 14,
+        "triangles": 15060,
+        "geometries": 69,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.08380712302612044,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "smg",
+        "calls": 18,
+        "triangles": 20312,
+        "geometries": 81,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.08244447601979327,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "lmg",
+        "calls": 17,
+        "triangles": 23648,
+        "geometries": 92,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.08826939640721877,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "laser",
+        "calls": 14,
+        "triangles": 9924,
+        "geometries": 100,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.0838064202289321,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "railgun",
+        "calls": 18,
+        "triangles": 12682,
+        "geometries": 112,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.09609259987697857,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "rocket",
+        "calls": 13,
+        "triangles": 12904,
+        "geometries": 119,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.09170161565320768,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "grenade_launcher",
+        "calls": 16,
+        "triangles": 11076,
+        "geometries": 129,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.08380656082867789,
+          "centralHits": 0
+        }
+      }
+    ],
+    "gameplay": [],
+    "sequence": [
+      {
+        "name": "accept-ar-idle",
+        "id": "ar",
+        "position": [
+          0.145,
+          -0.205,
+          -0.36
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "barrel": [
+          0,
+          0,
+          -1
+        ],
+        "hand": [
+          -0.068,
+          -0.055,
+          -0.28
+        ],
+        "sleeveLength": 0.312,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "ready",
+        "ammo": 20,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-sprint-enter-10",
+        "id": "ar",
+        "position": [
+          0.18317894580221278,
+          -0.24540866537662245,
+          -0.38260209108175186
+        ],
+        "rotation": [
+          0.1697272771694291,
+          -0.11498532968958211,
+          -0.21390414100859959
+        ],
+        "barrel": [
+          0.11473211497146313,
+          0.16779812519843618,
+          -0.9791222247370677
+        ],
+        "hand": [
+          -0.068,
+          -0.055,
+          -0.28
+        ],
+        "sleeveLength": 0.312,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "ready",
+        "ammo": 20,
+        "calls": 18,
+        "triangles": 22144,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-sprint-enter-25",
+        "id": "ar",
+        "position": [
+          0.18728614408927113,
+          -0.26330479990957323,
+          -0.38909407849733046
+        ],
+        "rotation": [
+          0.21398835627649151,
+          -0.1543124692509386,
+          -0.2720057236506419
+        ],
+        "barrel": [
+          0.15370077454920372,
+          0.20983559873208063,
+          -0.9655801848669658
+        ],
+        "hand": [
+          -0.068,
+          -0.055,
+          -0.28
+        ],
+        "sleeveLength": 0.31200000000000006,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "ready",
+        "ammo": 20,
+        "calls": 18,
+        "triangles": 22144,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-sprint-carry",
+        "id": "ar",
+        "position": [
+          0.19603114355886977,
+          -0.2561177407471102,
+          -0.38999997505413847
+        ],
+        "rotation": [
+          0.21999983501969292,
+          -0.15999984273297774,
+          -0.27999978024250105
+        ],
+        "barrel": [
+          0.15931805135594884,
+          0.21544208446665214,
+          -0.9634326477511581
+        ],
+        "hand": [
+          -0.068,
+          -0.055,
+          -0.28
+        ],
+        "sleeveLength": 0.31199999999999994,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "ready",
+        "ammo": 20,
+        "calls": 18,
+        "triangles": 22144,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-sprint-stop-10",
+        "id": "ar",
+        "position": [
+          0.15698832223293738,
+          -0.21655042570161553,
+          -0.36739790276667444
+        ],
+        "rotation": [
+          0.05812724003499651,
+          -0.0335890583100448,
+          -0.07201275530155195
+        ],
+        "barrel": [
+          0.03358274266468278,
+          0.058061743655311755,
+          -0.9977479808643175
+        ],
+        "hand": [
+          -0.068,
+          -0.055,
+          -0.28
+        ],
+        "sleeveLength": 0.312,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "ready",
+        "ammo": 20,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-sprint-stop-25",
+        "id": "ar",
+        "position": [
+          0.14622849176819297,
+          -0.20468504343275423,
+          -0.3609059207493698
+        ],
+        "rotation": [
+          0.007245498095692397,
+          -0.0038865678572621316,
+          -0.00892107844884514
+        ],
+        "barrel": [
+          0.003886558072569547,
+          0.00724537997851923,
+          -0.9999661989964038
+        ],
+        "hand": [
+          -0.068,
+          -0.055,
+          -0.28
+        ],
+        "sleeveLength": 0.31199999999999994,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "ready",
+        "ammo": 20,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-sprint-ready",
+        "id": "ar",
+        "position": [
+          0.14500007108246377,
+          -0.2047177404445191,
+          -0.3600000249458408
+        ],
+        "rotation": [
+          1.999914812522515e-07,
+          -1.0613139442683846e-07,
+          -2.4604163762218356e-07
+        ],
+        "barrel": [
+          1.0613139442683826e-07,
+          1.99991481252249e-07,
+          -0.9999999999999744
+        ],
+        "hand": [
+          -0.068,
+          -0.055,
+          -0.28
+        ],
+        "sleeveLength": 0.312,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "ready",
+        "ammo": 20,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-stop-ads",
+        "id": "ar",
+        "position": [
+          3.260576747093331e-05,
+          -0.1463890243620557,
+          -0.36000000000560944
+        ],
+        "rotation": [
+          4.497155218304901e-11,
+          -2.386547714494024e-11,
+          -5.532672707459222e-11
+        ],
+        "barrel": [
+          2.386547714494024e-11,
+          4.497155218304901e-11,
+          -1
+        ],
+        "hand": [
+          -0.068,
+          -0.055,
+          -0.28
+        ],
+        "sleeveLength": 0.31200000000000006,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "ready",
+        "ammo": 20,
+        "calls": 18,
+        "triangles": 21388,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-tactical-20",
+        "id": "ar",
+        "position": [
+          0.13052522746071138,
+          -0.16822202823845578,
+          -0.3419065343258892
+        ],
+        "rotation": [
+          0.10809326745100417,
+          -0.12517937690959424,
+          -0.2768116136791272
+        ],
+        "barrel": [
+          0.12485270872975565,
+          0.10703874135552487,
+          -0.9863845644432336
+        ],
+        "hand": [
+          -0.050099998611777864,
+          -0.18004426172948473,
+          0.011687752378649333
+        ],
+        "sleeveLength": 0.312,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "eject",
+        "phaseElapsed": 0.19999999999999998,
+        "ammo": 20,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-tactical-50",
+        "id": "ar",
+        "position": [
+          0.12499999999999999,
+          -0.1536367224799533,
+          -0.33499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.07427510943210083,
+          -0.3548206434551417,
+          0.03148033474973672
+        ],
+        "sleeveLength": 0.31200000000000006,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "insert",
+        "phaseElapsed": 0.016399999999999918,
+        "ammo": 20,
+        "calls": 15,
+        "triangles": 19472,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-tactical-90",
+        "id": "ar",
+        "position": [
+          0.12499999999999999,
+          -0.1530485532843467,
+          -0.33499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.06501201063865604,
+          -0.2886572187414275,
+          0.024865721756999408
+        ],
+        "sleeveLength": 0.312,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "insert",
+        "phaseElapsed": 0.4163999999999999,
+        "ammo": 20,
+        "calls": 16,
+        "triangles": 19540,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-tactical-130",
+        "id": "ar",
+        "position": [
+          0.12499999999999999,
+          -0.15314208056999223,
+          -0.33499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.046789898153094575,
+          -0.15849927252209706,
+          0.011849927252201757
+        ],
+        "sleeveLength": 0.31199999999999994,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "insert",
+        "phaseElapsed": 0.8164000000000008,
+        "ammo": 20,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-tactical-170",
+        "id": "ar",
+        "position": [
+          0.12803556658395354,
+          -0.16147354902510103,
+          -0.3387944582299419
+        ],
+        "rotation": [
+          0.12314521425209633,
+          -0.14947736542345863,
+          -0.32342078329923746
+        ],
+        "barrel": [
+          0.1489213461342304,
+          0.12146448712062774,
+          -0.9813606936463737
+        ],
+        "hand": [
+          -0.04550921741830487,
+          -0.1011304690379892,
+          -0.047119247731093813
+        ],
+        "sleeveLength": 0.312,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "close",
+        "phaseElapsed": 0.12830000000000097,
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-tactical-194",
+        "id": "ar",
+        "position": [
+          0.145,
+          -0.20454094410595744,
+          -0.36
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "barrel": [
+          0,
+          0,
+          -1
+        ],
+        "hand": [
+          -0.06678138412671568,
+          -0.057499482692856485,
+          -0.2673818449728709
+        ],
+        "sleeveLength": 0.31200000000000006,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "ready",
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-25",
+        "id": "ar",
+        "position": [
+          0.1347360703812317,
+          -0.17860763089490717,
+          -0.3471700879765396
+        ],
+        "rotation": [
+          0.08018910354028422,
+          -0.08575809929323486,
+          -0.19742256095093816
+        ],
+        "barrel": [
+          0.08565302064212464,
+          0.07980881423091614,
+          -0.9931234128878117
+        ],
+        "hand": [
+          -0.04855723548802987,
+          -0.17049102882373476,
+          0.012351334144641929
+        ],
+        "sleeveLength": 0.312,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "eject",
+        "phaseElapsed": 0.24999999999999997,
+        "ammo": 0,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-65",
+        "id": "ar",
+        "position": [
+          0.12499999999999999,
+          -0.15334459622366547,
+          -0.33499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.07380303424997245,
+          -0.3514502018325584,
+          0.03114497292426085
+        ],
+        "sleeveLength": 0.31199999999999994,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "eject",
+        "phaseElapsed": 0.6500000000000004,
+        "ammo": 0,
+        "calls": 15,
+        "triangles": 19472,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-120",
+        "id": "ar",
+        "position": [
+          0.12499999999999999,
+          -0.1530523047382436,
+          -0.33499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.06671627994104153,
+          -0.3008305710073602,
+          0.026083057100648562
+        ],
+        "sleeveLength": 0.312,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "insert",
+        "phaseElapsed": 0.5180000000000001,
+        "ammo": 0,
+        "calls": 16,
+        "triangles": 19540,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-190",
+        "id": "ar",
+        "position": [
+          0.12499999999999999,
+          -0.15442504397531487,
+          -0.33499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.04467992489359156,
+          -0.14342803495422538,
+          0.010342803495422524
+        ],
+        "sleeveLength": 0.31199999999999994,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "insert",
+        "phaseElapsed": 1.2180000000000004,
+        "ammo": 0,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-224",
+        "id": "ar",
+        "position": [
+          0.12499999999999999,
+          -0.15543335016077475,
+          -0.33499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.016001478501735014,
+          -0.05988761628357165,
+          0.08926842597063088
+        ],
+        "sleeveLength": 0.31200000000000006,
+        "bolt": [
+          0.039,
+          0.017,
+          0.07549198190408529
+        ],
+        "phase": "chamber",
+        "phaseElapsed": 0.02349999999999952,
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-237",
+        "id": "ar",
+        "position": [
+          0.12499999999999999,
+          -0.15580346391270833,
+          -0.33499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.0016624228127454978,
+          -0.029408066842736204,
+          0.15001382387193526
+        ],
+        "sleeveLength": 0.312,
+        "bolt": [
+          0.039,
+          0.017,
+          0.09276396669942048
+        ],
+        "phase": "chamber",
+        "phaseElapsed": 0.15349999999999941,
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-255",
+        "id": "ar",
+        "position": [
+          0.12499999999999999,
+          -0.15626287765672137,
+          -0.33499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.0010088101462653837,
+          -0.028018727125028352,
+          0.18185961600989214
+        ],
+        "sleeveLength": 0.31200000000000006,
+        "bolt": [
+          0.039,
+          0.017,
+          0.1199396077339784
+        ],
+        "phase": "chamber",
+        "phaseElapsed": 0.33349999999999913,
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-272",
+        "id": "ar",
+        "position": [
+          0.12499999999999999,
+          -0.15661323549716644,
+          -0.33499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.0010001489572453676,
+          -0.028000316628223172,
+          0.16909243661921358
+        ],
+        "sleeveLength": 0.312,
+        "bolt": [
+          0.039,
+          0.017,
+          0.09786421759308898
+        ],
+        "phase": "chamber",
+        "phaseElapsed": 0.5034999999999995,
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-285",
+        "id": "ar",
+        "position": [
+          0.12499999999999999,
+          -0.15681172142843736,
+          -0.33499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.0010000065775301764,
+          -0.028000013981405752,
+          0.14655806812331482
+        ],
+        "sleeveLength": 0.31200000000000006,
+        "bolt": [
+          0.039,
+          0.017,
+          0.07704246842760501
+        ],
+        "phase": "chamber",
+        "phaseElapsed": 0.6334999999999997,
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-300",
+        "id": "ar",
+        "position": [
+          0.12816715542521964,
+          -0.1648729487983793,
+          -0.3389589442815245
+        ],
+        "rotation": [
+          0.12237710140288856,
+          -0.14817592986370132,
+          -0.3209624448447827
+        ],
+        "barrel": [
+          0.14763429707127024,
+          0.12073421230909447,
+          -0.9816452334251792
+        ],
+        "hand": [
+          -0.005091792478779675,
+          -0.029648936077727485,
+          0.11736645719551943
+        ],
+        "sleeveLength": 0.31199999999999994,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "close",
+        "phaseElapsed": 0.1014999999999996,
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-342",
+        "id": "ar",
+        "position": [
+          0.145,
+          -0.20682812093101582,
+          -0.36
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "barrel": [
+          0,
+          0,
+          -1
+        ],
+        "hand": [
+          -0.0665517124693793,
+          -0.05441636185144505,
+          -0.27085173608151103
+        ],
+        "sleeveLength": 0.312,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "ready",
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-wide-idle",
+        "id": "ar",
+        "position": [
+          0.145,
+          -0.205,
+          -0.36
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "barrel": [
+          0,
+          0,
+          -1
+        ],
+        "hand": [
+          -0.068,
+          -0.055,
+          -0.28
+        ],
+        "sleeveLength": 0.312,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "ready",
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-wide-sprint",
+        "id": "ar",
+        "position": [
+          0.19603114355886983,
+          -0.2561177407471102,
+          -0.38999997505413847
+        ],
+        "rotation": [
+          0.21999983501969292,
+          -0.15999984273297777,
+          -0.27999978024250105
+        ],
+        "barrel": [
+          0.1593180513559489,
+          0.21544208446665214,
+          -0.9634326477511581
+        ],
+        "hand": [
+          -0.068,
+          -0.055,
+          -0.28
+        ],
+        "sleeveLength": 0.31199999999999994,
+        "bolt": [
+          0.039,
+          0.017,
+          0.075
+        ],
+        "phase": "ready",
+        "calls": 18,
+        "triangles": 22144,
+        "geometries": 130,
+        "programs": 6
+      }
+    ],
+    "timing": {
+      "medianUpdateMs": 0,
+      "p95UpdateMs": 0.10000000149011612,
+      "maxUpdateMs": 2.199999999254942,
+      "note": "CPU pose update only; no GPU/FPS claim"
+    },
+    "checks": [
+      "12 held configurations; both faction palettes; AR/pistol hip, ADS, reload and sprint; close-up; 4:3 and 21:9"
+    ],
+    "errors": []
+  },
+  "after": {
+    "startedAt": "2026-10-15T07:29:56.325Z",
+    "browser": "154.0.8037.57",
+    "viewport": "1280x720",
+    "results": [
+      {
+        "id": "ar",
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 18,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.08668813199757716,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "pistol",
+        "calls": 19,
+        "triangles": 13340,
+        "geometries": 30,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.09787226727324286,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "sniper",
+        "calls": 17,
+        "triangles": 21664,
+        "geometries": 41,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.0957155030401469,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "br",
+        "calls": 15,
+        "triangles": 20140,
+        "geometries": 50,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.0930354280737776,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "minigun",
+        "calls": 19,
+        "triangles": 14556,
+        "geometries": 61,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.12894990919893057,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "shotgun",
+        "calls": 14,
+        "triangles": 15060,
+        "geometries": 69,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.08812543631016051,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "smg",
+        "calls": 18,
+        "triangles": 20312,
+        "geometries": 81,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.08244447601979327,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "lmg",
+        "calls": 17,
+        "triangles": 23648,
+        "geometries": 92,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.08826939640721877,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "laser",
+        "calls": 14,
+        "triangles": 9924,
+        "geometries": 100,
+        "programs": 5,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.0838064202289321,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "railgun",
+        "calls": 18,
+        "triangles": 12682,
+        "geometries": 112,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.09609259987697857,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "rocket",
+        "calls": 13,
+        "triangles": 12904,
+        "geometries": 119,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.09170161565320768,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "grenade_launcher",
+        "calls": 16,
+        "triangles": 11076,
+        "geometries": 129,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.08380656082867789,
+          "centralHits": 0
+        }
+      }
+    ],
+    "gameplay": [
+      {
+        "faction": "usmc",
+        "id": "ar",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 369,
+        "triangles": 86532,
+        "geometries": 302
+      },
+      {
+        "faction": "usmc",
+        "id": "pistol",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 360,
+        "triangles": 66656,
+        "geometries": 302
+      },
+      {
+        "faction": "usmc",
+        "id": "sniper",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 357,
+        "triangles": 85236,
+        "geometries": 314
+      },
+      {
+        "faction": "usmc",
+        "id": "br",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 355,
+        "triangles": 83096,
+        "geometries": 326
+      },
+      {
+        "faction": "usmc",
+        "id": "minigun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 355,
+        "triangles": 69028,
+        "geometries": 337
+      },
+      {
+        "faction": "usmc",
+        "id": "shotgun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 351,
+        "triangles": 72696,
+        "geometries": 347
+      },
+      {
+        "faction": "usmc",
+        "id": "smg",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 349,
+        "triangles": 82388,
+        "geometries": 362
+      },
+      {
+        "faction": "usmc",
+        "id": "lmg",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 346,
+        "triangles": 88952,
+        "geometries": 373
+      },
+      {
+        "faction": "usmc",
+        "id": "laser",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 340,
+        "triangles": 62116,
+        "geometries": 382
+      },
+      {
+        "faction": "usmc",
+        "id": "railgun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 350,
+        "triangles": 68408,
+        "geometries": 396
+      },
+      {
+        "faction": "usmc",
+        "id": "rocket",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 337,
+        "triangles": 67428,
+        "geometries": 403
+      },
+      {
+        "faction": "usmc",
+        "id": "grenade_launcher",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 343,
+        "triangles": 63772,
+        "geometries": 413
+      },
+      {
+        "faction": "apex",
+        "id": "ar",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 369,
+        "triangles": 74578,
+        "geometries": 284
+      },
+      {
+        "faction": "apex",
+        "id": "pistol",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 356,
+        "triangles": 54622,
+        "geometries": 284
+      },
+      {
+        "faction": "apex",
+        "id": "sniper",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 353,
+        "triangles": 73202,
+        "geometries": 296
+      },
+      {
+        "faction": "apex",
+        "id": "br",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 351,
+        "triangles": 71062,
+        "geometries": 308
+      },
+      {
+        "faction": "apex",
+        "id": "minigun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 351,
+        "triangles": 56994,
+        "geometries": 319
+      },
+      {
+        "faction": "apex",
+        "id": "shotgun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 341,
+        "triangles": 60098,
+        "geometries": 328
+      },
+      {
+        "faction": "apex",
+        "id": "smg",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 338,
+        "triangles": 70206,
+        "geometries": 344
+      },
+      {
+        "faction": "apex",
+        "id": "lmg",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 335,
+        "triangles": 76770,
+        "geometries": 355
+      },
+      {
+        "faction": "apex",
+        "id": "laser",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 330,
+        "triangles": 49970,
+        "geometries": 364
+      },
+      {
+        "faction": "apex",
+        "id": "railgun",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 340,
+        "triangles": 56262,
+        "geometries": 378
+      },
+      {
+        "faction": "apex",
+        "id": "rocket",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 327,
+        "triangles": 55282,
+        "geometries": 385
+      },
+      {
+        "faction": "apex",
+        "id": "grenade_launcher",
+        "pose": "idle",
+        "fov": 74,
+        "calls": 333,
+        "triangles": 51626,
+        "geometries": 395
+      }
+    ],
+    "sequence": [
+      {
+        "name": "accept-ar-idle",
+        "id": "ar",
+        "position": [
+          0.15,
+          -0.225,
+          -0.35
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "barrel": [
+          0,
+          0,
+          -1
+        ],
+        "hand": [
+          -0.036,
+          -0.0605,
+          -0.24
+        ],
+        "sleeveLength": 0.247,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "ready",
+        "ammo": 20,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-sprint-enter-10",
+        "id": "ar",
+        "position": [
+          0.20605188521905568,
+          -0.26329300338178846,
+          -0.40273821252408754
+        ],
+        "rotation": [
+          -0.18487924422394952,
+          -0.6386572825716261,
+          0.0967290697711933
+        ],
+        "barrel": [
+          0.5961179153938798,
+          -0.14759480030282582,
+          -0.7892142965443696
+        ],
+        "hand": [
+          -0.036,
+          -0.0605,
+          -0.24
+        ],
+        "sleeveLength": 0.247,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "ready",
+        "ammo": 20,
+        "calls": 18,
+        "triangles": 21388,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-sprint-enter-25",
+        "id": "ar",
+        "position": [
+          0.22202620576504128,
+          -0.2800769590499304,
+          -0.4178861831604377
+        ],
+        "rotation": [
+          -0.24133025710656764,
+          -0.8241114094672435,
+          0.10414759154924462
+        ],
+        "barrel": [
+          0.7339445330334141,
+          -0.16232734384850322,
+          -0.6595265391699213
+        ],
+        "hand": [
+          -0.036,
+          -0.0605,
+          -0.24
+        ],
+        "sleeveLength": 0.247,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "ready",
+        "ammo": 20,
+        "calls": 18,
+        "triangles": 21388,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-sprint-carry",
+        "id": "ar",
+        "position": [
+          0.22295640037908754,
+          -0.2775946821209416,
+          -0.41999994179298966
+        ],
+        "rotation": [
+          -0.24999975753926393,
+          -0.8499992871501872,
+          0.10262794631927294
+        ],
+        "barrel": [
+          0.7512799346712398,
+          -0.16328242078487695,
+          -0.6394664266582009
+        ],
+        "hand": [
+          -0.036,
+          -0.0605,
+          -0.24
+        ],
+        "sleeveLength": 0.247,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "ready",
+        "ammo": 20,
+        "calls": 18,
+        "triangles": 21388,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-sprint-stop-10",
+        "id": "ar",
+        "position": [
+          0.1691439292665861,
+          -0.23548902246676567,
+          -0.3672617731222404
+        ],
+        "rotation": [
+          -0.06413027664935651,
+          -0.20706406676440642,
+          0.04389904212469544
+        ],
+        "barrel": [
+          0.20558757207260508,
+          -0.0627173618755256,
+          -0.9766269926275158
+        ],
+        "hand": [
+          -0.036,
+          -0.0605,
+          -0.24
+        ],
+        "sleeveLength": 0.24700000000000003,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "ready",
+        "ammo": 20,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-sprint-stop-25",
+        "id": "ar",
+        "position": [
+          0.1522016123840919,
+          -0.22451881785881525,
+          -0.35211381508186285
+        ],
+        "rotation": [
+          -0.008292296305322773,
+          -0.02520253357827355,
+          0.006115418020859794
+        ],
+        "barrel": [
+          0.02519986569046011,
+          -0.00828956794311188,
+          -0.999648062986419
+        ],
+        "hand": [
+          -0.036,
+          -0.0605,
+          -0.24
+        ],
+        "sleeveLength": 0.24700000000000003,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "ready",
+        "ammo": 20,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-sprint-ready",
+        "id": "ar",
+        "position": [
+          0.15000007172375587,
+          -0.22471773327076175,
+          -0.3500000582069619
+        ],
+        "rotation": [
+          -2.3038661930456423e-07,
+          -6.933126240890625e-07,
+          1.4817648707116772e-07
+        ],
+        "barrel": [
+          6.933126240890069e-07,
+          -2.3038661930450681e-07,
+          -0.9999999999997331
+        ],
+        "hand": [
+          -0.036,
+          -0.0605,
+          -0.24
+        ],
+        "sleeveLength": 0.24699999999999997,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "ready",
+        "ammo": 20,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-stop-ads",
+        "id": "ar",
+        "position": [
+          3.373012723686495e-05,
+          -0.14639352171494424,
+          -0.359997751339847
+        ],
+        "rotation": [
+          -5.1806435553293696e-11,
+          -1.5590335029716485e-10,
+          5.376521053077109e-11
+        ],
+        "barrel": [
+          1.5590335029716485e-10,
+          -5.1806435553293696e-11,
+          -1
+        ],
+        "hand": [
+          -0.036,
+          -0.0605,
+          -0.24
+        ],
+        "sleeveLength": 0.24699999999999994,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "ready",
+        "ammo": 20,
+        "calls": 18,
+        "triangles": 21388,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-tactical-20",
+        "id": "ar",
+        "position": [
+          0.13552522746071138,
+          -0.1882220282384558,
+          -0.3319065343258892
+        ],
+        "rotation": [
+          0.10809326745100417,
+          -0.12517937690959424,
+          -0.2768116136791272
+        ],
+        "barrel": [
+          0.12485270872975565,
+          0.10703874135552487,
+          -0.9863845644432336
+        ],
+        "hand": [
+          -0.04983664670620924,
+          -0.1800895253382543,
+          0.01201694226061012
+        ],
+        "sleeveLength": 0.24700000000000003,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "eject",
+        "phaseElapsed": 0.19999999999999998,
+        "ammo": 20,
+        "calls": 18,
+        "triangles": 21388,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-tactical-50",
+        "id": "ar",
+        "position": [
+          0.13,
+          -0.17363672247995332,
+          -0.32499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.0742749128173055,
+          -0.35482067724830957,
+          0.03148058051823085
+        ],
+        "sleeveLength": 0.24700000000000003,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "insert",
+        "phaseElapsed": 0.016399999999999918,
+        "ammo": 20,
+        "calls": 15,
+        "triangles": 19472,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-tactical-90",
+        "id": "ar",
+        "position": [
+          0.13,
+          -0.1730485532843467,
+          -0.32499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.06501201062533955,
+          -0.2886572187437163,
+          0.024865721773645
+        ],
+        "sleeveLength": 0.247,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "insert",
+        "phaseElapsed": 0.4163999999999999,
+        "ammo": 20,
+        "calls": 15,
+        "triangles": 19472,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-tactical-130",
+        "id": "ar",
+        "position": [
+          0.13,
+          -0.17314208056999225,
+          -0.32499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.04678989815309369,
+          -0.15849927252209722,
+          0.011849927252202888
+        ],
+        "sleeveLength": 0.247,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "insert",
+        "phaseElapsed": 0.8164000000000008,
+        "ammo": 20,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-tactical-170",
+        "id": "ar",
+        "position": [
+          0.13303556658395355,
+          -0.18147354902510104,
+          -0.3287944582299419
+        ],
+        "rotation": [
+          0.12314521425209633,
+          -0.14947736542345863,
+          -0.32342078329923746
+        ],
+        "barrel": [
+          0.1489213461342304,
+          0.12146448712062774,
+          -0.9813606936463737
+        ],
+        "hand": [
+          -0.039457944138317075,
+          -0.10217053163298709,
+          -0.03955515613110905
+        ],
+        "sleeveLength": 0.24700000000000003,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "close",
+        "phaseElapsed": 0.12830000000000097,
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-tactical-194",
+        "id": "ar",
+        "position": [
+          0.15,
+          -0.22454094410595746,
+          -0.35
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "barrel": [
+          0,
+          0,
+          -1
+        ],
+        "hand": [
+          -0.0361873614490993,
+          -0.0627578303405718,
+          -0.22913931662585038
+        ],
+        "sleeveLength": 0.247,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "ready",
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-25",
+        "id": "ar",
+        "position": [
+          0.1397360703812317,
+          -0.19860763089490718,
+          -0.3371700879765396
+        ],
+        "rotation": [
+          0.08018910354028422,
+          -0.08575809929323486,
+          -0.19742256095093816
+        ],
+        "barrel": [
+          0.08565302064212464,
+          0.07980881423091614,
+          -0.9931234128878117
+        ],
+        "hand": [
+          -0.04847791541837652,
+          -0.1705046619607065,
+          0.012450484231708539
+        ],
+        "sleeveLength": 0.24699999999999997,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "eject",
+        "phaseElapsed": 0.24999999999999997,
+        "ammo": 0,
+        "calls": 17,
+        "triangles": 20228,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-65",
+        "id": "ar",
+        "position": [
+          0.13,
+          -0.1733445962236655,
+          -0.32499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.07380302887772437,
+          -0.35145020275591354,
+          0.031144979639570955
+        ],
+        "sleeveLength": 0.24699999999999997,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "eject",
+        "phaseElapsed": 0.6500000000000004,
+        "ammo": 0,
+        "calls": 15,
+        "triangles": 19472,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-120",
+        "id": "ar",
+        "position": [
+          0.13,
+          -0.17305230473824362,
+          -0.32499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.06671627994103158,
+          -0.30083057100736194,
+          0.026083057100661004
+        ],
+        "sleeveLength": 0.24700000000000005,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "insert",
+        "phaseElapsed": 0.5180000000000001,
+        "ammo": 0,
+        "calls": 15,
+        "triangles": 19472,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-190",
+        "id": "ar",
+        "position": [
+          0.13,
+          -0.1744250439753149,
+          -0.32499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.044679924893591544,
+          -0.14342803495422535,
+          0.01034280349542254
+        ],
+        "sleeveLength": 0.247,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "insert",
+        "phaseElapsed": 1.2180000000000004,
+        "ammo": 0,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-224",
+        "id": "ar",
+        "position": [
+          0.13,
+          -0.17543335016077477,
+          -0.32499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.04300160462611838,
+          -0.10210083001724568,
+          0.013446960872756295
+        ],
+        "sleeveLength": 0.247,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "chamber",
+        "phaseElapsed": 0.02349999999999952,
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-237",
+        "id": "ar",
+        "position": [
+          0.13,
+          -0.17580346391270835,
+          -0.32499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.08299999999999999,
+          0.028000000000000025,
+          0.10305073222789983
+        ],
+        "sleeveLength": 0.24699999999999997,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025050732227899872
+        ],
+        "phase": "chamber",
+        "phaseElapsed": 0.15349999999999941,
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-255",
+        "id": "ar",
+        "position": [
+          0.13,
+          -0.17626287765672138,
+          -0.32499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.08299999999999999,
+          0.027999999999999997,
+          0.14800000000000002
+        ],
+        "sleeveLength": 0.24699999999999994,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.07
+        ],
+        "phase": "chamber",
+        "phaseElapsed": 0.33349999999999913,
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-272",
+        "id": "ar",
+        "position": [
+          0.13,
+          -0.17661323549716645,
+          -0.32499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.08299999999999996,
+          0.028000000000000025,
+          0.11701727299450725
+        ],
+        "sleeveLength": 0.24700000000000003,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.03901727299450725
+        ],
+        "phase": "chamber",
+        "phaseElapsed": 0.5034999999999995,
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-285",
+        "id": "ar",
+        "position": [
+          0.13,
+          -0.17681172142843737,
+          -0.32499999999999996
+        ],
+        "rotation": [
+          0.14,
+          -0.17999999999999997,
+          -0.38
+        ],
+        "barrel": [
+          0.17902957342582415,
+          0.1372886132147418,
+          -0.9742177623717094
+        ],
+        "hand": [
+          -0.0522116967961814,
+          -0.029973719862509476,
+          -0.12168910635978251
+        ],
+        "sleeveLength": 0.24700000000000003,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "chamber",
+        "phaseElapsed": 0.6334999999999997,
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-300",
+        "id": "ar",
+        "position": [
+          0.13316715542521965,
+          -0.18487294879837932,
+          -0.3289589442815245
+        ],
+        "rotation": [
+          0.12237710140288856,
+          -0.14817592986370132,
+          -0.3209624448447827
+        ],
+        "barrel": [
+          0.14763429707127024,
+          0.12073421230909447,
+          -0.9816452334251792
+        ],
+        "hand": [
+          -0.0378543350056874,
+          -0.057008326638226914,
+          -0.22646729985211106
+        ],
+        "sleeveLength": 0.24700000000000003,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "close",
+        "phaseElapsed": 0.1014999999999996,
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-empty-342",
+        "id": "ar",
+        "position": [
+          0.15,
+          -0.22682812093101584,
+          -0.35
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "barrel": [
+          0,
+          0,
+          -1
+        ],
+        "hand": [
+          -0.03604269093608214,
+          -0.06041961387567511,
+          -0.23968844699837924
+        ],
+        "sleeveLength": 0.247,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "ready",
+        "ammo": 30,
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-wide-idle",
+        "id": "ar",
+        "position": [
+          0.15,
+          -0.225,
+          -0.35
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "barrel": [
+          0,
+          0,
+          -1
+        ],
+        "hand": [
+          -0.036,
+          -0.0605,
+          -0.24
+        ],
+        "sleeveLength": 0.247,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "ready",
+        "calls": 19,
+        "triangles": 22252,
+        "geometries": 130,
+        "programs": 6
+      },
+      {
+        "name": "accept-wide-sprint",
+        "id": "ar",
+        "position": [
+          0.2229564003790875,
+          -0.27759468212094157,
+          -0.41999994179298966
+        ],
+        "rotation": [
+          -0.24999975753926396,
+          -0.8499992871501872,
+          0.10262794631927295
+        ],
+        "barrel": [
+          0.7512799346712398,
+          -0.16328242078487698,
+          -0.6394664266582006
+        ],
+        "hand": [
+          -0.036,
+          -0.0605,
+          -0.24
+        ],
+        "sleeveLength": 0.247,
+        "bolt": [
+          -0.045,
+          0.048,
+          0.025
+        ],
+        "phase": "ready",
+        "calls": 18,
+        "triangles": 21388,
+        "geometries": 130,
+        "programs": 6
+      }
+    ],
+    "liveRecording": {
+      "startSeconds": 60.363,
+      "endSeconds": 81.629,
+      "phases": [
+        {
+          "phase": "eject",
+          "elapsed": 0.2,
+          "ammo": 0,
+          "hand": [
+            -0.05002902186339782,
+            -0.1814636336038873,
+            0.012154353087167311
+          ]
+        },
+        {
+          "phase": "insert",
+          "elapsed": 0.5384999999999998,
+          "ammo": 0,
+          "hand": [
+            -0.06013987464000016,
+            -0.2538562474283337,
+            0.02138562474007983
+          ]
+        },
+        {
+          "phase": "chamber",
+          "elapsed": 0.187625,
+          "ammo": 30,
+          "hand": [
+            -0.0830000000000017,
+            0.02800000000000004,
+            0.12984065207198783
+          ]
+        },
+        {
+          "phase": "chamber",
+          "elapsed": 0.4876249999999999,
+          "ammo": 30,
+          "hand": [
+            -0.04384224419568377,
+            -0.045733221035787475,
+            -0.18276830299745678
+          ]
+        },
+        {
+          "phase": "close",
+          "elapsed": 0.27612499999999973,
+          "ammo": 30,
+          "hand": [
+            -0.03810658917171036,
+            -0.05653333741071574,
+            -0.22462638115113504
+          ]
+        }
+      ],
+      "state": {
+        "ammo": 30,
+        "reserve": 120
+      }
+    },
+    "timing": {
+      "medianUpdateMs": 0,
+      "p95UpdateMs": 0.10000000149011612,
+      "maxUpdateMs": 4.300000000745058,
+      "note": "CPU pose update only; no GPU/FPS claim"
+    },
+    "checks": [
+      "12 held configurations; both faction palettes; AR/pistol hip, ADS, reload and sprint; close-up; 4:3 and 21:9",
+      "usmc: uninterrupted live last-shot/empty-reload with sampled insert/chamber/close and conserved ammo",
+      "usmc: actual field-armory all twelve idle/ADS captures and four reload poses",
+      "usmc: actual Training preparation/fire/ADS/reload/pause/pistol/perspective/death/replay/lobby; one rig; no first-use program additions",
+      "apex: uninterrupted live last-shot/empty-reload with sampled insert/chamber/close and conserved ammo",
+      "apex: actual field-armory all twelve idle/ADS captures and four reload poses",
+      "apex: actual Training preparation/fire/ADS/reload/pause/pistol/perspective/death/replay/lobby; one rig; no first-use program additions"
+    ],
+    "errors": []
+  },
+  "sprintInput": {
+    "samples": [
+      {
+        "name": "ready",
+        "sprinting": false,
+        "aiming": false,
+        "position": [
+          0.15,
+          -0.2247450952110048,
+          -0.35
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "hand": [
+          -0.036,
+          -0.0605,
+          -0.24
+        ],
+        "ammo": 30,
+        "reloading": false
+      },
+      {
+        "name": "straight-sprint",
+        "sprinting": true,
+        "aiming": false,
+        "position": [
+          0.21133438929427925,
+          -0.2688297863745401,
+          -0.41142805002229127
+        ],
+        "rotation": [
+          -0.2162565031704827,
+          -0.7450189203239017,
+          0.10056496283477705
+        ],
+        "hand": [
+          -0.036,
+          -0.0605,
+          -0.24
+        ],
+        "ammo": 30,
+        "reloading": false
+      },
+      {
+        "name": "direction-change-sprint",
+        "sprinting": true,
+        "aiming": false,
+        "position": [
+          0.21556038146537385,
+          -0.28054150990121585,
+          -0.41987145866560793
+        ],
+        "rotation": [
+          -0.2494651048676131,
+          -0.8484258384061578,
+          0.09619430633874511
+        ],
+        "hand": [
+          -0.036,
+          -0.0605,
+          -0.24
+        ],
+        "ammo": 30,
+        "reloading": false
+      },
+      {
+        "name": "stop-immediate-ads",
+        "sprinting": false,
+        "aiming": true,
+        "position": [
+          0.0033736360846004674,
+          -0.14532013535400157,
+          -0.36089970570448276
+        ],
+        "rotation": [
+          -0.00413593977869564,
+          -0.012508339466871927,
+          0.0030560520082862
+        ],
+        "hand": [
+          -0.036,
+          -0.0605,
+          -0.24
+        ],
+        "ammo": 30,
+        "reloading": false
+      }
+    ],
+    "errors": [],
+    "note": "Actual App input/pose; no forced settle or gameplay clock advancement",
+    "completedAt": "2026-10-15T07:36:55.356Z"
+  },
+  "preparation": {
+    "glRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "fixtureMs": 13059.900000002235,
+    "lightVariants": 22,
+    "totalDraws": 98,
+    "batchCount": 48,
+    "maxBatchDraws": 8,
+    "programCount": 92,
+    "maxPaddingPixelDifference": 0,
+    "cornersAfterUploadResize": [
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ]
+    ],
+    "cornersAfterCombatResize": [
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ]
+    ],
+    "cornersAfterCancelResize": [
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ]
+    ],
+    "passed": [
+      "fresh muzzle/particle first-use keys at every light count",
+      "upload resize",
+      "combat resize",
+      "resize then cancellation",
+      "state restoration",
+      "full-frame pixels",
+      "bounded batches"
+    ]
+  },
+  "defaultAssemblyParity": [
+    {
+      "id": "ar",
+      "hash": "273ee9357fecd6a30e2a8ae3d9e802fb0f4dc64d41e927a49374e95c1e4f1554",
+      "calls": 20,
+      "vertices": 52444,
+      "muzzle": [
+        0,
+        0.015,
+        -0.6050000000000001
+      ]
+    },
+    {
+      "id": "shotgun",
+      "hash": "54d1adb83373563ddbf6a6d8c59195ceb77d9f977b2b638fd3cf0595069a3694",
+      "calls": 11,
+      "vertices": 30072,
+      "muzzle": [
+        0,
+        0.023,
+        -0.56
+      ]
+    },
+    {
+      "id": "sniper",
+      "hash": "b4ac8e9439bcd3b75355e7f38c71295bb5499e9dc23c4227c5dfd928ecf6e8f4",
+      "calls": 17,
+      "vertices": 51056,
+      "muzzle": [
+        0,
+        0.015,
+        -0.805
+      ]
+    },
+    {
+      "id": "pistol",
+      "hash": "dd7a66986017679fa33e660708daefe13e62d97b78c12a7de87084f04f19f85f",
+      "calls": 10,
+      "vertices": 15540,
+      "muzzle": [
+        0,
+        0.035,
+        -0.13
+      ]
+    },
+    {
+      "id": "smg",
+      "hash": "801a93153ad7b7ef35dcdcca5438ed36825fde744b13ffbfaf9a202b9eeb1272",
+      "calls": 17,
+      "vertices": 46676,
+      "muzzle": [
+        0,
+        0.015,
+        -0.455
+      ]
+    },
+    {
+      "id": "lmg",
+      "hash": "0b3c55d3f79bf478391bcd698bd6ba1cedc0747d91609adf57bcd49ed0200e3c",
+      "calls": 13,
+      "vertices": 55644,
+      "muzzle": [
+        0,
+        0.015,
+        -0.675
+      ]
+    },
+    {
+      "id": "br",
+      "hash": "d66cefd2cbe64044c3b761f9f4e6d7c6c14ae2901e186e68b6956dffc3af323e",
+      "calls": 16,
+      "vertices": 48500,
+      "muzzle": [
+        0,
+        0.015,
+        -0.6050000000000001
+      ]
+    },
+    {
+      "id": "laser",
+      "hash": "45dcd833e478f28ccc93c0fc8db88319608ff571fd0752df63b11b3c6bd7e3dc",
+      "calls": 8,
+      "vertices": 12780,
+      "muzzle": [
+        0,
+        0.015,
+        -0.515
+      ]
+    },
+    {
+      "id": "minigun",
+      "hash": "f8895cd4bd26d92b9b1e0a5c3df1c8c342c45fb75f8a4c553e442ede69e71e53",
+      "calls": 7,
+      "vertices": 15684,
+      "muzzle": [
+        0,
+        0,
+        -0.64
+      ]
+    },
+    {
+      "id": "railgun",
+      "hash": "8803398c6c54e1220bebebd944f5140aa340d65749beaeae45553f90b1e4267e",
+      "calls": 18,
+      "vertices": 25404,
+      "muzzle": [
+        0,
+        0.01,
+        -0.74
+      ]
+    },
+    {
+      "id": "rocket",
+      "hash": "8430b49d1a1fd1a53aca96ff93a984e995699dd184eb6ecbf12b3747904830ba",
+      "calls": 9,
+      "vertices": 22580,
+      "muzzle": [
+        0,
+        0.025,
+        -0.57
+      ]
+    },
+    {
+      "id": "grenade_launcher",
+      "hash": "423bd086761c9524d052302c4741391b450fd9bf86c761d00c0e8c35439b9095",
+      "calls": 12,
+      "vertices": 17928,
+      "muzzle": [
+        0,
+        0.035,
+        -0.4
+      ]
+    }
+  ],
+  "gripMeasurements": {
+    "before": {
+      "wristForearmAngleDegrees": 74.69960508236417,
+      "sleeveLengthWithOverlap": 0.312,
+      "cuffNdcY": -0.5391119587832915,
+      "cuffCentreToBottomPixels": 165.91969483801503
+    },
+    "after": {
+      "wristForearmAngleDegrees": 30.753990832618328,
+      "sleeveLengthWithOverlap": 0.247,
+      "cuffNdcY": -0.7116488897303817,
+      "cuffCentreToBottomPixels": 103.8063996970626
+    }
+  },
+  "video": {
+    "start": {
+      "frame": 327,
+      "mse": 85.4203009158308,
+      "seconds": 65.4
+    },
+    "end": {
+      "frame": 422,
+      "mse": 90.19008940252944,
+      "seconds": 84.4
+    },
+    "clock": "Original browser recording clock, continuous interval; no retiming or audio",
+    "note": "Clip boundaries matched to actual live last-shot and ready screenshots at 5 fps"
+  },
+  "heldComparison": [
+    {
+      "id": "ar",
+      "beforeCalls": 19,
+      "afterCalls": 19,
+      "beforeTriangles": 22252,
+      "afterTriangles": 22252
+    },
+    {
+      "id": "pistol",
+      "beforeCalls": 19,
+      "afterCalls": 19,
+      "beforeTriangles": 13340,
+      "afterTriangles": 13340
+    },
+    {
+      "id": "sniper",
+      "beforeCalls": 17,
+      "afterCalls": 17,
+      "beforeTriangles": 21664,
+      "afterTriangles": 21664
+    },
+    {
+      "id": "br",
+      "beforeCalls": 15,
+      "afterCalls": 15,
+      "beforeTriangles": 20140,
+      "afterTriangles": 20140
+    },
+    {
+      "id": "minigun",
+      "beforeCalls": 19,
+      "afterCalls": 19,
+      "beforeTriangles": 14556,
+      "afterTriangles": 14556
+    },
+    {
+      "id": "shotgun",
+      "beforeCalls": 14,
+      "afterCalls": 14,
+      "beforeTriangles": 15060,
+      "afterTriangles": 15060
+    },
+    {
+      "id": "smg",
+      "beforeCalls": 18,
+      "afterCalls": 18,
+      "beforeTriangles": 20312,
+      "afterTriangles": 20312
+    },
+    {
+      "id": "lmg",
+      "beforeCalls": 17,
+      "afterCalls": 17,
+      "beforeTriangles": 23648,
+      "afterTriangles": 23648
+    },
+    {
+      "id": "laser",
+      "beforeCalls": 14,
+      "afterCalls": 14,
+      "beforeTriangles": 9924,
+      "afterTriangles": 9924
+    },
+    {
+      "id": "railgun",
+      "beforeCalls": 18,
+      "afterCalls": 18,
+      "beforeTriangles": 12682,
+      "afterTriangles": 12682
+    },
+    {
+      "id": "rocket",
+      "beforeCalls": 13,
+      "afterCalls": 13,
+      "beforeTriangles": 12904,
+      "afterTriangles": 12904
+    },
+    {
+      "id": "grenade_launcher",
+      "beforeCalls": 16,
+      "afterCalls": 16,
+      "beforeTriangles": 11076,
+      "afterTriangles": 11076
+    }
+  ],
+  "changedFiles": [
+    "docs/final-viewmodel-acceptance.md",
+    "docs/final-viewmodel-images/accept-ar-idle.png",
+    "docs/final-viewmodel-images/accept-empty-120.png",
+    "docs/final-viewmodel-images/accept-empty-190.png",
+    "docs/final-viewmodel-images/accept-empty-224.png",
+    "docs/final-viewmodel-images/accept-empty-237.png",
+    "docs/final-viewmodel-images/accept-empty-25.png",
+    "docs/final-viewmodel-images/accept-empty-255.png",
+    "docs/final-viewmodel-images/accept-empty-272.png",
+    "docs/final-viewmodel-images/accept-empty-285.png",
+    "docs/final-viewmodel-images/accept-empty-300.png",
+    "docs/final-viewmodel-images/accept-empty-342.png",
+    "docs/final-viewmodel-images/accept-empty-65.png",
+    "docs/final-viewmodel-images/accept-sprint-carry.png",
+    "docs/final-viewmodel-images/accept-sprint-enter-10.png",
+    "docs/final-viewmodel-images/accept-sprint-enter-25.png",
+    "docs/final-viewmodel-images/accept-sprint-ready.png",
+    "docs/final-viewmodel-images/accept-sprint-stop-10.png",
+    "docs/final-viewmodel-images/accept-sprint-stop-25.png",
+    "docs/final-viewmodel-images/accept-stop-ads.png",
+    "docs/final-viewmodel-images/accept-support-detail.png",
+    "docs/final-viewmodel-images/accept-support-side.png",
+    "docs/final-viewmodel-images/accept-tactical-130.png",
+    "docs/final-viewmodel-images/accept-tactical-170.png",
+    "docs/final-viewmodel-images/accept-tactical-194.png",
+    "docs/final-viewmodel-images/accept-tactical-20.png",
+    "docs/final-viewmodel-images/accept-tactical-50.png",
+    "docs/final-viewmodel-images/accept-tactical-90.png",
+    "docs/final-viewmodel-images/accept-wide-idle.png",
+    "docs/final-viewmodel-images/accept-wide-sprint.png",
+    "docs/final-viewmodel-images/apex-pistol-sprint.png",
+    "docs/final-viewmodel-images/before-ar-idle.png",
+    "docs/final-viewmodel-images/before-empty-255.png",
+    "docs/final-viewmodel-images/before-empty-285.png",
+    "docs/final-viewmodel-images/before-sprint-carry.png",
+    "docs/final-viewmodel-images/before-stop-ads.png",
+    "docs/final-viewmodel-images/before-support-detail.png",
+    "docs/final-viewmodel-images/before-wide-idle.png",
+    "docs/final-viewmodel-images/before-wide-sprint.png",
+    "docs/final-viewmodel-images/game-apex-ar-idle.png",
+    "docs/final-viewmodel-images/game-usmc-br-idle.png",
+    "docs/final-viewmodel-images/game-usmc-minigun-idle.png",
+    "docs/final-viewmodel-images/game-usmc-minigun-sprint.png",
+    "docs/final-viewmodel-images/game-usmc-shotgun-idle.png",
+    "docs/final-viewmodel-images/game-usmc-sniper-aim.png",
+    "docs/final-viewmodel-images/game-usmc-sniper-idle.png",
+    "docs/final-viewmodel-images/input-direction-change-sprint.png",
+    "docs/final-viewmodel-images/input-ready.png",
+    "docs/final-viewmodel-images/input-stop-immediate-ads.png",
+    "docs/final-viewmodel-images/input-straight-sprint.png",
+    "docs/final-viewmodel-images/live-apex-chamber-0.35.png",
+    "docs/final-viewmodel-images/live-apex-chamber-0.62.png",
+    "docs/final-viewmodel-images/live-apex-ready.png",
+    "docs/final-viewmodel-images/live-ar-fire-empty-reload.webm",
+    "docs/final-viewmodel-images/live-usmc-chamber-0.35.png",
+    "docs/final-viewmodel-images/live-usmc-chamber-0.62.png",
+    "docs/final-viewmodel-images/live-usmc-close-0.35.png",
+    "docs/final-viewmodel-images/live-usmc-eject-0.3.png",
+    "docs/final-viewmodel-images/live-usmc-insert-0.45.png",
+    "docs/final-viewmodel-images/live-usmc-last-shot.png",
+    "docs/final-viewmodel-images/live-usmc-ready.png",
+    "docs/final-viewmodel-validation.json",
+    "docs/first-person-visual-repair.md",
+    "scripts/test-viewmodel-browser.mjs",
+    "scripts/test-viewmodel-sprint-browser.mjs",
+    "scripts/viewmodel-acceptance-sequence.mjs",
+    "scripts/viewmodel-video-clip.mjs",
+    "src/viewmodelGrips.ts",
+    "src/viewmodelHands.ts",
+    "src/weaponModels.ts",
+    "src/weapons.ts",
+    "tests/viewmodel.test.ts"
+  ],
+  "passed": [
+    "TypeScript",
+    "Production build",
+    "viewmodel suite including finger/control geometry contact",
+    "weapons suite",
+    "tactical suite",
+    "controls suite",
+    "runtime suite",
+    "preparation suite",
+    "Full two-faction browser gallery/lifecycle and live AR last-shot/empty reload",
+    "Real W/Shift \u2192 W/D \u2192 stop/RMB sprint probe",
+    "WebGL 22-light preparation/resize/cancel/restoration",
+    "All-twelve default actor/studio parity",
+    "Production bundle has no test hooks"
+  ],
+  "limits": [
+    "SwiftShader only; no native GPU results",
+    "Video is muted, continuous on browser recorder clock; no retiming",
+    "Fixture frame sequences are deterministic presentation samples, not native recordings",
+    "Fine hand-contact polish and audio sync need final laptop acceptance",
+    "CPU samples use coarse timers; recording was active in the after run, so timings are indicative only"
+  ]
+}

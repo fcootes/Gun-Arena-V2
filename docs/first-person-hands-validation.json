@@ -1,0 +1,322 @@
+{
+  "implementationCheckpoint": "c59ae2d",
+  "baselineCommit": "794fdfd",
+  "scope": "Chromium 154 / ANGLE SwiftShader; neutral held fixture at 1280x720 DPR1. Actual Training uses zero allies/one hostile via lobby controls. CPU timings are not GPU time or native FPS.",
+  "before": {
+    "startedAt": "2026-10-15T02:34:37.543Z",
+    "browser": "154.0.8037.57",
+    "viewport": "1280x720",
+    "results": [
+      {
+        "id": "ar",
+        "calls": 19,
+        "triangles": 16492,
+        "geometries": 19,
+        "programs": 5,
+        "hands": {
+          "visible": false
+        }
+      },
+      {
+        "id": "pistol",
+        "calls": 9,
+        "triangles": 4208,
+        "geometries": 28,
+        "programs": 5,
+        "hands": {
+          "visible": false
+        }
+      }
+    ],
+    "timing": {
+      "medianUpdateMs": 0,
+      "p95UpdateMs": 0.09999999962747097,
+      "maxUpdateMs": 0.20000000018626451,
+      "note": "CPU pose update only; no GPU/FPS claim"
+    },
+    "checks": [],
+    "errors": []
+  },
+  "after": {
+    "startedAt": "2026-10-15T02:46:52.830Z",
+    "browser": "154.0.8037.57",
+    "viewport": "1280x720",
+    "results": [
+      {
+        "id": "ar",
+        "calls": 26,
+        "triangles": 24544,
+        "geometries": 24,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.2460564830961209,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "pistol",
+        "calls": 19,
+        "triangles": 13340,
+        "geometries": 35,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.23803679315567217,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "sniper",
+        "calls": 22,
+        "triangles": 23820,
+        "geometries": 49,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.24788083318781556,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "br",
+        "calls": 21,
+        "triangles": 23096,
+        "geometries": 62,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.2460616557023343,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "minigun",
+        "calls": 16,
+        "triangles": 13388,
+        "geometries": 70,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.1977847558129341,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "shotgun",
+        "calls": 16,
+        "triangles": 16972,
+        "geometries": 78,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.24606194456578057,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "smg",
+        "calls": 23,
+        "triangles": 22596,
+        "geometries": 93,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.24605699800339195,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "lmg",
+        "calls": 19,
+        "triangles": 25560,
+        "geometries": 104,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.24779912346326238,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "laser",
+        "calls": 17,
+        "triangles": 12420,
+        "geometries": 113,
+        "programs": 6,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.2286153048018294,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "railgun",
+        "calls": 24,
+        "triangles": 15506,
+        "geometries": 129,
+        "programs": 7,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.24779178909290517,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "rocket",
+        "calls": 17,
+        "triangles": 15648,
+        "geometries": 138,
+        "programs": 7,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.24787116106375406,
+          "centralHits": 0
+        }
+      },
+      {
+        "id": "grenade_launcher",
+        "calls": 18,
+        "triangles": 12988,
+        "geometries": 148,
+        "programs": 7,
+        "hands": {
+          "visible": true,
+          "nearestZ": -0.23804559432681874,
+          "centralHits": 0
+        }
+      }
+    ],
+    "timing": {
+      "medianUpdateMs": 0,
+      "p95UpdateMs": 0.10000000055879354,
+      "maxUpdateMs": 0.20000000018626451,
+      "note": "CPU pose update only; no GPU/FPS claim"
+    },
+    "checks": [
+      "12 held configurations; both faction palettes; AR/pistol hip, ADS, reload and sprint; close-up; 4:3 and 21:9",
+      "usmc: actual Training preparation/fire/ADS/reload/pause/pistol/perspective/death/replay/lobby; one rig; no first-use program additions",
+      "apex: actual Training preparation/fire/ADS/reload/pause/pistol/perspective/death/replay/lobby; one rig; no first-use program additions"
+    ],
+    "errors": []
+  },
+  "preparation": {
+    "browser": "154.0.8037.57",
+    "fixture": "tiny synthetic scene; not full-map or native-device timing",
+    "results": {
+      "glRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "fixtureMs": 10864.600000000559,
+      "lightVariants": 22,
+      "totalDraws": 98,
+      "batchCount": 47,
+      "maxBatchDraws": 8,
+      "programCount": 92,
+      "maxPaddingPixelDifference": 0,
+      "cornersAfterUploadResize": [
+        [
+          255,
+          255,
+          255,
+          255
+        ],
+        [
+          255,
+          255,
+          255,
+          255
+        ],
+        [
+          255,
+          255,
+          255,
+          255
+        ],
+        [
+          255,
+          255,
+          255,
+          255
+        ]
+      ],
+      "cornersAfterCombatResize": [
+        [
+          255,
+          255,
+          255,
+          255
+        ],
+        [
+          255,
+          255,
+          255,
+          255
+        ],
+        [
+          255,
+          255,
+          255,
+          255
+        ],
+        [
+          255,
+          255,
+          255,
+          255
+        ]
+      ],
+      "cornersAfterCancelResize": [
+        [
+          255,
+          255,
+          255,
+          255
+        ],
+        [
+          255,
+          255,
+          255,
+          255
+        ],
+        [
+          255,
+          255,
+          255,
+          255
+        ],
+        [
+          255,
+          255,
+          255,
+          255
+        ]
+      ],
+      "passed": [
+        "fresh muzzle/particle first-use keys at every light count",
+        "upload resize",
+        "combat resize",
+        "resize then cancellation",
+        "state restoration",
+        "full-frame pixels",
+        "bounded batches"
+      ]
+    },
+    "errors": []
+  },
+  "passedCommands": [
+    "npm run lint",
+    "npm run build",
+    "npm run test:viewmodel",
+    "npm run test:weapons",
+    "npm run test:tactical",
+    "npm run test:runtime",
+    "npm run test:preparation",
+    "npm run test:controls",
+    "npm run test:viewmodel:browser",
+    "npm run test:preparation:browser"
+  ],
+  "limitations": [
+    "Native Windows laptop GPU/frame-time and long-session acceptance remain unverified.",
+    "Priority AR/pistol poses and all 12 held hip configurations reviewed; later complete weapon-specific reload choreography remains out of scope.",
+    "Vercel preview uses the connected project; deployment protection may require login."
+  ]
+}

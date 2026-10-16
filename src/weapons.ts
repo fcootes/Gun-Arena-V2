@@ -1,7 +1,10 @@
 import * as THREE from 'three';
 import { WeaponDef, WeaponSlotState, ARSENAL } from './types';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
-import { createWeaponAssembly, orientHeldWeapon, type WeaponAssembly } from './weaponModels';
+import { createWeaponAssembly, orientHeldWeapon, disposeWeaponObject, type WeaponAssembly, type WeaponModelId } from './weaponModels';
+import { createFirstPersonHands } from './viewmodelHands';
+import { VIEWMODEL_GRIPS, arChargingStroke } from './viewmodelGrips';
+import type { FactionType } from './lobbyAvatar';
 import {
   createWeaponMuzzleEffect,
   type WeaponMuzzleEffect,
@@ -291,6 +294,8 @@ export interface ViewmodelManager {
   triggerMuzzleFlash: (id?: string) => void;
   getMuzzlePosition: (target: THREE.Vector3) => THREE.Vector3;
   resetEffects: () => void;
+  setFaction: (faction: FactionType) => void;
+  dispose: () => void;
 }
 
 export function createViewmodelManager(): ViewmodelManager {
@@ -305,7 +310,6 @@ export function createViewmodelManager(): ViewmodelManager {
         THREE.Object3D,
         { position: THREE.Vector3; quaternion: THREE.Quaternion }
       >;
-      hands: THREE.Group;
     }
   >();
   let selected: ReturnType<typeof getModel> | null = null;
@@ -323,13 +327,14 @@ export function createViewmodelManager(): ViewmodelManager {
     radioTimer = 0,
     radioHold = false;
   const reloadRotation = new THREE.Quaternion(), reloadEuler = new THREE.Euler(), reloadPosition = new THREE.Vector3();
+  const hands = createFirstPersonHands(); hands.root.visible = false; root.add(hands.root);
+  const viewPosition = new THREE.Vector3(), targetPosition = new THREE.Vector3();
+  const viewRotation = new THREE.Quaternion(), targetRotation = new THREE.Quaternion(), targetEuler = new THREE.Euler();
+  let poseInitialized = false, previousId = '', walkBlend = 0, runBlend = 0, equip = 0, disposed = false;
+  root.userData.cleanupWeaponEffect = () => { disposed = true; hands.releaseInstances(); models.clear(); selected = null; };
   const gloveMaterial = new THREE.MeshStandardMaterial({
     color: 0x20282b,
     roughness: 0.88,
-  });
-  const sleeveMaterial = new THREE.MeshStandardMaterial({
-    color: 0x303a30,
-    roughness: 0.94,
   });
   const utilityMaterial = new THREE.MeshStandardMaterial({
     color: 0x34424b,
@@ -408,36 +413,9 @@ export function createViewmodelManager(): ViewmodelManager {
   function getModel(id: string) {
     let model = models.get(id);
     if (model) return model;
-    const assembly = createWeaponAssembly(id),
-      effects = createWeaponMuzzleEffect(assembly),
-      hands = new THREE.Group();
-    hands.name = 'GlovedHands';
+    const assembly = createWeaponAssembly(id, { firstPerson: true }),
+      effects = createWeaponMuzzleEffect(assembly);
     orientHeldWeapon(assembly, 'negative-z');
-    addBox(hands, 0.05, 0.065, 0.075, 0.018, -0.095, 0.09, gloveMaterial);
-    addBox(
-      hands,
-      0.07,
-      0.07,
-      0.22,
-      0.053,
-      -0.14,
-      0.235,
-      sleeveMaterial,
-    ).rotation.x = 0.24;
-    if (id !== 'pistol') {
-      addBox(hands, 0.051, 0.047, 0.083, -0.01, -0.055, -0.24, gloveMaterial);
-      addBox(
-        hands,
-        0.065,
-        0.07,
-        0.2,
-        -0.07,
-        -0.12,
-        -0.14,
-        sleeveMaterial,
-      ).rotation.z = -0.45;
-    }
-    assembly.root.add(hands);
     root.add(assembly.root);
     assembly.root.visible = false;
     const pose = new Map<
@@ -450,7 +428,7 @@ export function createViewmodelManager(): ViewmodelManager {
         quaternion: part.quaternion.clone(),
       }),
     );
-    model = { assembly, effects, pose, hands };
+    model = { assembly, effects, pose };
     models.set(id, model);
     return model;
   }
@@ -468,6 +446,10 @@ export function createViewmodelManager(): ViewmodelManager {
     alive: boolean,
     playing: boolean,
   ) {
+    if (disposed) return;
+    if (!alive) { root.visible = false; return; }
+    if (!playing) return; // Pausing freezes pose, joints, timers and recoil.
+    dt = Number.isFinite(dt) ? THREE.MathUtils.clamp(dt, 0, .1) : 0;
     const w =
       typeof slotOrWeapon === 'number'
         ? (WEAPONS[slotOrWeapon] ?? WEAPONS[0])
@@ -475,7 +457,7 @@ export function createViewmodelManager(): ViewmodelManager {
     const ws = Array.isArray(states)
       ? states[typeof slotOrWeapon === 'number' ? slotOrWeapon : 0]
       : states;
-    root.visible = alive && playing;
+    root.visible = true;
     time += dt;
     bob += dt * (sprinting ? 14 : 9.5);
     slideTimer = Math.max(0, slideTimer - dt);
@@ -485,6 +467,7 @@ export function createViewmodelManager(): ViewmodelManager {
     recoil = Math.max(0, recoil - dt * 0.55);
     recoilRotation = Math.max(0, recoilRotation - dt * 3.8);
     currentId = w.id;
+    if (w.id !== 'minigun') venting = false;
     selected = w.type === 'weapon' ? getModel(w.id) : null;
     for (const [id, model] of models) {
       model.assembly.root.visible = id === w.id && !melee && radioTimer === 0;
@@ -513,9 +496,10 @@ export function createViewmodelManager(): ViewmodelManager {
       utility.position.set(-0.16, -0.06, -0.35);
       screenMaterial.emissiveIntensity = radioHold ? 1.9 : 1.2;
     }
-    if (!selected) return;
-    const { assembly, pose, hands } = selected,
+    if (!selected) { hands.root.visible = false; previousId = w.id; return; }
+    const { assembly, pose } = selected,
       parts = assembly.parts;
+    if (hands.root.parent !== assembly.root) assembly.root.add(hands.root);
     for (const [part, transform] of pose) {
       part.position.copy(transform.position);
       if (part !== parts.rotor) part.quaternion.copy(transform.quaternion);
@@ -523,17 +507,32 @@ export function createViewmodelManager(): ViewmodelManager {
     }
     const scoped = aiming && !!w.scoped;
     parts.receiver.visible = !scoped;
-    hands.visible = !scoped;
-    const walk = moving && onGround ? 1 : 0;
-    assembly.root.position.set(
-      aiming ? 0 : 0.18,
-      aiming ? -0.1 : -0.2,
-      -0.36 + recoil,
-    );
-    assembly.root.position.x += Math.cos(bob * 0.5) * 0.008 * walk;
+    // The shouldered stock sits behind the eye in first person. Drawing it at
+    // the camera near plane obscures the hands; actor/studio stocks stay intact.
+    if (parts.stock) parts.stock.visible = false;
+    hands.root.visible = !scoped;
+    const grip = VIEWMODEL_GRIPS[w.id as WeaponModelId];
+    const alpha = 1 - Math.exp(-14 * dt);
+    targetPosition.fromArray(aiming ? grip.aim : sprinting ? grip.sprint : grip.hip);
+    if (aiming) targetEuler.set(...grip.aimRotation);
+    else if (sprinting) targetEuler.set(...grip.sprintRotation);
+    else targetEuler.set(0, 0, 0);
+    targetRotation.setFromEuler(targetEuler);
+    if (!poseInitialized) { viewPosition.copy(targetPosition); viewRotation.copy(targetRotation); poseInitialized = true; }
+    else { viewPosition.lerp(targetPosition, alpha); viewRotation.slerp(targetRotation, alpha); }
+    if (previousId && previousId !== w.id) equip = 1;
+    previousId = w.id; equip *= Math.exp(-18 * dt);
+    walkBlend += ((moving && onGround ? 1 : 0) - walkBlend) * (1 - Math.exp(-12 * dt));
+    runBlend += ((sprinting && !aiming && moving && onGround ? 1 : 0) - runBlend) * (1 - Math.exp(-12 * dt));
+    const walk = walkBlend * (aiming ? .18 : 1) * (1 - runBlend);
+    assembly.root.position.copy(viewPosition);
+    assembly.root.position.z += recoil + equip * .025;
+    assembly.root.position.y -= equip * .06;
+    assembly.root.position.x += Math.cos(bob * 0.5) * 0.008 * walk + Math.sin(bob * .5) * .0045 * runBlend;
     assembly.root.position.y +=
-      Math.abs(Math.sin(bob)) * 0.012 * walk + Math.sin(time * 1.5) * 0.002;
-    assembly.root.rotation.set(recoilRotation, 0, sprinting ? -0.15 : 0);
+      Math.abs(Math.sin(bob)) * 0.012 * walk + Math.cos(bob) * .003 * runBlend + Math.sin(time * 1.5) * 0.002;
+    assembly.root.quaternion.copy(viewRotation); assembly.root.rotation.x += recoilRotation;
+    assembly.root.rotation.z += Math.sin(bob * .5) * .004 * runBlend;
     if (parts.reloadRound) parts.reloadRound.visible = false;
     const sequence = ws?.reloadSequence;
     if (ws?.reloading && sequence) {
@@ -558,7 +557,7 @@ export function createViewmodelManager(): ViewmodelManager {
       if (parts.vent) { reloadRotation.setFromEuler(reloadEuler.set(0, 0, -.95)); parts.vent.quaternion.slerp(reloadRotation, phase.phase === 'close' ? 1-p : opened); }
       if ((phase.phase === 'chamber' && sequence.empty) || (w.id === 'shotgun' && phase.phase === 'close' && !sequence.empty)) {
         const pull = Math.sin(p * Math.PI);
-        if (parts.bolt) parts.bolt.position.z += pull * (w.id === 'br' ? .07 : .045);
+        if (parts.bolt) parts.bolt.position.z += w.id === 'ar' ? arChargingStroke(sequence.elapsed / phase.duration) : pull * (w.id === 'br' ? .07 : .045);
         if (parts.slide) parts.slide.position.z += pull * .048;
         if (parts.pump) parts.pump.position.z += pull * .08;
       }
@@ -568,10 +567,7 @@ export function createViewmodelManager(): ViewmodelManager {
         parts.reloadRound.position.lerpVectors(reloadPosition, base.position, p);
         parts.reloadRound.visible = p < .92;
       }
-      // Support hand reaches into the magwell/loading port, then returns to its grip.
-      hands.position.set(-.055 * Math.sin(p * Math.PI), -.02 * lift, .025 * lift);
     } else {
-      hands.position.set(0, 0, 0);
       if (parts.slide) parts.slide.position.z += Math.sin((slideTimer / .12) * Math.PI) * .045;
       if (parts.bolt) parts.bolt.position.z += Math.sin((boltTimer / .07) * Math.PI) * .025;
       if (parts.pump) parts.pump.position.z += Math.sin((pumpTimer / .42) * Math.PI) * .075;
@@ -586,11 +582,14 @@ export function createViewmodelManager(): ViewmodelManager {
     assembly.update(dt, charge, spin);
     spin = 0;
     if (venting) assembly.root.rotation.z += Math.sin(time * 16) * 0.014;
+    hands.update(w.id as WeaponModelId, dt, assembly, ws, aiming);
   }
   return {
     root,
     update,
-    prepare(ids: readonly string[]) { ids.forEach(id => getModel(id)); },
+    prepare(ids: readonly string[]) { if (!disposed) ids.forEach(id => getModel(id)); },
+    setFaction(faction) { hands.setFaction(faction); },
+    dispose() { if (!disposed) disposeWeaponObject(root); },
     triggerPistolSlideFire() {
       slideTimer = 0.12;
     },
@@ -619,16 +618,21 @@ export function createViewmodelManager(): ViewmodelManager {
       radioHold = hold;
     },
     triggerMuzzleFlash(id = currentId) {
+      if (disposed) return;
       const model = getModel(id);
       model.effects.trigger();
     },
     getMuzzlePosition(target) {
+      if (disposed) return target.set(0, 0, 0);
       const model = selected ?? getModel(currentId);
       root.updateWorldMatrix(true, true);
       return model.assembly.muzzle.getWorldPosition(target);
     },
     resetEffects() {
       models.forEach((model) => model.effects.reset());
+      recoil = recoilRotation = slideTimer = pumpTimer = boltTimer = equip = walkBlend = runBlend = time = bob = 0;
+      charge = spin = radioTimer = 0; venting = radioHold = false;
+      poseInitialized = false; previousId = '';
     },
   };
 }

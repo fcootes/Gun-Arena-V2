@@ -37,6 +37,7 @@ try {
     const { waitForGpu } = await import('/src/renderPreparation.ts');
     const { createWeaponAssembly } = await import('/src/weaponModels.ts');
     const { createWeaponMuzzleEffect } = await import('/src/weaponEffects.ts');
+    const { createFirstPersonHands } = await import('/src/viewmodelHands.ts');
     const { disposeBotVisuals } = await import('/src/botBuilder.ts');
     const check = (condition, message) => { if (!condition) throw new Error(message); };
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
@@ -55,6 +56,7 @@ try {
     const backdrop = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false }));
     backdrop.position.z = -5; scene.add(backdrop);
     const assembly = createWeaponAssembly('ar'); scene.add(assembly.root);
+    const hands = createFirstPersonHands(); assembly.root.add(hands.root); hands.update('ar', 0, assembly, {}, false);
     const muzzle = createWeaponMuzzleEffect(assembly);
     const effects = createSceneEffects(renderer, scene, camera);
     const initialCamera = camera.matrixWorld.toArray(), initialProjection = camera.projectionMatrix.toArray();
@@ -120,6 +122,8 @@ try {
       for (let count = 0; count <= 21; count++) {
         if (count > 1) { const extra = new THREE.PointLight(0xffffff, 0); scene.add(extra); extraLights.push(extra); }
         const fresh = createWeaponAssembly('ar'), freshMuzzle = createWeaponMuzzleEffect(fresh);
+        const freshHands = createFirstPersonHands(); fresh.root.add(freshHands.root);
+        freshHands.setFaction(count % 2 ? 'usmc' : 'apex'); freshHands.update('ar', 0, fresh, {}, false);
         scene.add(fresh.root);
         if (count > 0) { freshMuzzle.trigger(); freshMuzzle.update(.01); }
         let visibleMuzzleLights = 0;

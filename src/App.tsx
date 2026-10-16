@@ -2941,6 +2941,7 @@ export default function App() {
         camera.position.copy(player.pos); camera.rotation.order = 'YXZ';
         camera.rotation.set(player.pitch, player.yaw, 0);
         await pipeline.stage('Viewmodel preparation', () => {
+          vmManager.setFaction(factionAlignmentRef.current);
           vmManager.prepare(playerLoadout.filter(weapon => weapon.type === 'weapon').map(weapon => weapon.id));
           vmManager.update(0, currentSlot(), currentSlotState(), false, false, player.onGround, false, false, false, 0, true, true);
         });
