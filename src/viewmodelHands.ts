@@ -313,8 +313,8 @@ export function createFirstPersonHands() {
           pistolContact = 1; curl = .95;
           if (stage.phase === 'eject') {
             const reach = pistolEase(t / .20);
-            left.target.lerpVectors(supportGrip, attachmentPosition, reach);
-            left.orientation.setFromEuler(euler.set(...config.left.rotation)).slerp(targetRotation, reach);
+            left.target.lerpVectors(left.phaseStart, attachmentPosition, reach);
+            left.orientation.slerpQuaternions(left.phaseRotation, targetRotation, reach);
             pistolContact = reach;
           } else if (stage.phase === 'chamber') {
             // Thumb reaches the actual slide-release paddle. The slide return

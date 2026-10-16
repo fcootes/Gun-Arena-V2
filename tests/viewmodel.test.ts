@@ -276,9 +276,9 @@ for (const id of WEAPON_MODEL_IDS) {
   const m=weapon(v,id),b=new THREE.Vector3(0,0,-1).applyQuaternion(m.quaternion);
   const breech=m.position.clone().project(acceptanceCamera);
   const muzzle=m.getObjectByName('muzzle')!.getWorldPosition(new THREE.Vector3()).project(acceptanceCamera);
-  assert.ok(breech.x<0&&muzzle.x<0,`${id}: receiver and actual muzzle project left of screen centre`);
-  assert.ok(b.y<.01,`${id}: muzzle remains controlled below horizontal`);
+  assert.ok(id === 'pistol' ? breech.x>0&&muzzle.x>0 : breech.x<0&&muzzle.x<0,`${id}: weapon stays on its authored carry side`);
+  assert.ok(id === 'pistol' ? b.y>.15&&b.y<.45 : b.y<.01,`${id}: controlled weapon-specific muzzle pitch`);
   assert.ok(m.position.y<VIEWMODEL_GRIPS[id].hip[1],`${id}: lowered carry`);
   v.dispose();
 }
-console.log('PASS: all twelve sprint profiles project receiver and muzzle screen-left with controlled downward pitch');
+console.log('PASS: eleven lowered lateral sprint profiles plus right-handed raised pistol carry');

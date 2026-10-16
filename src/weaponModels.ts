@@ -1020,9 +1020,11 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     silhouette('Curved trigger shoe',[[.017,-.036],[.023,-.039],[.010,-.061],[.015,-.069],[.009,-.072],[.002,-.061]],.006,dark);
     const mag = group('magazine',0,-.115,.079); mag.rotation.x=-.16;
     box('CP9 magazine steel body',.027,.094,.038,0,0,0,dark,mag);
-    box('Magazine baseplate',.040,.010,.050,0,-.052,.002,polymer,mag);
-    box('Magazine heel pad',.029,.003,.034,0,-.059,.003,rubber,mag);
+    box('Magazine baseplate',.049,.012,.050,0,-.064,.002,polymer,mag);
+    box('Magazine heel pad',.036,.003,.038,0,-.072,.003,rubber,mag);
     for(const x of [-.014,.014]) box('Magazine witness channel',.001,.058,.004,x,-.002,.010,edge,mag);
+    // Matte ceramic sight inserts stay legible without emissive lighting.
+    const sightPaint = new THREE.MeshStandardMaterial({color:0xc1cabe,roughness:.78,metalness:0}); materials.push(sightPaint);
     // Compact dust-cover rail, with three functional cross slots.
     box('Accessory rail bed',.031,.009,.071,0,-.028,-.111,dark);
     for(let i=0;i<3;i++)box('Accessory rail lug',.037,.006,.009,0,-.035,-.135+i*.021,steel);
@@ -1033,10 +1035,10 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     box('Magazine release button',.005,.012,.013,0,0,0,dark,catchPart);
     const pin=tube('Takedown axis',.0035,.047,0,-.006,-.020,dark);pin.rotation.set(0,0,Math.PI/2);
     box('Front iron sight',.005,.009,.009,0,.026,-.136,dark,slide);
-    box('Front sight white inset',.002,.003,.001,0,.029,-.130,edge,slide);
+    box('Front sight white inset',.002,.003,.001,0,.029,-.130,sightPaint,slide);
     for(const side of [-1,1]) {
       box('Rear iron sight notch shoulder',.007,.009,.013,side*.009,.026,.080,dark,slide);
-      box('Rear sight white inset',.002,.002,.001,side*.009,.029,.087,edge,slide);
+      box('Rear sight white inset',.002,.002,.001,side*.009,.029,.087,sightPaint,slide);
     }
   } else if (id === 'laser') {
     for (const side of [-1, 1]) {

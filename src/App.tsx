@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 54822)
-Total output lines: 4777
-
 import { beginSniperCycle, requireSniperBolt } from './sniperMechanics';
 import { GameplayInput, KEY_ACTIONS, MOUSE_BUTTONS, CONTROLS_GUIDE, canPlayerFire } from './gameplayInput';
 import { DeploymentPipeline } from './deployment';
@@ -704,7 +701,7 @@ export default function App() {
     const fireCamera=new THREE.PerspectiveCamera();
     function getFireCamera(){fireCamera.copy(camera,false);fireCamera.position.copy(player.pos);fireCamera.updateMatrixWorld();return fireCamera;}
     const chaseDirection=new THREE.Vector3(),chaseTarget=new THREE.Vector3(),chaseRay=new THREE.Raycaster();
-    let localPistolArms = false;
+    let localPistolArms = false, localPistolPhase = 0;
     function updateThirdPerson(delta:number) {
       if(!thirdPerson||!player.alive){if(thirdPersonActor)thirdPersonActor.rootGroup.visible=false;return;}
       const w=currentSlot();
@@ -723,14 +720,15 @@ export default function App() {
       if (w.id === 'pistol') {
         localPistolArms = true;
         const pistolRun = player.sprinting && player.onGround && !currentSlotState().reloading;
-        const armBlend = 1 - Math.exp(-16 * delta), armSwing = Math.sin(clock.elapsedTime * 7);
+        localPistolPhase += delta * (pistolRun ? 14 : 9.5);
+        const armBlend = 1 - Math.exp(-16 * delta), armSwing = Math.sin(localPistolPhase * .5);
         actor.armLPivot.rotation.x += ((pistolRun ? -.12 + armSwing * .60 : -.45) - actor.armLPivot.rotation.x) * armBlend;
         actor.armRPivot.rotation.x += ((pistolRun ? -.85 - armSwing * .18 : -.45) - actor.armRPivot.rotation.x) * armBlend;
         actor.armLLowerPivot.rotation.x += ((pistolRun ? -.90 - armSwing * .20 : -.35) - actor.armLLowerPivot.rotation.x) * armBlend;
         actor.armRLowerPivot.rotation.x += ((pistolRun ? -.85 : -.22) - actor.armRLowerPivot.rotation.x) * armBlend;
       } else if (localPistolArms) {
         actor.armLPivot.rotation.set(-.45,.25,0); actor.armRPivot.rotation.set(-.45,-.15,0);
-        actor.armLLowerPivot.rotation.x=-.35; actor.armRLowerPivot.rotation.x=-.22; localPistolArms=false;
+        actor.armLLowerPivot.rotation.x=-.35; actor.armRLowerPivot.rotation.x=-.22; localPistolArms=false; localPistolPhase=0;
       }
       actor.weaponAssembly?.update(delta,currentSlotState().chargeTimer??0,w.id==='minigun'?delta*30:0);actor.weaponEffects?.update(delta);
       vmManager.root.visible=false;
@@ -1292,7 +1290,7 @@ export default function App() {
         player.health = 0;
         player.alive = false;
         stopWeaponAudio();
-        playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } if (playerLoadout[i]?.id === 'sniper') { cancelWeaponReload(ws); ws.sniperCycle = undefined; ws.sniperRecoveryT = 0; ws.boltCycleT = 0; ws.needsChamber = true; } if (playerLoadout[i]?.id === 'br') cancelWeaponReload(ws); });
+        playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } if (playerLoadout[i]?.id === 'sniper') { cancelWeaponReload(ws); ws.sniperCycle = undefined; ws.sniperRecoveryT = 0; ws.boltCycleT = 0; ws.needsChamber = true; } if (playerLoadout[i]?.id === 'br' || playerLoadout[i]?.id === 'pistol') cancelWeaponReload(ws); });
 
         if (matchConfig.mode === 'extraction') {
           pushKillFeed('MISSION FAILED: OPERATOR KILLED');
@@ -2352,7 +2350,491 @@ export default function App() {
       for (let p = 0; p < pellets; p++) {
         const ndcX = (Math.random() - 0.5) * spread * 2;
         const ndcY = (Math.random() - 0.5) * spread * 2;
-        const raycaste…4822 tokens truncated…MOUSE_BUTTONS.fire) {
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), getFireCamera());
+        raycaster.far = w.range ?? 100;
+        const hits = raycaster.intersectObjects(world.hittableObjects, false);
+        if (hits.length > 0) {
+          const hit = hits[0];
+          const ud = hit.object.userData;
+          spawnImpactSpark(hit.point, ud.type === 'botpart');
+
+          if (hit.object.userData.destructible) {
+            let degAmount = 0;
+            if (w.id === 'sniper') degAmount = 45;
+            else if (w.id === 'lmg') degAmount = 20;
+            if (degAmount > 0) world.damageEnvironmentalBlock(hit.object as THREE.Mesh, degAmount);
+          }
+
+          if (ud.type === 'botpart' && ud.ref) {
+            const bot = ud.ref as Bot;
+            if (bot.team === player.team) continue;
+
+            player.shotsHit++;
+            const dist = camera.position.distanceTo(hit.point);
+            const falloff = getDamageRangeFalloff(w.id, dist);
+            if (falloff <= 0) continue;
+
+            const isHead = ud.part === 'head';
+            if (isHead) player.headshots++;
+            let finalDamage = (w.damage ?? 25) * falloff;
+            if (isHead) finalDamage *= (w.headshotMult ?? 2.0);
+
+            damageBot(bot, finalDamage, isHead, 'player', raycaster.ray.direction);
+            flashHit(bot);
+            showHitmarker(isHead);
+            if (bot.isZombie) addPoints(10);
+            if (['sniper', 'laser', 'lmg', 'minigun'].includes(w.id)) { const d = camera.position.distanceTo(hit.point); const v = Math.max(0, 1.0 - d / 50); AUDIO.bulletHit.play(v); }
+          } else if (['sniper', 'lmg', 'br'].includes(w.id)) {
+            // Material penetration logic (4 units depth)
+            const secHit = hits.find(h => h.object.userData.type === 'botpart' && h.distance - hit.distance <= 4.0);
+            if (secHit && secHit.object.userData.ref) {
+              const bot = secHit.object.userData.ref as Bot;
+              if (bot.team === player.team) continue;
+
+              player.shotsHit++;
+              const dist = camera.position.distanceTo(secHit.point);
+              const falloff = getDamageRangeFalloff(w.id, dist);
+              if (falloff > 0) {
+                const isHead = secHit.object.userData.part === 'head';
+                if (isHead) player.headshots++;
+                let finalDamage = (w.damage ?? 25) * falloff * 0.5; // 50% damage
+                if (isHead) finalDamage *= (w.headshotMult ?? 2.0);
+                damageBot(bot, finalDamage, isHead, 'player', raycaster.ray.direction);
+                flashHit(bot);
+                showHitmarker(isHead);
+                if (bot.isZombie) addPoints(10);
+                if (['sniper', 'lmg'].includes(w.id)) AUDIO.bulletHit.play(1.0);
+                pushKillFeed(isHead ? 'HEADSHOT COVER PIERCE!' : 'COVER PIERCE HIT!');
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Heavy Minigun firing logic: high rate of fire with distance falloff
+    function fireMinigunBullet() {
+      if (!canPlayerFire(player)) return;
+      const w = currentSlot();
+      if (w.id !== 'minigun') return;
+      const ws = currentSlotState();
+      if (ws.overheated) return;
+
+      const now = performance.now() / 1000;
+      if (now - (ws.lastFired ?? 0) < (w.fireRate ?? 0.045)) return;
+      ws.lastFired = now;
+
+      player.continuousShots++;
+      player.shotsFired++;
+      vmManager.addRecoil(0.012, 0.016);
+      recoilKick += 0.007;
+      recoilPitch += (Math.random() - 0.48) * 0.006 + 0.006;
+      triggerPlayerFlash();
+
+      const spread = player.aiming ? (w.adsSpread ?? 0.024) : (w.spread ?? 0.034);
+      const ndcX = (Math.random() - 0.5) * spread * 2;
+      const ndcY = (Math.random() - 0.5) * spread * 2;
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), getFireCamera());
+      raycaster.far = w.range ?? 160;
+      const hits = raycaster.intersectObjects(world.hittableObjects, false);
+      if (hits.length > 0) {
+        const hit = hits[0];
+        const ud = hit.object.userData;
+        spawnImpactSpark(hit.point, ud.type === 'botpart');
+
+        if (hit.object.userData.destructible) {
+          world.damageEnvironmentalBlock(hit.object as THREE.Mesh, 15);
+        }
+
+        if (ud.type === 'botpart' && ud.ref) {
+          const bot = ud.ref as Bot;
+          if (bot.team === player.team) return;
+
+          player.shotsHit++;
+          const dist = camera.position.distanceTo(hit.point);
+          const falloff = getDamageRangeFalloff('minigun', dist);
+          if (falloff <= 0) return;
+
+          const isHead = ud.part === 'head';
+          if (isHead) player.headshots++;
+          let finalDamage = (w.damage ?? 16) * falloff;
+          if (isHead) finalDamage *= (w.headshotMult ?? 1.8);
+
+          damageBot(bot, finalDamage, isHead, 'player', raycaster.ray.direction);
+          flashHit(bot);
+          showHitmarker(isHead);
+          if (bot.isZombie) addPoints(10);
+          if (['sniper', 'laser', 'lmg', 'minigun'].includes(w.id)) { const d = camera.position.distanceTo(hit.point); const v = Math.max(0, 1.0 - d / 50); AUDIO.bulletHit.play(v); }
+        }
+      }
+    }
+
+    // Tactical Railgun Slug: Pierces solid building walls and doors, zero distance falloff
+    function fireRailgunSlug() {
+      if (!canPlayerFire(player)) return;
+      const w = currentSlot();
+      if (w.id !== 'railgun') return;
+      const ws = currentSlotState();
+
+      ws.lastFired = performance.now() / 1000;
+      player.shotsFired++;
+      vmManager.addRecoil(0.12, 0.16);
+      recoilKick += 0.08;
+      recoilPitch += 0.055;
+      triggerPlayerFlash();
+
+      AUDIO.railgunFire.play(1.0, true);
+
+      const dir = new THREE.Vector3();
+      getFireCamera().getWorldDirection(dir);
+      const raycaster = new THREE.Raycaster(player.pos, dir, 0.1, w.range ?? 500);
+      const allHits = raycaster.intersectObjects(world.hittableObjects, false);
+
+      // Environmental block degradation from railgun (+75%)
+      for (const hit of allHits) {
+        if (hit.object.userData.destructible) {
+          world.damageEnvironmentalBlock(hit.object as THREE.Mesh, 75);
+        }
+      }
+
+      // Compute muzzle origin for beam visual
+      const origin = camera.position.clone();
+      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+      const muzzlePt = origin.clone()
+        .add(dir.clone().multiplyScalar(0.42))
+        .add(right.clone().multiplyScalar(0.16))
+        .add(new THREE.Vector3(0, -0.09, 0));
+
+      let endPt = origin.clone().add(dir.clone().multiplyScalar(w.range ?? 300));
+      if (allHits.length > 0) {
+        endPt = allHits[allHits.length - 1].point.clone().add(dir.clone().multiplyScalar(2.5));
+      }
+      spawnRailgunBeam(muzzlePt, endPt);
+
+      // Pierce Physics: pierce through solid building walls and doors, dealing full lethal damage with NO falloff
+      const hitBotIds = new Set<number>();
+      for (const hit of allHits) {
+        const ud = hit.object.userData;
+        spawnImpactSpark(hit.point, ud.type === 'botpart');
+
+        if (ud.type === 'botpart' && ud.ref) {
+          const bot = ud.ref as Bot;
+          if (hitBotIds.has(bot.id)) continue;
+          hitBotIds.add(bot.id);
+
+          if (bot.team === player.team) continue;
+
+          player.shotsHit++;
+          // Railgun has ZERO falloff: 100% full lethal damage across any distance
+          const dist = camera.position.distanceTo(hit.point);
+          const falloff = getDamageRangeFalloff('railgun', dist); // 1.0
+          const isHead = ud.part === 'head';
+          if (isHead) player.headshots++;
+          let finalDamage = (w.damage ?? 160) * falloff;
+          if (isHead) finalDamage *= (w.headshotMult ?? 2.5);
+
+          damageBot(bot, finalDamage, isHead, 'player', raycaster.ray.direction);
+          flashHit(bot);
+          showHitmarker(isHead);
+          if (bot.isZombie) addPoints(25);
+          if (['sniper', 'laser', 'lmg', 'minigun'].includes(w.id)) { const d = camera.position.distanceTo(hit.point); const v = Math.max(0, 1.0 - d / 50); AUDIO.bulletHit.play(v); }
+          pushKillFeed(isHead ? 'RAILGUN HEADSHOT COVER PIERCE!' : 'RAILGUN SOLID COVER PIERCE HIT!');
+        }
+      }
+    }
+
+    function reloadWeapon() {
+      const w = currentSlot();
+      if (w.type !== 'weapon') return;
+      const ws = currentSlotState();
+
+      if (w.id === 'sniper' && ws.needsChamber && (ws.ammo ?? 0) > 0) {
+        if (beginSniperCycle(ws)) player.aiming = false;
+        return;
+      }
+
+      // Minigun manual overheat vent
+      if (w.id === 'minigun') {
+        if (ws.overheated || (ws.heat ?? 0) <= 0) return;
+        beginWeaponReload(w, ws, player.classReloadMultiplier);
+        ws.overheated = true;
+        ws.ventTimer = 2.0;
+        ws.spinWarmup = 0;
+        ws.spinSpeed = 0;
+        AUDIO.minigunFire.stop();
+        playMinigunCoolingAudio(Math.min(ws.ventTimer, ws.totalReloadT ?? ws.ventTimer));
+        pushKillFeed('MANUAL VENTING MINIGUN CORES...');
+        return;
+      }
+
+      if (!beginWeaponReload(w, ws, player.classReloadMultiplier)) return;
+      player.aiming = false;
+      AUDIO.arSpray.stop(); AUDIO.lmgAuto.stop(); AUDIO.smgAuto.stop(); AUDIO.laserBeam.stop(); AUDIO.minigunFire.stop();
+      laserBeamMesh.visible = false; player.continuousShots = 0;
+      if (!playWeaponReloadAudio(w, ws)) {
+        if (ws.isTacticalReload) AUDIO.reloadTactical.play(1.0);
+        else AUDIO.reloadEmpty.play(1.0);
+      }
+    }
+
+    function switchSlot(index: number) {
+      if (extractionState === 'carrying' && index === 0) {
+         pushKillFeed('COMMAND: CANNOT EQUIP PRIMARY WHILE CARRYING CRYO-POD.', true);
+         return;
+      }
+
+      if (!Number.isInteger(index) || index < 0 || index >= playerLoadout.length) return;
+      if (player.slotIndex !== index) {
+        stopWeaponAudio();
+        AUDIO.arSpray.stop();
+        AUDIO.laserBeam.stop();
+        AUDIO.minigunFire.stop();
+        AUDIO.minigunWindup.stop();
+        AUDIO.railgunCharge.stop();
+        updateRailgunWeaponAudio(false, 0);
+        laserBeamMesh.visible = false;
+        railgunAimLaserMesh.visible = false;
+        player.continuousShots = 0;
+        player.isDrinking = false;
+        AUDIO.arReload.stop();
+        AUDIO.shotgunReload.stop();
+        AUDIO.sniperReload.stop();
+        AUDIO.pistolReload.stop();
+        AUDIO.smgReload.stop();
+        AUDIO.lmgReload.stop();
+        AUDIO.brReload.stop();
+        AUDIO.laserVent.stop();
+        const oldWs = playerWeaponState[player.slotIndex];
+        if (oldWs) {
+          cancelWeaponReload(oldWs);
+          if (playerLoadout[player.slotIndex]?.id === 'shotgun') cancelShotgunCycle(oldWs);
+          if (oldWs.sniperCycle?.soundStarted) oldWs.sniperCycle.resumeSound = true;
+          oldWs.charging = false;
+          oldWs.chargeTimer = 0;
+          oldWs.spinWarmup = 0;
+        }
+        vmManager.setRailgunChargeProgress(0);
+        player.slotIndex = index;
+      }
+    }
+
+    selectLoadoutSlotRef.current = (index) => {
+      if (gameStateRef.current === 'playing') switchSlot(index);
+    };
+
+    // Safe pointer lock helper that catches permission errors in iframes
+    const requestGamePointerLock = () => {
+      try {
+        const p = renderer.domElement.requestPointerLock?.();
+        if (p && typeof p.catch === 'function') {
+          p.catch(() => {
+            // Pointer lock rejected or not supported in current iframe context
+          });
+        }
+      } catch {
+        // Fallback
+      }
+    };
+
+    function gameplayControlsActive() {
+      return gameStateRef.current === 'playing' && player.alive && !world.facility?.controlsLocked
+        && world.offshore?.phase !== 'DEPARTING' && world.offshore?.phase !== 'COMPLETE';
+    }
+
+    function updateHeldControls() {
+      input.applyHeld(player, gameplayControlsActive(), currentSlot().type === 'weapon', !!currentSlotState().reloading || !!currentSlotState().sniperCycle);
+      if (player.sprinting) {
+        const ws = currentSlotState();
+        ws.burstRemaining = 0; ws.burstTimer = 0;
+        AUDIO.brBurst.stop(); AUDIO.arSpray.stop();
+      }
+    }
+
+    function clearGameplayInput() {
+      input.clear(player);
+      player.vel.x = player.vel.z = 0;
+      player.continuousShots = 0;
+      const ws = currentSlotState();
+      ws.charging = false; ws.chargeTimer = 0; ws.spinWarmup = 0;
+      vmManager.setRailgunChargeProgress(0);
+      // Release fire/charge voices while preserving paused reload cursors.
+      releaseMinigunAudio(0); updateRailgunWeaponAudio(false, 0);
+      AUDIO.brBurst.stop();
+      AUDIO.arSpray.stop(); AUDIO.lmgAuto.stop(); AUDIO.smgAuto.stop();
+      AUDIO.laserBeam.stop(); AUDIO.minigunFire.stop(); AUDIO.minigunWindup.stop(); AUDIO.railgunCharge.stop();
+      laserBeamMesh.visible = railgunAimLaserMesh.visible = false;
+    }
+
+    const pauseHandler = () => {
+      if (gameStateRef.current !== 'playing') return;
+      gameStateRef.current = 'paused';
+      clearGameplayInput();
+      setGameState('paused');
+      if (document.pointerLockElement) { try { document.exitPointerLock?.(); } catch {} }
+    };
+
+    // Input listeners
+    const onKeyDown = (e: KeyboardEvent) => {
+      const action = KEY_ACTIONS[e.code as keyof typeof KEY_ACTIONS];
+      if (!action) return;
+      if (action !== 'pause' && e.target instanceof HTMLElement && e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (gameStateRef.current !== 'playing' && gameStateRef.current !== 'paused') return;
+      e.preventDefault();
+      if (!input.keyDown(e.code, e.repeat)) return;
+      if (action === 'pause') {
+        if (gameStateRef.current === 'playing') pauseHandler();
+        else resumeHandler();
+        return;
+      }
+      if (!gameplayControlsActive()) { input.keyUp(e.code); return; }
+      updateHeldControls();
+      if (action === 'jump' && player.onGround) {
+        player.vel.y = JUMP_SPEED;
+        player.onGround = false;
+        updateHeldControls();
+      }
+      if (action === 'perspective') { thirdPerson=!thirdPerson; pushKillFeed(thirdPerson?'THIRD-PERSON VIEW':'FIRST-PERSON VIEW'); }
+      if (action === 'reload') { reloadWeapon(); updateHeldControls(); }
+      if (action === 'grenade') throwGrenade();
+
+      // Squad Controls
+      if (action === 'squadFollowHold') {
+        const nextDirective = squadDirectiveRef.current === 'follow_lead' ? 'hold_position' : 'follow_lead';
+        squadDirectiveRef.current = nextDirective;
+        setSquadDirective(nextDirective);
+        setSquadDirectiveBanner({
+          directive: nextDirective,
+          text: nextDirective === 'follow_lead' ? 'FOLLOW LEAD' : 'HOLD POSITION',
+          sub: nextDirective === 'follow_lead' ? 'TETHER ACTIVE' : 'DEFENDING LOCAL NODE',
+          timer: 2.8
+        });
+        AUDIO.sniperReload.play(0.65);
+      }
+      
+      if (action === 'squadFocus') {
+        // Toggle targeting phase
+        if (targetingPhaseRef.current) {
+           targetingPhaseRef.current = false;
+           setTargetingPhase(false);
+        } else {
+           targetingPhaseRef.current = true;
+           setTargetingPhase(true);
+        }
+      }
+      
+      if (action === 'squadPush') {
+        const nextDirective = 'push_objective';
+        squadDirectiveRef.current = nextDirective;
+        setSquadDirective(nextDirective);
+        setSquadDirectiveBanner({
+          directive: nextDirective,
+          text: 'PUSH OBJECTIVE',
+          sub: 'ADVANCING TO NEXT SECTOR',
+          timer: 2.8
+        });
+        AUDIO.sniperReload.play(0.65);
+      }
+
+      // F is exclusively melee; E remains the campaign interaction latch.
+      if (action === 'melee') {
+        if (!player.isMeleeing && player.alive) {
+          player.isMeleeing = true;
+          player.meleeTimer = 0.38;
+          updateHeldControls();
+          playKnifeSlashWhoosh();
+          vmManager.triggerKnifeSlash();
+          const raycaster = new THREE.Raycaster();
+          raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+          raycaster.far = 3.2;
+          const hits = raycaster.intersectObjects(world.hittableObjects, false);
+          if (hits.length > 0) {
+            const hit = hits[0];
+            const ud = hit.object.userData;
+            spawnImpactSpark(hit.point, ud.type === 'botpart');
+            if (ud.type === 'botpart' && ud.ref) {
+              const bot = ud.ref;
+              if (bot.team === player.team) return;
+              damageBot(bot, 65, false, 'player', raycaster.ray.direction);
+              flashHit(bot);
+              showHitmarker(false);
+              showBloodSplatter();
+              recoilKick += 0.04;
+              recoilPitch += 0.02;
+              AUDIO.bulletHit.play(1.0);
+              if (bot.isZombie) addPoints(25);
+            }
+          }
+        }
+      }
+      if (action === 'slot1') switchSlot(0);
+      if (action === 'slot2') switchSlot(1);
+      if (action === 'slot3') switchSlot(2);
+      if (action === 'slot4') switchSlot(3);
+      
+      // Digits 1–4 select the four loadout slots; higher digits remain unused.
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      input.keyUp(e.code);
+      updateHeldControls();
+    };
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (!gameplayControlsActive()) return;
+      if (e.button !== MOUSE_BUTTONS.fire && e.button !== MOUSE_BUTTONS.aim) return;
+      e.preventDefault();
+      if (!input.mouseDown(e.button)) return;
+      updateHeldControls();
+
+      if (document.pointerLockElement !== renderer.domElement) {
+        requestGamePointerLock();
+      }
+
+      if (e.button === MOUSE_BUTTONS.fire) {
+        if (targetingPhaseRef.current) {
+          // X Key: Focus Target Lock Phase
+          const raycaster = new THREE.Raycaster();
+          raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+          const hits = raycaster.intersectObjects(world.hittableObjects, false);
+          let targetHit = null;
+          for (const hit of hits) {
+            const bot = hit.object.userData?.ref;
+            if (bot && bot.alive && bot.team !== player.team) {
+              targetHit = bot;
+              break;
+            }
+          }
+          if (targetHit) {
+            focusTargetIDRef.current = targetHit.id;
+                        setSquadDirectiveBanner({
+              directive: 'focus_target',
+              text: 'TARGET ACQUIRED',
+              sub: `LOCKING ALL FIRE ON BOT #${targetHit.id}`,
+              timer: 3.5
+            });
+            pushKillFeed(`SQUAD CMD: ALL FIRE ON BOT #${targetHit.id}`);
+            AUDIO.sniperReload.play(0.85);
+          } else {
+            pushKillFeed('TARGETING PHASE FAILED - NO HOSTILE ACQUIRED');
+          }
+          targetingPhaseRef.current = false;
+          setTargetingPhase(false);
+          return; // Do not fire weapon during targeting phase click
+        }
+        
+        player.fireHeld = true;
+        if (!currentSlotState()?.reloading || currentSlot().id === 'shotgun') {
+          fireWeapon();
+        }
+      }
+    };
+
+    const onMouseUp = (e: MouseEvent) => {
+      input.mouseUp(e.button);
+      updateHeldControls();
+      if (e.button === MOUSE_BUTTONS.fire) {
         player.fireHeld = false;
         if (currentSlot().id === 'minigun') releaseMinigunAudio(currentSlotState().spinSpeed ?? 0);
         AUDIO.lmgAuto.stop();
@@ -2568,7 +3050,7 @@ export default function App() {
 
     function stopMatchInput() {
       clearGameplayInput();
-      playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } if (playerLoadout[i]?.id === 'sniper') { cancelWeaponReload(ws); ws.sniperCycle = undefined; ws.sniperRecoveryT = 0; ws.boltCycleT = 0; ws.needsChamber = true; } if (playerLoadout[i]?.id === 'br') cancelWeaponReload(ws); });
+      playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } if (playerLoadout[i]?.id === 'sniper') { cancelWeaponReload(ws); ws.sniperCycle = undefined; ws.sniperRecoveryT = 0; ws.boltCycleT = 0; ws.needsChamber = true; } if (playerLoadout[i]?.id === 'br' || playerLoadout[i]?.id === 'pistol') cancelWeaponReload(ws); });
       player.vel.set(0, 0, 0);
       for (const sound of Object.values(AUDIO)) sound.stop();
       stopWeaponAudio(); updateRailgunWeaponAudio(false, 0);
