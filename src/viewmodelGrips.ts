@@ -11,6 +11,7 @@ export interface HandAttachment {
   partOffset?: Triple;
   fingerAngles?: Triple;
   thumbAngles?: Triple;
+  thumbOpposition?: number;
 }
 export interface ViewmodelGrip {
   right: HandAttachment;
@@ -26,6 +27,8 @@ export interface ViewmodelGrip {
   sprintRotation: Triple;
   reloadReach: Triple;
   chamber?: HandAttachment;
+  /** Shotgun shell grip and thumb-led press; reused by the shared palette. */
+  shellLoad?: { grip: HandAttachment; press: HandAttachment };
 }
 
 const rightRotation: Triple = [-Math.PI / 2, Math.PI / 2, 0];
@@ -63,7 +66,12 @@ export const VIEWMODEL_GRIPS: Readonly<Record<WeaponModelId, ViewmodelGrip>> = {
     hip: [.13, -.125, -.39], aim: [0, -.0725, -.39],
     sprint: [-.07, -.23, -.40], sprintRotation: [-.14, .38, -.14],
   }),
-  shotgun: grip(primary(), { ...under(-.225, -.090), followPart: 'pump', partOffset: [-.036, -.065, .055] }, { hip: [.15, -.225, -.36], sleeveLength: .25, aim: [0, -.08375, -.36], aimRotation: [.0306, 0, 0] }),
+  shotgun: grip(primary(), { ...under(-.225, -.090), followPart: 'pump', partOffset: [-.036, -.065, .055] }, { hip: [.15, -.225, -.36], sleeveLength: .25, aim: [0, -.08375, -.36], aimRotation: [.0306, 0, 0],
+    shellLoad: {
+      grip: { position: [.002, -.055, .00964], rotation: [2.2882164105, -.0001139987, -2.9910262762], curl: 1, fingerAngles: [.85, 1.20, .90], thumbAngles: [.35, .65, .40], thumbOpposition: 1.25 },
+      press: { position: [.0221, -.115, -.0374], rotation: [2.695880341, 0, -3.06155919], curl: 1, fingerAngles: [1.65, 1.15, .70], thumbAngles: [.10, .25, .20], thumbOpposition: .65 },
+    },
+  }),
   sniper: grip(primary(), under(-.28), { hip: [.155, -.22, -.39], sleeveLength: .25, aim: [0, -.105, -.39] }),
   smg: grip(primary(), vertical(-.18, -.039, -.10), { hip: [.135, -.205, -.34], aim: [0, -.145, -.34] }),
   lmg: grip(primary(), under(-.27), { hip: [.17, -.245, -.40], aim: [0, -.105, -.40], sprint: [-.035, -.30, -.48], sprintRotation: [-.12, .52, -.12] }),

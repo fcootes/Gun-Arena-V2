@@ -500,7 +500,9 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
         {/* Reloading / Overheating Status Tag */}
         {weaponSlotState.reloading && (
           <div className="mt-1 px-2 py-0.5 bg-yellow-500/20 border border-yellow-400 text-yellow-300 text-[9px] font-bold animate-pulse rounded-xs">
-            {weaponSlotState.isTacticalReload ? 'TACTICAL RELOAD...' : 'EMPTY CHAMBER RELOAD...'}
+            {currentWeapon.id === 'shotgun' && !weaponSlotState.needsChamber
+              ? (weaponSlotState.reloadSequence?.phases[weaponSlotState.reloadSequence.index]?.phase === 'close' ? 'FINISHING RELOAD...' : 'TACTICAL RELOAD...')
+              : weaponSlotState.isTacticalReload ? 'TACTICAL RELOAD...' : 'EMPTY CHAMBER RELOAD...'}
           </div>
         )}
         {weaponSlotState.overheated && (

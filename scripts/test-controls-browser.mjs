@@ -45,8 +45,10 @@ try {
   await page.evaluate(async()=>{
     const THREE=await import('/node_modules/.vite/deps/three.js');
     const {GameplayInput,KEY_ACTIONS,MOUSE_BUTTONS}=await import('/src/gameplayInput.ts');
+    const {cancelWeaponReload}=await import('/src/weaponReload.ts');
+    const {cancelShotgunCycle}=await import('/src/shotgunMechanics.ts');
     const {default:create}=await import('/__controls-harness.js');
-    const h=create({THREE,GameplayInput,KEY_ACTIONS,MOUSE_BUTTONS});window.fixture=h;
+    const h=create({THREE,GameplayInput,KEY_ACTIONS,MOUSE_BUTTONS,cancelWeaponReload,cancelShotgunCycle});window.fixture=h;
     for(const event of ['keydown','keyup','mouseup','blur'])window.addEventListener(event,h[{keydown:'onKeyDown',keyup:'onKeyUp',mouseup:'onMouseUp',blur:'onBlur'}[event]]);
     for(const event of ['mousedown','wheel','contextmenu'])h.renderer.domElement.addEventListener(event,h[{mousedown:'onMouseDown',wheel:'onWheel',contextmenu:'onContextMenu'}[event]]);
     document.addEventListener('mousemove',h.onMouseMove);document.addEventListener('pointerlockchange',h.onPointerLockChange);
