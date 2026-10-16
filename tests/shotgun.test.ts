@@ -92,7 +92,7 @@ const vm = createViewmodelManager(); vm.prepare(['shotgun']);
 const ws: WeaponSlotState = {ammo: 2, reserve: 20}; beginWeaponReload(gun, ws);
 const shell = vm.root.getObjectByName('reloadRound')!, left = vm.root.getObjectByName('leftHand')!;
 const modelDuring = vm.root.getObjectByName('Weapon_shotgun')!, bodyDuring = modelDuring.getObjectByName('receiver')!;
-const clearance = new THREE.Raycaster(), shellAxis = new THREE.Vector3();
+const clearance = new THREE.Raycaster(), shellAxis = new THREE.Vector3(), thumbTip = new THREE.Vector3(), shellBase = new THREE.Vector3();
 const sentinelGeometry = new THREE.BufferGeometry(), sentinelMaterial = new THREE.MeshStandardMaterial(), sentinelObject = new THREE.Object3D();
 while (ws.reloading) {
   advanceWeaponReload(gun, ws, 1 / 144);
@@ -101,11 +101,21 @@ while (ws.reloading) {
   if (stage?.phase === 'insert' && shell.visible) {
     assert.ok(left.position.distanceTo(shell.position) < .12, 'Shell remains within the loading hand/thumb reach');
     if (seq!.elapsed / stage.duration < .52) {
-      near(left.position.x, shell.position.x - .00525); near(left.position.y, shell.position.y - .04159); near(left.position.z, shell.position.z + .00964);
+      near(left.position.x, shell.position.x + .002); near(left.position.y, shell.position.y - .055); near(left.position.z, shell.position.z + .00964);
+      if (seq!.elapsed / stage.duration >= .16) {
+        thumbTip.set(0,.018,0);modelDuring.worldToLocal(modelDuring.getObjectByName('left_thumb_2')!.localToWorld(thumbTip));
+        shellBase.set(0,0,.029);modelDuring.worldToLocal(shell.localToWorld(shellBase));
+        assert.ok(thumbTip.distanceTo(shellBase)<.025,'Opposed thumb stays in contact range of the brass rim while gripping/carrying');
+      }
     } else assert.ok(left.position.y <= -.10, 'Pressing fingers/palm remain outside the narrow receiver port');
     if (seq!.elapsed / stage.duration >= .52) {
       assert.ok(Math.abs(shell.position.x) < .009 && shell.position.y < -.019, 'Shell approaches through open underside');
       near(shell.rotation.x, 0);
+      if (seq!.elapsed / stage.duration >= .70) {
+        thumbTip.set(0,.018,0); modelDuring.worldToLocal(modelDuring.getObjectByName('left_thumb_2')!.localToWorld(thumbTip));
+        shellBase.copy(shell.position);shellBase.z+=.029;
+        assert.ok(thumbTip.distanceTo(shellBase)<.020,'Actual articulated thumb pad contacts the shell base at the final press');
+      }
       for (const dx of [-.008, 0, .008]) {
         clearance.ray.origin.set(shell.position.x + dx, shell.position.y, shell.position.z + .029).applyMatrix4(modelDuring.matrixWorld);
         shellAxis.set(0,0,-1).transformDirection(modelDuring.matrixWorld); clearance.ray.direction.copy(shellAxis); clearance.near = 0; clearance.far = .0565;
@@ -134,3 +144,13 @@ assert.equal(hudState.ammo,4);assert.equal(hudState.reserve,10);assert.equal(hud
 advanceWeaponReload(gun,hudState,2.78);assert.equal(hudState.needsChamber,false);assert.equal(hudState.reloading,true);assert.ok(hud().includes('FINISHING RELOAD...'));assert.ok(!hud().includes('EMPTY CHAMBER RELOAD...'),'Closed action never advertises an empty chamber');
 advanceWeaponReload(gun,hudState,1);assert.ok(!hud().includes('FINISHING RELOAD...'));
 console.log('PASS: actual HUD markup distinguishes 4/10 unchambered shells, closed-action finish and ready');
+
+const repeated=createViewmodelManager();const rest:WeaponSlotState={ammo:2,reserve:100};
+for(let cycle=0;cycle<5;cycle++){
+ rest.ammo=2;beginWeaponReload(gun,rest);
+ while(rest.reloading){advanceWeaponReload(gun,rest,1/60);repeated.update(1/60,gun,rest,false,false,true,false,false,false,0,true,true);}
+ for(let n=0;n<30;n++)repeated.update(1/60,gun,rest,false,false,true,false,false,false,0,true,true);
+ const h=repeated.root.getObjectByName('leftHand')!,m=repeated.root.getObjectByName('Weapon_shotgun')!,thumb=repeated.root.getObjectByName('left_thumb_0')!;
+ near(h.position.x,-.036);near(h.position.y,-.090);near(h.position.z,-.225);near(m.position.x,.15);assert.ok(Math.abs(m.position.y+.225)<.003);near(thumb.rotation.y,0);
+}
+repeated.dispose();console.log('PASS: repeated shell reloads restore original pump grip, thumb and framing without accumulated transforms');

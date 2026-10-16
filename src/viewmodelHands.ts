@@ -48,7 +48,7 @@ export function createFirstPersonHands() {
   const scratch = new THREE.Object3D(), inverse = new THREE.Matrix4(), matrix = new THREE.Matrix4(), instanceTransform = new THREE.Matrix4();
   const direction = new THREE.Vector3(), end = new THREE.Vector3(), elbow = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
   const targetRotation = new THREE.Quaternion(), euler = new THREE.Euler(), attachmentPosition = new THREE.Vector3();
-  const supportGrip = new THREE.Vector3(), shotgunPickup = new THREE.Vector3(-.08525, -.15659, -.03536);
+  const supportGrip = new THREE.Vector3(), shotgunPickup = new THREE.Vector3(-.078, -.170, -.03536);
   const shellPose = { x: 0, y: 0, z: 0, angle: 0 };
   let selected: WeaponModelId = 'ar', phase = '', disposed = false, initialized = false;
 
@@ -278,7 +278,8 @@ export function createFirstPersonHands() {
           digit.joints[segment].rotation.set(-angle * (hand.curl + (aiming ? .025 : 0)), 0, segment === 0 ? digit.spread : 0);
           if (side === 'left' && config.shellLoad && digit.thumb && segment === 0) {
             digit.joints[segment].rotation.y = -.65 * shellGrip;
-            digit.joints[segment].rotation.z += .65 * shellGrip;
+            const load = config.shellLoad;
+            digit.joints[segment].rotation.z += (load.grip.thumbOpposition! + (load.press.thumbOpposition! - load.grip.thumbOpposition!) * shellPress) * shellGrip;
           }
         }
       }

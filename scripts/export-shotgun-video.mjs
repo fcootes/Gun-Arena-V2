@@ -25,7 +25,7 @@ function find(name,lo=0,hi=frames.length/stride) {
 const start=find('live-start.png',0,(results.frames[0].at/1000+20)*fps);
 const end=find('live-end.png',Math.floor(start.frame+(elapsed-10)*fps),Math.ceil(start.frame+(elapsed+10)*fps));
 if(start.frame<0||Math.abs(end.seconds-start.seconds-elapsed)>6||start.mse>150||end.mse>150)throw Error('Cannot match continuous clip: '+JSON.stringify({start,end}));
-const seek=Math.max(0,start.seconds-.8),duration=end.seconds-seek+.6;
+const seek=Math.max(0,start.seconds-(results.livePixelRatio?2.5:.8)),duration=end.seconds-seek+.6;
 ffmpeg(['-y','-ss',String(seek),'-i',source,'-t',String(duration),'-an','-c:v','libvpx-vp9','-b:v','0','-crf','33',resolve(output,'shotgun-continuous.webm')]);
-const validation={source,matchedStart:start,matchedEnd:end,seek,duration,liveWallSeconds:elapsed,clock:'Continuous original browser recorder clock; no retiming, cuts within the sequence or recorded audio',renderer:'SwiftShader; fixed 1280×720 viewport, test-only 0.65 backing pixel ratio'};
+const validation={source,matchedStart:start,matchedEnd:end,seek,duration,liveWallSeconds:elapsed,clock:'Continuous original browser recorder clock; no retiming, cuts within the sequence or recorded audio',renderer:`SwiftShader; fixed 1280×720 viewport, test-only ${results.livePixelRatio??.65} backing pixel ratio`};
 writeFileSync(resolve(output,'video-validation.json'),JSON.stringify(validation,null,2)+'\n');console.log(JSON.stringify(validation,null,2));

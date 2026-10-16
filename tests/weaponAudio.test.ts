@@ -103,6 +103,7 @@ for (const hz of [30, 60, 144]) {
   for (let i = 0; i < hz; i++) advanceWeaponReload(shotgun, ws, 1 / hz, undefined, playShotgunMechanicalEvent);
   assert.equal(plays(AUDIO.shotgunPump), pumps + 1);
   assert.equal(report.paused, false, 'Delayed mechanical cue leaves the shot tail playing');
+  assert.ok(Math.abs(latest(AUDIO.shotgunPump).duration / latest(AUDIO.shotgunPump).playbackRate - .44)<1e-8, 'Existing pump clip fits the physical moving stroke');
 }
 stopWeaponAudio();
 for (const ammo of [0, 2, 5]) for (const reserve of [1, 20]) for (const multiplier of [1, .75]) {

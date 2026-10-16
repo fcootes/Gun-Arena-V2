@@ -145,6 +145,6 @@ try {
     checks.push('Actual weapon switch during pump; chamber-only return, pause/resume, repeated R, death/replay/lobby');
   }
   assert.deepEqual(errors,[]);
-  writeFileSync(resolve(output,'results.json'),JSON.stringify({completedAt:new Date().toISOString(),baseline,codeCommit:process.env.SHOTGUN_COMMIT,softwareRenderer:'Chromium SwiftShader',screens,checks,errors,...live},null,2)+'\n');
+  writeFileSync(resolve(output,'results.json'),JSON.stringify({completedAt:new Date().toISOString(),baseline,codeCommit:process.env.SHOTGUN_COMMIT,softwareRenderer:'Chromium SwiftShader',livePixelRatio:.30,screens,checks,errors,...live},null,2)+'\n');
 } finally {clearTimeout(deadline);await browser?.close();await server.close();}
 if(video)writeFileSync(resolve(output,'video-source.json'),JSON.stringify({path:await video.path(),note:'Raw fixed-viewport actual App recording; static pose samples are in a separate page. No recorded audio.'},null,2)+'\n');
