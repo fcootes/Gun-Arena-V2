@@ -1,4 +1,5 @@
-import { AUDIO, SoundTrack, FIRST_BATCH_AUDIO_URLS, SECOND_BATCH_AUDIO_URLS, THIRD_BATCH_AUDIO_URLS } from './audio';
+import type { BattleRifleListener } from './battleRifleMechanics';
+import { AUDIO, SoundTrack, FIRST_BATCH_AUDIO_URLS, SECOND_BATCH_AUDIO_URLS, THIRD_BATCH_AUDIO_URLS, BR_MECHANICAL_AUDIO_URLS } from './audio';
 import type { WeaponDef, WeaponSlotState } from './types';
 import type { ShotgunEventListener } from './shotgunMechanics';
 import type { SniperBoltListener } from './sniperMechanics';
@@ -14,14 +15,14 @@ const reloadProfiles = {
 const reloadTracks = [
   AUDIO.smgReloadTactical, AUDIO.smgReloadEmpty,
   AUDIO.lmgReloadTactical, AUDIO.lmgReloadEmpty,
-  AUDIO.brReloadTactical, AUDIO.brReloadEmpty,
+  AUDIO.brReloadTactical, AUDIO.brReloadEmpty, AUDIO.brMagazineOut, AUDIO.brMagazineIn, AUDIO.brCharge,
   AUDIO.arReloadTactical, AUDIO.arReloadEmpty,
   AUDIO.pistolReloadTactical, AUDIO.pistolReloadEmpty,
   AUDIO.sniperReloadTactical, AUDIO.sniperReloadEmpty,
   AUDIO.shotgunReload, AUDIO.shotgunReloadEmpty,
   AUDIO.laserVent, AUDIO.plasmaReloadEmpty, AUDIO.plasmaInsert,
 ];
-const weaponUrls = { ...FIRST_BATCH_AUDIO_URLS, ...SECOND_BATCH_AUDIO_URLS, ...THIRD_BATCH_AUDIO_URLS };
+const weaponUrls = { ...FIRST_BATCH_AUDIO_URLS, ...SECOND_BATCH_AUDIO_URLS, ...THIRD_BATCH_AUDIO_URLS, ...BR_MECHANICAL_AUDIO_URLS };
 const weaponTracks = Object.keys(weaponUrls).map(key => AUDIO[key as keyof typeof weaponUrls]);
 
 /** Prime only recordings for the current loadout and spawned actors; later shots stay lazy. */
@@ -76,8 +77,18 @@ export function updateSniperReloadAudio(state: WeaponSlotState): void {
   }
 }
 
+/** Existing BR mechanics cropped at the manifest's isolated action boundaries.
+ * Normal speed at standard class; no stretched full composite or duplicate layer. */
+export const playBattleRifleMechanicalEvent: BattleRifleListener = (event, speed, late) => {
+  const track = event === 'extract' ? AUDIO.brMagazineOut : event === 'insert' ? AUDIO.brMagazineIn : AUDIO.brCharge;
+  const clip = track.duration || (event === 'insert' ? .55 : .249);
+  const offset = Math.max(0,late) / speed;
+  if (offset < clip) track.play(1,true,1/speed,offset);
+};
+
 export function playWeaponReloadAudio(weapon: WeaponDef, state: WeaponSlotState): boolean {
   if (!state.reloading || !state.reloadSequence) return false;
+  if (weapon.id === 'br') { stopWeaponReloadAudio(); AUDIO.brBurst.stop(); return true; }
   if (weapon.id === 'sniper') {
     stopWeaponReloadAudio();
     sniperReloads.set(state, {sequence:state.reloadSequence,started:false});

@@ -1,0 +1,1351 @@
+{
+  "reviewedHead": "eba00404bc86562a95d2e68740ed9a3dbbb11a15",
+  "runtimeCommit": "05da46ccdfdf1a344b29a23ee214ec43f144b98f",
+  "productionFilesChanged": [
+    "src/weaponModels.ts"
+  ],
+  "protectedSourceFilesUnchangedSHA256": {
+    "src/battleRifleMechanics.ts": "e0407424ba5cd3f9411313789025e2b22f1ad51fdac6f96d819e4fdc2456b80e",
+    "src/weapons.ts": "3fbfeb9853e1311c2c66dba2f7aa1f0e49a07caf4ea2e16ff2241bb2bff55a6e",
+    "src/viewmodelGrips.ts": "52880921cf7f4bf5d9c253b6ea4c4ca6c68121a489701db2f207f6459f065820",
+    "src/viewmodelHands.ts": "19581c186d50306637744d6b4686fd976901c2bf1e123b4e86656dc9f7bb1490",
+    "src/weaponReload.ts": "660ba3baaba831ec6e588d62ce0bde65c71010cfdd6f94dde7a412b9010a56b9",
+    "src/weaponAudio.ts": "bb1a3ec5afdf000c36d3fbbb7d1ec2dc314b8018d8e173d1607ee26f99113fc0",
+    "src/audio.ts": "c4edd18131583c7bbf67cb9ac0f658c7444176afb4db8a0ec617dce80ec62552",
+    "src/App.tsx": "7e7a94c6e984b9372824dd4b8dbc930dbe675ca64dfdfd9fb9c203fd5304cab1",
+    "src/types.ts": "f7df51f190e62d368e8d9fbb1b2a6655aff3420647c2d3190300e0c0ccf7815c",
+    "src/gameLoop.ts": "f152810bb0ebf922d05d253f9cd354fe9c2f72e063f6cda8ebbc752ab5398a4b",
+    "src/gameplayInput.ts": "5d5d8d0adc012bb7268c069bbdb7c83290f97dc8da1e4528362b6cce6ec62abd"
+  },
+  "before": {
+    "screens": [
+      {
+        "name": "armory-side",
+        "calls": 21,
+        "triangles": 17032,
+        "camera": [
+          0,
+          0.055,
+          1.28
+        ],
+        "optic": [
+          0,
+          0.07,
+          0
+        ]
+      },
+      {
+        "name": "armory-front-three-quarter",
+        "calls": 21,
+        "triangles": 17032,
+        "camera": [
+          -0.9,
+          0.52,
+          1.18
+        ],
+        "optic": [
+          0,
+          0.07,
+          0
+        ]
+      },
+      {
+        "name": "armory-rear-three-quarter",
+        "calls": 21,
+        "triangles": 17032,
+        "camera": [
+          0.95,
+          0.48,
+          1.2
+        ],
+        "optic": [
+          0,
+          0.07,
+          0
+        ]
+      },
+      {
+        "name": "first-person-hip",
+        "at": 27309.29999999702,
+        "id": "br",
+        "ammo": 20,
+        "reserve": 60,
+        "reloading": false,
+        "needsChamber": false,
+        "burst": 0,
+        "sprinting": false,
+        "aiming": false,
+        "root": [
+          0.14,
+          -0.22344385360622415,
+          -0.38
+        ],
+        "muzzleElevation": 0,
+        "mag": [
+          0,
+          -0.065,
+          0.21
+        ],
+        "magVisible": true,
+        "fresh": [
+          0,
+          -0.065,
+          0.21
+        ],
+        "freshVisible": false,
+        "handVisible": true,
+        "receiverVisible": true
+      },
+      {
+        "name": "first-person-ads",
+        "at": 30872.40000000596,
+        "id": "br",
+        "ammo": 20,
+        "reserve": 60,
+        "reloading": false,
+        "needsChamber": false,
+        "burst": 0,
+        "sprinting": false,
+        "aiming": false,
+        "root": [
+          1.0615584599076652e-10,
+          -0.1069550603263209,
+          -0.38
+        ],
+        "muzzleElevation": 0,
+        "mag": [
+          0,
+          -0.065,
+          0.21
+        ],
+        "magVisible": true,
+        "fresh": [
+          0,
+          -0.065,
+          0.21
+        ],
+        "freshVisible": false,
+        "handVisible": false,
+        "receiverVisible": false
+      },
+      {
+        "name": "upright-reload",
+        "at": 33071.5,
+        "id": "br",
+        "ammo": 20,
+        "reserve": 60,
+        "reloading": true,
+        "needsChamber": false,
+        "phase": "insert",
+        "elapsed": 0.570000000000003,
+        "burst": 0,
+        "sprinting": false,
+        "aiming": false,
+        "root": [
+          0.16,
+          -0.17,
+          -0.66
+        ],
+        "muzzleElevation": 78.67427598233796,
+        "mag": [
+          0,
+          -0.065,
+          0.21
+        ],
+        "magVisible": false,
+        "fresh": [
+          0,
+          -0.07408867205279833,
+          0.21
+        ],
+        "freshVisible": true,
+        "handVisible": true,
+        "receiverVisible": true
+      }
+    ],
+    "errors": [],
+    "renderer": "Chromium SwiftShader"
+  },
+  "after": {
+    "screens": [
+      {
+        "name": "armory-side",
+        "calls": 21,
+        "triangles": 12408,
+        "camera": [
+          0,
+          0.055,
+          1.28
+        ],
+        "optic": [
+          0,
+          0.07,
+          0
+        ]
+      },
+      {
+        "name": "armory-front-three-quarter",
+        "calls": 21,
+        "triangles": 12408,
+        "camera": [
+          -0.9,
+          0.52,
+          1.18
+        ],
+        "optic": [
+          0,
+          0.07,
+          0
+        ]
+      },
+      {
+        "name": "armory-rear-three-quarter",
+        "calls": 21,
+        "triangles": 12408,
+        "camera": [
+          0.95,
+          0.48,
+          1.2
+        ],
+        "optic": [
+          0,
+          0.07,
+          0
+        ]
+      },
+      {
+        "name": "first-person-hip",
+        "at": 27151.69999998808,
+        "id": "br",
+        "ammo": 20,
+        "reserve": 60,
+        "reloading": false,
+        "needsChamber": false,
+        "burst": 0,
+        "sprinting": false,
+        "aiming": false,
+        "root": [
+          0.14,
+          -0.22344385360622415,
+          -0.38
+        ],
+        "muzzleElevation": 0,
+        "mag": [
+          0,
+          -0.065,
+          0.21
+        ],
+        "magVisible": true,
+        "fresh": [
+          0,
+          -0.065,
+          0.21
+        ],
+        "freshVisible": false,
+        "handVisible": true,
+        "receiverVisible": true
+      },
+      {
+        "name": "first-person-ads",
+        "at": 29538.39999999106,
+        "id": "br",
+        "ammo": 20,
+        "reserve": 60,
+        "reloading": false,
+        "needsChamber": false,
+        "burst": 0,
+        "sprinting": false,
+        "aiming": false,
+        "root": [
+          1.0615584599076652e-10,
+          -0.1069550603263209,
+          -0.38
+        ],
+        "muzzleElevation": 0,
+        "mag": [
+          0,
+          -0.065,
+          0.21
+        ],
+        "magVisible": true,
+        "fresh": [
+          0,
+          -0.065,
+          0.21
+        ],
+        "freshVisible": false,
+        "handVisible": false,
+        "receiverVisible": false
+      },
+      {
+        "name": "upright-reload",
+        "at": 31948.79999999702,
+        "id": "br",
+        "ammo": 20,
+        "reserve": 60,
+        "reloading": true,
+        "needsChamber": false,
+        "phase": "insert",
+        "elapsed": 0.570000000000003,
+        "burst": 0,
+        "sprinting": false,
+        "aiming": false,
+        "root": [
+          0.16,
+          -0.17,
+          -0.66
+        ],
+        "muzzleElevation": 78.67427598233796,
+        "mag": [
+          0,
+          -0.065,
+          0.21
+        ],
+        "magVisible": false,
+        "fresh": [
+          0,
+          -0.07408867205279833,
+          0.21
+        ],
+        "freshVisible": true,
+        "handVisible": true,
+        "receiverVisible": true
+      }
+    ],
+    "checks": [
+      "Six matched views: actual armory side/front/rear; gameplay hip/ADS/upright mag seating",
+      "Actual three-round bursts before/after complete tactical reload; R clears queued burst and reload clicks cannot fire; exact 36/41 transfer with no charging cue",
+      "Complete empty reload with pause/resume, conserved 36/14 ammo, one empty-only receiver cue and no overlapping composites",
+      "Switch cancels magazine handling without phantom rounds; repeated equips keep one spare mag and restored transforms",
+      "Screen-left sprint blocks BR fire; reload stops sprint and returns to held sprint, followed by clean scoped ADS",
+      "Death cancels BR reload and redeployment succeeds"
+    ],
+    "errors": [],
+    "audio": [
+      {
+        "at": 35658.59999999404,
+        "src": "br_fire_burst_3.wav",
+        "rate": 1,
+        "offset": 0
+      },
+      {
+        "at": 39810.19999998808,
+        "src": "br_mag_remove.wav",
+        "rate": 1.3333333333333333,
+        "offset": 0.009866666674613916
+      },
+      {
+        "at": 43641.39999999106,
+        "src": "br_mag_insert.wav",
+        "rate": 1.3333333333333333,
+        "offset": 0.059866666674613905
+      },
+      {
+        "at": 47580.89999999106,
+        "src": "br_fire_burst_3.wav",
+        "rate": 1,
+        "offset": 0
+      },
+      {
+        "at": 51623.89999999106,
+        "src": "br_mag_remove.wav",
+        "rate": 1.3333333333333333,
+        "offset": 0.0648
+      },
+      {
+        "at": 55356.79999999702,
+        "src": "br_mag_insert.wav",
+        "rate": 1.3333333333333333,
+        "offset": 0.048133
+      },
+      {
+        "at": 57859.19999998808,
+        "src": "br_charge.wav",
+        "rate": 1.3333333333333333,
+        "offset": 0.01280000001192072
+      },
+      {
+        "at": 65727.5,
+        "src": "br_mag_remove.wav",
+        "rate": 1.3333333333333333,
+        "offset": 0.053333
+      },
+      {
+        "at": 68662.59999999404,
+        "src": "br_mag_insert.wav",
+        "rate": 1.3333333333333333,
+        "offset": 0.036666
+      }
+    ],
+    "renderer": "Chromium SwiftShader; no native-speed or audible-quality claim"
+  },
+  "sampledFrames": 236,
+  "stateTransitions": [
+    {
+      "at": 35639.89999999106,
+      "id": "br",
+      "ammo": 20,
+      "reserve": 60,
+      "reloading": false,
+      "needsChamber": false,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.16,
+        -0.17,
+        -0.66
+      ],
+      "muzzleElevation": 78.67427598233796,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": false,
+      "fresh": [
+        0,
+        -0.07408867205279833,
+        0.21
+      ],
+      "freshVisible": true,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 35711.19999998808,
+      "id": "br",
+      "ammo": 19,
+      "reserve": 60,
+      "reloading": false,
+      "needsChamber": false,
+      "burst": 2,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.14,
+        -0.22485014058545452,
+        -0.38
+      ],
+      "muzzleElevation": 0,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": true,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 36824.09999999404,
+      "id": "br",
+      "ammo": 18,
+      "reserve": 60,
+      "reloading": false,
+      "needsChamber": false,
+      "burst": 1,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.14,
+        -0.22455378727573652,
+        -0.3725
+      ],
+      "muzzleElevation": 0,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": true,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 37972.5,
+      "id": "br",
+      "ammo": 17,
+      "reserve": 60,
+      "reloading": true,
+      "needsChamber": false,
+      "phase": "open",
+      "elapsed": 0,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.14,
+        -0.2242674549418279,
+        -0.3725
+      ],
+      "muzzleElevation": 0,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": true,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 39808.89999999106,
+      "id": "br",
+      "ammo": 17,
+      "reserve": 60,
+      "reloading": true,
+      "needsChamber": false,
+      "phase": "eject",
+      "elapsed": 0.01740000000596044,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.16,
+        -0.17,
+        -0.66
+      ],
+      "muzzleElevation": 78.67427598233803,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": true,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 42366.29999999702,
+      "id": "br",
+      "ammo": 17,
+      "reserve": 60,
+      "reloading": true,
+      "needsChamber": false,
+      "phase": "pickup",
+      "elapsed": 0.029900000005960395,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.16,
+        -0.17,
+        -0.66
+      ],
+      "muzzleElevation": 78.67427598233803,
+      "mag": [
+        -0.02056947109968507,
+        -0.2696924793569179,
+        0.3055011158199664
+      ],
+      "magVisible": true,
+      "fresh": [
+        -0.16,
+        -0.355,
+        0.77
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 43396.19999998808,
+      "id": "br",
+      "ammo": 17,
+      "reserve": 60,
+      "reloading": true,
+      "needsChamber": false,
+      "phase": "insert",
+      "elapsed": 0.004900000005960428,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.16,
+        -0.17,
+        -0.66
+      ],
+      "muzzleElevation": 78.67427598233796,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": false,
+      "fresh": [
+        -0.03975714601186889,
+        -0.255,
+        0.21
+      ],
+      "freshVisible": true,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 46107,
+      "id": "br",
+      "ammo": 36,
+      "reserve": 41,
+      "reloading": true,
+      "needsChamber": false,
+      "phase": "close",
+      "elapsed": 0.017400000005960328,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.15984600281712547,
+        -0.1704133902019232,
+        -0.6578440394397564
+      ],
+      "muzzleElevation": 78.10348860754063,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": false,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": true,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 47806.79999999702,
+      "id": "br",
+      "ammo": 35,
+      "reserve": 41,
+      "reloading": false,
+      "needsChamber": false,
+      "burst": 2,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.14,
+        -0.22462131468011795,
+        -0.38
+      ],
+      "muzzleElevation": 0,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": true,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 48527.69999998808,
+      "id": "br",
+      "ammo": 34,
+      "reserve": 41,
+      "reloading": false,
+      "needsChamber": false,
+      "burst": 1,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.14,
+        -0.2249190368223512,
+        -0.3725
+      ],
+      "muzzleElevation": 0,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": true,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 49637.19999998808,
+      "id": "br",
+      "ammo": 0,
+      "reserve": 50,
+      "reloading": false,
+      "needsChamber": false,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.14,
+        -0.22526770875507504,
+        -0.3725
+      ],
+      "muzzleElevation": 0,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": true,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 49645.79999999702,
+      "id": "br",
+      "ammo": 0,
+      "reserve": 50,
+      "reloading": true,
+      "needsChamber": true,
+      "phase": "open",
+      "elapsed": 0,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.14,
+        -0.22485014058545452,
+        -0.38
+      ],
+      "muzzleElevation": 0,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": true,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 51355.79999999702,
+      "id": "br",
+      "ammo": 0,
+      "reserve": 50,
+      "reloading": true,
+      "needsChamber": true,
+      "phase": "eject",
+      "elapsed": 0.008600000008940636,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.16,
+        -0.17,
+        -0.66
+      ],
+      "muzzleElevation": 78.67427598233803,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": true,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 53148.5,
+      "id": "br",
+      "ammo": 0,
+      "reserve": 50,
+      "reloading": true,
+      "needsChamber": true,
+      "phase": "pickup",
+      "elapsed": 0.021100000008940592,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.16,
+        -0.17,
+        -0.66
+      ],
+      "muzzleElevation": 78.67427598233803,
+      "mag": [
+        -0.010822291285643201,
+        -0.26273020806117375,
+        0.26024635239762917
+      ],
+      "magVisible": true,
+      "fresh": [
+        -0.16,
+        -0.355,
+        0.77
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 54511,
+      "id": "br",
+      "ammo": 0,
+      "reserve": 50,
+      "reloading": true,
+      "needsChamber": true,
+      "phase": "insert",
+      "elapsed": 0.046100000008940614,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.16,
+        -0.17,
+        -0.66
+      ],
+      "muzzleElevation": 78.67427598233796,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": false,
+      "fresh": [
+        -0.024182157869135894,
+        -0.255,
+        0.21
+      ],
+      "freshVisible": true,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 57628,
+      "id": "br",
+      "ammo": 36,
+      "reserve": 14,
+      "reloading": true,
+      "needsChamber": true,
+      "phase": "chamber",
+      "elapsed": 0.008600000008940525,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.16,
+        -0.17,
+        -0.66
+      ],
+      "muzzleElevation": 78.67427598233803,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": false,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": true,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 59809.39999999106,
+      "id": "br",
+      "ammo": 36,
+      "reserve": 14,
+      "reloading": true,
+      "needsChamber": false,
+      "phase": "close",
+      "elapsed": 0.008600000008940525,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.15996170345706073,
+        -0.17010398903778495,
+        -0.6594638483988502
+      ],
+      "muzzleElevation": 78.53275862382876,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": false,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": true,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 61644.19999998808,
+      "id": "br",
+      "ammo": 8,
+      "reserve": 60,
+      "reloading": true,
+      "needsChamber": false,
+      "phase": "open",
+      "elapsed": 0,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.14,
+        -0.22534094140968153,
+        -0.38
+      ],
+      "muzzleElevation": 0,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": true,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 63214.59999999404,
+      "id": "br",
+      "ammo": 8,
+      "reserve": 60,
+      "reloading": false,
+      "needsChamber": false,
+      "burst": 0,
+      "sprinting": true,
+      "aiming": false,
+      "root": [
+        0.16,
+        -0.17,
+        -0.66
+      ],
+      "muzzleElevation": 78.67427598233803,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": true,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 64005.5,
+      "id": "br",
+      "ammo": 8,
+      "reserve": 60,
+      "reloading": true,
+      "needsChamber": false,
+      "phase": "open",
+      "elapsed": 0,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        -0.025278318205536467,
+        -0.27420421836958025,
+        -0.4414280500222913
+      ],
+      "muzzleElevation": -7.4028651839686885,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": true,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 65472.09999999404,
+      "id": "br",
+      "ammo": 8,
+      "reserve": 60,
+      "reloading": true,
+      "needsChamber": false,
+      "phase": "eject",
+      "elapsed": 0,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.16,
+        -0.17,
+        -0.66
+      ],
+      "muzzleElevation": 78.67427598233803,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": true,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 67368.39999999106,
+      "id": "br",
+      "ammo": 8,
+      "reserve": 60,
+      "reloading": true,
+      "needsChamber": false,
+      "phase": "pickup",
+      "elapsed": 0.01249999999999997,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.16,
+        -0.17,
+        -0.66
+      ],
+      "muzzleElevation": 78.67427598233803,
+      "mag": [
+        -0.00399670616995378,
+        -0.25785479012139556,
+        0.2285561357890711
+      ],
+      "magVisible": true,
+      "fresh": [
+        -0.16,
+        -0.355,
+        0.77
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 68662.19999998808,
+      "id": "br",
+      "ammo": 8,
+      "reserve": 60,
+      "reloading": true,
+      "needsChamber": false,
+      "phase": "insert",
+      "elapsed": 0.03749999999999999,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.16,
+        -0.17,
+        -0.66
+      ],
+      "muzzleElevation": 78.67427598233796,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": false,
+      "fresh": [
+        -0.028749086504477973,
+        -0.255,
+        0.21
+      ],
+      "freshVisible": true,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 70851.29999999702,
+      "id": "br",
+      "ammo": 36,
+      "reserve": 32,
+      "reloading": true,
+      "needsChamber": false,
+      "phase": "close",
+      "elapsed": 0,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.16,
+        -0.17,
+        -0.66
+      ],
+      "muzzleElevation": 78.67427598233803,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": false,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": true,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 72877.69999998808,
+      "id": "br",
+      "ammo": 36,
+      "reserve": 32,
+      "reloading": false,
+      "needsChamber": false,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.13655219065343996,
+        -0.21583309142030072,
+        -0.3800000000028324
+      ],
+      "muzzleElevation": -5.15352199778905e-10,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": true,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 73142.29999999702,
+      "id": "br",
+      "ammo": 36,
+      "reserve": 32,
+      "reloading": false,
+      "needsChamber": false,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": true,
+      "root": [
+        0.04191114635820441,
+        -0.2555980825473118,
+        -0.4152390287360079
+      ],
+      "muzzleElevation": -5.258187627803349,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": true,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": false,
+      "handVisible": true,
+      "receiverVisible": true
+    },
+    {
+      "at": 73433.69999998808,
+      "id": "br",
+      "ammo": 5,
+      "reserve": 30,
+      "reloading": false,
+      "needsChamber": false,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.02100518906057997,
+        -0.18051546987106393,
+        -0.3974991837901847
+      ],
+      "muzzleElevation": -2.916063700682765,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": true,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": false,
+      "handVisible": false,
+      "receiverVisible": false
+    },
+    {
+      "at": 74638.69999998808,
+      "id": "ar",
+      "ammo": 30,
+      "reserve": 150,
+      "reloading": false,
+      "needsChamber": false,
+      "burst": 0,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.02100518906057997,
+        -0.18051546987106393,
+        -0.3974991837901847
+      ],
+      "muzzleElevation": -2.916063700682765,
+      "mag": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "magVisible": true,
+      "fresh": [
+        0,
+        -0.065,
+        0.21
+      ],
+      "freshVisible": false,
+      "handVisible": false,
+      "receiverVisible": false
+    }
+  ],
+  "otherElevenWeapons": {
+    "baselineCommit": "eba00404bc86562a95d2e68740ed9a3dbbb11a15",
+    "before": {
+      "ar": "2828166a16d9ff3b75ed0ea1b252e3ec450a3d8b1e5f357be059b7bdc657c577",
+      "shotgun": "9aa9c9a865f522e59fc125a0eaf8e638dd7d5cdcc7d2eaed407c1f47fccca24e",
+      "sniper": "fcb1e3a4d3b1efa4bfe59c8f7b2c05ff92fa612fe78518bc0d1c32dc79e7dd72",
+      "pistol": "ad4844fd107d4e2523ac2a8da59ec9b0957330c7b7068be46eb2e9f40053a278",
+      "smg": "0c7659c6cc94fbf45326bc80093121052633e174023a6ec5a4f4e8f6c9583999",
+      "lmg": "4fd8eb9710f8dbe7cd86f332a726277f6e50e80d688290b969f649529be8328f",
+      "laser": "8e0c5d3b6dd1c4df618813188dce8072a13c68712473f0d2bb7c851dbad22216",
+      "minigun": "89aac32a6958127c3fa44d80ae306d861de2e8df55f8e3b29c77b8541ae9084f",
+      "railgun": "5d4d2230a616ae52ef13a375bff24bbec57e563cc7bf15f8329a056da3953191",
+      "rocket": "5be36617e92c5f8135e1bf9b8dc76c048a65a953331559df3836c31315a6367b",
+      "grenade_launcher": "c125b5f92ce106f584ca8e3deb03db6e708b8d21d0d89ab5bc2b142e1d4b5487"
+    },
+    "after": {
+      "ar": "2828166a16d9ff3b75ed0ea1b252e3ec450a3d8b1e5f357be059b7bdc657c577",
+      "shotgun": "9aa9c9a865f522e59fc125a0eaf8e638dd7d5cdcc7d2eaed407c1f47fccca24e",
+      "sniper": "fcb1e3a4d3b1efa4bfe59c8f7b2c05ff92fa612fe78518bc0d1c32dc79e7dd72",
+      "pistol": "ad4844fd107d4e2523ac2a8da59ec9b0957330c7b7068be46eb2e9f40053a278",
+      "smg": "0c7659c6cc94fbf45326bc80093121052633e174023a6ec5a4f4e8f6c9583999",
+      "lmg": "4fd8eb9710f8dbe7cd86f332a726277f6e50e80d688290b969f649529be8328f",
+      "laser": "8e0c5d3b6dd1c4df618813188dce8072a13c68712473f0d2bb7c851dbad22216",
+      "minigun": "89aac32a6958127c3fa44d80ae306d861de2e8df55f8e3b29c77b8541ae9084f",
+      "railgun": "5d4d2230a616ae52ef13a375bff24bbec57e563cc7bf15f8329a056da3953191",
+      "rocket": "5be36617e92c5f8135e1bf9b8dc76c048a65a953331559df3836c31315a6367b",
+      "grenade_launcher": "c125b5f92ce106f584ca8e3deb03db6e708b8d21d0d89ab5bc2b142e1d4b5487"
+    },
+    "passed": true
+  },
+  "testsPassed": [
+    "lint",
+    "build",
+    "weapons",
+    "viewmodel",
+    "br",
+    "brVisualModel",
+    "eleven weapon geometry/material/pose/state parity",
+    "actual App burst/tactical/empty/switch/pause/sprint/ADS/death checks"
+  ],
+  "limits": [
+    "SwiftShader cannot establish native laptop pacing or audio quality",
+    "Procedural gameplay backgrounds may differ; camera conventions, viewmodel transforms and sampled action states match",
+    "No long video or map/APEX lighting/performance benchmark"
+  ],
+  "exactModifiedFiles": [
+    "src/weaponModels.ts",
+    "scripts/test-br-visual-polish-browser.mjs",
+    "tests/brVisualModel.test.ts",
+    "docs/br-visual-polish/README.md",
+    "docs/br-visual-polish/validation.json",
+    "docs/br-visual-polish/before/armory-side.png",
+    "docs/br-visual-polish/before/armory-front-three-quarter.png",
+    "docs/br-visual-polish/before/armory-rear-three-quarter.png",
+    "docs/br-visual-polish/before/first-person-hip.png",
+    "docs/br-visual-polish/before/first-person-ads.png",
+    "docs/br-visual-polish/before/upright-reload.png",
+    "docs/br-visual-polish/after/armory-side.png",
+    "docs/br-visual-polish/after/armory-front-three-quarter.png",
+    "docs/br-visual-polish/after/armory-rear-three-quarter.png",
+    "docs/br-visual-polish/after/first-person-hip.png",
+    "docs/br-visual-polish/after/first-person-ads.png",
+    "docs/br-visual-polish/after/upright-reload.png"
+  ]
+}

@@ -7,6 +7,7 @@ import type { FactionType } from './lobbyAvatar';
 import { SHOTGUN, shotgunEase, shotgunShellPose } from './shotgunMechanics';
 import { VIEWMODEL_GRIPS, arChamberReach, arChamberRelease, type HandAttachment } from './viewmodelGrips';
 import { sniperEase, sniperHandReach } from './sniperMechanics';
+import { brEase } from './battleRifleMechanics';
 
 interface Digit { joints: THREE.Object3D[]; lengths: number[]; radius: number; thumb: boolean; index: boolean; spread: number; }
 interface Hand {
@@ -164,8 +165,8 @@ export function createFirstPersonHands() {
       if (phase !== nextPhase) { left.phaseStart.copy(left.wrist.position); left.phaseRotation.copy(left.wrist.quaternion); phase = nextPhase; }
       const p = stage ? THREE.MathUtils.smoothstep(sequence!.elapsed / stage.duration, 0, 1) : 0;
       let curl = config.left.curl;
-      let shellGrip = 0, shellPress = 0;
-      if (stage) {
+      let shellGrip = 0, shellPress = 0, brGrip = 0;
+      if (stage && id !== 'br') {
         const part = stage.phase === 'chamber' ? assembly.parts.bolt ?? assembly.parts.slide ?? assembly.parts.pump :
           sequence!.kind === 'vent' ? assembly.parts.feedTray ?? assembly.parts.receiver :
           assembly.parts.magazine ?? assembly.parts.reloadRound ?? assembly.parts.vent ?? assembly.parts.receiver;
@@ -226,6 +227,36 @@ export function createFirstPersonHands() {
           curl = .9;
         }
       }
+      if (id === 'br' && stage && config.magazineGrip) {
+        const t = sequence!.elapsed / stage.duration;
+        const attachment = stage.phase === 'chamber' ? config.chamber! : config.magazineGrip;
+        const usingFresh = ['insert','chamber','close'].includes(stage.phase);
+        const part = stage.phase === 'chamber' ? assembly.parts.bolt : usingFresh ? assembly.parts.freshMagazine : assembly.parts.magazine;
+        part.updateWorldMatrix(true,false); assembly.root.updateWorldMatrix(true,false);
+        inverse.copy(assembly.root.matrixWorld).invert(); matrix.multiplyMatrices(inverse,part.matrixWorld);
+        attachmentPosition.fromArray(attachment.partOffset ?? attachment.position).applyMatrix4(matrix);
+        left.target.copy(attachmentPosition); targetRotation.setFromEuler(euler.set(...attachment.rotation)); left.orientation.copy(targetRotation);
+        brGrip = 1; curl = attachment.curl;
+        if (stage.phase === 'open') {
+          left.target.lerpVectors(supportGrip,attachmentPosition,brEase(t));
+          left.orientation.setFromEuler(euler.set(...config.left.rotation));left.orientation.slerp(targetRotation,brEase(t));brGrip=brEase(t);
+        } else if (stage.phase === 'pickup') {
+          const fresh=assembly.parts.freshMagazine;
+          fresh.updateWorldMatrix(true,false);matrix.multiplyMatrices(inverse,fresh.matrixWorld);
+          attachmentPosition.fromArray(attachment.position).applyMatrix4(matrix);
+          left.target.lerp(attachmentPosition,brEase((t-.40)/.25));
+          curl = .65 + .30 * Math.abs(2*t-1);
+        } else if (stage.phase === 'chamber') {
+          const reach=brEase(t/.18),release=brEase((t-.84)/.16);
+          left.target.lerpVectors(left.phaseStart,left.target,reach);left.target.lerp(left.phaseStart,release);
+          left.orientation.slerpQuaternions(left.phaseRotation,targetRotation,reach);
+          left.orientation.slerp(left.phaseRotation,release);brGrip=0;
+        } else if (stage.phase === 'close') {
+          const recover=brEase((t-.30)/.70);
+          left.target.lerpVectors(left.phaseStart,supportGrip,recover);
+          targetRotation.setFromEuler(euler.set(...config.left.rotation));left.orientation.slerpQuaternions(left.phaseRotation,targetRotation,recover);brGrip=1-recover;
+        }
+      }
       if (id === 'shotgun' && config.shellLoad) {
         const load = config.shellLoad;
         left.orientation.setFromEuler(euler.set(...config.left.rotation));
@@ -269,8 +300,8 @@ export function createFirstPersonHands() {
       right.wrist.position.copy(right.target); right.wrist.quaternion.copy(right.orientation);
       // AR control contact is authored against the current moving part, without
       // an exponential lag that would leave fingers behind the charging latch.
-      left.wrist.position.lerp(left.target, arChamber || id === 'shotgun' || id === 'sniper' ? 1 : alpha);
-      left.wrist.quaternion.slerp(left.orientation, arChamber || id === 'shotgun' || id === 'sniper' ? 1 : alpha);
+      left.wrist.position.lerp(left.target, arChamber || id === 'shotgun' || id === 'sniper' || id === 'br' ? 1 : alpha);
+      left.wrist.quaternion.slerp(left.orientation, arChamber || id === 'shotgun' || id === 'sniper' || id === 'br' ? 1 : alpha);
       // Solve the sleeve from its posed cuff toward a camera-local torso bend.
       // Receiver tilt must not rotate a cut-off sleeve end into the viewport.
       assembly.root.updateMatrix(); inverse.copy(assembly.root.matrix).invert();
@@ -297,12 +328,20 @@ export function createFirstPersonHands() {
         hand.sleeve.quaternion.setFromUnitVectors(up, direction.normalize());
         for (const digit of hand.digits) for (let segment = 0; segment < 3; segment++) {
           let angle = (digit.thumb ? attachment.thumbAngles ?? thumbAngles : digit.index && side === 'right' && attachment.triggerFinger !== false ? triggerAngles : attachment.fingerAngles ?? gripAngles)[segment];
+          if (side === 'left' && config.magazineGrip && brGrip > 0) {
+            const gripAngle=(digit.thumb ? config.magazineGrip.thumbAngles! : config.magazineGrip.fingerAngles!)[segment];
+            angle += (gripAngle-angle)*brGrip;
+          }
           if (side === 'left' && config.shellLoad && shellGrip > 0) {
             const load = config.shellLoad, gripAngle = (digit.thumb ? load.grip.thumbAngles! : load.grip.fingerAngles!)[segment];
             const pressAngle = (digit.thumb ? load.press.thumbAngles! : load.press.fingerAngles!)[segment];
             angle += (gripAngle + (pressAngle - gripAngle) * shellPress - angle) * shellGrip;
           }
           digit.joints[segment].rotation.set(-angle * (hand.curl + (aiming ? .025 : 0)), 0, segment === 0 ? digit.spread : 0);
+          if (side === 'left' && config.magazineGrip && brGrip > 0 && digit.thumb && segment === 0) {
+            digit.joints[segment].rotation.z += (config.magazineGrip.thumbOpposition ?? 0)*brGrip;
+            digit.joints[segment].rotation.y = -.25*brGrip;
+          }
           if (side === 'left' && config.shellLoad && digit.thumb && segment === 0) {
             digit.joints[segment].rotation.y = -.65 * shellGrip;
             const load = config.shellLoad;
