@@ -542,12 +542,138 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
   backblast.position.set(0, 0.025, 0.5);
   body.add(backblast);
 
-  if (['ar', 'br', 'smg', 'sniper', 'lmg'].includes(id)) {
+  if (id === 'br') {
+    // BR-only chassis: longitudinal octagonal sections form real width/height
+    // tapers. Shared rifle construction below is intentionally not instantiated.
+    // Each section is [Z, half-width, bottom, top, chamfer]. No frame allocations.
+    type Section = [number, number, number, number, number];
+    function hull(name: string, sections: Section[], material: THREE.Material,
+      parent: THREE.Object3D = body) {
+      const channel = name === 'Continuous upper receiver chassis' ||
+        name === 'Extended integrated shoulder stock';
+      const rings = sections.map(([z,w,b,t,c]) => channel ? [
+        [-w+c,t,z],[w-c,t,z],[w,t-c,z],
+        [w,.022,z],[w-.002,.019,z],[w-.002,.009,z],[w,.006,z],
+        [w,b+c,z],[w-c,b,z],[-w+c,b,z],[-w,b+c,z],
+        [-w,.006,z],[-w+.002,.009,z],[-w+.002,.019,z],[-w,.022,z],[-w,t-c,z],
+      ] : [
+        [-w+c,t,z],[w-c,t,z],[w,t-c,z],[w,b+c,z],
+        [w-c,b,z],[-w+c,b,z],[-w,b+c,z],[-w,t-c,z],
+      ]);
+      const positions: number[] = [];
+      const triangle = (a: number[], b: number[], c: number[]) => positions.push(...a,...b,...c);
+      const quad = (a: number[], b: number[], c: number[], d: number[]) => {
+        triangle(a,c,b);triangle(a,d,c);
+      };
+      // Clockwise section outlines; the longitudinal faces and end caps have
+      // explicit outward winding. The shallow panel channels are actual hull
+      // sections, so highlights follow their recessed shoulders in all views.
+      const count=rings[0].length;
+      for(let j=0;j<rings.length-1;j++) for(let i=0;i<count;i++) {
+        const k=(i+1)%count,a=rings[j][i],b=rings[j][k],c=rings[j+1][k],d=rings[j+1][i];
+        if(name !== 'Tapered monocoque handguard' || j !== 2 || (i !== 2 && i !== 6)) {
+          quad(a,b,c,d);continue;
+        }
+        // Four machined cooling recesses per side are cut into the surface,
+        // not black rectangles glued over it. Surrounding quads meet each rim.
+        const us=[0,.10,.22,.33,.45,.56,.68,.79,.91,1];
+        const vs=i===2?[0,.22,.40,1]:[0,.60,.78,1];
+        const point=(u:number,v:number,depth=0)=>a.map((x,n)=>
+          (1-u)*((1-v)*x+v*b[n])+u*((1-v)*d[n]+v*c[n])+
+          (n===0?-Math.sign(a[0])*depth:0));
+        for(let u=0;u<us.length-1;u++)for(let v=0;v<vs.length-1;v++) {
+          const corners=[[us[u],vs[v]],[us[u],vs[v+1]],
+            [us[u+1],vs[v+1]],[us[u+1],vs[v]]];
+          const rim=corners.map(([u,v])=>point(u,v));
+          if(u%2===0||v!==1){quad(rim[0],rim[1],rim[2],rim[3]);continue;}
+          const inset=corners.map(([u,v])=>point(u,v,.003));
+          quad(inset[0],inset[1],inset[2],inset[3]);
+          for(let n=0;n<4;n++) {
+            const next=(n+1)%4;
+            quad(rim[n],rim[next],inset[next],inset[n]);
+          }
+        }
+      }
+      for(const [j,front] of [[0,true],[rings.length-1,false]] as const) {
+        const r=rings[j],center=[0,(sections[j][2]+sections[j][3])/2,sections[j][0]];
+        for(let i=0;i<count;i++) {
+          const a=r[i],b=r[(i+1)%count];
+          if(front)triangle(center,a,b);else triangle(center,b,a);
+        }
+      }
+      const geometry=new THREE.BufferGeometry();
+      geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+      // The existing bake combines the same material family; provide UVs for it.
+      geometry.setAttribute('uv',new THREE.Float32BufferAttribute(positions.flatMap((_,i)=>i%3===0?[positions[i+2]*3,positions[i+1]*3]:[]),2));
+      geometry.computeVertexNormals();
+      return mesh(name,geometry,material,0,0,0,parent);
+    }
+    // One continuous fore-end, with a shallow underside palm contact. The rear
+    // section exactly meets the receiver section, not a plate over a solid box.
+    hull('Tapered monocoque handguard',[
+      [-.460,.022,-.021,.036,.007],[-.430,.030,-.047,.043,.009],
+      [-.365,.034,-.064,.047,.010],[-.185,.036,-.064,.049,.010],
+      [-.130,.036,-.047,.052,.009],
+    ],polymer);
+    hull('Continuous upper receiver chassis',[
+      [-.130,.036,-.047,.052,.009],[-.090,.037,-.045,.055,.009],
+      [.115,.039,-.046,.056,.009],[.160,.042,-.050,.057,.010],
+      [.270,.042,-.050,.057,.010],
+    ],steel);
+    // The magwell sides are structural walls. Nothing spans the protected
+    // withdrawal opening below Y -.063 between Z .165 and .255.
+    for(const side of [-1,1]) {
+      const wall=hull('Rear magazine socket wall',[
+        [.153,.005,-.054,-.034,.002],[.168,.005,-.061,-.034,.002],
+        [.252,.005,-.061,-.034,.002],[.268,.005,-.050,-.034,.002],
+      ],polymer);wall.position.x=side*.034;
+    }
+    // Lower central web ends ahead of the rear magazine. Trigger and firing
+    // grip keep their accepted physical contact/attachment positions.
+    hull('Lower receiver grip web',[
+      [-.130,.029,-.047,-.024,.005],[-.065,.029,-.053,-.024,.005],
+      [.065,.030,-.054,-.024,.005],[.145,.033,-.050,-.024,.005],
+    ],polymer);
+    grip();
+    magazine(false,.14,.21,.045);
+    const rear=group('stock',0,0,.25);
+    hull('Extended integrated shoulder stock',[
+      [.020,.042,-.050,.057,.010],[.075,.042,-.052,.062,.011],
+      [.145,.040,-.066,.065,.012],[.230,.037,-.071,.057,.012],
+      [.247,.036,-.069,.052,.011],
+    ],polymer,rear);
+    hull('Shoulder rubber buttpad',[
+      [.247,.036,-.069,.052,.010],[.254,.038,-.073,.054,.010],
+      [.264,.037,-.072,.053,.010],
+    ],rubber,rear);
+    // Cheek surface belongs to the stock and follows its taper; its underside
+    // matches the hull top, rather than covering a disconnected side plate.
+    hull('Integrated cheek contact',[
+      [.030,.029,.058,.062,.002],[.100,.030,.063,.069,.002],
+      [.175,.028,.061,.067,.002],[.230,.025,.057,.061,.002],
+    ],dark,rear);
+    box('Chassis lower support pad',.058,.010,.205,0,-.068,-.280,rubber);
+    const bolt=group('bolt',-.045,.048,-.025);
+    box('Side charging lever',.043,.018,.022,0,0,0,edge,bolt);
+    box('Charging guide',.006,.006,.108,-.039,.046,-.006,dark);
+    tube('Bored barrel',.013,.15,0,.015,-.505,steel);
+    tube('Long stroke gas piston',.006,.075,0,.043,-.455,dark);
+    tube('Machined muzzle brake',.020,.050,0,.015,-.580,dark);
+    ring('Muzzle crown',.017,.002,0,.015,-.605,steel);
+    muzzle.position.set(0,.015,-.22-.33-.055);
+    // Slim integrated bridge. Its lower edge and tapered supports form one
+    // structural outline; the existing scope axis and mount stay fixed.
+    silhouette('Carry bridge',[
+      [-.300,.049],[-.281,.101],[-.250,.152],[-.232,.1575],
+      [.082,.1575],[.108,.130],[.140,.056],[.107,.056],
+      [.079,.137],[-.230,.137],[-.257,.098],[-.271,.051],
+    ],.036,polymer);
+    optic();parts.optic.position.y=.07;
+    box('Optic saddle seat',.046,.006,.160,0,.155,-.030,steel);
+  } else if (['ar', 'smg', 'sniper', 'lmg'].includes(id)) {
     const long = id === 'sniper',
       compact = id === 'smg';
-    if (id === 'br') silhouette('Faceted upper receiver',
-      [[-.145,.028],[-.095,.060],[.135,.058],[.175,.039],[.175,-.018],[-.12,-.025]], .068, steel);
-    else box(
+    box(
       'Upper receiver',
       0.066,
       0.085,
@@ -585,10 +711,9 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     // The first-person AR exposes its receiver charging latch on the eye-near
     // side. Other weapons and actor/studio assemblies retain their original part.
     const heldAr = id === 'ar' && options.firstPerson;
-    const heldBr = id === 'br';
     const heldSniper = id === 'sniper' && options.firstPerson;
-    const bolt = group('bolt', heldSniper ? 0 : heldAr || heldBr ? -.045 : .039,
-      heldSniper ? .025 : heldAr || heldBr ? .048 : .017, heldSniper ? -.015 : heldBr ? -.025 : heldAr ? .025 : .075);
+    const bolt = group('bolt', heldSniper ? 0 : heldAr ? -.045 : .039,
+      heldSniper ? .025 : heldAr ? .048 : .017, heldSniper ? -.015 : heldAr ? .025 : .075);
     if (heldSniper) {
       // Slide along the bore; rotate this local pivot to lift the near-side handle.
       box('Bolt cylinder', .028, .028, .09, 0, 0, -.025, edge, bolt);
@@ -596,7 +721,7 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       const knob = group('boltKnob', -.075, -.012, .008); bolt.add(knob);
       mesh('Bolt knob', new THREE.SphereGeometry(.016, 12, 8), dark, 0, 0, 0, knob);
       box('Receiver bolt guide', .008, .014, .12, -.037, .025, .005, edge);
-    } else if (!heldBr) box('Charging handle', 0.026, 0.011, 0.016, 0, 0, 0, steel, bolt);
+    } else box('Charging handle', 0.026, 0.011, 0.016, 0, 0, 0, steel, bolt);
     grip();
     screws(-0.1);
     box('Bolt catch paddle', 0.007, 0.027, 0.018, -0.039, -0.002, -0.04, dark);
@@ -675,18 +800,8 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       -0.16 - handguardLen / 2,
       steel,
     );
-    if (id !== 'br') rail(-0.17, handguardLen + 0.25, 0.063);
-    if (id === 'br') {
-      // One purposeful vent/panel treatment instead of stacked accessory rails.
-      for (const side of [-1,1]) {
-        const panel = silhouette('Tapered handguard side panel',
-          [[-.415,.010],[-.365,.027],[-.15,.027],[-.125,-.014],[-.175,-.045],[-.370,-.045]], .005, dark);
-        panel.position.x=side*.035;
-        for(let i=0;i<5;i++) box('Recessed cooling slot', .0015, .012, .024,
-          side*.038, .006, -.365+i*.037, rubber).rotation.x=.23;
-        box('Fore-end service seam', .0015, .003, .145, side*.038, -.025, -.285, steel);
-      }
-    } else for (const side of [-1, 1]) {
+    rail(-0.17, handguardLen + 0.25, 0.063);
+    for (const side of [-1, 1]) {
       for (let i = 0; i < 9; i++)
         box(
           'Handguard vent',
@@ -700,39 +815,8 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
         );
       rail(-0.27, 0.13, 0.013, side * 0.037, true);
     }
-    magazine(
-      id === 'ar' || compact,
-      id === 'br' ? 0.14 : compact ? 0.2 : 0.17,
-      id === 'br' ? 0.21 : -0.058,
-      id === 'br' ? 0.045 : 0.038,
-    );
-    if (id !== 'br') stock(false, long);
-    else {
-      // Rear magwell has an actual underside opening, bounded by lips/webs.
-      // The integrated upper housing joins the front chassis to the butt shell.
-      silhouette('Bullpup receiver spine',
-        [[-.060,.035],[-.025,.061],[.19,.064],[.26,.043],[.275,.012],[.263,-.014],[.08,-.014],[-.030,0]], .076, polymer);
-      for (const x of [-.033, .033]) {
-        box('Rear magwell lip', .014, .043, .112, x, -.045, .21, steel);
-        const plate=silhouette('Segmented rear action plate',
-          [[.075,.046],[.19,.051],[.252,.031],[.256,.005],[.105,-.006],[.075,.008]], .006, dark);
-        plate.position.x=Math.sign(x)*.040;
-        const shoulder=silhouette('Reinforced magwell shoulder',
-          [[.145,-.008],[.157,-.053],[.258,-.053],[.275,-.008],[.260,.005],[.16,.005]], .009, polymer);
-        shoulder.position.x=Math.sign(x)*.042;
-        box('Rear action plate seam', .0015, .003, .11, Math.sign(x)*.0435, .025, .175, steel);
-      }
-      for (const z of [.145, .275]) box('Magwell joining web', .066, .040, .018, 0, -.040, z, polymer);
-      silhouette('Front chassis fairing', [[-.43,-.006],[-.385,.022],[-.15,.026],[-.11,-.020],[-.18,-.063],[-.355,-.063],[-.415,-.045]], .072, polymer);
-      box('Chassis lower support pad', .060, .012, .23, 0, -.064, -.29, rubber);
-      const rear = group('stock', 0, 0, .25);
-      silhouette('Integrated bullpup butt shell',
-        [[-.022,.055],[.065,.043],[.10,.018],[.10,-.060],[.060,-.074],[-.022,-.045]], .068, polymer, rear);
-      box('Rubber buttpad', .072, .125, .018, 0, -.014, .105, rubber, rear);
-      silhouette('Contoured cheek ridge', [[.055,.057],[.078,.072],[.215,.071],[.276,.047],[.25,.039],[.09,.052]], .064, dark);
-      for (const x of [-.0435,.0435]) for (const z of [.08,.25])
-        box('Rear housing fastener', .003, .010, .010, x, .030, z, edge);
-    }
+    magazine(id === 'ar' || compact, compact ? .2 : .17, -.058, .038);
+    stock(false, long);
     if (id === 'ar') {
       optic();
       body.userData.arOptic = 'ACOG';
@@ -843,34 +927,6 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
         );
         for (const side of [-1, 1])
           tube('Wire stock strut', 0.006, 0.3, side * 0.023, 0.03, options.firstPerson ? -.02 : .3, edge, options.firstPerson ? parts.stock : body);
-      }
-      if (id === 'br') {
-        parts.optic.position.y = .07;
-        silhouette(
-          'BR55 integrated carry bridge',
-          [
-            [-.320,.064],[-.292,.124],[-.263,.151],[-.236,.1575],
-            [.075,.1575],[.108,.131],[.130,.064],[.073,.064],
-            [.057,.117],[-.228,.117],[-.251,.089],[-.264,.064],
-          ],
-          0.056,
-          dark,
-        );
-        box('Carry bridge front attachment foot', .062, .018, .070, 0, .064, -.287, polymer);
-        box('Carry bridge rear attachment foot', .062, .018, .066, 0, .064, .098, polymer);
-        box('Optic saddle seat', .047, .007, .16, 0, .154, -.03, steel);
-        tube('Long stroke gas piston', .007, .31, 0, .050, -.30, steel);
-        box(
-          'Side charging lever',
-          0.043,
-          0.018,
-          0.022,
-          0,
-          0,
-          0,
-          edge,
-          parts.bolt,
-        );
       }
     }
   } else if (id === 'shotgun') {

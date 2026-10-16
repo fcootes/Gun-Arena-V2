@@ -15,14 +15,21 @@ const server=await createServer({root:process.env.BR_MODEL_ROOT,logLevel:'error'
  transform(code,id){
  if(id.endsWith('/src/WeaponStudio.tsx')){
   return code.replace('    controls.maxDistance = 5;',`    controls.maxDistance = 5;
+    const brClay=new THREE.MeshStandardMaterial({color:0xa7a7a7,roughness:.8,metalness:0});
+    const brSilhouette=new THREE.MeshBasicMaterial({color:0x101010});
+    const brBackground=scene.background;
+    const brSilhouetteBackground=new THREE.Color(0xf0f0f0);
     window.__brStudio={renderer,scene,camera,weapon,controls,hold:false,
      view(angle){this.hold=true;controls.enabled=false;controls.enableDamping=false;
       weapon.rotation.set(0,-Math.PI/2,0);weapon.position.set(.125,-.0225,0);
-      const eye=angle==='front'?[-.90,.52,1.18]:angle==='rear'?[.95,.48,1.20]:[0,.055,1.28];
+      scene.overrideMaterial=angle==='clay'?brClay:angle==='silhouette'?brSilhouette:null;
+      scene.background=angle==='silhouette'?brSilhouetteBackground:brBackground;
+      for(const o of scene.children)if(o!==weapon&&(o.isMesh||o.isLineSegments))o.visible=!['clay','silhouette'].includes(angle);
+      const eye=angle==='front'?[-.90,.52,1.18]:angle==='rear'?[.95,.48,1.20]:angle==='top'?[.50,1.10,.72]:angle==='clay'?[.95,.48,1.20]:[0,.055,1.62];
       camera.position.set(...eye);controls.target.set(0,0,0);camera.lookAt(0,0,0);camera.updateProjectionMatrix();
       renderer.info.reset();renderer.render(scene,camera);
       return{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,camera:camera.position.toArray(),optic:weapon.userData.weaponAssembly.parts.optic.position.toArray()};
-     }};`).replace('      controls.update();','      if(!window.__brStudio?.hold) controls.update();');
+     }};`).replace('      controls.update();','      if(!window.__brStudio?.hold) controls.update();').replace('      disposed = true;', '      disposed = true; brClay.dispose(); brSilhouette.dispose();');
  }
 
  if(!id.endsWith('/src/App.tsx'))return;
@@ -72,12 +79,13 @@ try {
 
  const studio=await browser.newPage({viewport:{width:1280,height:720}});studio.setDefaultTimeout(60000);studio.on('pageerror',e=>{errors.push(e.message);console.error(e.stack);});
  await studio.goto(`http://127.0.0.1:${port}/__br-studio`);await studio.waitForFunction(()=>!!window.__brStudio);
- for(const [name,angle]of[['armory-side','side'],['armory-front-three-quarter','front'],['armory-rear-three-quarter','rear']]){
+ for(const [name,angle]of[['armory-side','side'],['armory-front-three-quarter','front'],['armory-rear-three-quarter','rear'],...(process.env.BR_GEOMETRY_REBUILD==='1'?[['armory-top-rear','top'],['geometry-clay','clay'],['geometry-silhouette','silhouette']]:[])]){
  const stats=await studio.evaluate(angle=>window.__brStudio.view(angle),angle);await studio.screenshot({path:resolve(output,name+'.png')});screens.push({name,...stats});}
  writeFileSync(resolve(output,'studio-validation.json'),JSON.stringify({screens,errors},null,2)+'\n');
+ if(process.env.BR_STUDIO_ONLY==='1'){console.log('PASS: structural studio views');process.exitCode=0;}else{
  await browser.close();browser=await launch();
  let page=await boot();
- for(const [name,action,t]of[['first-person-hip','idle',0],['first-person-ads','ads',0],['upright-reload','reload',1.72]]){
+ for(const [name,action,t]of[['first-person-hip','idle',0],['first-person-ads','ads',0],['upright-reload','reload',1.72],...(process.env.BR_GEOMETRY_REBUILD==='1'?[['magazine-removed','reload',.82],['magazine-reinserted','reload',1.80]]:[])]){
  const sample=await page.evaluate(({action,t})=>{
   const g=window.__brProbe,scope=document.getElementById('scope-overlay'),cross=document.getElementById('crosshair');
   if(scope)scope.style.display=action==='ads'?'block':'none';if(cross)cross.style.display=action==='ads'?'none':'block';
@@ -86,7 +94,8 @@ try {
   for(let n=0;n<90;n++)g.manager.update(1/60,window.__brDef,g.ws,true,false,true,false,false,false,0,true,true);
   g.camera.fov=window.__brDef.adsFov;g.camera.updateProjectionMatrix();g.renderer.render(g.scene,g.camera);return g.sample();
  },{action,t});await page.screenshot({path:resolve(output,name+'.png')});screens.push({name,...sample});}
- checks.push('Six matched views: actual armory side/front/rear; gameplay hip/ADS/upright mag seating');
+ checks.push(`${screens.length} matched views: actual armory profiles; gameplay hip/ADS/upright mag handling`);
+ assert.deepEqual(errors,[]);
  if(process.env.BR_POSES_ONLY==='1'){
  writeFileSync(resolve(output,'pose-validation.json'),JSON.stringify({screens,errors,renderer:'Chromium SwiftShader'},null,2)+'\n');
  } else {
@@ -125,4 +134,5 @@ try {
  writeFileSync(resolve(output,'validation.json'),JSON.stringify({screens,checks,errors,frames:await page.evaluate(()=>window.__brProbe.frames),audio:await page.evaluate(()=>window.__weaponAudio),renderer:'Chromium SwiftShader; no native-speed or audible-quality claim'},null,2)+'\n');
  }
  for(const check of checks)console.log('PASS:',check);
+}
 }finally{clearTimeout(deadline);await browser?.close();await server.close();}

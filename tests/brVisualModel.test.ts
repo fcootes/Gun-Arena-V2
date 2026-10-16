@@ -27,6 +27,24 @@ for(const firstPerson of [false,true]){
   }
  });
  assert.ok(checked>1000);
+ const stockBounds=new THREE.Box3().setFromObject(assembly.parts.stock);
+ assert.ok(stockBounds.max.z>.50 && stockBounds.max.z-stockBounds.min.z>.24,
+   'Structural stock must extend meaningfully behind the protected magazine');
+ assert.ok(stockBounds.max.y<.08 && stockBounds.min.y>-.08,
+   'Extended shoulder housing stays compact in height');
+ const widthAt=(z:number)=>{
+   const hits=new THREE.Raycaster(new THREE.Vector3(.15,0,z),new THREE.Vector3(-1,0,0))
+     .intersectObject(assembly.root,true);
+   assert.ok(hits.length>0,'Chassis has an actual side surface at '+z);
+   return hits[0].point.x;
+ };
+ assert.ok(widthAt(-.45)<widthAt(-.20),'Fore-end has a real transverse taper');
+ assert.ok(widthAt(.48)<widthAt(.32),'Shoulder housing tapers towards the butt');
+ assembly.root.traverse(o=>{
+   if(!(o instanceof THREE.Mesh))return;
+   for(const value of o.geometry.attributes.normal.array)assert.ok(Number.isFinite(value));
+ });
+
  disposeWeaponObject(assembly.root);
 }
-console.log('PASS: FP/actor functional anchor positions/orientations and fixed-triangle clearance along the entire rear magazine extraction path');
+console.log('PASS: FP/actor functional anchor positions/orientations and fixed-triangle clearance along the entire rear magazine extraction path; extended stock envelope, real transverse hull tapers and finite normals');
