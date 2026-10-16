@@ -330,6 +330,14 @@ export function createFirstPersonHands() {
             targetRotation.setFromEuler(euler.set(...config.left.rotation)); left.orientation.slerp(targetRotation, recover);
             pistolContact = 1 - recover; curl = config.left.curl;
           }
+        } else if (pistolSprintBlend > 1e-5) {
+          assembly.root.updateMatrix(); inverse.copy(assembly.root.matrix).invert();
+          pistolSprintWrist(sprintPhase, attachmentPosition, targetRotation, euler);
+          attachmentPosition.applyMatrix4(inverse);
+          // Remove the weapon carry rotation from the camera-space free wrist.
+          targetRotation.premultiply(inverseWeaponRotation.copy(assembly.root.quaternion).invert());
+          left.target.lerp(attachmentPosition, pistolSprintBlend);
+          left.orientation.slerp(targetRotation, pistolSprintBlend); curl = .72;
         }
       }
       const alpha = changed || dt === 0 ? 1 : 1 - Math.exp(-24 * dt);

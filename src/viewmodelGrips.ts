@@ -65,7 +65,7 @@ export const VIEWMODEL_GRIPS: Readonly<Record<WeaponModelId, ViewmodelGrip>> = {
   }),
   pistol: grip(primary(.105), vertical(.088, -.039, -.108), {
     hip: [.13, -.125, -.39], aim: [0, -.0735, -.39],
-    sprint: [-.07, -.23, -.40], sprintRotation: [-.14, .38, -.14],
+    sprint: [.165, -.16, -.44], sprintRotation: [.30, -.12, -.20],
   }),
   shotgun: grip(primary(), { ...under(-.225, -.090), followPart: 'pump', partOffset: [-.036, -.065, .055] }, { hip: [.15, -.225, -.36], sleeveLength: .25, aim: [0, -.08375, -.36], aimRotation: [.0306, 0, 0],
     shellLoad: {

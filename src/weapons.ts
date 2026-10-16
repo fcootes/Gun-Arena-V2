@@ -541,6 +541,19 @@ export function createViewmodelManager(): ViewmodelManager {
     assembly.root.rotation.z += Math.sin(bob * .5) * .004 * runBlend;
     if (parts.reloadRound) parts.reloadRound.visible = false;
     if (parts.freshMagazine) parts.freshMagazine.visible = false;
+    const pistol = w.id === 'pistol';
+    const pistolRunning = pistol && sprinting && moving && onGround && !aiming && !ws?.reloading && !melee && radioTimer === 0;
+    pistolSprintBlend += ((pistolRunning ? 1 : 0) - pistolSprintBlend) * (1 - Math.exp(-16 * dt));
+    if (!pistol) pistolSprintBlend = 0;
+    if (pistolSprintBlend > 1e-5) {
+      // Athletic raised right-handed carry. Wrist remains fixed in weapon space.
+      const swing = Math.sin(bob * .5), lift = Math.cos(bob * .5);
+      assembly.root.position.x += .016 * lift * pistolSprintBlend;
+      assembly.root.position.y -= .026 * swing * pistolSprintBlend;
+      assembly.root.position.z += .018 * swing * pistolSprintBlend;
+      assembly.root.rotation.x += .065 * swing * pistolSprintBlend;
+      assembly.root.rotation.z += .045 * lift * pistolSprintBlend;
+    }
     const sequence = ws?.reloadSequence;
     if (selected.pistolAnimation) selected.pistolAnimation(ws, Math.sin((slideTimer / .12) * Math.PI));
     else if (ws?.reloading && sequence && selected.brReload) selected.brReload(sequence);
@@ -626,7 +639,7 @@ export function createViewmodelManager(): ViewmodelManager {
     assembly.update(dt, charge, spin);
     spin = 0;
     if (venting) assembly.root.rotation.z += Math.sin(time * 16) * 0.014;
-    hands.update(w.id as WeaponModelId, dt, assembly, ws, aiming);
+    hands.update(w.id as WeaponModelId, dt, assembly, ws, aiming, pistolSprintBlend, bob);
   }
   return {
     root,
