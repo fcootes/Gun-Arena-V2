@@ -1,4 +1,5 @@
 import { beginSniperCycle, requireSniperBolt } from './sniperMechanics';
+import { PISTOL_SPRINT } from './pistolSprint';
 import { GameplayInput, KEY_ACTIONS, MOUSE_BUTTONS, CONTROLS_GUIDE, canPlayerFire } from './gameplayInput';
 import { DeploymentPipeline } from './deployment';
 import { initialization, createPerformanceOverlay } from './performance';
@@ -725,7 +726,7 @@ export default function App() {
         actor.armRPivot.rotation.x = THREE.MathUtils.lerp(-.45, -gait.right.shoulderPitch, blend);
         actor.armLLowerPivot.rotation.x = THREE.MathUtils.lerp(-.35, -gait.left.elbowFlexion, blend);
         actor.armRLowerPivot.rotation.x = THREE.MathUtils.lerp(-.22, -gait.right.elbowFlexion, blend);
-        const stride = (gait.right.shoulderPitch - .41) * 2.5;
+        const stride = (gait.right.shoulderPitch - PISTOL_SPRINT.rightShoulderPitch) / PISTOL_SPRINT.rightShoulderRange * .425;
         actor.legLPivot.rotation.x = THREE.MathUtils.lerp(walk, -stride, blend);
         actor.legRPivot.rotation.x = THREE.MathUtils.lerp(-walk, stride, blend);
       } else if (localPistolArms) {

@@ -1,15 +1,16 @@
 import * as THREE from 'three';
 
 /** One cycle = a left/right stride pair, not a footfall. At 8.6 m/s this is
- * 4.10 steps/s. The former bob*.5 oscillator was only 2.23 steps/s.
+ * 3.50 steps/s. Body impacts and local third-person limbs share this phase.
  * All positions are camera-local metres; shoulders are virtual, offscreen bones.
  */
 export const PISTOL_SPRINT = Object.freeze({
-  referenceSpeed: 8.6, pairsPerSecond: 2.05, minSpeedRatio: .72, maxSpeedRatio: 1.25,
-  enterTime: .095, exitTime: .065, resetThreshold: .00002, reloadRecoveryTime: .08,
+  referenceSpeed: 8.6, pairsPerSecond: 1.75, minSpeedRatio: .72, maxSpeedRatio: 1.25,
+  enterTime: .115, exitTime: .08, resetThreshold: .00002, reloadRecoveryTime: .08,
   upperArm: .26, forearm: .285, cuffOffset: .047,
   shoulderY: -.23, rightShoulderX: .205, leftShoulderX: -.215,
   rightShoulderZ: -.07, leftShoulderZ: -.19,
+  rightShoulderPitch: .22, rightShoulderRange: .55,
   inertiaSeconds: .035, inertiaPitch: .045, torsoYaw: .025, compression: .006,
   rightGrip: [.038, -.10, .105] as const,
   rightGripRotation: [-Math.PI / 2, Math.PI / 2, 0] as const,
@@ -105,11 +106,15 @@ export function createPistolGaitEvaluator() {
     const counter = torso * PISTOL_SPRINT.torsoYaw;
     pose.right.shoulder.set(PISTOL_SPRINT.rightShoulderX + counter * .10, PISTOL_SPRINT.shoulderY + pose.compression, PISTOL_SPRINT.rightShoulderZ - counter * .20);
     pose.left.shoulder.set(PISTOL_SPRINT.leftShoulderX + counter * .10, PISTOL_SPRINT.shoulderY + pose.compression, PISTOL_SPRINT.leftShoulderZ + counter * .20);
-    articulate(pose.right, .41 + .17 * r, 1.755 - .125 * r, 1, 0, euler);
-    articulate(pose.left, .26 + .57 * l, 1.48 - .06 * l, -1, sample(leftFistTwist,phase), euler);
+    // The shoulder supplies the right arm's depth travel; keep its elbow bent
+    // throughout recovery rather than reaching the pistol toward the crosshair.
+    articulate(pose.right, PISTOL_SPRINT.rightShoulderPitch + PISTOL_SPRINT.rightShoulderRange * r, 1.80 + .02 * r, 1, 0, euler);
+    // Coordinate flexion with the forward drive: at l=1 the forearm is 11°
+    // from upright. Both wrist and elbow still come exclusively from FK.
+    articulate(pose.left, .29 + .61 * l, 1.80 + .25 * l, -1, sample(leftFistTwist,phase), euler);
     // Constrained carry: derive the weapon root from the FK firing wrist and
     // inverse grip. There is no independent positional weapon bob afterward.
-    pose.weaponRotation.setFromEuler(euler.set(.43 + .035 * r + pose.inertia, -.14 + counter, -.20 - .035 * r));
+    pose.weaponRotation.setFromEuler(euler.set(.38 + .16 * r + pose.inertia, -.14 + counter, -.20 - .035 * r));
     pose.right.rotation.multiplyQuaternions(pose.weaponRotation, gripRotation);
     offset.copy(grip).applyQuaternion(pose.weaponRotation);
     pose.weaponPosition.copy(pose.right.wrist).sub(offset);

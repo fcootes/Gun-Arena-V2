@@ -31,7 +31,7 @@ const server = await createServer({ logLevel: 'error', server: { host: '127.0.0.
     const needle = '    // Main Game Loop'; assert.equal(code.split(needle).length, 2);
     code = code.replace(needle, `
     const pistolDef=WEAPONS.find(w=>w.id==='pistol');
-    window.__pistol={scene,renderer,camera,manager:vmManager,player,hold:false,
+    window.__pistol={scene,renderer,camera,manager:vmManager,player,hold:false,cadence:PISTOL_SPRINT.pairsPerSecond,
       get state(){return gameStateRef.current;},get ws(){return currentSlotState();},get weapon(){return currentSlot();},
       equip(ammo=8){stopWeaponAudio();cancelWeaponReload(currentSlotState());playerLoadout[0]=pistolDef;playerLoadout[1]=WEAPONS[0];playerWeaponState[1]={ammo:30,reserve:90};playerWeaponState[0]={ammo,reserve:60,lastFired:-100};switchSlot(0);player.aiming=false;vmManager.resetEffects();},
       kill(){applyDamageToPlayer(999999,true,true,null);},
@@ -46,6 +46,17 @@ const server = await createServer({ logLevel: 'error', server: { host: '127.0.0.
         if(action==='sprint-exit'||action==='ads-after-sprint'){advance(.8,true);advance(t,false,action==='ads-after-sprint');}
         if(action==='ads')advance(.8,false,true);
         renderer.render(scene,camera);return this.sample();},
+      freezeBackdrop(){
+        vmManager.root.visible=false;renderer.render(scene,camera);
+        const canvas=document.createElement('canvas');canvas.width=renderer.domElement.width;canvas.height=renderer.domElement.height;
+        canvas.getContext('2d').drawImage(renderer.domElement,0,0);vmManager.root.visible=true;
+        const backdrop=new THREE.CanvasTexture(canvas);backdrop.colorSpace=THREE.SRGBColorSpace;
+        scene.background=backdrop;scene.fog=null;
+        for(const child of scene.children)if(child!==camera&&child!==combatLightGroup&&!child.isLight)child.visible=false;
+        renderer.shadowMap.enabled=false;
+        // HUD blur/compositing is not part of this canvas-only capture.
+        const style=document.createElement('style');style.textContent='body *{visibility:hidden!important}#viewport,#viewport *{visibility:visible!important}';document.head.append(style);
+      },
       capture(){renderer.render(scene,camera);return renderer.domElement.toDataURL('image/png').split(',')[1];}
     };
     ${needle}`);
@@ -81,9 +92,10 @@ try {
   await page.getByRole('button',{name:'Select TEAM DEATHMATCH',exact:true}).click();await page.getByRole('button',{name:/OUTDOOR ARENA TRAINING FIELD/}).click();
   await page.locator('input[type="range"][min="1"][max="20"]').press('Home');await page.getByRole('button',{name:'DEPLOY SELECTED SCENARIO',exact:true}).click();
   await page.waitForFunction(()=>window.__pistol?.state==='playing');
-  if(process.env.PISTOL_LIVE_ONLY==='1')evidence.push(...JSON.parse(readFileSync(resolve(output,'poses.json'),'utf8')));
-  for(const [name,action,t] of process.env.PISTOL_LIVE_ONLY==='1'?[]:process.env.PISTOL_GAIT==='1'?[
-    ['entry','sprint',.04],['right-drive','sprint',2.115/2.05],['neutral','sprint',2.255/2.05],['left-drive','sprint',2.515/2.05],['loop-return','sprint',3.115/2.05],['exit','sprint-exit',.08],['restored-ready','sprint-exit',1.0],
+  const cadence=await page.evaluate(()=>window.__pistol.cadence);
+  if(process.env.PISTOL_LIVE_ONLY==='1'||process.env.PISTOL_REALTIME_ONLY==='1')evidence.push(...JSON.parse(readFileSync(resolve(output,'poses.json'),'utf8')));
+  for(const [name,action,t] of process.env.PISTOL_LIVE_ONLY==='1'||process.env.PISTOL_REALTIME_ONLY==='1'?[]:process.env.PISTOL_GAIT==='1'?[
+    ['entry','sprint',.04],['right-drive','sprint',2.115/cadence],['neutral','sprint',2.255/cadence],['left-drive','sprint',2.515/cadence],['loop-return','sprint',3.115/cadence],['exit','sprint-exit',.08],['restored-ready','sprint-exit',1.0],
   ]:[
     ['idle','idle',0],['ads','ads',0],['tactical-removal','tactical',.26],['tactical-insertion','tactical',.79],['tactical-ready','tactical',1.30],
     ['empty-slide-locked','empty',.25],['empty-mag-seated','empty',1.37],['empty-slide-release','empty',1.49],['empty-slide-forward','empty',1.64],['empty-ready','empty',2.25],
@@ -106,7 +118,8 @@ try {
   }
   checks.push(process.env.PISTOL_GAIT==='1'?'Seven representative actual-game gait poses':'15 rendered poses in the actual running game; physical magazine/slide and independent sprint wrist assertions');
   if(process.env.PISTOL_GAIT==='1') {
-    await page.evaluate(()=>window.__pistol.pose('sprint',2/2.05));
+    if(process.env.PISTOL_REALTIME_ONLY!=='1'){
+    await page.evaluate(()=>window.__pistol.pose('sprint',2/window.__pistol.cadence));
     const frames=resolve(output,'cycle-frames');mkdirSync(frames,{recursive:true});
     for(let i=0;i<48;i++) {
       const frame=await page.evaluate(()=>{const g=window.__pistol;g.tick(1/24,true);g.renderer.render(g.scene,g.camera);return g.renderer.domElement.toDataURL('image/jpeg',.86).split(',')[1];});
@@ -114,7 +127,44 @@ try {
     }
     const video=spawnSync('ffmpeg',['-loglevel','error','-y','-framerate','24','-i',resolve(frames,'%03d.jpg'),'-c:v','libx264','-pix_fmt','yuv420p','-movflags','+faststart',resolve(output,'sprint-cycle.mp4')],{encoding:'utf8',timeout:30000});
     checks.push(video.status===0?'Two-second continuous 24 FPS recording; over four complete stride pairs':'Video encoder unavailable; 48 real rendered cycle frames retained');
+    }
     const a=byName('right-drive'),b=byName('left-drive');assert.ok(a.leftCamera[1]<b.leftCamera[1]-.20);assert.deepEqual(a.right,b.right);
+    // Wall-clock evidence, separate from the deterministic pose/continuity clip.
+    // Advance by actual rAF elapsed seconds, never by requested video FPS.
+    // Freeze world/AI and camera to isolate the animation at a stable reference
+    // speed. The same production manager renders both hands and the pistol.
+    console.log('Recording eight seconds of wall-clock animation');
+    const recording=await page.evaluate(async()=>{
+      const g=window.__pistol;g.pose('idle');g.freezeBackdrop();g.renderer.setPixelRatio(.5);
+      // Compile the backdrop/rig before starting the recording's clock.
+      for(let i=0;i<3;i++){g.renderer.render(g.scene,g.camera);await new Promise(requestAnimationFrame);}
+      const stream=g.renderer.domElement.captureStream(60);
+      const mimeType=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm;codecs=vp8';
+      const recorder=new MediaRecorder(stream,{mimeType,videoBitsPerSecond:2500000}),chunks=[],frames=[];
+      const done=new Promise(resolve=>{recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};recorder.onstop=resolve;});
+      let start,last;await new Promise(resolve=>{recorder.onstart=resolve;recorder.start();});
+      await new Promise(resolve=>{
+        function frame(now){
+          start??=now;last??=now;const t=(now-start)/1000,dt=(now-last)/1000;last=now;
+          g.tick(dt,t>=.5&&t<7.5);g.renderer.render(g.scene,g.camera);
+          frames.push({seconds:t,dt,phase:g.manager.getPistolSprintPose().phase,blend:g.manager.getPistolSprintPose().blend});
+          if(t<8)requestAnimationFrame(frame);else resolve();
+        }requestAnimationFrame(frame);
+      });
+      await new Promise(resolve=>setTimeout(resolve,200));recorder.stop();await done;stream.getTracks().forEach(track=>track.stop());
+      const bytes=await new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.readAsDataURL(new Blob(chunks,{type:mimeType}));});
+      return {bytes,mimeType,frames,width:g.renderer.domElement.width,height:g.renderer.domElement.height};
+    });
+    writeFileSync(resolve(output,'sprint-realtime.webm'),Buffer.from(recording.bytes,'base64'));
+    const {bytes,...timing}=recording; // Keep binary data out of the report.
+    timing.wallSeconds=timing.frames.at(-1).seconds;
+    timing.actualRenderFPS=(timing.frames.length-1)/timing.wallSeconds;
+    writeFileSync(resolve(output,'realtime-timing.json'),JSON.stringify(timing,null,2)+'\n');
+    const realtimeVideo=spawnSync('ffmpeg',['-loglevel','error','-y','-i',resolve(output,'sprint-realtime.webm'),'-c:v','libx264','-pix_fmt','yuv420p','-movflags','+faststart','-fps_mode','vfr',resolve(output,'sprint-realtime.mp4')],{encoding:'utf8',timeout:30000});
+    assert.equal(realtimeVideo.status,0,realtimeVideo.stderr);
+    assert.ok(timing.wallSeconds>=8&&timing.wallSeconds<10,'Continuous 8–10 second wall-clock recording');
+    console.log(`Wall-clock render rate: ${timing.actualRenderFPS.toFixed(1)} FPS; ${timing.wallSeconds.toFixed(2)} seconds`);
+    checks.push(`Eight-second real-time capture (60 FPS requested, ${timing.actualRenderFPS.toFixed(1)} actual render FPS); frozen game backdrop, live production hands/pistol and real elapsed-time gait`);
   }
   if(process.env.PISTOL_POSES_ONLY!=='1'&&process.env.PISTOL_GAIT!=='1') {
     console.log('Checking live controls');
