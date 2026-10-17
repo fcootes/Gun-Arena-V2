@@ -3,6 +3,7 @@ import { createServer } from 'vite';
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 const output = resolve(process.env.PISTOL_OUTPUT ?? 'docs/pistol-fidelity/evidence');
 mkdirSync(output, { recursive: true });
 const port = Number(process.env.PISTOL_PORT ?? 3125), errors = [], evidence = [], checks = [];
@@ -36,7 +37,7 @@ const server = await createServer({ logLevel: 'error', server: { host: '127.0.0.
       kill(){applyDamageToPlayer(999999,true,true,null);},
       tick(dt,run=false,aim=false,playing=true){vmManager.update(dt,pistolDef,this.ws,aim,run,true,run,false,false,0,true,playing);},
       sample(){const s=this.ws,q=s.reloadSequence,m=vmManager.root.getObjectByName('Weapon_pistol');m?.updateMatrixWorld(true);const left=m?.getObjectByName('leftHand'),right=m?.getObjectByName('rightHand'),mag=m?.getObjectByName('magazine'),fresh=m?.getObjectByName('freshMagazine');
-        return {id:currentSlot().id,ammo:s.ammo,reserve:s.reserve,reloading:!!s.reloading,needsChamber:!!s.needsChamber,phase:q?.phases[q.index]?.phase,elapsed:q?.elapsed,sprinting:player.sprinting,aiming:player.aiming,root:m?.position.toArray(),right:right?.position.toArray(),left:left?.position.toArray(),leftCamera:left?.position.clone().applyMatrix4(m.matrix).toArray(),mag:mag?.position.toArray(),fresh:fresh?.position.toArray(),magVisible:mag?.visible,freshVisible:fresh?.visible,slide:m?.getObjectByName('slide')?.position.z};},
+        return {id:currentSlot().id,ammo:s.ammo,reserve:s.reserve,reloading:!!s.reloading,needsChamber:!!s.needsChamber,phase:q?.phases[q.index]?.phase,elapsed:q?.elapsed,sprinting:player.sprinting,aiming:player.aiming,root:m?.position.toArray(),right:right?.position.toArray(),left:left?.position.toArray(),leftCamera:left?.position.clone().applyMatrix4(m.matrix).toArray(),mag:mag?.position.toArray(),fresh:fresh?.position.toArray(),magVisible:mag?.visible,freshVisible:fresh?.visible,slide:m?.getObjectByName('slide')?.position.z,gait:{phase:vmManager.getPistolSprintPose().phase,blend:vmManager.getPistolSprintPose().blend,leftElbow:vmManager.getPistolSprintPose().left.elbow.toArray(),rightElbow:vmManager.getPistolSprintPose().right.elbow.toArray()}};},
       pose(action,t=0){this.hold=true;this.equip(action.startsWith('empty')?0:8);for(let n=0;n<60;n++)this.tick(1/60);
         camera.fov=action==='ads'||action==='ads-after-sprint'?pistolDef.adsFov:HIP_FOV;camera.updateProjectionMatrix();
         const advance=(seconds,run=false,aim=false,reload=false)=>{for(let left=seconds;left>1e-8;){const dt=Math.min(1/144,left);left-=dt;if(reload)advanceWeaponReload(pistolDef,this.ws,dt);this.tick(dt,run,aim);}};
@@ -53,7 +54,7 @@ const server = await createServer({ logLevel: 'error', server: { host: '127.0.0.
   },
 }] });
 let browser;
-const deadline = setTimeout(() => { console.error('Pistol browser validation exceeded eight minutes'); void browser?.close(); void server.close(); process.exitCode = 1; }, 480000);
+const deadline = setTimeout(() => { console.error('Pistol browser validation exceeded eight minutes'); void browser?.close(); void server.close(); process.exitCode = 1; }, process.env.PISTOL_GAIT==='1'?240000:480000);
 try {
   await server.listen();
   browser = await chromium.launch({ headless: true, executablePath: process.env.BENCHMARK_BROWSER ?? '/usr/bin/chromium', args: ['--no-sandbox','--single-process','--no-zygote','--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required'] });
@@ -81,10 +82,12 @@ try {
   await page.locator('input[type="range"][min="1"][max="20"]').press('Home');await page.getByRole('button',{name:'DEPLOY SELECTED SCENARIO',exact:true}).click();
   await page.waitForFunction(()=>window.__pistol?.state==='playing');
   if(process.env.PISTOL_LIVE_ONLY==='1')evidence.push(...JSON.parse(readFileSync(resolve(output,'poses.json'),'utf8')));
-  for(const [name,action,t] of process.env.PISTOL_LIVE_ONLY==='1'?[]:[
+  for(const [name,action,t] of process.env.PISTOL_LIVE_ONLY==='1'?[]:process.env.PISTOL_GAIT==='1'?[
+    ['entry','sprint',.04],['right-drive','sprint',2.115/2.05],['neutral','sprint',2.255/2.05],['left-drive','sprint',2.515/2.05],['loop-return','sprint',3.115/2.05],['exit','sprint-exit',.08],['restored-ready','sprint-exit',1.0],
+  ]:[
     ['idle','idle',0],['ads','ads',0],['tactical-removal','tactical',.26],['tactical-insertion','tactical',.79],['tactical-ready','tactical',1.30],
     ['empty-slide-locked','empty',.25],['empty-mag-seated','empty',1.37],['empty-slide-release','empty',1.49],['empty-slide-forward','empty',1.64],['empty-ready','empty',2.25],
-    ['sprint-release','sprint',.04],['sprint-phase-a','sprint',.50],['sprint-phase-b','sprint',.88],['sprint-recovery','sprint-exit',.07],['ads-after-sprint','ads-after-sprint',.70],
+    ['sprint-release','sprint',.04],['sprint-phase-a','sprint',.545],['sprint-phase-b','sprint',.74],['sprint-recovery','sprint-exit',.07],['ads-after-sprint','ads-after-sprint',.70],
   ]) {
     const sample=await page.evaluate(({action,t})=>window.__pistol.pose(action,t),{action,t});
     writeFileSync(resolve(output,name+'.png'),Buffer.from(await page.evaluate(()=>window.__pistol.capture()),'base64'));
@@ -92,6 +95,7 @@ try {
     writeFileSync(resolve(output,'poses.json'),JSON.stringify(evidence,null,2)+'\n');
   }
   const byName=name=>evidence.find(e=>e.name===name);
+  if(process.env.PISTOL_GAIT!=='1') {
   assert.deepEqual(byName('sprint-phase-a').right,byName('idle').right);
   assert.ok(Math.abs(byName('sprint-phase-a').leftCamera[0]+.20)<.04);
   assert.ok(Math.abs(byName('sprint-phase-a').leftCamera[1]-byName('sprint-phase-b').leftCamera[1])>.02);
@@ -99,8 +103,20 @@ try {
   assert.equal(byName('empty-mag-seated').ammo,15);
   assert.equal(byName('empty-slide-forward').slide,0);
   assert.ok(!byName('empty-ready').freshVisible&&byName('empty-ready').magVisible);
-  checks.push('15 rendered poses in the actual running game; physical magazine/slide and independent sprint wrist assertions');
-  if(process.env.PISTOL_POSES_ONLY!=='1') {
+  }
+  checks.push(process.env.PISTOL_GAIT==='1'?'Seven representative actual-game gait poses':'15 rendered poses in the actual running game; physical magazine/slide and independent sprint wrist assertions');
+  if(process.env.PISTOL_GAIT==='1') {
+    await page.evaluate(()=>window.__pistol.pose('sprint',2/2.05));
+    const frames=resolve(output,'cycle-frames');mkdirSync(frames,{recursive:true});
+    for(let i=0;i<48;i++) {
+      const frame=await page.evaluate(()=>{const g=window.__pistol;g.tick(1/24,true);g.renderer.render(g.scene,g.camera);return g.renderer.domElement.toDataURL('image/jpeg',.86).split(',')[1];});
+      writeFileSync(resolve(frames,String(i).padStart(3,'0')+'.jpg'),Buffer.from(frame,'base64'));
+    }
+    const video=spawnSync('ffmpeg',['-loglevel','error','-y','-framerate','24','-i',resolve(frames,'%03d.jpg'),'-c:v','libx264','-pix_fmt','yuv420p','-movflags','+faststart',resolve(output,'sprint-cycle.mp4')],{encoding:'utf8',timeout:30000});
+    checks.push(video.status===0?'Two-second continuous 24 FPS recording; over four complete stride pairs':'Video encoder unavailable; 48 real rendered cycle frames retained');
+    const a=byName('right-drive'),b=byName('left-drive');assert.ok(a.leftCamera[1]<b.leftCamera[1]-.20);assert.deepEqual(a.right,b.right);
+  }
+  if(process.env.PISTOL_POSES_ONLY!=='1'&&process.env.PISTOL_GAIT!=='1') {
     console.log('Checking live controls');
     await page.evaluate(()=>{const g=window.__pistol;g.equip(8);g.renderer.setPixelRatio(.5);g.hold=false;});
     await page.keyboard.down('w');await page.keyboard.down('Shift');
@@ -123,7 +139,7 @@ try {
     const audio=await page.evaluate(()=>window.__pistolAudio);assert.ok(audio.some(a=>a.src.startsWith('pistol_reload_tactical')));assert.ok(audio.some(a=>a.src.startsWith('pistol_reload_empty')));
     console.log('Checking death and redeployment');
     await page.evaluate(()=>window.__pistol.kill());await page.waitForFunction(()=>!window.__pistol.player.alive);
-    await page.locator('#btn-restart-end').click();await page.waitForFunction(()=>window.__pistol.state==='playing'&&window.__pistol.player.alive);
+    await page.getByRole('button',{name:'[ PLAY AGAIN ]',exact:true}).click();await page.waitForFunction(()=>window.__pistol.state==='playing'&&window.__pistol.player.alive,null,{timeout:180000});
     await page.evaluate(()=>{window.__pistol.hold=true;window.__pistol.equip(15);window.__pistol.tick(0);});
     const redeployed=await page.evaluate(()=>window.__pistol.sample());assert.equal(redeployed.freshVisible,false);assert.equal(redeployed.magVisible,true);assert.equal(redeployed.reloading,false);
     checks.push('Real W/Shift sprint, fire restriction, crouch, ADS priority, R reload, pause/resume, switch interruption/re-equip, composite audio, death and redeployment');

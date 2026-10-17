@@ -34,6 +34,7 @@
     "test:shotgun": "node --import tsx tests/shotgun.test.ts",
     "test:shotgun:browser": "node scripts/test-shotgun-browser.mjs",
     "test:pistol": "node --import tsx tests/pistol.test.ts",
+    "test:pistol:sprint": "node --import tsx tests/pistolSprint.test.ts",
     "test:pistol:browser": "node scripts/test-pistol-browser.mjs"
   },
   "dependencies": {

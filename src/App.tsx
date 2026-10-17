@@ -701,7 +701,7 @@ export default function App() {
     const fireCamera=new THREE.PerspectiveCamera();
     function getFireCamera(){fireCamera.copy(camera,false);fireCamera.position.copy(player.pos);fireCamera.updateMatrixWorld();return fireCamera;}
     const chaseDirection=new THREE.Vector3(),chaseTarget=new THREE.Vector3(),chaseRay=new THREE.Raycaster();
-    let localPistolArms = false, localPistolPhase = 0;
+    let localPistolArms = false;
     function updateThirdPerson(delta:number) {
       if(!thirdPerson||!player.alive){if(thirdPersonActor)thirdPersonActor.rootGroup.visible=false;return;}
       const w=currentSlot();
@@ -719,16 +719,18 @@ export default function App() {
       // Pistol sprint is local-player presentation; bot/faction animation stays owned by its existing path.
       if (w.id === 'pistol') {
         localPistolArms = true;
-        const pistolRun = player.sprinting && player.onGround && !currentSlotState().reloading;
-        localPistolPhase += delta * (pistolRun ? 14 : 9.5);
-        const armBlend = 1 - Math.exp(-16 * delta), armSwing = Math.sin(localPistolPhase * .5);
-        actor.armLPivot.rotation.x += ((pistolRun ? -.12 + armSwing * .60 : -.45) - actor.armLPivot.rotation.x) * armBlend;
-        actor.armRPivot.rotation.x += ((pistolRun ? -.85 - armSwing * .18 : -.45) - actor.armRPivot.rotation.x) * armBlend;
-        actor.armLLowerPivot.rotation.x += ((pistolRun ? -.90 - armSwing * .20 : -.35) - actor.armLLowerPivot.rotation.x) * armBlend;
-        actor.armRLowerPivot.rotation.x += ((pistolRun ? -.85 : -.22) - actor.armRLowerPivot.rotation.x) * armBlend;
+        const gait = vmManager.getPistolSprintPose(), blend = gait.blend;
+        // Same phase/FK angles as first person; no second oscillator or timer.
+        actor.armLPivot.rotation.x = THREE.MathUtils.lerp(-.45, -gait.left.shoulderPitch, blend);
+        actor.armRPivot.rotation.x = THREE.MathUtils.lerp(-.45, -gait.right.shoulderPitch, blend);
+        actor.armLLowerPivot.rotation.x = THREE.MathUtils.lerp(-.35, -gait.left.elbowFlexion, blend);
+        actor.armRLowerPivot.rotation.x = THREE.MathUtils.lerp(-.22, -gait.right.elbowFlexion, blend);
+        const stride = (gait.right.shoulderPitch - .41) * 2.5;
+        actor.legLPivot.rotation.x = THREE.MathUtils.lerp(walk, -stride, blend);
+        actor.legRPivot.rotation.x = THREE.MathUtils.lerp(-walk, stride, blend);
       } else if (localPistolArms) {
         actor.armLPivot.rotation.set(-.45,.25,0); actor.armRPivot.rotation.set(-.45,-.15,0);
-        actor.armLLowerPivot.rotation.x=-.35; actor.armRLowerPivot.rotation.x=-.22; localPistolArms=false; localPistolPhase=0;
+        actor.armLLowerPivot.rotation.x=-.35; actor.armRLowerPivot.rotation.x=-.22; localPistolArms=false;
       }
       actor.weaponAssembly?.update(delta,currentSlotState().chargeTimer??0,w.id==='minigun'?delta*30:0);actor.weaponEffects?.update(delta);
       vmManager.root.visible=false;
@@ -3168,8 +3170,11 @@ export default function App() {
           } else {
             bobPhase *= 0.9;
           }
-          const bobY = Math.sin(bobPhase) * (player.crouching ? 0.02 : 0.045);
-          const bobX = Math.cos(bobPhase * 0.5) * (player.crouching ? 0.01 : 0.03);
+          // Pistol weight lives on the arms, not a second camera oscillator.
+          // Fade the existing cosmetic camera bob; add no new camera motion.
+          const cameraBobWeight = currentSlot().id === 'pistol' ? 1 - vmManager.getPistolSprintPose().blend : 1;
+          const bobY = Math.sin(bobPhase) * (player.crouching ? 0.02 : 0.045) * cameraBobWeight;
+          const bobX = Math.cos(bobPhase * 0.5) * (player.crouching ? 0.01 : 0.03) * cameraBobWeight;
 
           recoilPitch = Math.max(0, recoilPitch - dt * 0.8);
           camera.position.set(player.pos.x + bobX, player.pos.y + bobY, player.pos.z);
@@ -3504,7 +3509,8 @@ export default function App() {
           player.isDrinking,
           player.drinkTimer,
           player.alive,
-          true
+          true,
+          Math.hypot(player.vel.x, player.vel.z)
         );
 
         

@@ -1,4 +1,5 @@
-import { PISTOL, pistolEase, pistolPickup, pistolSprintWrist } from './pistolMechanics';
+import type { PistolSprintPose } from './pistolSprint';
+import { PISTOL, pistolEase, pistolPickup } from './pistolMechanics';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
@@ -16,6 +17,7 @@ interface Hand {
   target: THREE.Vector3; orientation: THREE.Quaternion; phaseStart: THREE.Vector3; phaseRotation: THREE.Quaternion;
   curl: number;
 }
+const runningFingerAngles = [.95, 1.35, .95], runningThumbAngles = [.35, .70, .45];
 const pistolFingerAngles = [.85, 1.20, .90], pistolThumbAngles = [.25, .55, .45];
 const thumbAngles = [.20, .35, .30], triggerAngles = [.10, .50, .65], gripAngles = [.5, .9, .65];
 
@@ -150,7 +152,7 @@ export function createFirstPersonHands() {
     },
     releaseInstances,
     reset() { initialized = false; phase = ''; },
-    update(id: WeaponModelId, dt: number, assembly: WeaponAssembly, state: WeaponSlotState | null | undefined, aiming: boolean, pistolSprintBlend = 0, sprintPhase = 0) {
+    update(id: WeaponModelId, dt: number, assembly: WeaponAssembly, state: WeaponSlotState | null | undefined, aiming: boolean, sprint?: Readonly<PistolSprintPose>) {
       if (disposed) return;
       const changed = !initialized || selected !== id; selected = id;
       const config = VIEWMODEL_GRIPS[id];
@@ -164,6 +166,7 @@ export function createFirstPersonHands() {
       supportGrip.copy(left.target);
       const sequence = state?.reloading ? state.reloadSequence : undefined;
       const stage = sequence?.phases[sequence.index];
+      const pistolSprintBlend = id === 'pistol' && !stage ? sprint?.blend ?? 0 : 0;
       const nextPhase = stage?.phase ?? '';
       if (changed) { left.wrist.position.copy(left.target); left.wrist.quaternion.copy(left.orientation); phase = ''; }
       if (phase !== nextPhase) { left.phaseStart.copy(left.wrist.position); left.phaseRotation.copy(left.wrist.quaternion); phase = nextPhase; }
@@ -332,12 +335,12 @@ export function createFirstPersonHands() {
           }
         } else if (pistolSprintBlend > 1e-5) {
           assembly.root.updateMatrix(); inverse.copy(assembly.root.matrix).invert();
-          pistolSprintWrist(sprintPhase, attachmentPosition, targetRotation, euler);
+          attachmentPosition.copy(sprint!.left.wrist); targetRotation.copy(sprint!.left.rotation);
           attachmentPosition.applyMatrix4(inverse);
           // Remove the weapon carry rotation from the camera-space free wrist.
           targetRotation.premultiply(inverseWeaponRotation.copy(assembly.root.quaternion).invert());
           left.target.lerp(attachmentPosition, pistolSprintBlend);
-          left.orientation.slerp(targetRotation, pistolSprintBlend); curl = .72;
+          left.orientation.slerp(targetRotation, pistolSprintBlend); curl = 1.05;
         }
       }
       const alpha = changed || dt === 0 ? 1 : 1 - Math.exp(-24 * dt);
@@ -361,6 +364,7 @@ export function createFirstPersonHands() {
         elbow.x = THREE.MathUtils.clamp(elbow.x, attachmentPosition.x - .12, attachmentPosition.x + .12);
         elbow.y = Math.min(elbow.y, attachmentPosition.y - .30);
         elbow.z = Math.min(-.14, Math.max(elbow.z, attachmentPosition.z + .22));
+        if (pistolSprintBlend > 0) elbow.lerp(sprint![side].elbow, pistolSprintBlend);
         elbow.applyMatrix4(inverse);
         // A distant body target determines direction, never cylinder length.
         // Keep a bounded forearm while its broad end tucks down toward the torso.
@@ -385,7 +389,15 @@ export function createFirstPersonHands() {
             const contactAngle = (digit.thumb ? pistolThumbAngles : pistolFingerAngles)[segment];
             angle += (contactAngle - angle) * pistolContact;
           }
+          if (side === 'left' && pistolSprintBlend > 0) {
+            const runningAngle = (digit.thumb ? runningThumbAngles : runningFingerAngles)[segment];
+            angle += (runningAngle - angle) * pistolSprintBlend;
+          }
           digit.joints[segment].rotation.set(-angle * (hand.curl + (aiming ? .025 : 0)), 0, segment === 0 ? digit.spread : 0);
+          if (side === 'left' && pistolSprintBlend > 0 && digit.thumb && segment === 0) {
+            digit.joints[segment].rotation.y = -.35 * pistolSprintBlend;
+            digit.joints[segment].rotation.z += .30 * pistolSprintBlend;
+          }
           if (side === 'left' && config.magazineGrip && brGrip > 0 && digit.thumb && segment === 0) {
             digit.joints[segment].rotation.z += (config.magazineGrip.thumbOpposition ?? 0)*brGrip;
             digit.joints[segment].rotation.y = -.25*brGrip;

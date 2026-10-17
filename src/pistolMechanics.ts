@@ -67,10 +67,3 @@ export function createPistolAnimator(assembly: WeaponAssembly) {
   };
 }
 
-/** The free wrist is authored in CAMERA space. The rig converts it back to
- * weapon space, so pistol/right-arm motion cannot drag the left arm along. */
-export function pistolSprintWrist(phase: number, position: THREE.Vector3, rotation: THREE.Quaternion, euler: THREE.Euler) {
-  const swing = Math.sin(phase * .5), lift = Math.cos(phase * .5);
-  position.set(-.205 + .025 * lift, -.225 + .065 * swing, -.40 - .065 * swing);
-  rotation.setFromEuler(euler.set(-.90 + .25 * swing, -.45, -.45 + .12 * lift));
-}

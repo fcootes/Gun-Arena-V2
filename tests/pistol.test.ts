@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { createViewmodelManager, WEAPONS } from '../src/weapons';
 import { createWeaponAssembly, disposeWeaponObject } from '../src/weaponModels';
 import { advanceWeaponReload, beginWeaponReload, cancelWeaponReload } from '../src/weaponReload';
-import { PISTOL, pistolSprintWrist } from '../src/pistolMechanics';
+import { PISTOL } from '../src/pistolMechanics';
 import { VIEWMODEL_GRIPS } from '../src/viewmodelGrips';
 import type { WeaponSlotState } from '../src/types';
 const gun = WEAPONS.find(w=>w.id==='pistol')!;
@@ -45,7 +45,7 @@ function sprint(rate:number){
  const world=()=>{root.updateMatrixWorld(true);return left.getWorldPosition(new THREE.Vector3());};
  const points:THREE.Vector3[]=[];
  for(let n=0;n<rate;n++){tick(1/rate,true);assert.ok(right.position.distanceTo(anchor)<1e-9);if(n>rate/2)points.push(world());}
- const at=world(),expected=new THREE.Vector3(),q=new THREE.Quaternion();pistolSprintWrist(14,expected,q,new THREE.Euler());assert.ok(at.distanceTo(expected)<1e-5,'Left wrist uses independent camera-space target');
+ const at=world(),gait=vm.getPistolSprintPose(),expected=new THREE.Vector3(...VIEWMODEL_GRIPS.pistol.left.position).applyMatrix4(root.matrix).lerp(gait.left.wrist,gait.blend);assert.ok(at.distanceTo(expected)<1e-5,'Left wrist uses independent camera-space target');
  assert.ok(points.some(p=>p.distanceTo(at)>.035),'Running arm visibly swings');
  const frozen=world(),rotation=root.quaternion.clone();tick(1,true,false,false);assert.ok(world().distanceTo(frozen)<1e-10);assert.ok(root.quaternion.angleTo(rotation)<1e-7);
  for(let n=0;n<rate;n++)tick(1/rate,false,true);assert.ok(left.position.distanceTo(new THREE.Vector3(...VIEWMODEL_GRIPS.pistol.left.position))<1e-6);
