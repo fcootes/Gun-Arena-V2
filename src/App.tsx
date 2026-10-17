@@ -13,7 +13,7 @@ import { audioManager } from './campaignAudio';
 import { PostDeathMenu } from './PostDeathMenu';
 import { beginShotgunCycle, cancelShotgunCycle } from './shotgunMechanics';
 import { beginWeaponReload, advanceWeaponReload, cancelWeaponReload, interruptShellReload } from './weaponReload';
-import { prepareWeaponAudio, releaseWeaponAudio, playWeaponReloadAudio, playShotgunMechanicalEvent, playSniperBoltEvent, updateSniperReloadAudio, playBattleRifleMechanicalEvent, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } from './weaponAudio';
+import { prepareWeaponAudio, releaseWeaponAudio, playWeaponReloadAudio, playShotgunMechanicalEvent, playSniperBoltEvent, updateSniperReloadAudio, updateSmgReloadAudio, playBattleRifleMechanicalEvent, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } from './weaponAudio';
 import './ModePosters.css';
 import { createWeaponAssembly, disposeWeaponObject } from './weaponModels';
 import { useEffect, useRef, useState } from 'react';
@@ -3251,6 +3251,7 @@ export default function App() {
           advanceWeaponReload(w, ws, dt, undefined, player.slotIndex === i && w.id === 'shotgun' ? playShotgunMechanicalEvent : undefined,
             w.id === 'sniper' ? playSniperBoltEvent : undefined, w.id === 'br' && player.slotIndex === i ? playBattleRifleMechanicalEvent : undefined);
           if (w.id === 'sniper') updateSniperReloadAudio(ws);
+          if (w.id === 'smg' && player.slotIndex === i) updateSmgReloadAudio(ws);
           if (player.slotIndex === i && w.id === 'laser') updatePlasmaReloadAudio(ws);
           if (wasReloading && !ws.reloading && player.slotIndex === i) stopWeaponReloadAudio();
         });

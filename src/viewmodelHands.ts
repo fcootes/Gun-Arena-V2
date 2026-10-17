@@ -1,3 +1,4 @@
+import { SMG, smgEase, smgReach, smgSwap } from './smgMechanics';
 import type { PistolSprintPose } from './pistolSprint';
 import { PISTOL, pistolEase, pistolPickup } from './pistolMechanics';
 import * as THREE from 'three';
@@ -173,7 +174,7 @@ export function createFirstPersonHands() {
       const p = stage ? THREE.MathUtils.smoothstep(sequence!.elapsed / stage.duration, 0, 1) : 0;
       let curl = config.left.curl;
       let shellGrip = 0, shellPress = 0, brGrip = 0, pistolContact = 0;
-      if (stage && id !== 'br' && id !== 'pistol') {
+      if (stage && id !== 'br' && id !== 'pistol' && id !== 'smg') {
         const part = stage.phase === 'chamber' ? assembly.parts.bolt ?? assembly.parts.slide ?? assembly.parts.pump :
           sequence!.kind === 'vent' ? assembly.parts.feedTray ?? assembly.parts.receiver :
           assembly.parts.magazine ?? assembly.parts.reloadRound ?? assembly.parts.vent ?? assembly.parts.receiver;
@@ -303,6 +304,43 @@ export function createFirstPersonHands() {
           if (state?.shotgunCycle?.kind === 'chamber') left.target.lerpVectors(left.phaseStart, supportGrip, shotgunEase(state.shotgunCycle.elapsed / (state.shotgunCycle.duration * SHOTGUN.recovery / SHOTGUN.cycle)));
         }
       }
+      if (id === 'smg' && stage) {
+        const t=sequence!.elapsed/stage.duration, old=assembly.parts.magazine, fresh=assembly.parts.freshMagazine;
+        const part=stage.phase==='open'||stage.phase==='eject'||(stage.phase==='insert'&&t<smgSwap)?old:fresh;
+        part.updateMatrix();
+        attachmentPosition.fromArray(SMG.magazineGrip).applyMatrix4(part.matrix);
+        targetRotation.setFromEuler(euler.set(...SMG.magazineRotation)).premultiply(part.quaternion);
+        left.target.copy(attachmentPosition);left.orientation.copy(targetRotation);curl=.95;
+        if(stage.phase==='open') {
+          const reach=smgEase(t);
+          left.target.lerpVectors(supportGrip,attachmentPosition,reach);
+          left.orientation.setFromEuler(euler.set(...config.left.rotation));left.orientation.slerp(targetRotation,reach);
+        } else if(stage.phase==='chamber') {
+          // Start from the fully seated magazine, or the forward grip when
+          // resuming a chamber-only interruption. Transform through the real
+          // receiver hierarchy, including any future parent orientation.
+          if(!sequence!.phases.some(s=>s.phase==='insert'))left.target.copy(supportGrip);
+          const control=assembly.parts.bolt;
+          control.updateWorldMatrix(true,false);assembly.root.updateWorldMatrix(true,false);
+          inverse.copy(assembly.root.matrixWorld).invert();matrix.multiplyMatrices(inverse,control.matrixWorld);
+          attachmentPosition.fromArray(SMG.chargingGrip).applyMatrix4(matrix);
+          const reach=smgReach(t);left.target.lerp(attachmentPosition,reach);
+          targetRotation.setFromEuler(euler.set(...SMG.chargingRotation)).premultiply(control.quaternion);
+          left.orientation.slerp(targetRotation,reach);curl=.8;
+        } else if(stage.phase==='close') {
+          if(sequence!.empty) {
+            const control=assembly.parts.bolt;
+            control.updateWorldMatrix(true,false);assembly.root.updateWorldMatrix(true,false);
+            inverse.copy(assembly.root.matrixWorld).invert();matrix.multiplyMatrices(inverse,control.matrixWorld);
+            left.target.fromArray(SMG.chargingGrip).applyMatrix4(matrix);
+            left.orientation.setFromEuler(euler.set(...SMG.chargingRotation)).premultiply(control.quaternion);
+          }
+          const recover=smgEase(t);
+          left.target.lerp(supportGrip,recover);
+          targetRotation.setFromEuler(euler.set(...config.left.rotation));left.orientation.slerp(targetRotation,recover);
+          curl=.8+(config.left.curl-.8)*recover;
+        }
+      }
       if (id === 'pistol') {
         left.target.copy(supportGrip); left.orientation.setFromEuler(euler.set(...config.left.rotation));
         if (stage) {
@@ -347,8 +385,8 @@ export function createFirstPersonHands() {
       right.wrist.position.copy(right.target); right.wrist.quaternion.copy(right.orientation);
       // AR control contact is authored against the current moving part, without
       // an exponential lag that would leave fingers behind the charging latch.
-      left.wrist.position.lerp(left.target, arChamber || id === 'shotgun' || id === 'sniper' || id === 'br' || (id === 'pistol' && (!!stage || pistolSprintBlend > 1e-5)) ? 1 : alpha);
-      left.wrist.quaternion.slerp(left.orientation, arChamber || id === 'shotgun' || id === 'sniper' || id === 'br' || (id === 'pistol' && (!!stage || pistolSprintBlend > 1e-5)) ? 1 : alpha);
+      left.wrist.position.lerp(left.target, arChamber || id === 'smg' || id === 'shotgun' || id === 'sniper' || id === 'br' || (id === 'pistol' && (!!stage || pistolSprintBlend > 1e-5)) ? 1 : alpha);
+      left.wrist.quaternion.slerp(left.orientation, arChamber || id === 'smg' || id === 'shotgun' || id === 'sniper' || id === 'br' || (id === 'pistol' && (!!stage || pistolSprintBlend > 1e-5)) ? 1 : alpha);
       // Solve the sleeve from its posed cuff toward a camera-local torso bend.
       // Receiver tilt must not rotate a cut-off sleeve end into the viewport.
       assembly.root.updateMatrix(); inverse.copy(assembly.root.matrix).invert();

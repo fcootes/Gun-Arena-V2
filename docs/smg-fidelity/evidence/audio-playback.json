@@ -1,0 +1,77 @@
+[
+  {
+    "src": "smg_reload_tactical.wav",
+    "rate": 1.3333333333333333,
+    "offset": 0.037066
+  },
+  {
+    "src": "smg_fire_single.wav",
+    "rate": 1,
+    "offset": 0
+  },
+  {
+    "src": "smg_fire_single.wav",
+    "rate": 1,
+    "offset": 0
+  },
+  {
+    "src": "smg_fire_single.wav",
+    "rate": 1,
+    "offset": 0
+  },
+  {
+    "src": "smg_reload_empty.wav",
+    "rate": 1.3333333333333333,
+    "offset": 0.006666
+  },
+  {
+    "src": "smg_fire_single.wav",
+    "rate": 1,
+    "offset": 0
+  },
+  {
+    "src": "smg_fire_single.wav",
+    "rate": 1,
+    "offset": 0
+  },
+  {
+    "src": "smg_fire_single.wav",
+    "rate": 1,
+    "offset": 0
+  },
+  {
+    "src": "smg_fire_single.wav",
+    "rate": 1,
+    "offset": 0
+  },
+  {
+    "src": "smg_fire_single.wav",
+    "rate": 1,
+    "offset": 0
+  },
+  {
+    "src": "smg_reload_empty.wav",
+    "rate": 1.3333333333333333,
+    "offset": 0.05506666666657364
+  },
+  {
+    "src": "smg_fire_single.wav",
+    "rate": 1,
+    "offset": 0
+  },
+  {
+    "src": "smg_fire_single.wav",
+    "rate": 1,
+    "offset": 0
+  },
+  {
+    "src": "smg_fire_single.wav",
+    "rate": 1,
+    "offset": 0
+  },
+  {
+    "src": "smg_fire_single.wav",
+    "rate": 1,
+    "offset": 0
+  }
+]

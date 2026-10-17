@@ -1,3 +1,4 @@
+import { SMG } from './smgMechanics';
 import type { WeaponDef, WeaponSlotState } from './types';
 import { SHOTGUN, advanceShotgunCycle, beginShotgunCycle, type ShotgunEventListener } from './shotgunMechanics';
 import { SNIPER, advanceSniperAction, type SniperBoltListener } from './sniperMechanics';
@@ -54,6 +55,12 @@ export function beginWeaponReload(weapon: WeaponDef, state: WeaponSlotState, mul
     if (!chamberOnly) { timed('eject', BATTLE_RIFLE.extract); timed('pickup', BATTLE_RIFLE.acquire); timed('insert', BATTLE_RIFLE.insert); }
     if (empty || chamberOnly) timed('chamber', BATTLE_RIFLE.chamber);
     timed('close', chamberOnly ? .35 : BATTLE_RIFLE.lower);
+  } else if (weapon.id === 'smg' && playerHandling) {
+    const speed = Math.max(.1, Number.isFinite(multiplier) ? multiplier : 1);
+    const timing = empty || chamberOnly ? SMG.empty : SMG.tactical;
+    if (!chamberOnly) for (const phase of ['open','eject','insert'] as const) phases.push({phase,duration:timing[phase]*speed});
+    if (empty || chamberOnly) phases.push({phase:'chamber',duration:SMG.empty.chamber*speed});
+    phases.push({phase:'close',duration:timing.close*speed});
   } else if (chamberOnly) { add('chamber', .25); add('close', .15);
   } else if (vent) {
     kind = weapon.id === 'laser' ? 'battery' : 'vent'; add('vent', .25);

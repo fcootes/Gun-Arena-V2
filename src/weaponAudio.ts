@@ -1,3 +1,4 @@
+import { SMG } from './smgMechanics';
 import type { BattleRifleListener } from './battleRifleMechanics';
 import { AUDIO, SoundTrack, FIRST_BATCH_AUDIO_URLS, SECOND_BATCH_AUDIO_URLS, THIRD_BATCH_AUDIO_URLS, BR_MECHANICAL_AUDIO_URLS } from './audio';
 import type { WeaponDef, WeaponSlotState } from './types';
@@ -38,6 +39,7 @@ export function releaseWeaponAudio(): void {
   for (const track of Object.values(AUDIO)) track.release();
 }
 
+let smgReloads = new WeakMap<WeaponSlotState, { sequence: NonNullable<WeaponSlotState['reloadSequence']>; started: boolean; speed: number; chamberOnly: boolean }>();
 let plasmaReloads = new WeakMap<WeaponSlotState, { sequence: NonNullable<WeaponSlotState['reloadSequence']>; inserted: boolean }>();
 let sniperReloads = new WeakMap<WeaponSlotState, { sequence: NonNullable<WeaponSlotState['reloadSequence']>; started: boolean }>();
 
@@ -86,8 +88,30 @@ export const playBattleRifleMechanicalEvent: BattleRifleListener = (event, speed
   if (offset < clip) track.play(1,true,1/speed,offset);
 };
 
+/** One unchanged composite, delayed for the hand's approach. Existing action
+ * cuts keep their pitch; extra recovery time stays silent. No chamber layer. */
+export function updateSmgReloadAudio(state: WeaponSlotState): void {
+  const pending=smgReloads.get(state), q=state.reloadSequence;
+  if(!pending||pending.started||!state.reloading||q!==pending.sequence)return;
+  const elapsed=(state.totalReloadT??0)-(state.reloadT??0);
+  const delay=pending.chamberOnly?0:q!.phases[0].duration;
+  if(elapsed+1e-8<delay)return;
+  pending.started=true;
+  const empty=q!.empty, track=empty?AUDIO.smgReloadEmpty:AUDIO.smgReloadTactical;
+  const offset=(pending.chamberOnly?SMG.chamberOffset:0)+(elapsed-delay)/pending.speed;
+  const clip=empty?SMG.emptyClip:SMG.tacticalClip;
+  if(offset<clip)track.play(1,true,1/pending.speed,Math.max(0,offset));
+}
+
 export function playWeaponReloadAudio(weapon: WeaponDef, state: WeaponSlotState): boolean {
   if (!state.reloading || !state.reloadSequence) return false;
+  if (weapon.id === 'smg' && ['open','chamber'].includes(state.reloadSequence.phases[0].phase)) {
+    stopWeaponReloadAudio(); AUDIO.smgAuto.stop();
+    const q=state.reloadSequence, chamberOnly=q.phases[0].phase==='chamber';
+    const base=chamberOnly?SMG.empty.chamber:q.empty?SMG.empty.open:SMG.tactical.open;
+    smgReloads.set(state,{sequence:q,started:false,speed:q.phases[0].duration/base,chamberOnly});
+    updateSmgReloadAudio(state);return true;
+  }
   if (weapon.id === 'br') { stopWeaponReloadAudio(); AUDIO.brBurst.stop(); return true; }
   if (weapon.id === 'sniper') {
     stopWeaponReloadAudio();
@@ -125,6 +149,7 @@ export function playWeaponReloadAudio(weapon: WeaponDef, state: WeaponSlotState)
 
 export function stopWeaponReloadAudio(): void {
   reloadTracks.forEach(track => track.stop());
+  smgReloads = new WeakMap();
   plasmaReloads = new WeakMap();
   sniperReloads = new WeakMap();
 }
@@ -133,6 +158,7 @@ export function stopWeaponAudio(): void {
   weaponTracks.forEach(track => track.stop());
   minigunPhase = 'idle';
   partialBursts = new WeakSet<WeaponSlotState>();
+  smgReloads = new WeakMap();
   plasmaReloads = new WeakMap();
   sniperReloads = new WeakMap();
   railgunCharging = false;

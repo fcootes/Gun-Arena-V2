@@ -1,3 +1,4 @@
+import { SMG } from '../src/smgMechanics';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -41,7 +42,7 @@ class MockAudio {
 }
 (globalThis as any).Audio = MockAudio;
 const { AUDIO, FIRST_BATCH_AUDIO_URLS, SECOND_BATCH_AUDIO_URLS, THIRD_BATCH_AUDIO_URLS } = await import('../src/audio');
-const { playWeaponReloadAudio, playShotgunMechanicalEvent, playBattleRifleMechanicalEvent, playSniperBoltEvent, updateSniperReloadAudio, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } = await import('../src/weaponAudio');
+const { playWeaponReloadAudio, updateSmgReloadAudio, playShotgunMechanicalEvent, playBattleRifleMechanicalEvent, playSniperBoltEvent, updateSniperReloadAudio, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } = await import('../src/weaponAudio');
 for (const track of Object.values(AUDIO)) track.prepare();
 const latest = (track: typeof AUDIO.arSingle) => track.pool[(track.index + track.poolSize - 1) % track.poolSize] as unknown as MockAudio;
 const plays = (track: typeof AUDIO.arSingle) => track.pool.reduce((n, audio) => n + (audio as unknown as MockAudio).plays, 0);
@@ -73,9 +74,16 @@ for (const [id, tactical, empty] of [
     const w = weapon(id), ws: WeaponSlotState = { ammo, reserve: 100 };
     assert.ok(beginWeaponReload(w, ws, multiplier)); assert.equal(playWeaponReloadAudio(w, ws), true);
     const selected = ammo ? tactical : empty, other = ammo ? empty : tactical;
+    if(id==='smg') {
+      assert.ok(selected.pool.every(a=>a.paused),'No SMG mechanics before support-hand approach');
+      advanceWeaponReload(w,ws,ws.reloadSequence!.phases[0].duration);updateSmgReloadAudio(ws);
+    }
     const audio = latest(selected);
     assert.equal(audio.paused, false); assert.ok(other.pool.every(a => a.paused));
-    assert.ok(Math.abs(audio.duration / audio.playbackRate - ws.totalReloadT!) < 1e-9, `${id}: class-adjusted clip fits reload`);
+    if(id==='smg') {
+      assert.ok(Math.abs(audio.playbackRate-1/multiplier)<1e-9,'SMG native pitch/speed at baseline class');
+      assert.ok(audio.duration/audio.playbackRate<=ws.reloadT!+1e-8,'Composite ends before readiness');
+    } else assert.ok(Math.abs(audio.duration / audio.playbackRate - ws.totalReloadT!) < 1e-9, `${id}: class-adjusted clip fits reload`);
     assert.equal(audio.preservesPitch, true);
     const totalAmmo = ws.ammo! + ws.reserve!;
     advanceWeaponReload(w, ws, 20); stopWeaponReloadAudio();
@@ -144,11 +152,12 @@ console.log('PASS: pause/resume preserves cursor and speed; cancellation clears 
 
 
 for (const [id, track, offset] of [
-  ['smg', AUDIO.smgReloadEmpty, 1.287], ['lmg', AUDIO.lmgReloadEmpty, 3.696],
+  ['smg', AUDIO.smgReloadEmpty, SMG.chamberOffset], ['lmg', AUDIO.lmgReloadEmpty, 3.696],
 ] as const) {
   const ws: WeaponSlotState = { ammo: 10, reserve: 100, needsChamber: true };
   beginWeaponReload(weapon(id), ws); playWeaponReloadAudio(weapon(id), ws);
   assert.equal(latest(track).currentTime, offset);
+  if(id==='smg')assert.equal(latest(track).playbackRate,1);
   assert.ok(Math.abs((track.duration - offset) / latest(track).playbackRate - ws.totalReloadT!) < 1e-9);
   stopWeaponAudio();
 }
@@ -334,3 +343,21 @@ assert.ok(beginWeaponReload(weapon('br'),brResume));playWeaponReloadAudio(weapon
 while(brResume.reloading)advanceWeaponReload(weapon('br'),brResume,1/144,undefined,undefined,undefined,playBattleRifleMechanicalEvent);
 assert.deepEqual([plays(AUDIO.brMagazineOut)-brCounts[0],plays(AUDIO.brMagazineIn)-brCounts[1],plays(AUDIO.brCharge)-brCounts[2]],[0,0,1]);
 console.log('PASS: interrupted BR empty reload resumes chamber-only without replaying magazine cues');
+
+// SMG composites retain native spacing, including late-frame start and one voice.
+for(const hz of [30,60,144])for(const speed of [1,.75,.9])for(const ammo of [0,17]) {
+  stopWeaponAudio();const w=weapon('smg'),ws:WeaponSlotState={ammo,reserve:192};beginWeaponReload(w,ws,speed);
+  const track=ammo?AUDIO.smgReloadTactical:AUDIO.smgReloadEmpty,before=plays(track);
+  playWeaponReloadAudio(w,ws);assert.equal(plays(track),before);
+  while(ws.reloading){advanceWeaponReload(w,ws,1/hz);updateSmgReloadAudio(ws);}
+  assert.equal(plays(track),before+1,'Exactly one complete SMG composite per reload');
+  assert.ok(Math.abs(latest(track).playbackRate-1/speed)<1e-8);
+  assert.ok(latest(track).currentTime<1/(hz*speed)+1e-8,'Late start seeks the real audio cursor');
+  stopWeaponReloadAudio();updateSmgReloadAudio(ws);assert.equal(plays(track),before+1);
+}
+const smgManifest=JSON.parse(readFileSync(new URL('../src/assets/audio/weapons/batch2/clip_manifest.json',import.meta.url),'utf8'));
+const emptySmg=smgManifest.clips.find((c:any)=>c.filename==='smg_reload_empty.wav');
+assert.equal(emptySmg.source_cuts.length,3,'Empty asset already contains magazine-out/in and charging');
+const chargeOnset=SMG.empty.open+1.338,phaseStart=SMG.empty.open+SMG.empty.eject+SMG.empty.insert;
+assert.ok(Math.abs(phaseStart+SMG.empty.chamber*.306-chargeOnset)<.001,'Handle starts pulling on the embedded charging cue');
+console.log('PASS: SMG approach delay, native-rate single composite, late-frame cursor, cancellation and embedded charging synchronization at three frame rates/class speeds');

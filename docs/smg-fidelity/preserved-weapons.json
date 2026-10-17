@@ -1,0 +1,32 @@
+{
+  "baselineRoot": "/workspace/Gun-Arena-V2/work/baseline",
+  "includeSprint": true,
+  "excludeShotgun": false,
+  "before": {
+    "ar": "faacd88edbfe685432ecde212e40462e8c8943d3f7450030d74fb80f4c68377d",
+    "shotgun": "3bf49a3d34759148df50836836f88d46153505f429902fcd0515393dfbdf0110",
+    "sniper": "ac457d9b415aaa2285d17688871e2134ccbf07b09e14265da44e079f2c0672de",
+    "pistol": "d7a27f61ac4b2df818d3e62818dc6313466d92f204a235337c807b5d282ec507",
+    "lmg": "f7d006da5be285222106c0aad79263dbd785c5afd14c70481c65b1b7c90ffa29",
+    "br": "8ce5811ec4bdfad1a6a3c9fc6e334a3d25aade5fbbd4d116d066a41522b22d85",
+    "laser": "9e788f164f307eb37b0409ba14b2379eb362b7be708a5a699d6db3978619636a",
+    "minigun": "d8cb40a6d76325ac17c1737b3597afa8a050aebbc3c039dda0f73f51ada51f2f",
+    "railgun": "7f9d639b8d6734ccf322079158a6a2e4c5f5926a0b880d7fd02ee14889536fca",
+    "rocket": "46994bef648efec3a37e9e562666a6df551d85a6809aebefa5a97a25885e7f4a",
+    "grenade_launcher": "4ec62353b3985cd654c37aeed0e44989aaee34bcb3eb46826c542d4f769271aa"
+  },
+  "after": {
+    "ar": "faacd88edbfe685432ecde212e40462e8c8943d3f7450030d74fb80f4c68377d",
+    "shotgun": "3bf49a3d34759148df50836836f88d46153505f429902fcd0515393dfbdf0110",
+    "sniper": "ac457d9b415aaa2285d17688871e2134ccbf07b09e14265da44e079f2c0672de",
+    "pistol": "d7a27f61ac4b2df818d3e62818dc6313466d92f204a235337c807b5d282ec507",
+    "lmg": "f7d006da5be285222106c0aad79263dbd785c5afd14c70481c65b1b7c90ffa29",
+    "br": "8ce5811ec4bdfad1a6a3c9fc6e334a3d25aade5fbbd4d116d066a41522b22d85",
+    "laser": "9e788f164f307eb37b0409ba14b2379eb362b7be708a5a699d6db3978619636a",
+    "minigun": "d8cb40a6d76325ac17c1737b3597afa8a050aebbc3c039dda0f73f51ada51f2f",
+    "railgun": "7f9d639b8d6734ccf322079158a6a2e4c5f5926a0b880d7fd02ee14889536fca",
+    "rocket": "46994bef648efec3a37e9e562666a6df551d85a6809aebefa5a97a25885e7f4a",
+    "grenade_launcher": "4ec62353b3985cd654c37aeed0e44989aaee34bcb3eb46826c542d4f769271aa"
+  },
+  "passed": true
+}

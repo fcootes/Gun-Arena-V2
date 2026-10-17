@@ -1,0 +1,335 @@
+{
+  "renderer": "Chromium SwiftShader; actual App/WeaponStudio",
+  "evidence": [
+    {
+      "name": "ready",
+      "ammo": 17,
+      "reserve": 192,
+      "reloading": false,
+      "needsChamber": false,
+      "progress": 0,
+      "root": [
+        0.135,
+        -0.2280050100267919,
+        -0.315
+      ],
+      "right": [
+        0.038,
+        -0.1,
+        0.125
+      ],
+      "left": [
+        -0.036,
+        -0.078,
+        -0.205
+      ],
+      "mag": [
+        0,
+        -0.075,
+        -0.055
+      ],
+      "fresh": [
+        0,
+        -0.075,
+        -0.055
+      ],
+      "bolt": [
+        -0.043,
+        0.04,
+        -0.095
+      ],
+      "magVisible": true,
+      "freshVisible": false
+    },
+    {
+      "name": "tactical-removal",
+      "ammo": 17,
+      "reserve": 192,
+      "reloading": true,
+      "needsChamber": false,
+      "phase": "eject",
+      "progress": 0.8547008547008579,
+      "root": [
+        0.115,
+        -0.155,
+        -0.345
+      ],
+      "right": [
+        0.038,
+        -0.1,
+        0.125
+      ],
+      "left": [
+        -0.034,
+        -0.2582779379288258,
+        -0.037000000000000005
+      ],
+      "mag": [
+        0,
+        -0.2022779379288258,
+        -0.055
+      ],
+      "fresh": [
+        0,
+        -0.075,
+        -0.055
+      ],
+      "bolt": [
+        -0.043,
+        0.04,
+        -0.095
+      ],
+      "magVisible": true,
+      "freshVisible": false
+    },
+    {
+      "name": "magazine-seating",
+      "ammo": 17,
+      "reserve": 192,
+      "reloading": true,
+      "needsChamber": false,
+      "phase": "insert",
+      "progress": 0.9325735992402692,
+      "root": [
+        0.115,
+        -0.15310422510221713,
+        -0.345
+      ],
+      "right": [
+        0.038,
+        -0.1,
+        0.125
+      ],
+      "left": [
+        -0.034,
+        -0.13559285143764738,
+        -0.037000000000000005
+      ],
+      "mag": [
+        -0.08,
+        -0.31000000000000005,
+        -0.055
+      ],
+      "fresh": [
+        0,
+        -0.07959285143764738,
+        -0.055
+      ],
+      "bolt": [
+        -0.043,
+        0.04,
+        -0.095
+      ],
+      "magVisible": false,
+      "freshVisible": true
+    },
+    {
+      "name": "charging-contact",
+      "ammo": 32,
+      "reserve": 160,
+      "reloading": true,
+      "needsChamber": true,
+      "phase": "chamber",
+      "progress": 0.30583501006036745,
+      "root": [
+        0.115,
+        -0.155,
+        -0.345
+      ],
+      "right": [
+        0.038,
+        -0.1,
+        0.125
+      ],
+      "left": [
+        -0.07600000000000015,
+        0.02000000000000049,
+        -0.029999999999991755
+      ],
+      "mag": [
+        0,
+        -0.075,
+        -0.055
+      ],
+      "fresh": [
+        0,
+        -0.075,
+        -0.055
+      ],
+      "bolt": [
+        -0.043,
+        0.04,
+        -0.095
+      ],
+      "magVisible": false,
+      "freshVisible": true
+    },
+    {
+      "name": "charging-retracted",
+      "ammo": 32,
+      "reserve": 160,
+      "reloading": true,
+      "needsChamber": true,
+      "phase": "chamber",
+      "progress": 0.6116700201207198,
+      "root": [
+        0.115,
+        -0.155,
+        -0.345
+      ],
+      "right": [
+        0.038,
+        -0.1,
+        0.125
+      ],
+      "left": [
+        -0.07600000000000015,
+        0.02000000000000049,
+        0.004000000000000059
+      ],
+      "mag": [
+        0,
+        -0.075,
+        -0.055
+      ],
+      "fresh": [
+        0,
+        -0.075,
+        -0.055
+      ],
+      "bolt": [
+        -0.043,
+        0.04,
+        -0.061
+      ],
+      "magVisible": false,
+      "freshVisible": true
+    },
+    {
+      "name": "support-recovery",
+      "ammo": 32,
+      "reserve": 160,
+      "reloading": true,
+      "needsChamber": false,
+      "phase": "close",
+      "progress": 0.8653198653198583,
+      "root": [
+        0.13400939279007268,
+        -0.22817887139606546,
+        -0.316485910814891
+      ],
+      "right": [
+        0.038,
+        -0.1,
+        0.125
+      ],
+      "left": [
+        -0.03798121441985467,
+        -0.07314602467135606,
+        -0.1963321869131354
+      ],
+      "mag": [
+        0,
+        -0.075,
+        -0.055
+      ],
+      "fresh": [
+        0,
+        -0.075,
+        -0.055
+      ],
+      "bolt": [
+        -0.043,
+        0.04,
+        -0.095
+      ],
+      "magVisible": false,
+      "freshVisible": true
+    },
+    {
+      "name": "ads-after-reload",
+      "ammo": 32,
+      "reserve": 160,
+      "reloading": false,
+      "needsChamber": false,
+      "progress": 0,
+      "root": [
+        0.0000018460164688668747,
+        -0.10999399746959168,
+        -0.3349997265160787
+      ],
+      "right": [
+        0.038,
+        -0.1,
+        0.125
+      ],
+      "left": [
+        -0.036,
+        -0.078,
+        -0.205
+      ],
+      "mag": [
+        0,
+        -0.075,
+        -0.055
+      ],
+      "fresh": [
+        0,
+        -0.075,
+        -0.055
+      ],
+      "bolt": [
+        -0.043,
+        0.04,
+        -0.095
+      ],
+      "magVisible": true,
+      "freshVisible": false
+    },
+    {
+      "name": "two-hand-sprint",
+      "ammo": 17,
+      "reserve": 192,
+      "reloading": false,
+      "needsChamber": false,
+      "progress": 0,
+      "root": [
+        -0.05359194748852658,
+        -0.2849717022606208,
+        -0.44999815398353116
+      ],
+      "right": [
+        0.038,
+        -0.1,
+        0.125
+      ],
+      "left": [
+        -0.036,
+        -0.078,
+        -0.205
+      ],
+      "mag": [
+        0,
+        -0.075,
+        -0.055
+      ],
+      "fresh": [
+        0,
+        -0.075,
+        -0.055
+      ],
+      "bolt": [
+        -0.043,
+        0.04,
+        -0.095
+      ],
+      "magVisible": true,
+      "freshVisible": false
+    }
+  ],
+  "checks": [
+    "Eight production App poses plus WeaponStudio side/top/three-quarter",
+    "Actual R tactical/empty reload; automatic fire before/after; pause/resume; switch/cancel; two-hand sprint firing restriction; ADS; death/redeployment; bundled audio"
+  ],
+  "errors": []
+}
