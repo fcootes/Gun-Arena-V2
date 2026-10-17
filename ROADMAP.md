@@ -20,7 +20,8 @@ Evolve **Gun-Arena V2** into a responsive, performant, visually coherent WebGL t
 | Shotgun fidelity | [#17](https://github.com/fcootes/Gun-Arena-V2/pull/17) | **Merged** | Regress pump, shell loop, sound timing and interruption |
 | Heavy Sniper fidelity | [#18](https://github.com/fcootes/Gun-Arena-V2/pull/18) | **Merged** | Regress manual R bolt-cycle, ADS and reload |
 | Battle Rifle fidelity | [#19](https://github.com/fcootes/Gun-Arena-V2/pull/19) | **Merged** | Regress bullpup identity, stock/grips and upright rear-mag reload |
-| Combat Pistol fidelity | [#20](https://github.com/fcootes/Gun-Arena-V2/pull/20) | **Merged** | User confirmed the tuned one-handed sprint looks good; retain reload and gait regression checks |
+| Combat Pistol fidelity | [#20](https://github.com/fcootes/Gun-Arena-V2/pull/20) | **Merged** | User accepted one-handed sprint; preserve reload and gait tests |
+| SMG fidelity | [#22](https://github.com/fcootes/Gun-Arena-V2/pull/22) | **Merged** | User satisfied with SMG; preserve receiver charging and tactical/empty reload behavior |
 
 Other earlier gameplay, UI, world and performance PRs are history, not a substitute for final visual/playtest acceptance. See the existing PR descriptions and documentation.
 
@@ -47,9 +48,9 @@ The user's latest laptop playtest approved the revised one-handed pistol gait; G
 - Distinguish tactical vs empty reload visuals/audio; preserve existing good magazine action.
 - Dedicated PR and user footage/acceptance.
 
-### A3 — SMG and LMG (Issue #16 step 5)
+### A3 — SMG merged; Heavy LMG next (Issue #16 step 5)
 
-- **SMG:** closer/lower viewmodel, precise primary/support hand grips, believable magazine/action timing and correct audio.
+- **SMG:** [PR #22](https://github.com/fcootes/Gun-Arena-V2/pull/22) **merged**, with user-reported positive laptop playtest; preserve updated receiver-side charging, compact model, timing and audio. Do not reopen without demonstrated regression.
 - **LMG:** connected top feed cover, open/close/slap interaction, coherent belt/magazine handling with discrete mechanical sound; make weight and support stance readable.
 - Use manageable PR scopes and record per-weapon visual/audio acceptance.
 
@@ -87,7 +88,7 @@ The supplied batch1/2/3 WAV libraries and manifests are already integrated in va
 - **Movement choice still open:** Current unrestricted fast sprint makes it too easy to bypass hostiles. User is interested in a three-state **walk → sustainable run → faster limited tactical sprint** with a generous stamina budget, or a Halo-like burst with recovery. **Recommendation:** prototype the three-state hybrid first; compare it against a cooldown-based tactical sprint and existing baseline. No final stamina commitment or hard numbers without native playtest.
 - **Character art pipeline:** User objects to polishing throwaway blocky bot models. Favor an early **single properly rigged character prototype** (optimized GLB/glTF, shared skeleton/rig and modular armor) rather than repeatedly detailing the current procedural meshes. Keep existing bots running as fallbacks until proven replacement meets performance, animation and AI needs; fix only urgent visibility/weapon-contact bugs in the interim. Asset style targets Halo: Reach-inspired *grounded* military science fiction; do not assume Blender installation is required.
 - **Training Grounds:** Turn the *existing, preserved* Training Grounds map into a meaningful interactive **shooting range and tactical training facility**. Use it to validate weapons, reloads, sprint, hit reactions, cover and AI before rolling changes into Area 51. Do not delete or replace the map and do not break its existing modes. Build progressively, starting with a lightweight range/test harness before broad environmental art.
-- **Sequencing:** Finish approved weapon backlog → small Training Grounds instrumented range/testbed + shared sprint/movement → initial encounter checks → combat feedback and deep enemy rigs/AI → presentation/graphics → campaign maps/cutscenes. The range/testbed may be built earlier as a narrowly scoped utility if it accelerates weapon QA.
+- **Sequencing:** Finish every remaining weapon upgrade and acceptance item → build Training Grounds shooting range + movement course + optional AI arena → shared two-handed sprint and three-state locomotion → visible hit reactions, stagger and non-graphic death response → modular rig and deep enemy AI → graphics/atmosphere → campaign maps/cutscenes. Basic AI bypass diagnostics can overlap movement, but the significant AI overhaul remains in its own PRs. **Do not start Training Grounds construction before the weapon backlog is complete**, per the user's explicit decision.
 
 ### Sprint design prototype — *proposal, not approved balance settings*
 
@@ -101,17 +102,101 @@ Measure sprint distance, encounter bypass rate, combat re-engagement, weapon-rea
 
 ### Training Grounds — staged interactive range concept
 
-**Near-term range/test harness:** clearly marked pistol/rifle/heavy bays; near/mid/far targets with hit-location and damage feedback; reload/ADS/shot grouping drills; sprint lane with distance/cadence and start-stop markers; simple reset/deploy controls. Include a small repeatable AI test zone with selectable threat/cover settings behind deliberate opt-in controls. Make developer instrumentation optional so ordinary gameplay remains clean.
+**First Training Grounds release (after all weapons):** include **all** of the user's selected capabilities: pistol/rifle/heavy shooting lanes with near/mid/far targets and hit-location/damage feedback; reload/ADS/shot grouping drills; a sprint and obstacle course with distance/cadence/start-stop markers; and a physically separated **optional** repeatable AI combat arena with selectable threat/cover settings, spawn/reset controls and deterministic baseline. Deliver via small serial PRs TG-01 to TG-03 so the full first release has all three components without building an unreviewable monolith. Make developer instrumentation optional so ordinary gameplay remains clean.
 
 **Later training facility:** class/loadout testing, moving/reactive targets, material-specific footstep/audio test surfaces, squad command course, encounter scenario presets (USMC/APEX/infected as appropriate), frame-time/draw-call diagnostics and standardized visual evidence captures. Reuse production weapon, movement, projectile, bot and lighting paths rather than inventing separate simplified mechanics.
 
 **Acceptance:** browser and native laptop QA remains quick and reproducible, safe boundaries prevent stray enemies/projectiles affecting another test area, startup and disposal costs stay bounded, Training Grounds remains playable, and Area 51/Shattered Wall are unchanged.
 
+## Confirmed execution board — implementation PR sequence (17 Oct 2026)
+
+**This section is the actionable source of truth for upcoming implementation sequencing.** Previous Phase A–E sections retain the broader design requirements. IDs below are **planning ticket keys, not GitHub PR numbers or claims of completed code**. Start each implementation PR from current `main`; do not work on this docs branch. Scope each PR narrowly, gather acceptance evidence, await laptop playtest approval before merging. **No work below is being implemented by the roadmap update.**
+
+### Stage W — Close original weapon backlog first (Issue #16)
+
+**Done on GitHub:** core hands [#15](https://github.com/fcootes/Gun-Arena-V2/pull/15), shotgun [#17](https://github.com/fcootes/Gun-Arena-V2/pull/17), heavy sniper [#18](https://github.com/fcootes/Gun-Arena-V2/pull/18), Battle Rifle [#19](https://github.com/fcootes/Gun-Arena-V2/pull/19), pistol [#20](https://github.com/fcootes/Gun-Arena-V2/pull/20) and SMG [#22](https://github.com/fcootes/Gun-Arena-V2/pull/22). Merge != blanket acceptance for unrelated issues. Verify AR's existing receiver-latch/reload success against the remaining AR checks without rebuilding it.
+
+| Planned PR | Prerequisite | Exact implementation boundary | User-facing acceptance |
+| --- | --- | --- | --- |
+| **W01 LMG Fidelity** | SMG #22 merged (**verified**) | Pivoting hinged feed cover, side ammo box + belt ownership, tactical/empty box choreography and visible **palm slap** to close cover; audit LMG loop and composite audio | First-person continuous tactical + empty reload clips show real hand-cover contact, no belt floating, fire/audio and ADS work |
+| **W02 Railgun Fidelity** | W01 accepted | Inspect/confirm preferred **rear-breech reload** proposal, separate open/insert/lock mechanism, correct hands and charging audio | Approved concept, convincing cartridge/breech state and intact charge/fire mechanics |
+| **W03 Plasma Fidelity** | W02 accepted | Model/hand alignment, battery/vent/chamber sequence, heat/overheat/firing audio correctness | Readable vent/reload, no duplicated cues, firing/overheat and cooldown work |
+| **W04 Minigun Fidelity** | W03 accepted + user's under-cradled reference | Correct **handheld under-cradled** support and orientation (not spade-grip), barrel spin/heat/audio, viewmodel framing | Matches actual reference and first-person ergonomics; smooth windup/spindown |
+| **W05 Rocket Launcher Fidelity** | W04 accepted | Correct low/close carry, loading/hand/launcher states and verify projectile/audio hook | Reliable projectile hit/flight, reload and suitable firing audio or precise missing-asset report |
+| **W06 Grenade Launcher Fidelity** | W05 accepted | Correct viewmodel/cylinder/ammo sequence, articulated hand contact, sound, preserve detonation | Firing and reload mechanically legible; projectile behavior unchanged |
+| **W07 Arsenal Acceptance/AUDIO** | W01–W06 reviewed | Audit 12 weapons' audio manifests/triggers, composites vs duplicate mechanical cues; AR acceptance check; targeted shared viewmodel, ADS, controls and memory/disposal regression | Each weapon gets checklist with native playtest verdict and explicit unresolved exceptions; no missing clip is silently fabricated |
+
+Keep W01–W07 as independently reviewable implementation PRs; a clearly evidenced, user-approved exception can be recorded instead of marking the entire backlog complete. No fictional PR links or dates. **Only after W07/Issue #16 sign-off proceed with Training Grounds construction.**
+
+### Stage TG — Training Grounds first playable shooting/testing facility (AFTER all weapon upgrades)
+
+Preserve the **existing** Training Grounds; do not delete it or swap it for Area 51. These are consecutive small PRs delivering the user's requested **initial release with all capabilities**:
+
+| Planned PR | Prerequisite | Deliverable | Definition of done |
+| --- | --- | --- | --- |
+| **TG01 Target Range** | W07 accepted | Safe separated shooting lanes for pistol, rifle and heavy weapons; near/mid/far targets; target hit-location/damage feedback; ADS/shot grouping and reload timing display; reset/replenish controls | Real weapon/projectile/damage hooks, repeatable target readings; no new combat damage model; no target geometry leaks; map loads correctly |
+| **TG02 Sprint/Obstacle Course** | TG01 accepted | Marked sprint distance, acceleration and stop markers; simple obstacle/cover route; cadence/speed, start/stop/recovery readouts using real player movement | Repeated baseline movement runs comparable without affecting controls/physics; accessible restart and no map collision voids |
+| **TG03 Optional AI Combat Arena** | TG02 accepted | Opt-in gated/separated compact arena with selectable faction/opponent presets, deterministic spawns, reset and simple score/time/engagement stats | Default range has no unexpected enemies; player can start/reset multiple waves safely; no enemy leaks or spillover to other lanes; both USMC/APEX scenarios and Area 51 regression pass |
+
+**Initial Training Grounds facility is accepted only when TG01 + TG02 + TG03 are working together**. Later expansion (squad-command course, new target types, advanced replay/telemetry) is separate optional scope, not a blocker.
+
+### Stage MOV — Movement and two-handed weapon sprint FIRST (next combat-quality priority)
+
+| Planned PR | Prerequisite | Deliverable | Definition of done |
+| --- | --- | --- | --- |
+| **MOV01 Shared Two-Hand Sprint Gait** | TG03 accepted | Shared shoulder/elbow/grip-constrained authored running motion with per-weapon carry profiles; no fixed side-locked rifles; pistol remains on approved independent gait | Both hands correctly attached, distinct weapon weight, smooth enter/exit/ADS/reload at 30/60/144 Hz; native first-/third-person playtest |
+| **MOV02 Three-State Locomotion Prototype** | MOV01 accepted | **Walk + sustainable run + stamina-limited tactical sprint** as chosen first prototype; responsive acceleration/deceleration, weapon-ready transition, clear low-clutter stamina display and reset | Physics/input/ADS/hit detection preserved; stamina spends/restores deterministically incl. pause/death/respawn; no surprise midair sprint; player compares to baseline and approves speed/recovery |
+| **MOV03 Integrated Movement Acceptance** | MOV02 accepted | Verify heavy/light class profiles, tactical retreat, aim recovery, obstacles, jump, stairs, squad/weapon changes, Area 51 run-through baseline and first low-risk AI detection telemetry | Range course + one real Area 51 route show measurable changes in traversal and combat engagement; no global speed nerf assumed; user confirms actual feel |
+
+**Implementation choices not yet signed off:** numeric speed tiers, stamina capacity/regeneration/cooldown, whether Shift triggers tactical sprint and how sustainable run is entered (existing Shift/ADS bindings must not be broken), and presentation of stamina. Proposed values are trial parameters, NOT commitments. **Do not silently make stamina mandatory across the game before MOV02 approval.** Test on Training Grounds first and retain a comparison switch for development.
+
+### Stage HIT — Immediate post-movement combat-feedback priority
+
+| Planned PR | Prerequisite | Deliverable | Definition of done |
+| --- | --- | --- | --- |
+| **HIT01 Damage/Reaction Contract** | MOV03 accepted | Central authoritative hit event with impact direction, severity and hit-zone info where already available; distinct flinch/stagger intent separated from actual HP/damage; stable transitions | No double damage, no damage-on-animation, no hitbox misalignment; unit + scenario regression for melee, projectiles and shooting |
+| **HIT02 Readable Reactions and Defeat Animations** | HIT01 accepted | Directional hit flinches, bounded stagger, recoil from impacts, readable non-graphic collapse/defeat states; preserve gameplay/AI ownership | Enemies react without rubberbanding, freezing, teleporting, breaking cover/firing state or excessive visual violence; loop through optional AI arena and Area 51; avoid throwaway bot model sculpting |
+
+**Prioritization:** HIT01/HIT02 are FIRST after MOV work, ahead of major grenade/recoil/muzzle/footstep VFX projects. Implement presentable, inexpensive reactions for existing actors as a temporary bridge; do not deeply rework low-detail procedural models.
+
+### Stage CHAR + AI — Modular soldier rig, then advanced opponent quality
+
+| Planned PR | Prerequisite | Deliverable | Definition of done |
+| --- | --- | --- | --- |
+| **CHAR01 Modular Rig Proof of Concept** | HIT02 accepted | ONE optimized properly skinned GLB/glTF humanoid with shared skeleton and switchable **USMC/APEX armor/helmet/insignia**, appropriate licensed/original assets and idle, run, aim, reload, react, defeat states; browser-compatible pipeline | Both appearances derive from same skeleton; weapons attach correctly; no external install assumed; measured render/memory cost and resource ownership |
+| **CHAR02 Safe Runtime Integration** | CHAR01 accepted | Integrate shared rig into real botBuilder/gameplay, update animation state from existing AI events, maintain authored hitboxes, keep procedural fallback behind selectable/testable path | Representative USMC/APEX squads navigate, fire, reload, react, dispose/redeploy correctly in range and both maps; fallback remains available |
+| **AI01 Perception, Pursuit and Cover** | MOV03 diagnostics + CHAR02 accepted | Fix meaningful enemy alert memory, pursuit, flanking and readable cover/weapon behavior (without omniscience or gratuitous HP/accuracy boosts) | Same Area 51 run-through replay is meaningfully contested, while retreat and intended alternate paths remain possible; no APEX cold-load regression |
+| **AI02 Contested Objectives & Squad Cooperation** | AI01 accepted | Selective defend/hold objectives, reasonable reinforcements and class/squad responses; no arbitrary locked doors in unrelated modes | Both factions' Extraction complete; enemies/squads react credibly and Survival stays functional; native performance measured |
+
+A minimal **read-only AI detection/bypass audit** can occur during MOV03, but large enemy rewrites remain distinct. No disposable procedural-bot cosmetics project before CHAR01.
+
+### Stage GFX → Campaign (future, conditional)
+
+| Planned PR group | Prerequisite | First slice and review gate |
+| --- | --- | --- |
+| **GFX01 Visual baseline + budgets** | Movement/enemy acceptance | Establish representative scenes, GPU CPU draw-call/frame-time/memory baseline; accessible quality tiers |
+| **GFX02 Environment/character atmosphere** | GFX01 | Focused lighting, materials, environment effects, HUD clarity, footstep/material spatial audio in reviewed map-specific batches |
+| **CAMP01 Story/missions planning** | GFX presentation accepted | Approve campaign canon, USMC/APEX mission structure and one representative mission flow **before building multiple new maps** |
+| **CAMP02 Playable campaign vertical slice** | CAMP01 | One full existing-map mission with clear objectives, checkpoint/retry, squad AI and complete extraction |
+| **CAMP03 Maps & cinematics** | CAMP02 | Expand story missions and create helicopter insertion/cutscenes **only AFTER graphics overhaul** with existing accepted assets |
+
+No firm mission count, duration, plot canon, cutscene delivery date, new map deletion or speculative integration is approved by this planning document.
+
+### Universal PR contract (applies to W, TG, MOV, HIT, CHAR, AI, GFX, CAMP)
+
+- Start from latest reviewed `main`, use a separate scoped feature branch and draft PR; **no stacked/automatic merge, no direct main push, no Vercel production promotion**.
+- Read affected `src/App.tsx`, `src/types.ts`, `src/world.ts`, `src/botBuilder.ts` and connected modules; verify real cross-file signatures.
+- Preserve approved gameplay input, player physics, aiming/hit detection, weapons, squad AI, USMC/APEX, both modes, Area 51, Shattered Wall and the existing Training Grounds.
+- All dynamic Three.js geometries/materials/textures have correct owner and disposal. Profile loops, avoid per-frame allocation; don't resurrect the APEX preparation stall.
+- Run TypeScript/build, focused weapon/viewmodel/controls/audio or runtime/area51 tests and frame-rate tests relevant to scope. Distinguish measured regressions from browser software-renderer issues.
+- Provide before/after first-person *and relevant third-person* visual evidence, limited continuous native-speed gameplay capture if useful, performance/correctness summary, known exceptions, exact PR commit/head, and ask the user to review on the target laptop.
+- **Only declare a step accepted when its actual user-facing criteria pass or the user explicitly grants a documented exception.** Keep the roadmap planning-only until separately authorized for implementation.
+
 ## PHASE B — Combat feel and movement quality (next quality milestone; coupled with initial encounter fixes)
 
 ### B1 — Finish the original weapon fidelity acceptance backlog
 
-Complete **Phase A**'s prescribed Issue #16 ordering and audio/visual acceptance. Pistol PR #20 is merged/accepted. Verify the already successful AR handling against the remaining checklist without redoing good work; then SMG/LMG, railgun/plasma and minigun/launchers. Keep separate weapon PRs.
+Complete **Phase A**'s prescribed Issue #16 ordering and audio/visual acceptance. Pistol [#20](https://github.com/fcootes/Gun-Arena-V2/pull/20) and SMG [#22](https://github.com/fcootes/Gun-Arena-V2/pull/22) are merged/user-reported accepted. Audit AR's approved handling rather than unnecessarily redoing it. Remaining: LMG, Railgun, Plasma, Minigun, Rocket Launcher, Grenade Launcher, then cross-arsenal audio/fidelity acceptance. Keep each weapon on a separate reviewed PR.
 
 ### B2 — Shared two-handed weapon sprint framework
 
@@ -123,9 +208,9 @@ Existing low/side-carry poses often look rigid. Implement reusable **shoulder/el
 - Physically expressive motion but precise controls, modest camera motion, no transform accumulation or per-frame GPU allocation.
 - Compare actual native-speed footage, not isolated static screenshots; targeted tests across frame rates.
 
-### B3 — Weapon impacts, recoil, audio and combat readability (after initial movement improvements)
+### B3 — Combat feedback: hit reactions and stagger FIRST (after movement)
 
-Polish shot/recoil feel, mechanical feedback, muzzle flashes, grenade throw/interaction, surface impacts, damage reaction feedback, directional threat indicators, HUD legibility and sound timing with **small weapon/system-specific PRs**. Avoid excessive camera shake, bright particle spam and UI clutter. Check all supplied audio assets before acquiring new ones. Perform a measured WebGL/React performance pass only on demonstrated bottlenecks.
+**The user's first post-movement combat-feedback priority is visible hit reactions, stagger and more convincing, non-graphic enemy defeat animations.** Implement hit-location and force/reaction contracts, readable stumble/stagger with bounded duration and gameplay-safe interrupts, and appropriate collapse/defeat transitions; test gameplay consequences and animation responsiveness. Do not conflate cosmetics with damage authority, add gratuitous gore or polish temporary procedural bot meshes that will be replaced. A later distinct batch handles recoil, impact decals, muzzle flash, grenades, weapon/audio texture, directional threat indicators and HUD legibility. Avoid excessive camera shake or particle spam; source-check existing clips and test measured browser GPU cost.
 
 ### B4 — Grounded movement and sprint gameplay prototype
 
@@ -151,7 +236,7 @@ Prototype improvements independently of movement changes, then test the interact
 
 ## PHASE C — Enemy quality: how they move, fight, react and look
 
-Once the fundamental combat feel and first anti-bypass fixes are accepted, deliberately invest in the enemies as a coherent system:
+After movement and the first hit/stagger/defeat-response task are accepted, deliberately invest in enemies as a coherent system. **Build one modular USMC/APEX rig as the FIRST character-model replacement milestone**, while keeping working procedural fallback until full integration and testing:
 
 - AI behavior: readable detection/communication, threat priorities, human operator cover/firing discipline, coordination, pathfinding and squad interactions.
 - Different factions/enemy archetypes: USMC and APEX/Ghost/Cordon concepts remain **lore-dependent**; infected, military hostiles, elites, bosses should not all move/think identically.
@@ -206,15 +291,17 @@ The target is **coherent Halo: Reach-inspired grounded science-fiction presentat
 
 ## Decisions still requiring design confirmation
 
-The high-level priorities above were answered by the user on 17 Oct 2026. Remaining *implementation* choices:
+The user has **explicitly selected**: Training Grounds after all weapons; first sprint prototype = walk/run/stamina-limited tactical sprint; first Training Grounds includes range, obstacle sprint lane, and optional AI arena; first enemy rig = **modular USMC/APEX soldier sharing one skeleton**; first post-movement combat polish = **hit reactions, stagger and realistic non-graphic defeats**. These are now the approved planning priorities, not open polling questions.
 
-1. **Sprinting balance:** compare generous walk/run/tactical-sprint stamina against a Halo-style recovery sprint and unrestricted baseline; tune speed, readiness and recovery through playtesting.
-2. **Combat feel acceptance:** choose first focus among recoil/hit reactions/throwable animations, weapon-ready handling, or audio/surface response.
-3. **Enemy asset pipeline:** select tooling and specifications for one optimized rigged GLB humanoid with interchangeable armor. Do not spend significant effort redesigning temporary blocky bots.
-4. **Training Grounds implementation details:** choose which firing lanes, movement test course, AI scenario controls and instrumentation should be in the first small release. Use one Area 51 encounter as the subsequent real-world acceptance test.
+Only detailed design/tuning choices remain:
+
+1. **Sprinting balance:** FIRST prototype is CONFIRMED walk + sustainable run + stamina-limited tactical sprint. Final speeds, stamina budget, recovery, input mapping and combat-ready delay must be approved through playtest; compare against the previous unlimited baseline.
+2. **Later combat-feel batch:** hit reactions, stagger and non-graphic defeats are FIRST after movement; decide whether recoil/throwables or audio/surface response follows them.
+3. **Rigged asset specifics:** modular USMC/APEX humanoid sharing one skeleton is CONFIRMED; choose acceptable art style, source/licensing and tooling, attachment/skeleton conventions, performance targets before building assets.
+4. **Training Grounds:** confirmed AFTER all weapons; first release must include shooting lanes, sprint/obstacle course AND an optional AI arena. Detailed layout, target types and training UI can be tuned when implementing TG-01..03; Area 51 remains the real mission acceptance environment.
 5. **Campaign scope:** proposed 8 missions × ~20 minutes and the railway/city settings remain tentative until story and pacing are agreed.
 
-Do not call these questions blockers for the small immediate pistol gait or remaining established weapon work.
+Do not treat these detailed decisions as blockers for finishing the original weapon sequence. No implementation PR exists merely because it appears in the board above.
 
 ---
 **Authority:** Weapon detail/sequencing: [Issue #16](https://github.com/fcootes/Gun-Arena-V2/issues/16). Technical progress: linked PRs, actual main, tests and laptop review. Planning updates should preserve this distinction.
