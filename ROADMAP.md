@@ -71,68 +71,102 @@ The supplied batch1/2/3 WAV libraries and manifests are already integrated in va
 
 **Gate to Phase B:** Every Issue #16 item has a linked implementation/review or a clearly recorded outstanding acceptance exception; all twelve weapons function during actual gameplay and have appropriate hand/weapon interactions and sound.
 
-## PHASE B — Tactical Movement and Sprint Fidelity (new proposal; *after* the existing weapon sequence)
+## Confirmed direction — user decisions, 17 October 2026
 
-### B1 — Two-handed weapon sprint motion framework
+1. **Movement realism AND encounter integrity together.** Work on a shared two-handed weapon sprint framework and measure/fix the Area 51 encounter run-through problem as coordinated but separate PRs. Do not make a single huge movement-plus-AI rewrite.
+2. **Grounded momentum plus stamina investigation.** User wants acceleration, deceleration, weapon-ready recovery **and to explore stamina**. Start with low-risk responsive handling and a tunable stamina prototype/side-by-side playtest, **not a compulsory stamina limit or blanket nerf without approval**.
+3. **Smarter enemies PLUS meaningful objective security.** Combine detection/pursuit/cover/squad tactics with selective contested objectives; avoid arbitrary doors blocking all shortcuts.
+4. **Helicopter insertion/cutscenes LATER.** The user explicitly wants cinematic production **after graphics overhauls**. No near-term cinematic prototype is on the critical path.
+5. **Primary development strategy: combat looks/feels excellent → enemies play/look excellent → expanded story campaign maps and cutscenes.** Quality before quantity. Do not schedule a full eight-map build while the core fighting/AI is unfinished.
 
-The current low/side-carry transformations make many rifles seem rigidly pinned in place. Create one **shared, configurable procedural two-hand locomotion framework** with weapon-specific profiles, rather than twelve unrelated trigonometric bobs:
+**Nuance:** the combat and AI work are connected, so build/test them together in a small existing environment. This does *not* mean delaying every AI fix until every weapon is perfect, or polishing weapon animations in isolation from opponents. Detailed enemy visual/behavior overhaul follows the combat foundation. Continue to preserve both factions, Shattered Wall and Training Grounds.
 
-- Coordinated shoulder/elbow and body-weight transfer; both grips remain constrained to the weapon.
-- Natural forward/backward weapon path with restrained roll, settle/reversal and direction-aware reaction; no floating or intersecting hands.
-- Profiles for carbine/AR, SMG, Battle Rifle, shotgun, sniper, LMG, plasma, railgun, heavy minigun and launchers.
-- Separate sprint, stop, ADS, reload, switch, air/ground and local third-person state behavior.
-- Keep hit detection, fire restrictions, responsiveness, movement speed and weapon balance unchanged in this presentation-only stage.
-- Optimize scratch allocations/disposal and validate native-GPU footage at useful real-time playback rates.
+## PHASE B — Combat feel and movement quality (next quality milestone; coupled with initial encounter fixes)
 
-### B2 — Grounded locomotion feel (requires user approval)
+### B1 — Finish the original weapon fidelity acceptance backlog
 
-Explore *small*, testable changes to sprint acceleration/deceleration, turn-response, carry/recovery and directional movement. No arbitrary camera shake, overly restrictive stamina or general speed nerf without playtest consent.
+Complete **Phase A**'s prescribed Issue #16 ordering and audio/visual acceptance. This is the current active stream; do not skip remaining AR, SMG/LMG, railgun/plasma or minigun/launchers work. PR #20 remains draft until the latest pistol gait is accepted.
 
-**Gate:** Sprinting looks and feels physical without hurting precise shooter controls.
+### B2 — Shared two-handed weapon sprint framework
 
-## PHASE C — Encounter Integrity and Tactical Pacing (new proposal)
+Existing low/side-carry poses often look rigid. Implement reusable **shoulder/elbow, grip-constrained, authored procedural gait** with weight-specific profiles:
 
-**Player-reported problem (17 Oct):** in Area 51 Extraction, players can run past too many engagements. This is a **design problem**, not automatically an animation bug. Diagnose first: log encounter activations, bot awareness, pursuit, objective gating and run-through times on both factions. Establish a reproducible baseline.
+- Both hands remain attached to suitable rifle/shotgun/LMG/launcher grips; plausible shoulder movement drives a curved weapon path, not only synchronized sinusoidal bobbing.
+- Profiles for AR/carbine, SMG, bullpup BR, shotgun, sniper, heavy LMG, plasma/railgun, minigun and launchers.
+- Distinct start/stop/ADS/reload/switch/landing recovery, first-/third-person coherence, stable sprint-to-combat aim.
+- Physically expressive motion but precise controls, modest camera motion, no transform accumulation or per-frame GPU allocation.
+- Compare actual native-speed footage, not isolated static screenshots; targeted tests across frame rates.
 
-Candidate changes, sequenced conservatively:
+### B3 — Weapon impacts, recoil, audio and combat readability
 
-1. Make encounter activation, enemy pursuit, target memory and positioning robust; prevent bots from simply forgetting fast-moving players.
-2. Design readable combat spaces, flanking pressure, suppression and squad coordination where appropriate; preserve fairness and performance.
-3. Tie meaningful objective interactions to controlled zones when fiction and mission demand it; avoid locking every door behind mandatory elimination or invisible walls.
-4. Tune equipment/mobility trade-offs only if enemy/objective fixes do not solve bypassing; avoid blanket stamina meters or hard speed reductions by default.
-5. Measure multiple viable approaches: stealth/bypass where deliberately intended, fighting through and tactical repositioning; both APEX and USMC must remain playable.
+Polish shot/recoil feel, mechanical feedback, muzzle flashes, grenade throw/interaction, surface impacts, damage reaction feedback, directional threat indicators, HUD legibility and sound timing with **small weapon/system-specific PRs**. Avoid excessive camera shake, bright particle spam and UI clutter. Check all supplied audio assets before acquiring new ones. Perform a measured WebGL/React performance pass only on demonstrated bottlenecks.
 
-**Gate:** A skilled player can maneuver and disengage, but cannot casually bypass the whole mission with no tactical consequences. No broken objective progression or enemy performance regression.
+### B4 — Grounded movement and sprint gameplay prototype
 
-## PHASE D — Area 51 Extraction vertical slice (new proposal)
+Evaluate **two complementary designs** in bounded experiments:
 
-Polish one complete **start-to-extraction** experience before broad expansion:
+- **Momentum version:** responsive sprint acceleration/deceleration, turning feel, short weapon-ready recovery, and clear state transition; no blanket movement speed nerf.
+- **Stamina-assisted version:** the same grounded movement plus a light, visible stamina/recovery budget, adjustable values, potentially class/loadout-dependent only if justified. Preserve tactical retreat and accessibility; don't make slow movement unavoidable or force exhausting waits.
 
-- Verify staging → decontamination → Bio-Lab → warehouse/boss → helicopter extraction, including elevator, bulkhead and mission objective states.
-- Improve navigation readability, mission cues, combat encounter pacing, checkpoints/failure recovery and squad participation.
-- Validate faction-specific flows (APEX guards/marines/Spartans vs USMC infected/boss) and cold/warm deployment.
-- Optional **independent prototype** for the desired cinematic Area 51 helicopter insertion: desert approach, facility reveal, onboard briefing, landing and transition into first person. Prototype separately, with approved voice/audio sourcing, before integration.
-- Preserve the existing flight/extraction sequence and map geometry until a replacement is accepted.
+Measure whether either approach improves encounters and still feels responsive. **No mandatory stamina feature is approved yet**; user selects after a playtest. Movement and combat controls must not regress.
 
-**Gate:** One polished, replayable, reliably complete vertical slice on the actual target laptop.
+### B5 — Small-scale AI/encounter co-development, in parallel with B2–B4
 
-## PHASE E — Graphics, audio atmosphere and content polish (future candidate backlog)
+**Player report:** in Area 51 Extraction players can simply sprint past too many threats. Diagnose actual encounter spawn and awareness, detection persistence, chase/navigation, objective gating, enemy accuracy/reaction, squad AI and mission timing for **both USMC and APEX**.
 
-**Proposals, not previously approved commitments:**
+Prototype improvements independently of movement changes, then test the interaction:
 
-- Lighting and visual identity: distinct Area 51 sterile/industrial atmosphere vs stormy Shattered Wall, with measured GPU cost and no hidden fidelity downgrade.
-- Operator and squad animation consistency (first-/third-person, sprint, aiming, cover, reload), audio spatialization and ambient sound storytelling.
-- Level art readability, signage, clutter, effects, impact feedback and HUD legibility/scale.
-- Expand Shattered Wall and Training Grounds only after map-specific playtesting identifies actual gaps; never replace or delete them.
-- Further mode, progression and onboarding refinements only once the core Extraction loop is demonstrably engaging.
+- Enemies should notice and remember nearby sprinting players appropriately and pressure an escape route without teleporting or gaining unfair omniscience.
+- Tactical flanks, suppression/cover, pursuit and sensible reinforcement timing where supported.
+- Clear objective affordances and **selective** control/hold zones only where fiction and level flow make sense.
+- Preserve deliberate stealth, bypass or maneuver routes where intended; the answer should not be invisible walls or mandatory elimination of every bot.
 
-**Gate:** Art, presentation and controls elevate the experience without causing old startup stalls, memory leaks, unbounded shaders or degraded playability.
+**Phase B gate:** the existing game reliably demonstrates satisfying firing/reload/grenade handling, physically credible movement across weapon classes, responsive controls, and *observable* consequences for sprinting past a contested position—without major performance regressions.
 
-## Phase sequencing and operating rules
+## PHASE C — Enemy quality: how they move, fight, react and look
 
-`A1 Pistol → A2 AR → A3 SMG/LMG → A4 Railgun/Plasma → A5 Minigun/Launchers → A6 audio/fidelity acceptance → B two-hand movement → C encounter pacing → D Area 51 vertical slice → E optional presentation/content`.
+Once the fundamental combat feel and first anti-bypass fixes are accepted, deliberately invest in the enemies as a coherent system:
 
-The phases are a **recommended dependency order**, not a deadline or permission to implement everything. Cross-cutting regression and performance checks accompany every phase. Small *audit-only* or prototype tasks may be done in parallel but must not displace the authoritative Issue #16 sequence.
+- AI behavior: readable detection/communication, threat priorities, human operator cover/firing discipline, coordination, pathfinding and squad interactions.
+- Different factions/enemy archetypes: USMC and APEX/Ghost/Cordon concepts remain **lore-dependent**; infected, military hostiles, elites, bosses should not all move/think identically.
+- Character animation: believable stances, weapon grips, recoil, sprint, hit reactions, cover, reload, traversal, neutral-to-alert, and non-graphic death states; lighter hits should not always break bodies into pieces.
+- Visual overhaul: stopgap optimized procedural characters initially, but begin a proper modular asset pipeline for helmets, faces/visors, hands, equipment, armor and skeletal rigs; later authored GLB/glTF assets created with compatible browser/local tools if practical. Keep procedural fallback and performance.
+- Tactical AI in both Area 51 and Shattered Wall; preserve extraction/survival progression, squad posture, difficulty scaling (easy/medium/hard) and predictable test scenarios.
+- Enemy audio, footfalls on relevant surface materials, warning lines and spatial cues, with an explicit asset/license audit.
+
+**Gate:** encounters are fair, readable, varied and replayable; bots look and handle weapons believably and their animations match behavior. Native-GPU testing includes larger squad/AI scenes.
+
+## PHASE D — Graphics, atmosphere and presentation overhaul (BEFORE campaign cinematics)
+
+The target is **coherent Halo: Reach-inspired grounded science-fiction presentation with tactical-shooter clarity**, not a promise of photorealism or literal AAA engine fidelity.
+
+- Improve lighting/tonemapping/shadow budget, material response, prop geometry, environmental variety and levels' visual contrast while protecting cold deployment and runtime frame rates.
+- Refine Area 51's scientific-industrial horror atmosphere and Shattered Wall's stormy offshore identity; keep Training Grounds intact.
+- Upgrade effects and feedback, environmental/footstep sound by surface, spatial audio, interface typography/layout/readability, AI/model rendering, transitions and cinematic-quality scene staging.
+- Establish a repeatable asset pipeline: optimized authored 3D GLB/glTF rigs where helpful, procedural geometry where efficient, texture budgets, LOD/instancing/occlusion as justified. No forced Three.js-to-another-engine migration.
+- Before building major cinematics, verify consistent visual language, lighting, animation, loading and native performance in gameplay.
+
+**Gate:** base visuals and character presentation meet a cohesive quality bar at supported laptop/browser settings; major scenes can be filmed using real game assets without revealing glaringly placeholder geometry.
+
+## PHASE E — Full campaign content, maps, narrative and cutscenes (after quality foundations)
+
+**User's stated intent:** a concise, replayable military-science-fiction action/horror campaign exploring **both USMC and APEX**, with some exclusive faction missions and selected overlapping locations. The detailed storyline and canon are **not locked**.
+
+- Establish story/canon and mission design before writing the four planned narrative/production Markdown documents. Do not present brainstorms as canon.
+- Preserve existing **Area 51, Operation Shattered Wall / Pacific Rim, and Training Grounds**. Do not restore Bunker Hangar; Area 51 replaces it only.
+- Candidate expansion settings: freight yard/railway with convoy, city operation and further connected places. Eight roughly 20-minute missions is a **provisional aspiration** requiring pacing/content proof, not a fixed commitment.
+- Make a **small, playable combat/encounter evaluation slice** continuously in Phases B/C. **Later**, polish one complete beginning-to-extraction mission (initially Area 51 is convenient) to establish encounter, checkpoint, mission scripting and performance standards.
+- Only then scale the campaign missions and locations, faction-specific story beats, voice/radio storytelling and cinematics.
+- Helicopter insertion sequence (desert flight, facility reveal, cabin briefing, landing and first-person transition) belongs **after Phase D's graphics overhaul**, not immediately after weapon work. Prototype and obtain review before production integration.
+- Keep the established military action/horror balance adaptable by map, not an open-world commitment. Storytelling can span mission cinematics, dialogue and environmental clues; major plot decisions require user sign-off.
+
+**Gate:** an end-to-end playable and narratively coherent campaign experience with representative mission depth, reliable checkpoints/retries, and cinematics that fit the real game assets and performance.
+
+## Project order, parallel work, and scope discipline
+
+`Phase A (finish original weapon backlog) → Phase B (combat feel + two-hand movement; early encounter AI in parallel) → Phase C (deep enemy behavior/animation/visual overhaul) → Phase D (graphics/audio/UI presentation) → Phase E (campaign maps, lore integration and cutscenes)`.
+
+**Important:** This is the **user-approved broad priority direction**, not automatic implementation permission. The Phase A weapon order is still authoritative. Fix important crashes, AI pathing blockers or serious performance regressions whenever encountered. Develop small representative battle scenes as tests throughout; save large new maps and cinematic production for Phase E.
 
 ### Required acceptance checklist for every implementation PR
 
@@ -144,15 +178,17 @@ The phases are a **recommended dependency order**, not a deadline or permission 
 - [ ] Target-laptop playtest: movement, reload, enemy engagement and startup performance.
 - [ ] PR/branch review with explicit unresolved defects; no auto-merge or production promotion.
 
-## Open direction questions (not yet approved)
+## Decisions still requiring design confirmation
 
-1. After weapon fidelity, should we prioritize **all-weapon movement realism** or **Area 51 combat/AI engagement** first?
-2. Should sprint pacing retain unlimited sprint with tactical consequences, add light acceleration/weapon-ready delays, or investigate a stamina mechanic?
-3. Should enemies contest objectives primarily through **responsive AI**, selective **room security/objective states**, or a balanced combination?
-4. Should the Area 51 helicopter insertion cinematic be prioritized immediately after weapon work, or after a stronger combat loop?
-5. Should we target **one polished Area 51 Extraction vertical slice** before broad improvements on all maps/modes?
+The high-level priorities above were answered by the user on 17 Oct 2026. Remaining *implementation* choices:
 
-These are explicitly **pending user decisions**. Don't treat proposed order or new mechanics as confirmed scope without approval.
+1. **Stamina:** lightweight recoverable bar, weapon-ready delay only, or different tuning per class? Prototype before requiring.
+2. **Combat feel acceptance:** choose first focus among recoil/hit reactions/throwable animations, weapon-ready handling, or audio/surface response.
+3. **Enemy visual pipeline:** how far to take procedural character refinement versus introducing authored skeletal GLB models/animations?
+4. **Scope of prototype arena:** dedicated training encounter vs one Area 51 room for reliable A/B combat evaluation?
+5. **Campaign scope:** proposed 8 missions × ~20 minutes and the railway/city settings remain tentative until story and pacing are agreed.
+
+Do not call these questions blockers for the small immediate pistol gait or remaining established weapon work.
 
 ---
 **Authority:** Weapon detail/sequencing: [Issue #16](https://github.com/fcootes/Gun-Arena-V2/issues/16). Technical progress: linked PRs, actual main, tests and laptop review. Planning updates should preserve this distinction.
