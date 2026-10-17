@@ -114,11 +114,18 @@ for (const id of WEAPON_MODEL_IDS) {
     const serialized = JSON.stringify(state); step(vm, id, 1 / 60, state);
     assert.equal(JSON.stringify(state), serialized, 'Presentation never changes reload/ammo/audio state');
     assert.ok(right.position.distanceTo(anchoredRight) < 1e-8, `${id}: firing hand stays attached during reload`);
+    if(id==='lmg')weapon(vm,id).updateMatrixWorld(true);
     for (const side of ['right', 'left'] as const) {
       const sleeve = pair.getObjectByName(`${side}Forearm`)!;
       sleeveEnd.set(0, -.5, 0).applyMatrix4(sleeve.matrixWorld);
       assert.ok(sleeve.scale.y <= VIEWMODEL_GRIPS[id].sleeveLength + .012001, `${id}: anatomical forearm never stretches to a remote elbow`);
-      assert.ok(sleeveEnd.project(acceptanceCamera).y < -1, `${id}: capped sleeve end never swings into the viewport during reload`);
+      if(id==='lmg'&&side==='left'&&state.reloading) {
+        const upper=weapon(vm,id).getObjectByName('leftUpperArm')!;
+        assert.ok(upper.visible&&Math.abs(upper.scale.y-.32)<1e-7,'LMG raised contact has an anatomical upper arm');
+        const joint=new THREE.Vector3(0,.5,0).applyMatrix4(upper.matrixWorld);
+        assert.ok(joint.distanceTo(sleeveEnd)<.007,'LMG forearm meets the upper sleeve without a visible chopped end');
+        assert.ok(new THREE.Vector3(0,-.5,0).applyMatrix4(upper.matrixWorld).project(acceptanceCamera).y<-1,'LMG shoulder exits below viewport');
+      } else assert.ok(sleeveEnd.project(acceptanceCamera).y < -1, `${id}: capped sleeve end never swings into the viewport during reload`);
     }
     reached ||= left.position.distanceTo(startLeft) > .025;
   }

@@ -1,3 +1,4 @@
+import { LMG } from '../src/lmgMechanics';
 import { SMG } from '../src/smgMechanics';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
@@ -41,8 +42,8 @@ class MockAudio {
   pause() { this.paused = true; }
 }
 (globalThis as any).Audio = MockAudio;
-const { AUDIO, FIRST_BATCH_AUDIO_URLS, SECOND_BATCH_AUDIO_URLS, THIRD_BATCH_AUDIO_URLS } = await import('../src/audio');
-const { playWeaponReloadAudio, updateSmgReloadAudio, playShotgunMechanicalEvent, playBattleRifleMechanicalEvent, playSniperBoltEvent, updateSniperReloadAudio, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } = await import('../src/weaponAudio');
+const { AUDIO, LMG_MECHANICAL_AUDIO_URLS, FIRST_BATCH_AUDIO_URLS, SECOND_BATCH_AUDIO_URLS, THIRD_BATCH_AUDIO_URLS } = await import('../src/audio');
+const { playWeaponReloadAudio, playLmgMechanicalEvent, updateSmgReloadAudio, playShotgunMechanicalEvent, playBattleRifleMechanicalEvent, playSniperBoltEvent, updateSniperReloadAudio, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } = await import('../src/weaponAudio');
 for (const track of Object.values(AUDIO)) track.prepare();
 const latest = (track: typeof AUDIO.arSingle) => track.pool[(track.index + track.poolSize - 1) % track.poolSize] as unknown as MockAudio;
 const plays = (track: typeof AUDIO.arSingle) => track.pool.reduce((n, audio) => n + (audio as unknown as MockAudio).plays, 0);
@@ -68,7 +69,6 @@ for (const [id, tactical, empty] of [
   ['ar', AUDIO.arReloadTactical, AUDIO.arReloadEmpty],
   ['pistol', AUDIO.pistolReloadTactical, AUDIO.pistolReloadEmpty],
   ['smg', AUDIO.smgReloadTactical, AUDIO.smgReloadEmpty],
-  ['lmg', AUDIO.lmgReloadTactical, AUDIO.lmgReloadEmpty],
 ] as const) {
   for (const multiplier of [1, .75, .9]) for (const ammo of [0, 1]) {
     const w = weapon(id), ws: WeaponSlotState = { ammo, reserve: 100 };
@@ -152,7 +152,7 @@ console.log('PASS: pause/resume preserves cursor and speed; cancellation clears 
 
 
 for (const [id, track, offset] of [
-  ['smg', AUDIO.smgReloadEmpty, SMG.chamberOffset], ['lmg', AUDIO.lmgReloadEmpty, 3.696],
+  ['smg', AUDIO.smgReloadEmpty, SMG.chamberOffset],
 ] as const) {
   const ws: WeaponSlotState = { ammo: 10, reserve: 100, needsChamber: true };
   beginWeaponReload(weapon(id), ws); playWeaponReloadAudio(weapon(id), ws);
@@ -361,3 +361,27 @@ assert.equal(emptySmg.source_cuts.length,3,'Empty asset already contains magazin
 const chargeOnset=SMG.empty.open+1.338,phaseStart=SMG.empty.open+SMG.empty.eject+SMG.empty.insert;
 assert.ok(Math.abs(phaseStart+SMG.empty.chamber*.306-chargeOnset)<.001,'Handle starts pulling on the embedded charging cue');
 console.log('PASS: SMG approach delay, native-rate single composite, late-frame cursor, cancellation and embedded charging synchronization at three frame rates/class speeds');
+
+for(const [key,url]of Object.entries(LMG_MECHANICAL_AUDIO_URLS)) {
+ const track=AUDIO[key as keyof typeof LMG_MECHANICAL_AUDIO_URLS];assert.equal(track.confirmedSrc,url);assert.equal(track.duration,wavDuration(url));
+}
+for(const hz of [30,60,144])for(const speed of [1,.75,.9])for(const ammo of [0,43]) {
+ stopWeaponAudio();const ws:WeaponSlotState={ammo,reserve:300},w=weapon('lmg');beginWeaponReload(w,ws,speed);
+ const before=[plays(AUDIO.lmgBoxOut),plays(AUDIO.lmgBoxIn),plays(AUDIO.lmgCharge)];playWeaponReloadAudio(w,ws);
+ assert.ok(AUDIO.lmgReloadTactical.pool.every(a=>a.paused)&&AUDIO.lmgReloadEmpty.pool.every(a=>a.paused),'No duplicate composite');
+ while(ws.reloading)advanceWeaponReload(w,ws,1/hz,undefined,undefined,undefined,undefined,playLmgMechanicalEvent);
+ assert.deepEqual([plays(AUDIO.lmgBoxOut)-before[0],plays(AUDIO.lmgBoxIn)-before[1],plays(AUDIO.lmgCharge)-before[2]],[1,1,ammo?0:1]);
+ assert.ok(Math.abs(latest(AUDIO.lmgBoxIn).playbackRate-1/speed)<1e-8);
+ const coverBefore=Object.values(AUDIO).reduce((n,t)=>n+plays(t),0);playLmgMechanicalEvent('cover',speed,0);
+ assert.equal(Object.values(AUDIO).reduce((n,t)=>n+plays(t),0),coverBefore,'Missing cover cue is not faked with a shot or magazine/AR sound');
+ stopWeaponReloadAudio();assert.ok([AUDIO.lmgBoxOut,AUDIO.lmgBoxIn,AUDIO.lmgCharge].every(t=>t.pool.every(a=>a.paused&&a.currentTime===0)));
+}
+const chamberLmg:WeaponSlotState={ammo:100,reserve:200,needsChamber:true};beginWeaponReload(weapon('lmg'),chamberLmg);playWeaponReloadAudio(weapon('lmg'),chamberLmg);
+const boxes=[plays(AUDIO.lmgBoxOut),plays(AUDIO.lmgBoxIn)],charges=plays(AUDIO.lmgCharge);
+advanceWeaponReload(weapon('lmg'),chamberLmg,5,undefined,undefined,undefined,undefined,playLmgMechanicalEvent);
+assert.deepEqual([plays(AUDIO.lmgBoxOut),plays(AUDIO.lmgBoxIn)],boxes);assert.equal(plays(AUDIO.lmgCharge),charges,'A skipped obsolete charging clip is not replayed');
+assert.equal(AUDIO.lmgFire.duration,.115,'Opening report now fills the actual .115 s firing interval');assert.equal(AUDIO.lmgAuto.duration,3.565,'Sustain no longer repeats a five-report file');
+stopWeaponAudio();playLmgFire(1);playLmgFire(2);const sustain=AUDIO.lmgAuto.pool[0]as unknown as MockAudio;sustain.currentTime=1.3;const starts=sustain.plays;
+for(let n=3;n<80;n++)playLmgFire(n);assert.equal(sustain.currentTime,1.3);assert.equal(sustain.plays,starts,'Sustained LMG retains one uninterrupted voice through many firing events');
+pauseWeaponAudio();assert.ok(sustain.paused);resumeWeaponAudio();assert.equal(sustain.currentTime,1.3);stopWeaponAudio();resumeWeaponAudio();assert.ok(sustain.paused);assert.equal(sustain.currentTime,0);
+console.log('PASS: LMG isolated box/charging events, no duplicate/mislabeled cover sound, native class rates, late-event skip, .115 s lead and uninterrupted 3.565 s sustain with pause/reset');

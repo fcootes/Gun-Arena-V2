@@ -1,6 +1,7 @@
+import type { LmgListener } from './lmgMechanics';
 import { SMG } from './smgMechanics';
 import type { BattleRifleListener } from './battleRifleMechanics';
-import { AUDIO, SoundTrack, FIRST_BATCH_AUDIO_URLS, SECOND_BATCH_AUDIO_URLS, THIRD_BATCH_AUDIO_URLS, BR_MECHANICAL_AUDIO_URLS } from './audio';
+import { AUDIO, SoundTrack, LMG_MECHANICAL_AUDIO_URLS, FIRST_BATCH_AUDIO_URLS, SECOND_BATCH_AUDIO_URLS, THIRD_BATCH_AUDIO_URLS, BR_MECHANICAL_AUDIO_URLS } from './audio';
 import type { WeaponDef, WeaponSlotState } from './types';
 import type { ShotgunEventListener } from './shotgunMechanics';
 import type { SniperBoltListener } from './sniperMechanics';
@@ -15,7 +16,7 @@ const reloadProfiles = {
 };
 const reloadTracks = [
   AUDIO.smgReloadTactical, AUDIO.smgReloadEmpty,
-  AUDIO.lmgReloadTactical, AUDIO.lmgReloadEmpty,
+  AUDIO.lmgReloadTactical, AUDIO.lmgReloadEmpty, AUDIO.lmgBoxOut, AUDIO.lmgBoxIn, AUDIO.lmgCharge,
   AUDIO.brReloadTactical, AUDIO.brReloadEmpty, AUDIO.brMagazineOut, AUDIO.brMagazineIn, AUDIO.brCharge,
   AUDIO.arReloadTactical, AUDIO.arReloadEmpty,
   AUDIO.pistolReloadTactical, AUDIO.pistolReloadEmpty,
@@ -23,7 +24,7 @@ const reloadTracks = [
   AUDIO.shotgunReload, AUDIO.shotgunReloadEmpty,
   AUDIO.laserVent, AUDIO.plasmaReloadEmpty, AUDIO.plasmaInsert,
 ];
-const weaponUrls = { ...FIRST_BATCH_AUDIO_URLS, ...SECOND_BATCH_AUDIO_URLS, ...THIRD_BATCH_AUDIO_URLS, ...BR_MECHANICAL_AUDIO_URLS };
+const weaponUrls = { ...LMG_MECHANICAL_AUDIO_URLS, ...FIRST_BATCH_AUDIO_URLS, ...SECOND_BATCH_AUDIO_URLS, ...THIRD_BATCH_AUDIO_URLS, ...BR_MECHANICAL_AUDIO_URLS };
 const weaponTracks = Object.keys(weaponUrls).map(key => AUDIO[key as keyof typeof weaponUrls]);
 
 /** Prime only recordings for the current loadout and spawned actors; later shots stay lazy. */
@@ -103,6 +104,16 @@ export function updateSmgReloadAudio(state: WeaponSlotState): void {
   if(offset<clip)track.play(1,true,1/pending.speed,Math.max(0,offset));
 }
 
+/** Isolated cuts from the original LMG composites. No full composite is also
+ * played. The clock still emits cover contact, but its distinct asset is
+ * genuinely missing; never mislabel a magazine/AR/gunshot as a cover slam. */
+export const playLmgMechanicalEvent: LmgListener = (event,speed,late) => {
+  if(event==='cover')return;
+  const track=event==='extract'?AUDIO.lmgBoxOut:event==='seat'?AUDIO.lmgBoxIn:AUDIO.lmgCharge;
+  const offset=Math.max(0,late)/speed,clip=track.duration||(event==='extract'?.215:.330);
+  if(offset<clip)track.play(1,true,1/speed,offset);
+};
+
 export function playWeaponReloadAudio(weapon: WeaponDef, state: WeaponSlotState): boolean {
   if (!state.reloading || !state.reloadSequence) return false;
   if (weapon.id === 'smg' && ['open','chamber'].includes(state.reloadSequence.phases[0].phase)) {
@@ -112,6 +123,7 @@ export function playWeaponReloadAudio(weapon: WeaponDef, state: WeaponSlotState)
     smgReloads.set(state,{sequence:q,started:false,speed:q.phases[0].duration/base,chamberOnly});
     updateSmgReloadAudio(state);return true;
   }
+  if (weapon.id === 'lmg' && ['lift','chamber'].includes(state.reloadSequence.phases[0].phase)) { stopWeaponReloadAudio(); AUDIO.lmgAuto.stop(); AUDIO.lmgFire.stop(); return true; }
   if (weapon.id === 'br') { stopWeaponReloadAudio(); AUDIO.brBurst.stop(); return true; }
   if (weapon.id === 'sniper') {
     stopWeaponReloadAudio();

@@ -1,10 +1,11 @@
+import { LMG, lmgCue, lmgPhaseSeconds, type LmgListener } from './lmgMechanics';
 import { SMG } from './smgMechanics';
 import type { WeaponDef, WeaponSlotState } from './types';
 import { SHOTGUN, advanceShotgunCycle, beginShotgunCycle, type ShotgunEventListener } from './shotgunMechanics';
 import { SNIPER, advanceSniperAction, type SniperBoltListener } from './sniperMechanics';
 import { BATTLE_RIFLE, brCueTime, type BattleRifleListener } from './battleRifleMechanics';
 
-export type ReloadPhase = 'open' | 'eject' | 'pickup' | 'insert' | 'chamber' | 'close' | 'vent';
+export type ReloadPhase = 'open' | 'eject' | 'pickup' | 'insert' | 'chamber' | 'close' | 'vent' | 'lift' | 'feed' | 'slap';
 export type ReloadPhaseListener = (phase: ReloadPhase, duration: number, empty: boolean) => void;
 export interface ReloadSequence {
   kind: 'magazine' | 'shell' | 'battery' | 'tube' | 'cylinder' | 'vent';
@@ -16,6 +17,7 @@ export interface ReloadSequence {
   inserted: number;
   shellSeated?: boolean;
   brCuePlayed?: boolean;
+  lmgCuePlayed?: boolean;
 }
 
 export function cancelWeaponReload(state: WeaponSlotState) {
@@ -55,6 +57,12 @@ export function beginWeaponReload(weapon: WeaponDef, state: WeaponSlotState, mul
     if (!chamberOnly) { timed('eject', BATTLE_RIFLE.extract); timed('pickup', BATTLE_RIFLE.acquire); timed('insert', BATTLE_RIFLE.insert); }
     if (empty || chamberOnly) timed('chamber', BATTLE_RIFLE.chamber);
     timed('close', chamberOnly ? .35 : BATTLE_RIFLE.lower);
+  } else if (weapon.id === 'lmg' && playerHandling) {
+    const speed = Math.max(.1, Number.isFinite(multiplier) ? multiplier : 1);
+    const timed = (phase: ReloadPhase) => phases.push({phase,duration:lmgPhaseSeconds(phase)*speed});
+    if (!chamberOnly) for(const phase of ['lift','open','eject','pickup','insert','feed','slap'] as const) timed(phase);
+    if(empty || chamberOnly)timed('chamber');
+    timed('close');
   } else if (weapon.id === 'smg' && playerHandling) {
     const speed = Math.max(.1, Number.isFinite(multiplier) ? multiplier : 1);
     const timing = empty || chamberOnly ? SMG.empty : SMG.tactical;
@@ -88,7 +96,7 @@ export function beginWeaponReload(weapon: WeaponDef, state: WeaponSlotState, mul
 }
 
 /** Advance through phase boundaries without losing shell events on slow frames. */
-export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, delta: number, onPhaseStart?: ReloadPhaseListener, onShotgunEvent?: ShotgunEventListener, onSniperBolt?: SniperBoltListener, onBattleRifle?: BattleRifleListener): number {
+export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, delta: number, onPhaseStart?: ReloadPhaseListener, onShotgunEvent?: ShotgunEventListener, onSniperBolt?: SniperBoltListener, onBattleRifle?: BattleRifleListener, onLmg?: LmgListener): number {
   if (!Number.isFinite(delta) || delta <= 0) return 0;
   if (weapon.id === 'sniper') advanceSniperAction(state, delta, onSniperBolt);
   else if (weapon.id === 'shotgun' && state.shotgunCycle) advanceShotgunCycle(state, delta, onShotgunEvent);
@@ -103,7 +111,8 @@ export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, d
     const seat = sequence.kind === 'shell' && stage.phase === 'insert' && !sequence.shellSeated;
     const pumpStart = weapon.id === 'shotgun' && stage.phase === 'chamber' && sequence.elapsed < stage.duration * SHOTGUN.recovery / SHOTGUN.cycle - 1e-8;
     const brCue = weapon.id === 'br' && !sequence.brCuePlayed ? brCueTime(stage.phase, stage.duration) : undefined;
-    const boundary = brCue ?? (seat ? stage.duration * SHOTGUN.seat : pumpStart ? stage.duration * SHOTGUN.recovery / SHOTGUN.cycle : stage.duration);
+    const lmgAction = weapon.id === 'lmg' && (sequence.phases[0].phase === 'lift' || sequence.phases[0].phase === 'chamber') && !sequence.lmgCuePlayed ? lmgCue(stage.phase,stage.duration) : undefined;
+    const boundary = lmgAction ?? brCue ?? (seat ? stage.duration * SHOTGUN.seat : pumpStart ? stage.duration * SHOTGUN.recovery / SHOTGUN.cycle : stage.duration);
     const step = Math.min(remaining, Math.max(0, boundary - sequence.elapsed));
     sequence.elapsed += step; remaining -= step; state.reloadT = Math.max(0, (state.reloadT ?? 0) - step);
     if (seat && sequence.elapsed + 1e-8 >= boundary) {
@@ -117,6 +126,10 @@ export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, d
     if (brCue !== undefined && sequence.elapsed + 1e-8 >= boundary) {
       sequence.brCuePlayed = true;
       onBattleRifle?.(stage.phase === 'eject' ? 'extract' : stage.phase === 'insert' ? 'insert' : 'chamber', stage.duration / (stage.phase === 'eject' ? BATTLE_RIFLE.extract : stage.phase === 'insert' ? BATTLE_RIFLE.insert : BATTLE_RIFLE.chamber), remaining);
+    }
+    if(lmgAction !== undefined && sequence.elapsed + 1e-8 >= boundary) {
+      sequence.lmgCuePlayed=true;
+      onLmg?.(stage.phase==='eject'?'extract':stage.phase==='insert'?'seat':stage.phase==='slap'?'cover':'charge',stage.duration/lmgPhaseSeconds(stage.phase),remaining);
     }
     if (sequence.elapsed + 1e-8 < stage.duration) { if (remaining > 1e-8) continue; break; }
     if (stage.phase === 'insert') {
@@ -134,7 +147,7 @@ export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, d
       }
     }
     if (stage.phase === 'chamber') state.needsChamber = false;
-    sequence.index++; sequence.elapsed = 0; sequence.brCuePlayed = false;
+    sequence.index++; sequence.elapsed = 0; sequence.brCuePlayed = false; if(weapon.id==='lmg')sequence.lmgCuePlayed = false;
     if (sequence.index === sequence.phases.length) {
       if (sequence.kind === 'battery' || sequence.kind === 'vent') { state.heat = 0; state.overheated = false; if(weapon.id==='minigun')state.ammo=weapon.mag; }
       cancelWeaponReload(state);
