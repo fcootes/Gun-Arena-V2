@@ -106,7 +106,7 @@ try{
  writeFileSync(resolve(output,'audio-playback.json'),JSON.stringify(audio,null,2)+'\n');
  if(process.env.LMG_VIDEO==='1') {
   console.log('Capturing bounded nine-second clock-stepped tactical + empty reload clip');
-  const frames=resolve(output,'video-frames');mkdirSync(frames,{recursive:true});
+  const frames=resolve('work/lmg-video-frames');mkdirSync(frames,{recursive:true});
   await page.evaluate(()=>{const g=window.__lmg;g.hold=true;g.pose('idle');g.renderer.setPixelRatio(.5);g.freezeBackdrop();});
   let index=0;
   for(const [action,count]of[['tactical',40],['empty',50]]) {

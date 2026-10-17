@@ -2,7 +2,7 @@
 
 Starting main: `a00bdc6cb91d407285e0a05eae102cf7699a9981` (merged SMG PR #22). Branch: `feat/lmg-weapon-fidelity`, directly from fetched `origin/main`. One draft PR against main; no merge or production promotion. PR #21 is not a prerequisite.
 
-This checkpoint implements the isolated HMG-100 model, front-hinged feed cover, side ammunition box, attached feed belt, authoritative player reload profile, articulated cover/box contact, downward palm-driven cover closure, empty-only receiver charging and LMG-only raised-arm support. Capture/acceptance results are recorded after validation.
+This change implements the isolated HMG-100 model, front-hinged feed cover, side ammunition box, attached feed belt, authoritative player reload profile, articulated cover/box contact, downward palm-driven cover closure, empty-only receiver charging and LMG-only raised-arm support. Rendered evidence and automated results are linked below.
 
 ## Timing and contact
 
@@ -23,7 +23,7 @@ The existing `beginWeaponReload` / `advanceWeaponReload` clock owns phases, clas
 
 The front cover pivot is `(0,.058,-.18)` m, with its geometry extending rearward from that hinge. It opens 1.15 radians, and its origin remains fixed. The cover stays open until slap progress .43; the palm contacts its modeled top pad and follows its rapid closing arc until lock at .72 (global time **3.1656 s**). A separate 5 mm receiver settle follows locking. Finger curl flattens for cover contact and tightens for the box/charging control. Contact uses the actual part-to-weapon matrices and the glove's palm surface, not an approximate wrist point.
 
-The left sleeve uses an LMG-only 32 cm upper arm and 28 cm forearm during reload, with two-bone reach and a small shoulder lean. This keeps the raised arm connected without stretching the forearm or exposing a chopped elbow. It reuses the faction sleeve material and owns one cached mesh. The accepted pistol free-arm gait and other weapons' hand/sprint code paths remain unchanged.
+The left sleeve uses an LMG-only 32 cm upper arm and 28 cm forearm during reload, with two-bone reach and bounded shoulder movement. This keeps the raised arm connected without stretching the forearm or exposing a chopped elbow. It reuses the faction sleeve material and owns one cached mesh. The accepted pistol free-arm gait and other weapons' hand/sprint code paths remain unchanged.
 
 The old/fresh side boxes share baked geometry/materials; their removal/seating paths stay outside the receiver. The entire feed path disappears before a box detaches and returns only after seating and the feed-preparation gesture. No floating belt, independent belt physics, runtime mesh allocation or duplicate box remains at reset. The charging control travels 50 mm on the near side of the receiver (`z=.025` to `.075`), ahead of the stock. Hands, box, lid, control and visible recovery derive from normalized authoritative phase time and reset from cached origins.
 
@@ -46,3 +46,27 @@ The clean working tree and existing branches were inspected; fetched main contai
 Focused tests cover phases, the fixed hinge, palm/cover and box contact, raised palm, belt visibility, lock-before-charge, authoritative ammo/conservation, duplicate R, cancellation/chamber-only continuation, repeated reloads, pause/switch/death/reset, frame-rate agreement at 30/60/144 Hz, and zero recurring geometry/material/object allocations. Shared tests additionally verify the connected LMG elbow/upper-sleeve joint and all visible near-plane bounds. Audio checks cover isolated events, class speed, late skips, no duplicate/faked cover cue, full-interval lead, one continuous sustain and stop/pause/reset.
 
 Native-laptop review is required for weight, posture/clipping, dark-material readability, return to ADS, sustained-fire texture and the missing cover-impact integration. Railgun and global sprint work are untouched.
+
+
+## Rendered evidence and check results
+
+All checks passed: `npm run lint`, `npm run build`, and `npm run test:` with each of `lmg`, `viewmodel`, `weapons`, `audio`, `controls`, `runtime`, `tactical`, `smg`, `pistol`, `pistol:sprint`, `br`, `sniper`, and `shotgun`. The production build retains the existing Vite chunk-size advisory. The final code checkpoint is `ddfc692a3cc56dc37588c6a85117507c671f6e87`; the subsequent delivery commit adds this report/evidence and moves future intermediate video frames into ignored `work/`.
+
+`LMG_VIDEO=1 npm run test:lmg:browser` passed with **zero browser errors**. It exercises real R input for tactical/empty reloads, automatic fire before/after reload, pause/resume, switch/cancel after ammo insertion and chamber-only continuation, two-hand sprint fire restriction, ADS, and death/redeployment. [Validation record](evidence/validation.json) and [actual audio playback requests](evidence/audio-playback.json) record the result. Temporary test instrumentation runs against the actual App and WeaponStudio through Vite; it does not ship in the application bundle.
+
+| Actual App view | Capture |
+| --- | --- |
+| Normal carry | [Ready](evidence/ready.png) |
+| Cover starting to open | [Cover start](evidence/cover-start.png) |
+| Fully open cover/feed | [Cover open](evidence/cover-open.png) |
+| Old box handled | [Box removal](evidence/box-removal.png) |
+| Replacement seated | [Box fitted](evidence/box-fitted.png) |
+| Open palm raised | [Hand raised](evidence/hand-raised.png) |
+| Palm contacts locked cover | [Exact slap contact](evidence/slap-contact.png) |
+| Closed cover/recovery | [Cover closed](evidence/cover-closed.png) |
+| Empty-only receiver action | [Charging](evidence/empty-charging.png) |
+| Ready/ADS recovery | [ADS](evidence/ads-recovery.png) |
+
+WeaponStudio geometry: [side](evidence/model-side.png), [top](evidence/model-top.png), [three-quarter](evidence/model-three-quarter.png).
+
+[Continuous tactical + empty reload clip](evidence/reloads.mp4): **9 seconds, 640×360, 10 FPS**. These are clock-stepped production viewmodel frames over a frozen actual-game backdrop, rendered by Chromium SwiftShader. The clip is not a real-time native-GPU recording. Audio is an offline event-synchronized mix of the same existing LMG box/charging clips, not a live microphone or browser-audio capture; the missing cover impact is intentionally absent. The stills use the actual game scene/camera at 1280×720. Native laptop review is still needed for real-time smoothness, full-speed cover-slap weight, clipping/readability across movement, sustained firing sound, and final impact integration.
