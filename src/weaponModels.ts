@@ -966,64 +966,80 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     box('Front sight', 0.012, 0.021, 0.013, 0, 0.058, -0.5, edge);
     box('Ejection port', 0.003, 0.025, 0.07, 0.036, 0.012, 0.01, rubber);
   } else if (id === 'pistol') {
-    silhouette(
-      'Polymer pistol frame',
-      [
-        [-0.1, 0.016],
-        [0.09, 0.018],
-        [0.075, -0.035],
-        [0.05, -0.15],
-        [-0.005, -0.15],
-        [-0.035, -0.035],
-        [-0.1, -0.022],
-      ],
-      0.032,
-      polymer,
-    );
-    const slide = group('slide', 0, 0.042, -0.025);
-    box('Serrated slide', 0.039, 0.039, 0.19, 0, 0, 0, steel, slide);
-    for (const side of [-1, 1])
-      for (let i = 0; i < 9; i++)
-        box(
-          'Slide serration',
-          0.002,
-          0.027,
-          0.002,
-          side * 0.02,
-          0,
-          0.025 + i * 0.007,
-          rubber,
-          slide,
-        );
-    box(
-      'Pistol ejection port',
-      0.021,
-      0.003,
-      0.034,
-      0,
-      0.022,
-      0.015,
-      rubber,
-      slide,
-    );
-    tube('Pistol barrel', 0.009, 0.14, 0, 0.035, -0.055, dark);
-    muzzle.position.set(0, 0.035, -0.13);
-    grip(0.048);
-    magazine(false, 0.12, 0.05, 0.027);
-    rail(-0.07, 0.065, -0.028);
-    box('Front iron sight', 0.006, 0.009, 0.008, 0, 0.026, -0.081, edge, slide);
-    for (const side of [-1, 1])
-      box(
-        'Rear iron sight',
-        0.008,
-        0.009,
-        0.012,
-        side * 0.013,
-        0.026,
-        0.071,
-        edge,
-        slide,
-      );
+    // CP-9: chamfered steel slide over a hollow, contoured polymer grip.
+    // Dimensions remain a service sidearm: 250 mm slide, 44 mm maximum width.
+    steel.color.setHex(0x535e66); steel.metalness = .78; steel.roughness = .43;
+    dark.color.setHex(0x303a42); dark.metalness = .65; dark.roughness = .52;
+    polymer.color.setHex(0x39423f); polymer.roughness = .88;
+    edge.color.setHex(0x7c898c); edge.roughness = .48;
+    silhouette('CP9 lower frame', [[-.15,.015],[.096,.015],[.109,-.020],[.074,-.045],[-.036,-.037],[-.15,-.022]], .037, polymer);
+    const slide = group('slide', 0, .043, 0);
+    function slideSection(name: string, z: number, depth: number, open = false) {
+      const section = new THREE.Shape();
+      const profile = open ? [[-.020,-.016],[.020,-.016],[.020,-.007],[-.012,-.007],[-.012,.020],[-.020,.011]]
+        : [[-.018,-.016],[.018,-.016],[.021,-.009],[.021,.010],[.013,.021],[-.013,.021],[-.021,.010],[-.021,-.009]];
+      profile.forEach(([x,y],i)=>i?section.lineTo(x,y):section.moveTo(x,y)); section.closePath();
+      if (!open) { const bore = new THREE.Path(); bore.absarc(0,-.004,.0105,0,Math.PI*2,true); section.holes.push(bore); }
+      const geometry = new THREE.ExtrudeGeometry(section,{depth,steps:1,bevelEnabled:true,bevelSegments:2,bevelSize:.0015,bevelThickness:.0015,curveSegments:16});
+      mesh(name,geometry,steel,0,0,z,slide);
+    }
+    slideSection('Chamfered slide nose',-.154,.128);
+    slideSection('Open ejection window',-.023,.044,true);
+    slideSection('Rear slide block',.024,.070);
+    box('Extractor claw',.004,.010,.030,.022,.001,.001,dark,slide);
+    box('Rear striker plate',.028,.026,.003,0,-.001,.097,dark,slide);
+    for (const side of [-1,1]) {
+      for (let i=0;i<7;i++) box('Slide serration rear',.0025,.022,.0025,side*.0213,-.001,.034+i*.007,dark,slide).rotation.x = -.18;
+      for (let i=0;i<3;i++) box('Slide serration front',.0025,.018,.0025,side*.0213,-.002,-.126+i*.008,dark,slide).rotation.x = -.18;
+      box('Frame slide guide',.003,.007,.107,side*.020,.016,-.070,dark);
+    }
+    // An annular barrel has a real bore, rather than a black disc on a cylinder.
+    const boreProfile = [[.006,-.076],[.0095,-.076],[.010,-.074],[.010,.070],[.006,.070],[.006,-.076]].map(([r,y])=>new THREE.Vector2(r,y));
+    const barrel = mesh('Rifled muzzle bore',new THREE.LatheGeometry(boreProfile,24),dark,0,.039,-.080);
+    barrel.rotation.x = Math.PI/2;
+    box('Exposed chamber hood',.024,.016,.037,0,.048,-.001,edge);
+    tube('Recoil guide rod',.004,.137,0,.020,-.080,edge);
+    muzzle.position.set(0,.039,-.160);
+    // Open magwell: two side shells, curved frontstrap and backstrap. The mag
+    // can travel on its own axis without passing through a solid grip block.
+    const contour = [[.037,-.028],[.095,-.026],[.116,-.156],[.103,-.172],[.058,-.169],[.048,-.137],[.037,-.065]];
+    for (const side of [-1,1]) {
+      const shell = silhouette('Contoured grip side shell',contour,.009,polymer); shell.position.x=side*.017;
+      const panel = silhouette('Recessed grip traction panel',[[.049,-.061],[.086,-.050],[.104,-.151],[.064,-.151],[.055,-.122]],.0015,rubber); panel.position.x=side*.023;
+      for(let i=0;i<7;i++) box('Grip traction groove',.0018,.002,.031,side*.0245,-.070-i*.011,.070+i*.0018,polymer).rotation.x=-.16;
+    }
+    silhouette('Backstrap palm swell',[[.089,-.026],[.105,-.033],[.121,-.139],[.116,-.161],[.106,-.163],[.086,-.054]],.028,polymer);
+    silhouette('Frontstrap finger contour',[[.035,-.042],[.046,-.046],[.062,-.159],[.055,-.162],[.040,-.119],[.032,-.064]],.029,polymer);
+    box('Beavertail',.039,.013,.039,0,-.024,.095,dark);
+    // Bevelled loop with an actual open trigger aperture.
+    const guardShape = new THREE.Shape();
+    [[-.064,-.028],[.041,-.033],[.045,-.087],[-.043,-.087],[-.062,-.067]].forEach(([z,y],i)=>i?guardShape.lineTo(z,y):guardShape.moveTo(z,y));guardShape.closePath();
+    const opening = new THREE.Path();[[-.049,-.040],[-.047,-.065],[-.036,-.076],[.031,-.076],[.029,-.043]].forEach(([z,y],i)=>i?opening.lineTo(z,y):opening.moveTo(z,y));opening.closePath();guardShape.holes.push(opening);
+    const guardGeometry = new THREE.ExtrudeGeometry(guardShape,{depth:.022,bevelEnabled:true,bevelSegments:2,bevelSize:.002,bevelThickness:.002,steps:1});guardGeometry.rotateY(-Math.PI/2);guardGeometry.translate(.011,0,0);
+    mesh('Trigger guard bevelled loop',guardGeometry,polymer,0,0,0);
+    silhouette('Curved trigger shoe',[[.017,-.036],[.023,-.039],[.010,-.061],[.015,-.069],[.009,-.072],[.002,-.061]],.006,dark);
+    const mag = group('magazine',0,-.115,.079); mag.rotation.x=-.16;
+    box('CP9 magazine steel body',.027,.094,.038,0,0,0,dark,mag);
+    box('Magazine baseplate',.049,.012,.050,0,-.064,.002,polymer,mag);
+    box('Magazine heel pad',.036,.003,.038,0,-.072,.003,rubber,mag);
+    for(const x of [-.014,.014]) box('Magazine witness channel',.001,.058,.004,x,-.002,.010,edge,mag);
+    // Matte ceramic sight inserts stay legible without emissive lighting.
+    const sightPaint = new THREE.MeshStandardMaterial({color:0xc1cabe,roughness:.78,metalness:0}); materials.push(sightPaint);
+    // Compact dust-cover rail, with three functional cross slots.
+    box('Accessory rail bed',.031,.009,.071,0,-.028,-.111,dark);
+    for(let i=0;i<3;i++)box('Accessory rail lug',.037,.006,.009,0,-.035,-.135+i*.021,steel);
+    const release = group('slideRelease',-.026,-.004,.030);
+    box('Slide release paddle',.007,.009,.030,0,0,0,steel,release);
+    for(let i=0;i<3;i++)box('Release paddle traction',.0015,.008,.002,-.004,0,-.008+i*.007,edge,release);
+    const catchPart = group('magazineRelease',-.026,-.040,.041);
+    box('Magazine release button',.005,.012,.013,0,0,0,dark,catchPart);
+    const pin=tube('Takedown axis',.0035,.047,0,-.006,-.020,dark);pin.rotation.set(0,0,Math.PI/2);
+    box('Front iron sight',.005,.009,.009,0,.026,-.136,dark,slide);
+    box('Front sight white inset',.002,.003,.001,0,.029,-.130,sightPaint,slide);
+    for(const side of [-1,1]) {
+      box('Rear iron sight notch shoulder',.007,.009,.013,side*.009,.026,.080,dark,slide);
+      box('Rear sight white inset',.002,.002,.001,side*.009,.029,.087,sightPaint,slide);
+    }
   } else if (id === 'laser') {
     for (const side of [-1, 1]) {
       const shell = silhouette(
@@ -1395,7 +1411,7 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     parent.userData.features = featureNames;
   }
   bake(body);
-  if (id === 'br' && options.firstPerson) {
+  if ((id === 'br' || id === 'pistol') && options.firstPerson) {
     const fresh = parts.magazine.clone(true); fresh.name = 'freshMagazine'; fresh.visible = false;
     body.add(fresh); parts.freshMagazine = fresh;
   }

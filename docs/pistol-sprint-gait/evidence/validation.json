@@ -1,0 +1,431 @@
+{
+  "commit": "working tree",
+  "renderer": "Chromium SwiftShader; actual App scene and camera",
+  "evidence": [
+    {
+      "name": "entry",
+      "id": "pistol",
+      "ammo": 8,
+      "reserve": 60,
+      "reloading": false,
+      "needsChamber": false,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.14645027838150143,
+        -0.1245052605114044,
+        -0.41118862670808565
+      ],
+      "right": [
+        0.038,
+        -0.1,
+        0.105
+      ],
+      "left": [
+        -0.10023891006149774,
+        -0.18058741105326642,
+        0.08738931191267424
+      ],
+      "leftCamera": [
+        0.03561879136074843,
+        -0.3070865108089342,
+        -0.3427999399070617
+      ],
+      "mag": [
+        0,
+        -0.115,
+        0.079
+      ],
+      "fresh": [
+        0,
+        -0.115,
+        0.079
+      ],
+      "magVisible": true,
+      "freshVisible": false,
+      "slide": 0,
+      "gait": {
+        "phase": 0.082,
+        "blend": 0.2064162351626193,
+        "leftElbow": [
+          -0.23204444468221,
+          -0.47691064792793636,
+          -0.10641480839725571
+        ],
+        "rightElbow": [
+          0.22691900309961602,
+          -0.4469037288450839,
+          -0.21672068009526707
+        ]
+      }
+    },
+    {
+      "name": "right-drive",
+      "id": "pistol",
+      "ammo": 8,
+      "reserve": 60,
+      "reloading": false,
+      "needsChamber": false,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.20744918063478357,
+        -0.13330560672224628,
+        -0.49268941467362026
+      ],
+      "right": [
+        0.038,
+        -0.1,
+        0.105
+      ],
+      "left": [
+        -0.2948137434977307,
+        -0.4180893595590142,
+        0.3477915790201702
+      ],
+      "leftCamera": [
+        -0.21398172096751022,
+        -0.5703148636699165,
+        -0.37398076761840915
+      ],
+      "mag": [
+        0,
+        -0.115,
+        0.079
+      ],
+      "fresh": [
+        0,
+        -0.115,
+        0.079
+      ],
+      "magVisible": true,
+      "freshVisible": false,
+      "slide": 0,
+      "gait": {
+        "phase": 0.11500000000000624,
+        "blend": 0.999999991615673,
+        "leftElbow": [
+          -0.231981723890913,
+          -0.4752472916843783,
+          -0.10590772410621066
+        ],
+        "rightElbow": [
+          0.226981723890913,
+          -0.4452055433922426,
+          -0.21708566887493874
+        ]
+      }
+    },
+    {
+      "name": "neutral",
+      "id": "pistol",
+      "ammo": 8,
+      "reserve": 60,
+      "reloading": false,
+      "needsChamber": false,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.20460524338497132,
+        -0.16082746296759576,
+        -0.4654350449981903
+      ],
+      "right": [
+        0.038,
+        -0.1,
+        0.105
+      ],
+      "left": [
+        -0.3339631644788236,
+        -0.3725627103290988,
+        0.15493612496885434
+      ],
+      "leftCamera": [
+        -0.21560672315241053,
+        -0.47071919317719146,
+        -0.5070113592086603
+      ],
+      "mag": [
+        0,
+        -0.115,
+        0.079
+      ],
+      "fresh": [
+        0,
+        -0.115,
+        0.079
+      ],
+      "magVisible": true,
+      "freshVisible": false,
+      "slide": 0,
+      "gait": {
+        "phase": 0.25500000000000644,
+        "blend": 0.9999999978830376,
+        "leftElbow": [
+          -0.2336067238909131,
+          -0.4869240265956649,
+          -0.22304234099781645
+        ],
+        "rightElbow": [
+          0.2253567238909129,
+          -0.4641305356828397,
+          -0.18312034926363802
+        ]
+      }
+    },
+    {
+      "name": "left-drive",
+      "id": "pistol",
+      "ammo": 8,
+      "reserve": 60,
+      "reloading": false,
+      "needsChamber": false,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.200437994669053,
+        -0.19728722866492365,
+        -0.4274595747640058
+      ],
+      "right": [
+        0.038,
+        -0.1,
+        0.105
+      ],
+      "left": [
+        -0.4162821824868147,
+        -0.16940557524334315,
+        -0.08349125373828858
+      ],
+      "leftCamera": [
+        -0.21873172383402267,
+        -0.22850966202544074,
+        -0.6071309430323122
+      ],
+      "mag": [
+        0,
+        -0.115,
+        0.079
+      ],
+      "fresh": [
+        0,
+        -0.115,
+        0.079
+      ],
+      "magVisible": true,
+      "freshVisible": false,
+      "slide": 0,
+      "gait": {
+        "phase": 0.5150000000000076,
+        "blend": 0.9999999998372067,
+        "leftElbow": [
+          -0.23673172389091302,
+          -0.4071817205847334,
+          -0.38582279706931677
+        ],
+        "rightElbow": [
+          0.222231723890913,
+          -0.48404521003349393,
+          -0.1271289442883509
+        ]
+      }
+    },
+    {
+      "name": "loop-return",
+      "id": "pistol",
+      "ammo": 8,
+      "reserve": 60,
+      "reloading": false,
+      "needsChamber": false,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.2074491812841099,
+        -0.1333056067918801,
+        -0.4926894155345585
+      ],
+      "right": [
+        0.038,
+        -0.1,
+        0.105
+      ],
+      "left": [
+        -0.29481374522054055,
+        -0.41808936110826317,
+        0.3477915838118958
+      ],
+      "leftCamera": [
+        -0.21398172389076583,
+        -0.5703148663137503,
+        -0.3739807668652389
+      ],
+      "mag": [
+        0,
+        -0.115,
+        0.079
+      ],
+      "fresh": [
+        0,
+        -0.115,
+        0.079
+      ],
+      "magVisible": true,
+      "freshVisible": false,
+      "slide": 0,
+      "gait": {
+        "phase": 0.11500000000000987,
+        "blend": 0.9999999999995778,
+        "leftElbow": [
+          -0.231981723890913,
+          -0.4752472916843783,
+          -0.10590772410621066
+        ],
+        "rightElbow": [
+          0.226981723890913,
+          -0.4452055433922426,
+          -0.21708566887493874
+        ]
+      }
+    },
+    {
+      "name": "exit",
+      "id": "pistol",
+      "ammo": 8,
+      "reserve": 60,
+      "reloading": false,
+      "needsChamber": false,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.15150194670561556,
+        -0.13645182744129067,
+        -0.41247630463124063
+      ],
+      "right": [
+        0.038,
+        -0.1,
+        0.105
+      ],
+      "left": [
+        -0.12843044444402754,
+        -0.19571122268866709,
+        0.06411865766245489
+      ],
+      "leftCamera": [
+        0.008757186389422883,
+        -0.3294090621533655,
+        -0.37642213730816243
+      ],
+      "mag": [
+        0,
+        -0.115,
+        0.079
+      ],
+      "fresh": [
+        0,
+        -0.115,
+        0.079
+      ],
+      "magVisible": true,
+      "freshVisible": false,
+      "slide": 0,
+      "gait": {
+        "phase": 0.8040000000000042,
+        "blend": 0.2952816013997394,
+        "leftElbow": [
+          -0.23392152748873396,
+          -0.4891450592167954,
+          -0.18086083436173192
+        ],
+        "rightElbow": [
+          0.22504192029309206,
+          -0.4672495984415871,
+          -0.1756818124271996
+        ]
+      }
+    },
+    {
+      "name": "restored-ready",
+      "id": "pistol",
+      "ammo": 8,
+      "reserve": 60,
+      "reloading": false,
+      "needsChamber": false,
+      "sprinting": false,
+      "aiming": false,
+      "root": [
+        0.1299999596569808,
+        -0.12674308241340837,
+        -0.39
+      ],
+      "right": [
+        0.038,
+        -0.1,
+        0.105
+      ],
+      "left": [
+        -0.03900000000874968,
+        -0.10800000000004478,
+        0.08799999999138516
+      ],
+      "leftCamera": [
+        0.09099995964823113,
+        -0.23474308241345315,
+        -0.3020000000086148
+      ],
+      "mag": [
+        0,
+        -0.115,
+        0.079
+      ],
+      "fresh": [
+        0,
+        -0.115,
+        0.079
+      ],
+      "magVisible": true,
+      "freshVisible": false,
+      "slide": 0,
+      "gait": {
+        "phase": 0,
+        "blend": 0,
+        "leftElbow": [
+          -0.23260672389091303,
+          -0.47864963403813965,
+          -0.1128073562095053
+        ],
+        "rightElbow": [
+          0.226356723890913,
+          -0.4492529155535693,
+          -0.2121285440575874
+        ]
+      }
+    }
+  ],
+  "checks": [
+    "Seven representative actual-game gait poses",
+    "Two-second continuous 24 FPS recording; over four complete stride pairs"
+  ],
+  "errors": [],
+  "sourceCommit": "5d0dd1b9d001a67144733a6c05847740e5c775bf",
+  "captureMethod": "Actual App scene/camera and cached viewmodel manager; authoritative animation clock stepped deterministically. 48 rendered frames encoded at 24 FPS, two seconds/four complete stride pairs. This is not a native-GPU frame-rate measurement.",
+  "tests": [
+    "lint",
+    "build",
+    "pistol:sprint",
+    "pistol",
+    "viewmodel",
+    "controls",
+    "audio",
+    "br",
+    "sniper",
+    "shotgun",
+    "weapons"
+  ],
+  "preserved": [
+    "CP-9 geometry/materials",
+    "reload phases/audio",
+    "combat values",
+    "other weapons/maps/AI/physics"
+  ]
+}

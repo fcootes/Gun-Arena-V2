@@ -1,4 +1,5 @@
 import { beginSniperCycle, requireSniperBolt } from './sniperMechanics';
+import { PISTOL_SPRINT } from './pistolSprint';
 import { GameplayInput, KEY_ACTIONS, MOUSE_BUTTONS, CONTROLS_GUIDE, canPlayerFire } from './gameplayInput';
 import { DeploymentPipeline } from './deployment';
 import { initialization, createPerformanceOverlay } from './performance';
@@ -701,6 +702,7 @@ export default function App() {
     const fireCamera=new THREE.PerspectiveCamera();
     function getFireCamera(){fireCamera.copy(camera,false);fireCamera.position.copy(player.pos);fireCamera.updateMatrixWorld();return fireCamera;}
     const chaseDirection=new THREE.Vector3(),chaseTarget=new THREE.Vector3(),chaseRay=new THREE.Raycaster();
+    let localPistolArms = false;
     function updateThirdPerson(delta:number) {
       if(!thirdPerson||!player.alive){if(thirdPersonActor)thirdPersonActor.rootGroup.visible=false;return;}
       const w=currentSlot();
@@ -715,6 +717,22 @@ export default function App() {
       if(carriedId!==backId){if(carriedWeapon)disposeWeaponObject(carriedWeapon);carriedWeapon=createWeaponAssembly(backId).root;carriedWeapon.position.set(-.10,1.22,-.17);carriedWeapon.rotation.set(-Math.PI/2,.1,-.25);actor.rootGroup.add(carriedWeapon);carriedId=backId;}
       actor.rootGroup.scale.y=player.crouching?.7:1;actor.rootGroup.position.set(player.pos.x,player.pos.y-1.7*actor.rootGroup.scale.y,player.pos.z);actor.rootGroup.rotation.y=player.yaw+Math.PI;
       const walk=player.vel.lengthSq()>1?Math.sin(clock.elapsedTime*9)*.35:0;actor.legLPivot.rotation.x=walk;actor.legRPivot.rotation.x=-walk;
+      // Pistol sprint is local-player presentation; bot/faction animation stays owned by its existing path.
+      if (w.id === 'pistol') {
+        localPistolArms = true;
+        const gait = vmManager.getPistolSprintPose(), blend = gait.blend;
+        // Same phase/FK angles as first person; no second oscillator or timer.
+        actor.armLPivot.rotation.x = THREE.MathUtils.lerp(-.45, -gait.left.shoulderPitch, blend);
+        actor.armRPivot.rotation.x = THREE.MathUtils.lerp(-.45, -gait.right.shoulderPitch, blend);
+        actor.armLLowerPivot.rotation.x = THREE.MathUtils.lerp(-.35, -gait.left.elbowFlexion, blend);
+        actor.armRLowerPivot.rotation.x = THREE.MathUtils.lerp(-.22, -gait.right.elbowFlexion, blend);
+        const stride = (gait.right.shoulderPitch - PISTOL_SPRINT.rightShoulderPitch) / PISTOL_SPRINT.rightShoulderRange * .425;
+        actor.legLPivot.rotation.x = THREE.MathUtils.lerp(walk, -stride, blend);
+        actor.legRPivot.rotation.x = THREE.MathUtils.lerp(-walk, stride, blend);
+      } else if (localPistolArms) {
+        actor.armLPivot.rotation.set(-.45,.25,0); actor.armRPivot.rotation.set(-.45,-.15,0);
+        actor.armLLowerPivot.rotation.x=-.35; actor.armRLowerPivot.rotation.x=-.22; localPistolArms=false;
+      }
       actor.weaponAssembly?.update(delta,currentSlotState().chargeTimer??0,w.id==='minigun'?delta*30:0);actor.weaponEffects?.update(delta);
       vmManager.root.visible=false;
       camera.getWorldDirection(chaseDirection);chaseDirection.negate();
@@ -1275,7 +1293,7 @@ export default function App() {
         player.health = 0;
         player.alive = false;
         stopWeaponAudio();
-        playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } if (playerLoadout[i]?.id === 'sniper') { cancelWeaponReload(ws); ws.sniperCycle = undefined; ws.sniperRecoveryT = 0; ws.boltCycleT = 0; ws.needsChamber = true; } if (playerLoadout[i]?.id === 'br') cancelWeaponReload(ws); });
+        playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } if (playerLoadout[i]?.id === 'sniper') { cancelWeaponReload(ws); ws.sniperCycle = undefined; ws.sniperRecoveryT = 0; ws.boltCycleT = 0; ws.needsChamber = true; } if (playerLoadout[i]?.id === 'br' || playerLoadout[i]?.id === 'pistol') cancelWeaponReload(ws); });
 
         if (matchConfig.mode === 'extraction') {
           pushKillFeed('MISSION FAILED: OPERATOR KILLED');
@@ -3035,7 +3053,7 @@ export default function App() {
 
     function stopMatchInput() {
       clearGameplayInput();
-      playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } if (playerLoadout[i]?.id === 'sniper') { cancelWeaponReload(ws); ws.sniperCycle = undefined; ws.sniperRecoveryT = 0; ws.boltCycleT = 0; ws.needsChamber = true; } if (playerLoadout[i]?.id === 'br') cancelWeaponReload(ws); });
+      playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } if (playerLoadout[i]?.id === 'sniper') { cancelWeaponReload(ws); ws.sniperCycle = undefined; ws.sniperRecoveryT = 0; ws.boltCycleT = 0; ws.needsChamber = true; } if (playerLoadout[i]?.id === 'br' || playerLoadout[i]?.id === 'pistol') cancelWeaponReload(ws); });
       player.vel.set(0, 0, 0);
       for (const sound of Object.values(AUDIO)) sound.stop();
       stopWeaponAudio(); updateRailgunWeaponAudio(false, 0);
@@ -3153,8 +3171,11 @@ export default function App() {
           } else {
             bobPhase *= 0.9;
           }
-          const bobY = Math.sin(bobPhase) * (player.crouching ? 0.02 : 0.045);
-          const bobX = Math.cos(bobPhase * 0.5) * (player.crouching ? 0.01 : 0.03);
+          // Pistol weight lives on the arms, not a second camera oscillator.
+          // Fade the existing cosmetic camera bob; add no new camera motion.
+          const cameraBobWeight = currentSlot().id === 'pistol' ? 1 - vmManager.getPistolSprintPose().blend : 1;
+          const bobY = Math.sin(bobPhase) * (player.crouching ? 0.02 : 0.045) * cameraBobWeight;
+          const bobX = Math.cos(bobPhase * 0.5) * (player.crouching ? 0.01 : 0.03) * cameraBobWeight;
 
           recoilPitch = Math.max(0, recoilPitch - dt * 0.8);
           camera.position.set(player.pos.x + bobX, player.pos.y + bobY, player.pos.z);
@@ -3489,7 +3510,8 @@ export default function App() {
           player.isDrinking,
           player.drinkTimer,
           player.alive,
-          true
+          true,
+          Math.hypot(player.vel.x, player.vel.z)
         );
 
         

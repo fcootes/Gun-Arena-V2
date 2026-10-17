@@ -40,7 +40,7 @@ export function controlHarnessSource() {
     const reloadWeapon=()=>{counters.reload++; ws.reloading=true;};
     const throwGrenade=()=>{counters.grenade++;};
     const fireWeapon=()=>{counters.fire++;};
-    const vmManager={triggerKnifeSlash:()=>counters.melee++,setRailgunChargeProgress:noop};
+    const vmManager={getPistolSprintPose:()=>({blend:0}),triggerKnifeSlash:()=>counters.melee++,setRailgunChargeProgress:noop};
     const world={hittableObjects:[], moveEntityWithCollision(pos,vel,radius,foot,head,dt,team){
       counters.collisions++; counters.collisionArgs={radius,foot,head,team};pos.x+=vel.x*dt;pos.z+=vel.z*dt;
     },getHighestSurface:()=>0};

@@ -1,3 +1,5 @@
+import { createPistolSprintController, PISTOL_SPRINT, type PistolSprintPose } from './pistolSprint';
+import { createPistolAnimator } from './pistolMechanics';
 import * as THREE from 'three';
 import { WeaponDef, WeaponSlotState, ARSENAL } from './types';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
@@ -285,6 +287,7 @@ export interface ViewmodelManager {
     drinkTimer: number,
     isAlive: boolean,
     isPlaying: boolean,
+    horizontalSpeed?: number,
   ) => void;
   triggerPistolSlideFire: () => void;
   triggerSmgBoltFire: () => void;
@@ -296,6 +299,7 @@ export interface ViewmodelManager {
   triggerMuzzleFlash: (id?: string) => void;
   getMuzzlePosition: (target: THREE.Vector3) => THREE.Vector3;
   resetEffects: () => void;
+  getPistolSprintPose: () => Readonly<PistolSprintPose>;
   setFaction: (faction: FactionType) => void;
   dispose: () => void;
 }
@@ -309,6 +313,7 @@ export function createViewmodelManager(): ViewmodelManager {
       assembly: WeaponAssembly;
       effects: WeaponMuzzleEffect;
       brReload?: ReturnType<typeof createBattleRifleAnimator>;
+      pistolAnimation?: ReturnType<typeof createPistolAnimator>;
       pose: Map<
         THREE.Object3D,
         { position: THREE.Vector3; quaternion: THREE.Quaternion }
@@ -334,6 +339,8 @@ export function createViewmodelManager(): ViewmodelManager {
   const viewPosition = new THREE.Vector3(), targetPosition = new THREE.Vector3();
   const viewRotation = new THREE.Quaternion(), targetRotation = new THREE.Quaternion(), targetEuler = new THREE.Euler();
   let poseInitialized = false, previousId = '', walkBlend = 0, runBlend = 0, equip = 0, disposed = false;
+  const pistolSprint = createPistolSprintController();
+  function resetPistolMotion() { pistolSprint.reset(); hands.reset(); }
   root.userData.cleanupWeaponEffect = () => { disposed = true; hands.releaseInstances(); models.clear(); selected = null; };
   const gloveMaterial = new THREE.MeshStandardMaterial({
     color: 0x20282b,
@@ -431,7 +438,7 @@ export function createViewmodelManager(): ViewmodelManager {
         quaternion: part.quaternion.clone(),
       }),
     );
-    model = { assembly, effects, pose, brReload:id === 'br' ? createBattleRifleAnimator(assembly) : undefined };
+    model = { assembly, effects, pose, brReload:id === 'br' ? createBattleRifleAnimator(assembly) : undefined, pistolAnimation:id === 'pistol' ? createPistolAnimator(assembly) : undefined };
     models.set(id, model);
     return model;
   }
@@ -448,9 +455,10 @@ export function createViewmodelManager(): ViewmodelManager {
     drinkTimer: number,
     alive: boolean,
     playing: boolean,
+    horizontalSpeed: number = PISTOL_SPRINT.referenceSpeed,
   ) {
     if (disposed) return;
-    if (!alive) { root.visible = false; return; }
+    if (!alive) { root.visible = false; resetPistolMotion(); return; }
     if (!playing) return; // Pausing freezes pose, joints, timers and recoil.
     dt = Number.isFinite(dt) ? THREE.MathUtils.clamp(dt, 0, .1) : 0;
     const w =
@@ -498,7 +506,7 @@ export function createViewmodelManager(): ViewmodelManager {
       utility.position.set(-0.16, -0.06, -0.35);
       screenMaterial.emissiveIntensity = radioHold ? 1.9 : 1.2;
     }
-    if (!selected) { hands.root.visible = false; previousId = w.id; return; }
+    if (!selected) { hands.root.visible = false; resetPistolMotion(); previousId = w.id; return; }
     const { assembly, pose } = selected,
       parts = assembly.parts;
     if (hands.root.parent !== assembly.root) assembly.root.add(hands.root);
@@ -513,32 +521,48 @@ export function createViewmodelManager(): ViewmodelManager {
     // the camera near plane obscures the hands; actor/studio stocks stay intact.
     if (parts.stock) parts.stock.visible = false;
     hands.root.visible = !scoped;
-    const grip = VIEWMODEL_GRIPS[w.id as WeaponModelId];
+    const grip = VIEWMODEL_GRIPS[w.id as WeaponModelId], pistol = w.id === 'pistol';
     const alpha = 1 - Math.exp(-14 * dt);
-    targetPosition.fromArray(aiming ? grip.aim : sprinting ? grip.sprint : grip.hip);
+    targetPosition.fromArray(aiming ? grip.aim : sprinting && !pistol ? grip.sprint : grip.hip);
     if (aiming) targetEuler.set(...grip.aimRotation);
-    else if (sprinting) targetEuler.set(...grip.sprintRotation);
+    else if (sprinting && !pistol) targetEuler.set(...grip.sprintRotation);
     else targetEuler.set(0, 0, 0);
     targetRotation.setFromEuler(targetEuler);
     if (!poseInitialized) { viewPosition.copy(targetPosition); viewRotation.copy(targetRotation); poseInitialized = true; }
     else { viewPosition.lerp(targetPosition, alpha); viewRotation.slerp(targetRotation, alpha); }
-    if (previousId && previousId !== w.id) equip = 1;
+    if (previousId !== w.id) { equip = previousId ? 1 : 0; resetPistolMotion(); }
     previousId = w.id; equip *= Math.exp(-18 * dt);
+    const pistolRunning = pistol && sprinting && moving && onGround && !aiming && !ws?.reloading && !melee && radioTimer === 0;
+    pistolSprint.update(dt, pistolRunning, horizontalSpeed);
+    if (!pistol) pistolSprint.reset();
+    const gait = pistolSprint.pose;
     walkBlend += ((moving && onGround ? 1 : 0) - walkBlend) * (1 - Math.exp(-12 * dt));
     runBlend += ((sprinting && !aiming && moving && onGround ? 1 : 0) - runBlend) * (1 - Math.exp(-12 * dt));
     const walk = walkBlend * (aiming ? .18 : 1) * (1 - runBlend);
     assembly.root.position.copy(viewPosition);
     assembly.root.position.z += recoil + equip * .025;
     assembly.root.position.y -= equip * .06;
-    assembly.root.position.x += Math.cos(bob * 0.5) * 0.008 * walk + Math.sin(bob * .5) * .0045 * runBlend;
+    assembly.root.position.x += Math.cos(bob * 0.5) * 0.008 * walk + Math.sin(bob * .5) * .0045 * runBlend * (pistol ? 0 : 1);
     assembly.root.position.y +=
-      Math.abs(Math.sin(bob)) * 0.012 * walk + Math.cos(bob) * .003 * runBlend + Math.sin(time * 1.5) * 0.002;
+      Math.abs(Math.sin(bob)) * 0.012 * walk + Math.cos(bob) * .003 * runBlend * (pistol ? 0 : 1) + Math.sin(time * 1.5) * 0.002 * (pistol ? 1 - gait.blend : 1);
     assembly.root.quaternion.copy(viewRotation); assembly.root.rotation.x += recoilRotation;
-    assembly.root.rotation.z += Math.sin(bob * .5) * .004 * runBlend;
+    assembly.root.rotation.z += Math.sin(bob * .5) * .004 * runBlend * (pistol ? 0 : 1);
     if (parts.reloadRound) parts.reloadRound.visible = false;
     if (parts.freshMagazine) parts.freshMagazine.visible = false;
+    if (pistol && gait.blend > 0) {
+      // Reload hand interaction has priority. Only the first 80 ms of its real
+      // eject clock absorbs the carry; magazine/chamber choreography is intact.
+      const q = ws?.reloading ? ws.reloadSequence : undefined;
+      const recovery = q ? q.index === 0 ? Math.max(0, 1 - q.elapsed / PISTOL_SPRINT.reloadRecoveryTime) : 0 : 1;
+      const blend = gait.blend * recovery;
+      assembly.root.position.lerp(gait.weaponPosition, blend);
+      assembly.root.quaternion.slerp(gait.weaponRotation, blend);
+      assembly.root.position.z += recoil * blend;
+      assembly.root.rotation.x += recoilRotation * blend;
+    }
     const sequence = ws?.reloadSequence;
-    if (ws?.reloading && sequence && selected.brReload) selected.brReload(sequence);
+    if (selected.pistolAnimation) selected.pistolAnimation(ws, Math.sin((slideTimer / .12) * Math.PI));
+    else if (ws?.reloading && sequence && selected.brReload) selected.brReload(sequence);
     else if (ws?.reloading && sequence) {
       const phase = sequence.phases[sequence.index];
       const p = THREE.MathUtils.smoothstep(sequence.elapsed / phase.duration, 0, 1);
@@ -621,7 +645,7 @@ export function createViewmodelManager(): ViewmodelManager {
     assembly.update(dt, charge, spin);
     spin = 0;
     if (venting) assembly.root.rotation.z += Math.sin(time * 16) * 0.014;
-    hands.update(w.id as WeaponModelId, dt, assembly, ws, aiming);
+    hands.update(w.id as WeaponModelId, dt, assembly, ws, aiming, gait);
   }
   return {
     root,
@@ -665,11 +689,12 @@ export function createViewmodelManager(): ViewmodelManager {
       root.updateWorldMatrix(true, true);
       return model.assembly.muzzle.getWorldPosition(target);
     },
+    getPistolSprintPose() { return pistolSprint.pose; },
     resetEffects() {
       models.forEach((model) => model.effects.reset());
       recoil = recoilRotation = slideTimer = boltTimer = equip = walkBlend = runBlend = time = bob = 0;
       charge = spin = radioTimer = 0; venting = radioHold = false;
-      poseInitialized = false; previousId = '';
+      poseInitialized = false; previousId = ''; resetPistolMotion();
     },
   };
 }
