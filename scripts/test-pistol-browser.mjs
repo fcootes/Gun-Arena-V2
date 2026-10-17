@@ -126,7 +126,7 @@ try {
       writeFileSync(resolve(frames,String(i).padStart(3,'0')+'.jpg'),Buffer.from(frame,'base64'));
     }
     const video=spawnSync('ffmpeg',['-loglevel','error','-y','-framerate','24','-i',resolve(frames,'%03d.jpg'),'-c:v','libx264','-pix_fmt','yuv420p','-movflags','+faststart',resolve(output,'sprint-cycle.mp4')],{encoding:'utf8',timeout:30000});
-    checks.push(video.status===0?'Two-second continuous 24 FPS recording; over four complete stride pairs':'Video encoder unavailable; 48 real rendered cycle frames retained');
+    checks.push(video.status===0?`Two-second clock-stepped 24 FPS recording; ${(2*cadence).toFixed(2)} stride pairs`:'Video encoder unavailable; 48 real rendered cycle frames retained');
     }
     const a=byName('right-drive'),b=byName('left-drive');assert.ok(a.leftCamera[1]<b.leftCamera[1]-.20);assert.deepEqual(a.right,b.right);
     // Wall-clock evidence, separate from the deterministic pose/continuity clip.
@@ -138,33 +138,52 @@ try {
       const g=window.__pistol;g.pose('idle');g.freezeBackdrop();g.renderer.setPixelRatio(.5);
       // Compile the backdrop/rig before starting the recording's clock.
       for(let i=0;i<3;i++){g.renderer.render(g.scene,g.camera);await new Promise(requestAnimationFrame);}
-      const stream=g.renderer.domElement.captureStream(60);
-      const mimeType=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm;codecs=vp8';
-      const recorder=new MediaRecorder(stream,{mimeType,videoBitsPerSecond:2500000}),chunks=[],frames=[];
-      const done=new Promise(resolve=>{recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};recorder.onstop=resolve;});
-      let start,last;await new Promise(resolve=>{recorder.onstart=resolve;recorder.start();});
+      const frames=[];let start,last;
       await new Promise(resolve=>{
         function frame(now){
           start??=now;last??=now;const t=(now-start)/1000,dt=(now-last)/1000;last=now;
-          g.tick(dt,t>=.5&&t<7.5);g.renderer.render(g.scene,g.camera);
-          frames.push({seconds:t,dt,phase:g.manager.getPistolSprintPose().phase,blend:g.manager.getPistolSprintPose().blend});
+          // The production manager rejects dt > .1 s. Consume actual elapsed
+          // time in bounded catch-up steps so this slow renderer cannot make
+          // the evidence play the gait in slow motion. Split state boundaries.
+          for(let cursor=t-dt;cursor<t-1e-8;){
+            const boundary=cursor<.5?.5:cursor<7.5?7.5:t;
+            const step=Math.min(.05,t-cursor,boundary-cursor);
+            g.tick(step,cursor>=.5&&cursor<7.5);cursor+=step;
+          }
+          g.renderer.render(g.scene,g.camera);
+          frames.push({seconds:t,dt,phase:g.manager.getPistolSprintPose().phase,blend:g.manager.getPistolSprintPose().blend,jpeg:g.renderer.domElement.toDataURL('image/jpeg',.90).split(',')[1]});
           if(t<8)requestAnimationFrame(frame);else resolve();
         }requestAnimationFrame(frame);
       });
-      await new Promise(resolve=>setTimeout(resolve,200));recorder.stop();await done;stream.getTracks().forEach(track=>track.stop());
-      const bytes=await new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.readAsDataURL(new Blob(chunks,{type:mimeType}));});
-      return {bytes,mimeType,frames,width:g.renderer.domElement.width,height:g.renderer.domElement.height};
+      return {frames,width:g.renderer.domElement.width,height:g.renderer.domElement.height};
     });
-    writeFileSync(resolve(output,'sprint-realtime.webm'),Buffer.from(recording.bytes,'base64'));
-    const {bytes,...timing}=recording; // Keep binary data out of the report.
+    const liveFrames=resolve(output,'realtime-frames');mkdirSync(liveFrames,{recursive:true});
+    let concat='';
+    for(let i=0;i<recording.frames.length;i++){
+      const f=recording.frames[i],name=String(i).padStart(4,'0')+'.jpg';
+      writeFileSync(resolve(liveFrames,name),Buffer.from(f.jpeg,'base64'));delete f.jpeg;
+      concat+=`file '${name}'\n`;
+      if(i+1<recording.frames.length)concat+=`duration ${recording.frames[i+1].seconds-f.seconds}\n`;
+    }
+    // Preserve each real capture timestamp. Never retime sparse frames to 60 FPS.
+    writeFileSync(resolve(liveFrames,'frames.txt'),concat);
+    const timing=recording;
     timing.wallSeconds=timing.frames.at(-1).seconds;
     timing.actualRenderFPS=(timing.frames.length-1)/timing.wallSeconds;
+    for(let i=1;i<timing.frames.length;i++){
+      const a=timing.frames[i-1],b=timing.frames[i];
+      if(b.seconds>=.5&&b.seconds<7.5){
+        const runDt=b.seconds-Math.max(a.seconds,.5);
+        const expected=(a.phase+runDt*cadence)%1;
+        assert.ok(Math.abs(b.phase-expected)<1e-7,'Live gait advances by measured wall-clock time');
+      }
+    }
     writeFileSync(resolve(output,'realtime-timing.json'),JSON.stringify(timing,null,2)+'\n');
-    const realtimeVideo=spawnSync('ffmpeg',['-loglevel','error','-y','-i',resolve(output,'sprint-realtime.webm'),'-c:v','libx264','-pix_fmt','yuv420p','-movflags','+faststart','-fps_mode','vfr',resolve(output,'sprint-realtime.mp4')],{encoding:'utf8',timeout:30000});
+    const realtimeVideo=spawnSync('ffmpeg',['-loglevel','error','-y','-f','concat','-safe','0','-i',resolve(liveFrames,'frames.txt'),'-c:v','libx264','-pix_fmt','yuv420p','-movflags','+faststart','-fps_mode','vfr',resolve(output,'sprint-realtime.mp4')],{encoding:'utf8',timeout:30000});
     assert.equal(realtimeVideo.status,0,realtimeVideo.stderr);
     assert.ok(timing.wallSeconds>=8&&timing.wallSeconds<10,'Continuous 8–10 second wall-clock recording');
     console.log(`Wall-clock render rate: ${timing.actualRenderFPS.toFixed(1)} FPS; ${timing.wallSeconds.toFixed(2)} seconds`);
-    checks.push(`Eight-second real-time capture (60 FPS requested, ${timing.actualRenderFPS.toFixed(1)} actual render FPS); frozen game backdrop, live production hands/pistol and real elapsed-time gait`);
+    checks.push(`Eight-second real-time capture (${timing.actualRenderFPS.toFixed(1)} actual render FPS); original variable capture timestamps, frozen game backdrop, live production hands/pistol and real elapsed-time gait`);
   }
   if(process.env.PISTOL_POSES_ONLY!=='1'&&process.env.PISTOL_GAIT!=='1') {
     console.log('Checking live controls');

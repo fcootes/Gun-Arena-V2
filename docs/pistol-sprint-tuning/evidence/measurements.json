@@ -1,0 +1,115 @@
+{
+  "baseCommit": "acf4182915b4f2f7295be2dbcbd564e8412bff34",
+  "before": {
+    "pairsPerSecond": 2.05,
+    "footfallsPerSecond": 4.1,
+    "enterTime": 0.095,
+    "exitTime": 0.065,
+    "rightDepthTravel": 0.07563010086922312,
+    "rightHeightTravel": 0.060043528224799136,
+    "leftHeightTravel": 0.3418052043033044,
+    "leftForearmTiltDegrees": 51.17678697793174,
+    "extremes": [
+      {
+        "phase": 0.115,
+        "rightShoulderPitch": 0.58,
+        "rightElbowFlexion": 1.63,
+        "rightWrist": [
+          0.20898172389091302,
+          -0.27552636881613396,
+          -0.44536176862077376
+        ],
+        "leftShoulderPitch": -0.30999999999999994,
+        "leftElbowFlexion": 1.54,
+        "leftElbow": [
+          -0.231981723890913,
+          -0.4752472916843783,
+          -0.10590772410621066
+        ],
+        "leftWrist": [
+          -0.21398172389091302,
+          -0.5703148663138834,
+          -0.373980766865201
+        ]
+      },
+      {
+        "phase": 0.515,
+        "rightShoulderPitch": 0.23999999999999996,
+        "rightElbowFlexion": 1.88,
+        "rightWrist": [
+          0.20423172389091301,
+          -0.3355698970409331,
+          -0.36973166775155064
+        ],
+        "leftShoulderPitch": 0.83,
+        "leftElbowFlexion": 1.42,
+        "leftElbow": [
+          -0.23673172389091302,
+          -0.40718172058473107,
+          -0.38582279706931677
+        ],
+        "leftWrist": [
+          -0.21873172389091303,
+          -0.22850966201057896,
+          -0.6071309430668709
+        ]
+      }
+    ]
+  },
+  "after": {
+    "pairsPerSecond": 1.75,
+    "footfallsPerSecond": 3.5,
+    "enterTime": 0.115,
+    "exitTime": 0.08,
+    "rightDepthTravel": 0.14069679594898282,
+    "rightHeightTravel": 0.3395402070424992,
+    "leftHeightTravel": 0.4553666143025029,
+    "leftForearmTiltDegrees": 11.552308862198007,
+    "extremes": [
+      {
+        "phase": 0.115,
+        "rightShoulderPitch": 0.77,
+        "rightElbowFlexion": 1.82,
+        "rightWrist": [
+          0.20898172389091302,
+          -0.17222135212375053,
+          -0.4045408136197145
+        ],
+        "leftShoulderPitch": -0.32,
+        "leftElbowFlexion": 1.55,
+        "leftElbow": [
+          -0.231981723890913,
+          -0.4744440366772685,
+          -0.10344261323241377
+        ],
+        "leftWrist": [
+          -0.21398172389091302,
+          -0.5695116113067736,
+          -0.37151565599140407
+        ]
+      },
+      {
+        "phase": 0.515,
+        "rightShoulderPitch": -0.33000000000000007,
+        "rightElbowFlexion": 1.78,
+        "rightWrist": [
+          0.20423172389091301,
+          -0.5117615591662498,
+          -0.2638440176707317
+        ],
+        "leftShoulderPitch": 0.8999999999999999,
+        "leftElbowFlexion": 2.05,
+        "leftElbow": [
+          -0.23673172389091302,
+          -0.39337154707215305,
+          -0.3975924571537987
+        ],
+        "leftWrist": [
+          -0.21873172389091303,
+          -0.11414499700427072,
+          -0.4517545632538055
+        ]
+      }
+    ]
+  }
+}

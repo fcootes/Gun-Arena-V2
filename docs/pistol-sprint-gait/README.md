@@ -1,5 +1,7 @@
 # Combat Pistol sprint biomechanics — PR #20
 
+Latest: [final animation tuning and real-time evidence](../pistol-sprint-tuning/README.md) supersedes this checkpoint's cadence and arm ranges. The report below records the earlier authored-gait implementation.
+
 The former sprint combined a low-frequency sine wrist path with additional weapon bob, a mostly static elbow target, and an independent third-person oscillator. Its visible hand motion did not establish a coherent shoulder/elbow-driven stride pair.
 
 This pass changes sprint presentation only. The approved CP-9 model/materials, firing, recoil, ADS alignment, tactical/empty magazine choreography, audio, ammunition, other weapons, input restrictions, movement/physics, maps and bots remain intact. Original local work and unpublished evidence were preserved in backup commit `79d1521d8699423b39e06008ee97ee75c278fde1`.
