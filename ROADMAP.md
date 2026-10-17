@@ -20,7 +20,7 @@ Evolve **Gun-Arena V2** into a responsive, performant, visually coherent WebGL t
 | Shotgun fidelity | [#17](https://github.com/fcootes/Gun-Arena-V2/pull/17) | **Merged** | Regress pump, shell loop, sound timing and interruption |
 | Heavy Sniper fidelity | [#18](https://github.com/fcootes/Gun-Arena-V2/pull/18) | **Merged** | Regress manual R bolt-cycle, ADS and reload |
 | Battle Rifle fidelity | [#19](https://github.com/fcootes/Gun-Arena-V2/pull/19) | **Merged** | Regress bullpup identity, stock/grips and upright rear-mag reload |
-| Combat Pistol fidelity | [#20](https://github.com/fcootes/Gun-Arena-V2/pull/20) | **OPEN, DRAFT** | User's latest sprint-gait feedback remains an acceptance item; do not merge prematurely |
+| Combat Pistol fidelity | [#20](https://github.com/fcootes/Gun-Arena-V2/pull/20) | **Merged** | User confirmed the tuned one-handed sprint looks good; retain reload and gait regression checks |
 
 Other earlier gameplay, UI, world and performance PRs are history, not a substitute for final visual/playtest acceptance. See the existing PR descriptions and documentation.
 
@@ -28,17 +28,17 @@ Other earlier gameplay, UI, world and performance PRs are history, not a substit
 
 **Source of truth: [Issue #16](https://github.com/fcootes/Gun-Arena-V2/issues/16).** Do not allow the new sprint or encounter ideas to silently displace these weapons.
 
-### A1 — Combat Pistol: finish draft PR #20
+### A1 — Combat Pistol: merged and visually accepted (PR #20)
 
-**Next immediate task.** Tune the existing shoulder/elbow-driven one-handed sprint, not a new bob system:
+The user's latest laptop playtest approved the revised one-handed pistol gait; GitHub confirms [PR #20](https://github.com/fcootes/Gun-Arena-V2/pull/20) is merged. The accepted implementation includes:
 
-- Slow both arms together (the current `2.05` complete stride pairs/s is visibly too quick; evaluate approximately `1.7–1.8` without treating a trial number as final).
-- Broaden the right arm's *real shoulder-driven* forward/backward and vertical excursion: the pistol must pump rather than float/bob in place.
-- Left arm: moderately more useful upward range; reduce excessive forward reach; at forward apex the fist should be **above the elbow** with an approximately upright forearm.
+- A tuned cadence of **1.75 complete stride pairs/s** at the game's reference sprint speed (formerly 2.05).
+- Broader *shoulder-driven* right-arm forward/back and vertical travel; preserve the existing grip constraint.
+- Independent left arm with a higher, more upright forward apex and limited reach, then an offscreen rear/downward phase.
 - Preserve fixed bone lengths, hand-to-gun grip, opposing cadence, continuous curved paths, third-person phase consistency, responsive transitions, FPS camera comfort and all shooting/reload mechanics.
 - Validate across 30/60/144 FPS, capture a **real-time 6–10 second gameplay clip** and both opposing apexes, then obtain explicit laptop visual approval.
 
-**Definition of done:** User accepts speed, two-arm motion, pose and weapon attachment; targeted mechanics tests, lint/build and no visual regression. Keep PR #20 in draft until approved.
+**Acceptance:** laptop visual approval received and PR merged; preserve this model, reload, audio and sprint handling in all future shared movement work. Do not reopen pistol work without a specific defect.
 
 ### A2 — Assault Rifle: complete the other half of Issue #16 step 4
 
@@ -81,11 +81,37 @@ The supplied batch1/2/3 WAV libraries and manifests are already integrated in va
 
 **Nuance:** the combat and AI work are connected, so build/test them together in a small existing environment. This does *not* mean delaying every AI fix until every weapon is perfect, or polishing weapon animations in isolation from opponents. Detailed enemy visual/behavior overhaul follows the combat foundation. Continue to preserve both factions, Shattered Wall and Training Grounds.
 
+## Further user decisions — 17 October 2026
+
+- **Movement first within the combat-fidelity phase.** After the remaining weapon backlog (or with a small early testbed in parallel), prioritize realistic weapon-class sprint, acceleration, stopping and readiness before a major impacts/recoil/audio polish pass. This is about sequencing work, not postponing critical bugs.
+- **Movement choice still open:** Current unrestricted fast sprint makes it too easy to bypass hostiles. User is interested in a three-state **walk → sustainable run → faster limited tactical sprint** with a generous stamina budget, or a Halo-like burst with recovery. **Recommendation:** prototype the three-state hybrid first; compare it against a cooldown-based tactical sprint and existing baseline. No final stamina commitment or hard numbers without native playtest.
+- **Character art pipeline:** User objects to polishing throwaway blocky bot models. Favor an early **single properly rigged character prototype** (optimized GLB/glTF, shared skeleton/rig and modular armor) rather than repeatedly detailing the current procedural meshes. Keep existing bots running as fallbacks until proven replacement meets performance, animation and AI needs; fix only urgent visibility/weapon-contact bugs in the interim. Asset style targets Halo: Reach-inspired *grounded* military science fiction; do not assume Blender installation is required.
+- **Training Grounds:** Turn the *existing, preserved* Training Grounds map into a meaningful interactive **shooting range and tactical training facility**. Use it to validate weapons, reloads, sprint, hit reactions, cover and AI before rolling changes into Area 51. Do not delete or replace the map and do not break its existing modes. Build progressively, starting with a lightweight range/test harness before broad environmental art.
+- **Sequencing:** Finish approved weapon backlog → small Training Grounds instrumented range/testbed + shared sprint/movement → initial encounter checks → combat feedback and deep enemy rigs/AI → presentation/graphics → campaign maps/cutscenes. The range/testbed may be built earlier as a narrowly scoped utility if it accelerates weapon QA.
+
+### Sprint design prototype — *proposal, not approved balance settings*
+
+A. **Hybrid walk/run/tactical sprint (recommended first test):** walking retains precision and accessibility; sustainable run is useful but not a free pass through encounters; pressing Sprint gives a faster, shorter tactical burst with visibly limited stamina, smooth acceleration/deceleration and a short post-sprint weapon-ready recovery. Recovery is gradual and easy to read, not a punitive extended freeze. Tune generously initially and judge by actual Area 51 run-through tests.
+
+B. **Halo-inspired sprint with recovery:** stronger short burst and clear cooldown/recovery but less of an always-visible stamina bar. Compare whether it is less intrusive and still preserves emergency retreat.
+
+C. **Existing unrestricted sprint baseline:** retain as the control case so changes are justified by measurable improved encounter decisions and retained shooter responsiveness.
+
+Measure sprint distance, encounter bypass rate, combat re-engagement, weapon-ready latency, input response and perceived fun. Do not overfit by making enemies omniscient, hard-locking every room or arbitrarily crippling speed.
+
+### Training Grounds — staged interactive range concept
+
+**Near-term range/test harness:** clearly marked pistol/rifle/heavy bays; near/mid/far targets with hit-location and damage feedback; reload/ADS/shot grouping drills; sprint lane with distance/cadence and start-stop markers; simple reset/deploy controls. Include a small repeatable AI test zone with selectable threat/cover settings behind deliberate opt-in controls. Make developer instrumentation optional so ordinary gameplay remains clean.
+
+**Later training facility:** class/loadout testing, moving/reactive targets, material-specific footstep/audio test surfaces, squad command course, encounter scenario presets (USMC/APEX/infected as appropriate), frame-time/draw-call diagnostics and standardized visual evidence captures. Reuse production weapon, movement, projectile, bot and lighting paths rather than inventing separate simplified mechanics.
+
+**Acceptance:** browser and native laptop QA remains quick and reproducible, safe boundaries prevent stray enemies/projectiles affecting another test area, startup and disposal costs stay bounded, Training Grounds remains playable, and Area 51/Shattered Wall are unchanged.
+
 ## PHASE B — Combat feel and movement quality (next quality milestone; coupled with initial encounter fixes)
 
 ### B1 — Finish the original weapon fidelity acceptance backlog
 
-Complete **Phase A**'s prescribed Issue #16 ordering and audio/visual acceptance. This is the current active stream; do not skip remaining AR, SMG/LMG, railgun/plasma or minigun/launchers work. PR #20 remains draft until the latest pistol gait is accepted.
+Complete **Phase A**'s prescribed Issue #16 ordering and audio/visual acceptance. Pistol PR #20 is merged/accepted. Verify the already successful AR handling against the remaining checklist without redoing good work; then SMG/LMG, railgun/plasma and minigun/launchers. Keep separate weapon PRs.
 
 ### B2 — Shared two-handed weapon sprint framework
 
@@ -97,7 +123,7 @@ Existing low/side-carry poses often look rigid. Implement reusable **shoulder/el
 - Physically expressive motion but precise controls, modest camera motion, no transform accumulation or per-frame GPU allocation.
 - Compare actual native-speed footage, not isolated static screenshots; targeted tests across frame rates.
 
-### B3 — Weapon impacts, recoil, audio and combat readability
+### B3 — Weapon impacts, recoil, audio and combat readability (after initial movement improvements)
 
 Polish shot/recoil feel, mechanical feedback, muzzle flashes, grenade throw/interaction, surface impacts, damage reaction feedback, directional threat indicators, HUD legibility and sound timing with **small weapon/system-specific PRs**. Avoid excessive camera shake, bright particle spam and UI clutter. Check all supplied audio assets before acquiring new ones. Perform a measured WebGL/React performance pass only on demonstrated bottlenecks.
 
@@ -106,7 +132,7 @@ Polish shot/recoil feel, mechanical feedback, muzzle flashes, grenade throw/inte
 Evaluate **two complementary designs** in bounded experiments:
 
 - **Momentum version:** responsive sprint acceleration/deceleration, turning feel, short weapon-ready recovery, and clear state transition; no blanket movement speed nerf.
-- **Stamina-assisted version:** the same grounded movement plus a light, visible stamina/recovery budget, adjustable values, potentially class/loadout-dependent only if justified. Preserve tactical retreat and accessibility; don't make slow movement unavoidable or force exhausting waits.
+- **Hybrid run + tactical sprint (recommended test):** walking, sustainable running and a stronger limited sprint; a generous, tuneable stamina/recovery budget combined with clear weapon-ready windows. A Halo-like burst/cooldown approach is a second comparison. Preserve tactical retreat, controls and accessibility; don't require punishing waits or implement a mandatory stamina meter without user approval.
 
 Measure whether either approach improves encounters and still feels responsive. **No mandatory stamina feature is approved yet**; user selects after a playtest. Movement and combat controls must not regress.
 
@@ -130,7 +156,7 @@ Once the fundamental combat feel and first anti-bypass fixes are accepted, delib
 - AI behavior: readable detection/communication, threat priorities, human operator cover/firing discipline, coordination, pathfinding and squad interactions.
 - Different factions/enemy archetypes: USMC and APEX/Ghost/Cordon concepts remain **lore-dependent**; infected, military hostiles, elites, bosses should not all move/think identically.
 - Character animation: believable stances, weapon grips, recoil, sprint, hit reactions, cover, reload, traversal, neutral-to-alert, and non-graphic death states; lighter hits should not always break bodies into pieces.
-- Visual overhaul: stopgap optimized procedural characters initially, but begin a proper modular asset pipeline for helmets, faces/visors, hands, equipment, armor and skeletal rigs; later authored GLB/glTF assets created with compatible browser/local tools if practical. Keep procedural fallback and performance.
+- Visual overhaul: **avoid extended polishing of soon-to-be-replaced procedural bots**. First build and test one properly authored, optimized, skinned GLB/glTF humanoid with a coherent skeleton, believable weapon grip, locomotion/reload/hit animations and interchangeable faction armor/helmets. Establish rig retargeting, LOD and disposal/performance budgets before scaling to multiple enemies. Keep procedural fallback until the rigged replacement genuinely works, and fix legacy bots only where bugs block current gameplay. Browser-compatible modelling/animation workflow is acceptable; no forced Blender prerequisite.
 - Tactical AI in both Area 51 and Shattered Wall; preserve extraction/survival progression, squad posture, difficulty scaling (easy/medium/hard) and predictable test scenarios.
 - Enemy audio, footfalls on relevant surface materials, warning lines and spatial cues, with an explicit asset/license audit.
 
@@ -182,10 +208,10 @@ The target is **coherent Halo: Reach-inspired grounded science-fiction presentat
 
 The high-level priorities above were answered by the user on 17 Oct 2026. Remaining *implementation* choices:
 
-1. **Stamina:** lightweight recoverable bar, weapon-ready delay only, or different tuning per class? Prototype before requiring.
+1. **Sprinting balance:** compare generous walk/run/tactical-sprint stamina against a Halo-style recovery sprint and unrestricted baseline; tune speed, readiness and recovery through playtesting.
 2. **Combat feel acceptance:** choose first focus among recoil/hit reactions/throwable animations, weapon-ready handling, or audio/surface response.
-3. **Enemy visual pipeline:** how far to take procedural character refinement versus introducing authored skeletal GLB models/animations?
-4. **Scope of prototype arena:** dedicated training encounter vs one Area 51 room for reliable A/B combat evaluation?
+3. **Enemy asset pipeline:** select tooling and specifications for one optimized rigged GLB humanoid with interchangeable armor. Do not spend significant effort redesigning temporary blocky bots.
+4. **Training Grounds implementation details:** choose which firing lanes, movement test course, AI scenario controls and instrumentation should be in the first small release. Use one Area 51 encounter as the subsequent real-world acceptance test.
 5. **Campaign scope:** proposed 8 missions × ~20 minutes and the railway/city settings remain tentative until story and pacing are agreed.
 
 Do not call these questions blockers for the small immediate pistol gait or remaining established weapon work.
