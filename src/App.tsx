@@ -1,3 +1,4 @@
+import { lmgReloadStatus } from './lmgMechanics';
 import { beginSniperCycle, requireSniperBolt } from './sniperMechanics';
 import { PISTOL_SPRINT } from './pistolSprint';
 import { GameplayInput, KEY_ACTIONS, MOUSE_BUTTONS, CONTROLS_GUIDE, canPlayerFire } from './gameplayInput';
@@ -13,7 +14,7 @@ import { audioManager } from './campaignAudio';
 import { PostDeathMenu } from './PostDeathMenu';
 import { beginShotgunCycle, cancelShotgunCycle } from './shotgunMechanics';
 import { beginWeaponReload, advanceWeaponReload, cancelWeaponReload, interruptShellReload } from './weaponReload';
-import { prepareWeaponAudio, releaseWeaponAudio, playWeaponReloadAudio, playShotgunMechanicalEvent, playSniperBoltEvent, updateSniperReloadAudio, updateSmgReloadAudio, playBattleRifleMechanicalEvent, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } from './weaponAudio';
+import { prepareWeaponAudio, releaseWeaponAudio, playWeaponReloadAudio, playShotgunMechanicalEvent, playSniperBoltEvent, updateSniperReloadAudio, updateSmgReloadAudio, playBattleRifleMechanicalEvent, playLmgMechanicalEvent, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } from './weaponAudio';
 import './ModePosters.css';
 import { createWeaponAssembly, disposeWeaponObject } from './weaponModels';
 import { useEffect, useRef, useState } from 'react';
@@ -1293,7 +1294,7 @@ export default function App() {
         player.health = 0;
         player.alive = false;
         stopWeaponAudio();
-        playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } if (playerLoadout[i]?.id === 'sniper') { cancelWeaponReload(ws); ws.sniperCycle = undefined; ws.sniperRecoveryT = 0; ws.boltCycleT = 0; ws.needsChamber = true; } if (playerLoadout[i]?.id === 'br' || playerLoadout[i]?.id === 'pistol') cancelWeaponReload(ws); });
+        playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } if (playerLoadout[i]?.id === 'sniper') { cancelWeaponReload(ws); ws.sniperCycle = undefined; ws.sniperRecoveryT = 0; ws.boltCycleT = 0; ws.needsChamber = true; } if (playerLoadout[i]?.id === 'br' || playerLoadout[i]?.id === 'pistol' || playerLoadout[i]?.id === 'lmg') cancelWeaponReload(ws); });
 
         if (matchConfig.mode === 'extraction') {
           pushKillFeed('MISSION FAILED: OPERATOR KILLED');
@@ -3053,7 +3054,7 @@ export default function App() {
 
     function stopMatchInput() {
       clearGameplayInput();
-      playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } if (playerLoadout[i]?.id === 'sniper') { cancelWeaponReload(ws); ws.sniperCycle = undefined; ws.sniperRecoveryT = 0; ws.boltCycleT = 0; ws.needsChamber = true; } if (playerLoadout[i]?.id === 'br' || playerLoadout[i]?.id === 'pistol') cancelWeaponReload(ws); });
+      playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } if (playerLoadout[i]?.id === 'sniper') { cancelWeaponReload(ws); ws.sniperCycle = undefined; ws.sniperRecoveryT = 0; ws.boltCycleT = 0; ws.needsChamber = true; } if (playerLoadout[i]?.id === 'br' || playerLoadout[i]?.id === 'pistol' || playerLoadout[i]?.id === 'lmg') cancelWeaponReload(ws); });
       player.vel.set(0, 0, 0);
       for (const sound of Object.values(AUDIO)) sound.stop();
       stopWeaponAudio(); updateRailgunWeaponAudio(false, 0);
@@ -3249,7 +3250,8 @@ export default function App() {
           // Inactive manual actions freeze at their actual handle position.
           if (w.id === 'sniper' && player.slotIndex !== i) return;
           advanceWeaponReload(w, ws, dt, undefined, player.slotIndex === i && w.id === 'shotgun' ? playShotgunMechanicalEvent : undefined,
-            w.id === 'sniper' ? playSniperBoltEvent : undefined, w.id === 'br' && player.slotIndex === i ? playBattleRifleMechanicalEvent : undefined);
+            w.id === 'sniper' ? playSniperBoltEvent : undefined, w.id === 'br' && player.slotIndex === i ? playBattleRifleMechanicalEvent : undefined,
+            w.id === 'lmg' && player.slotIndex === i ? playLmgMechanicalEvent : undefined);
           if (w.id === 'sniper') updateSniperReloadAudio(ws);
           if (w.id === 'smg' && player.slotIndex === i) updateSmgReloadAudio(ws);
           if (player.slotIndex === i && w.id === 'laser') updatePlasmaReloadAudio(ws);
@@ -4179,6 +4181,8 @@ export default function App() {
               : (activeWs.charging
                 ? `CHARGING RAILGUN ${Math.round(((activeWs.chargeTimer ?? 0) / 1.2) * 100)}%`
                 : 'HOLD LMB (1.2s) TO FIRE PIERCING SLUG'));
+          } else if (curW.id === 'lmg') {
+            hudDom.text(reloadTagEl, lmgReloadStatus(activeWs));
           } else if (curW.type === 'weapon') {
             hudDom.text(reloadTagEl, activeWs.reloading ? 'RELOADING…' : '');
           } else if (curW.type === 'grenade') {

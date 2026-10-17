@@ -114,11 +114,18 @@ for (const id of WEAPON_MODEL_IDS) {
     const serialized = JSON.stringify(state); step(vm, id, 1 / 60, state);
     assert.equal(JSON.stringify(state), serialized, 'Presentation never changes reload/ammo/audio state');
     assert.ok(right.position.distanceTo(anchoredRight) < 1e-8, `${id}: firing hand stays attached during reload`);
+    if(id==='lmg')weapon(vm,id).updateMatrixWorld(true);
     for (const side of ['right', 'left'] as const) {
       const sleeve = pair.getObjectByName(`${side}Forearm`)!;
       sleeveEnd.set(0, -.5, 0).applyMatrix4(sleeve.matrixWorld);
       assert.ok(sleeve.scale.y <= VIEWMODEL_GRIPS[id].sleeveLength + .012001, `${id}: anatomical forearm never stretches to a remote elbow`);
-      assert.ok(sleeveEnd.project(acceptanceCamera).y < -1, `${id}: capped sleeve end never swings into the viewport during reload`);
+      if(id==='lmg'&&side==='left'&&state.reloading) {
+        const upper=weapon(vm,id).getObjectByName('leftUpperArm')!;
+        assert.ok(upper.visible&&Math.abs(upper.scale.y-.32)<1e-7,'LMG raised contact has an anatomical upper arm');
+        const joint=new THREE.Vector3(0,.5,0).applyMatrix4(upper.matrixWorld);
+        assert.ok(joint.distanceTo(sleeveEnd)<.007,'LMG forearm meets the upper sleeve without a visible chopped end');
+        assert.ok(new THREE.Vector3(0,-.5,0).applyMatrix4(upper.matrixWorld).project(acceptanceCamera).y<-1,'LMG shoulder exits below viewport');
+      } else assert.ok(sleeveEnd.project(acceptanceCamera).y < -1, `${id}: capped sleeve end never swings into the viewport during reload`);
     }
     reached ||= left.position.distanceTo(startLeft) > .025;
   }
@@ -167,7 +174,11 @@ function assertNear(id: string) {
       else transform.copy(object.matrixWorld);
       for (let i = 0; i < positions.count; i++) {
         vertex.fromBufferAttribute(positions, i).applyMatrix4(transform);
-        assert.ok(vertex.z < -.05, `${id}/${object.name}: visible weapon/hand must stay beyond near plane (${vertex.z})`);
+        // The LMG's connected upper sleeve may fold toward the body during
+        // offscreen box pickup. Require any near-plane crossing to clear even
+        // the near-plane bottom by 2.5 cm; visible glove/weapon vertices stay safe.
+        const offscreenUpper=id==='lmg'&&(object.name==='LMG upper sleeve'||object.name==='leftForearm')&&vertex.y<-.05*Math.tan(THREE.MathUtils.degToRad(74/2))-.025;
+        assert.ok(vertex.z < -.05 || offscreenUpper, `${id}/${object.name}: visible weapon/hand must stay beyond near plane (${vertex.z})`);
       }
     }
   });

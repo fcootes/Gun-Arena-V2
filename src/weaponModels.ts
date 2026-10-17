@@ -730,7 +730,77 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     box('Compact brace butt',.045,.104,.022,0,-.016,.18,polymer,brace);
     box('Brace shoulder pad',.043,.095,.009,0,-.016,.194,rubber,brace);
     screws(-.10,4);
-  } else if (['ar', 'sniper', 'lmg'].includes(id)) {
+  } else if (id === 'lmg') {
+    // HMG-100: open feed bed between substantial receiver walls. The front
+    // hinge is the actual origin of the lid, never its geometric centre.
+    steel.color.setHex(0x424d55);steel.metalness=.68;steel.roughness=.52;
+    polymer.color.setHex(0x2d373c);dark.color.setHex(0x20292f);
+    silhouette('HMG lower chassis',[
+      [-.21,-.006],[.16,-.006],[.17,-.055],[.075,-.074],
+      [.012,-.054],[-.03,-.080],[-.18,-.073],
+    ],.076,polymer);
+    for(const side of [-1,1])box('Feed receiver side wall',.014,.065,.34,side*.036,.015,-.015,steel);
+    box('Feed bed floor',.062,.012,.28,0,-.012,-.04,dark);
+    box('Integrated rear receiver block',.083,.083,.070,0,.013,.145,steel);
+    box('Feed roller saddle',.068,.024,.055,0,.024,-.065,dark);
+    for(let n=0;n<4;n++)box('Exposed feed guide tooth',.009,.018,.016,-.024+n*.016,.045,-.067,edge);
+    const cover=group('feedTray',0,.058,-.18);
+    box('Hinged feed cover shell',.092,.025,.29,0,.0125,.145,steel,cover);
+    box('Cover composite contact pad',.070,.005,.180,0,.028,.200,polymer,cover);
+    box('Cover rear latch',.029,.020,.020,0,.009,.294,dark,cover);
+    for(const side of [-1,1])box('Cover hinge ear',.014,.032,.029,side*.047,.058,-.18,dark);
+    tube('Captive cover hinge pin',.007,.110,0,.058,-.18,edge).rotation.set(0,0,Math.PI/2);
+    for(let n=0;n<5;n++)box('Cover stiffening rib',.084,.004,.006,0,.028,.050+n*.044,dark,cover);
+    box('Ammunition box mounting saddle',.024,.055,.13,-.052,-.015,-.025,steel);
+    const ammo=group('magazine',-.132,-.045,-.025);
+    box('Side ammunition box shell',.126,.158,.145,0,-.055,0,polymer,ammo);
+    box('Box reinforced rim',.132,.014,.152,0,.027,0,steel,ammo);
+    box('Box base protector',.130,.014,.15,0,-.133,0,dark,ammo);
+    for(const z of [-.045,0,.045])box('Box pressed reinforcing groove',.003,.118,.007,-.064,-.052,z,dark,ammo);
+    box('Box mounting tongue',.020,.040,.060,.064,.014,0,steel,ammo);
+    const belt=group('feedBelt');
+    const beltPath=new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-.13,-.008,-.026),new THREE.Vector3(-.116,.079,-.026),
+      new THREE.Vector3(-.062,.069,-.026),new THREE.Vector3(-.005,.049,-.026),
+    ]);
+    mesh('Connected feed belt web',new THREE.TubeGeometry(beltPath,12,.006,5,false),dark,0,0,0,belt);
+    const linkPoint=new THREE.Vector3();
+    for(let n=0;n<9;n++) {
+      beltPath.getPoint(n/8,linkPoint);
+      tube('Feed belt cartridge',.004,.040,linkPoint.x,linkPoint.y,linkPoint.z,edge,belt);
+      box('Feed belt link',.010,.007,.012,linkPoint.x,linkPoint.y,linkPoint.z+.009,dark,belt);
+    }
+    if(options.firstPerson) {
+      const arm=group('supportUpperArm');arm.name='leftUpperArm';root.add(arm);arm.visible=false;
+      mesh('LMG upper sleeve',new THREE.CapsuleGeometry(.061,.32,6,12).scale(1,1/.32,1),polymer,0,0,0,arm);
+    }
+    grip();screws(-.12,5);
+    const bolt=group('bolt',-.054,.022,.025);
+    box('Receiver-side charging stem',.028,.012,.020,0,0,0,steel,bolt);
+    box('Charging control knob',.017,.024,.025,-.017,0,0,edge,bolt);
+    box('Bounded charging guide',.006,.008,.105,-.043,.022,.042,dark);
+    box('Ejection recess',.003,.029,.092,.044,.010,.004,rubber);
+    silhouette('Integrated heavy handguard',[
+      [-.49,.022],[-.46,.050],[-.21,.050],[-.19,.018],[-.22,-.063],[-.46,-.063],
+    ],.080,polymer);
+    for(const side of [-1,1])for(let n=0;n<8;n++)box('Handguard cooling slot',.003,.025,.014,side*.041,.008,-.235-n*.030,rubber);
+    for(let n=0;n<6;n++)box('Underhand grip rib',.076,.004,.009,0,-.065,-.25-n*.030,dark);
+    tube('Heavy barrel jacket',.026,.29,0,.009,-.465,steel);
+    for(let n=0;n<6;n++)ring('Barrel heat sink rib',.030,.003,0,.009,-.49-n*.020,dark);
+    tube('HMG muzzle brake',.028,.064,0,.009,-.639,dark);
+    ring('Bored muzzle crown',.014,.003,0,.009,-.673,edge);muzzle.position.set(0,.009,-.678);
+    rail(-.31,.24,.071);
+    const sights=group('sights');
+    for(const z of [.135,-.46]) {
+      box('Heavy iron sight base',.036,.012,.022,0,.075,z,dark,sights);
+      for(const side of [-1,1])box('Sight protection wing',.006,.024,.012,side*.013,.092,z,steel,sights);
+    }
+    box('Front sight post',.003,.017,.005,0,.090,-.46,edge,sights);
+    const butt=group('stock',0,0,.18);
+    silhouette('Integrated heavy stock',[[0,.045],[.20,.038],[.21,-.085],[.15,-.085],[.09,-.023],[0,-.023]],.060,polymer,butt);
+    box('Heavy rubber buttpad',.067,.133,.022,0,-.022,.205,rubber,butt);
+    for(const side of [-1,1])box('Folded bipod leg',.012,.016,.19,side*.050,-.051,-.48,steel);
+  } else if (['ar', 'sniper'].includes(id)) {
     const long = id === 'sniper',
       compact = id === 'smg';
     box(
@@ -1471,7 +1541,7 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     parent.userData.features = featureNames;
   }
   bake(body);
-  if ((id === 'br' || id === 'pistol' || id === 'smg') && options.firstPerson) {
+  if ((id === 'br' || id === 'pistol' || id === 'smg' || id === 'lmg') && options.firstPerson) {
     const fresh = parts.magazine.clone(true); fresh.name = 'freshMagazine'; fresh.visible = false;
     body.add(fresh); parts.freshMagazine = fresh;
   }

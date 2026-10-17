@@ -1,0 +1,149 @@
+{
+  "provenance": "Derived from existing batch2 user-provided LMG recordings; original files unchanged. See batch2 clip_manifest.json for original cuts.",
+  "sample_rate": 48000,
+  "channels": 2,
+  "format": "PCM signed 16-bit WAV",
+  "fire_interval_seconds": 0.115,
+  "source_report_order": [
+    0,
+    2,
+    4,
+    1,
+    3,
+    2,
+    1,
+    4,
+    0,
+    3,
+    1,
+    0,
+    2,
+    3,
+    4,
+    2,
+    0,
+    4,
+    3,
+    1,
+    4,
+    2,
+    3,
+    0,
+    1,
+    3,
+    2,
+    4,
+    1,
+    0,
+    2
+  ],
+  "source_early_energy_peak_samples": [
+    559,
+    151,
+    72,
+    1919,
+    1806
+  ],
+  "pitch_processing": "none; sample rotations and gain only",
+  "joint_treatment": "1 ms per side cosine blend to common boundary sample",
+  "before": {
+    "loop_seconds": 0.575,
+    "report_rms": [
+      0.17964519550549726,
+      0.1869163618448141,
+      0.1564621451869369,
+      0.18501701396204825,
+      0.18207762385113646
+    ],
+    "report_level_range_db": 1.5447607782211645,
+    "opening_clip_seconds": 0.08,
+    "opening_gap_seconds": 0.035,
+    "seam_discontinuity": 0.0
+  },
+  "after": {
+    "loop_seconds": 3.565,
+    "report_rms": [
+      0.17818316678321583,
+      0.18014745942800306,
+      0.17279392363492413,
+      0.17846204960478515,
+      0.17446630476832264,
+      0.1765047135773329,
+      0.1801324692686279,
+      0.17336161444794973,
+      0.17959892702793256,
+      0.17680960159268122,
+      0.17287205847605921,
+      0.18172009014126875,
+      0.17592634786638606,
+      0.17512570763776708,
+      0.18006628151490503,
+      0.17424926007122826,
+      0.18044154389835654,
+      0.17758142720931194,
+      0.17337018036875682,
+      0.17936434467764073,
+      0.17370668412728177,
+      0.1781803886151601,
+      0.1775881610629283,
+      0.17511272804019581,
+      0.17889244951394062,
+      0.17400953988838982,
+      0.1762479442720477,
+      0.1795524258874432,
+      0.1729667945821111,
+      0.1799843166279419,
+      0.1786808679067016
+    ],
+    "report_level_range_db": 0.4374895458781178,
+    "opening_clip_seconds": 0.115,
+    "opening_gap_seconds": 0,
+    "seam_discontinuity": 0.0
+  },
+  "files": [
+    {
+      "filename": "lmg_fire_lead.wav",
+      "samples": 5520,
+      "duration_seconds": 0.115,
+      "sha256": "cae820e4aede40ca5bc93c6aee955f8bb12c5fdd771476cb842fee0fb8d1bccb"
+    },
+    {
+      "filename": "lmg_fire_sustain.wav",
+      "samples": 171120,
+      "duration_seconds": 3.565,
+      "sha256": "42f6ab38328bed6ae39da77f65438dcd862e08cb40333029d3beb9d9d679e666"
+    },
+    {
+      "filename": "lmg_box_release.wav",
+      "samples": 10320,
+      "duration_seconds": 0.215,
+      "sha256": "b2ece5db07ae4d841670c8ed9a4d7d66b4cbf1a9ac50b24cbc0f70c7b6e4ee29",
+      "source": "lmg_reload_tactical.wav",
+      "source_offset_seconds": 0.9166041666666667
+    },
+    {
+      "filename": "lmg_box_seat.wav",
+      "samples": 15840,
+      "duration_seconds": 0.33,
+      "sha256": "d3a29622cf07d3dc3a892e973dfa596ca5c7d044f1a7410f35bdd8d1dc7ea21e",
+      "source": "lmg_reload_tactical.wav",
+      "source_offset_seconds": 2.2757916666666667
+    },
+    {
+      "filename": "lmg_charge.wav",
+      "samples": 15840,
+      "duration_seconds": 0.33,
+      "sha256": "3ff6cc690827dfd4c3c50e18872dd8f997c15249f2fa360c03e80845352f78fe",
+      "source": "lmg_reload_empty.wav",
+      "source_offset_seconds": 4.275
+    }
+  ],
+  "missing": [
+    {
+      "filename": "lmg_feed_cover_close.wav",
+      "spec": "Original/licensed metallic feed-cover slam, 0.18\u20130.35 s, strong contact transient at 0 s and short latch decay, dry stereo/mono 48 kHz PCM; no speech, shot, box insertion or charging layer. Event: slap phase at 72%, 3.1656 s at baseline class."
+    }
+  ],
+  "cover_audio_audit": "Existing tactical active regions are .916625\u20131.131292 and 2.275875\u20132.605458 s; empty adds 4.275146\u20134.604813 s. All map to manifest box/action cuts. No isolated cover opening/closing recording established. No substitute cover sound synthesized or borrowed.",
+  "listening_limitation": "Waveform/cadence and playback-state analysis only; native-laptop listening approval remains required."
+}

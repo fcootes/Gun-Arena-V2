@@ -74,7 +74,7 @@ const semanticFeatures: Record<string, string[]> = {
   sniper: ['Barrel flute', 'Optic', 'Riser'],
   pistol: ['Slide serration', 'Trigger guard'],
   smg: ['SC-32 monolithic', 'Telescoping brace', 'Captive charging', 'Straight double stack'],
-  lmg: ['Feed tray', 'Side ammunition', 'Bipod'],
+  lmg: ['Hinged feed cover', 'Side ammunition', 'bipod', 'Connected feed belt'],
   br: ['Carry', 'Long stroke', 'charging'],
   laser: ['Energy coil', 'plasma cell', 'heat exhaust'],
   minigun: ['Rotary barrel', 'Flexible ammunition', 'spade'],

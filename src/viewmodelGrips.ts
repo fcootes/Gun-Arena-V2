@@ -82,7 +82,7 @@ export const VIEWMODEL_GRIPS: Readonly<Record<WeaponModelId, ViewmodelGrip>> = {
   smg: grip(primary(.125), under(-.205, -.078), {
     hip: [.135, -.230, -.315], aim: [0, -.108, -.335], sleeveLength: .235,
   }),
-  lmg: grip(primary(), under(-.27), { hip: [.17, -.245, -.40], aim: [0, -.105, -.40], sprint: [-.035, -.30, -.48], sprintRotation: [-.12, .52, -.12] }),
+  lmg: grip(primary(), under(-.32, -.098), { hip: [.17, -.26, -.375], aim: [0, -.105, -.40], sleeveLength: .28, sprint: [-.035, -.30, -.48], sprintRotation: [-.12, .52, -.12] }),
   br: grip(primary(.145,.041,-.108), under(-.27,-.078), {
     hip: [.14, -.225, -.38], sleeveLength: .25, aim: [0, -.105, -.38],
     magazineGrip: {position:[-.047,-.080,.042],rotation:[-Math.PI/2,-Math.PI/2,0],curl:.95,thumbOpposition:.45,
