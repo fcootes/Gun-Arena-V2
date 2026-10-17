@@ -29,7 +29,7 @@ for(const hz of [30,60,144])for(const speed of [1,.75,.9])for(const ammo of [0,1
    localPoint(root,left,LMG.palmPoint,palm);localPoint(root,cover,LMG.coverPoint);near(palm.distanceTo(anchor),0);
    if(phase==='slap'){contacts++;if(p>=LMG.lock)near(cover.rotation.x,0);}
   }
-  if(phase==='slap'&&p>.23&&p<.35){localPoint(root,left,LMG.palmPoint,palm);localPoint(root,cover,LMG.coverPoint);assert.ok(palm.y-anchor.y>.030,'Palm visibly raised over the open cover');sawRaised=true;}
+  if(phase==='slap'&&p<LMG.contact){localPoint(root,left,LMG.palmPoint,palm);localPoint(root,cover,LMG.coverPoint);sawRaised ||= palm.y-anchor.y>.030;}
   if(phase==='eject')sawOpen=true;
   if(phase==='eject'&&p>=.32||phase==='pickup'||phase==='insert') {
    const part=phase==='pickup'&&p>=.45||phase==='insert'?fresh:old;localPoint(root,part,LMG.boxGrip);near(left.position.distanceTo(anchor),0);

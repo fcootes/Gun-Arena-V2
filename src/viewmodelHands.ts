@@ -421,9 +421,11 @@ export function createFirstPersonHands() {
           lmgShoulder.set(-.19,-.43,-.16);lmgAxis.subVectors(attachmentPosition,lmgShoulder);
           const distance=lmgAxis.length();lmgAxis.normalize();
           if(distance>upper+fore-.006)lmgShoulder.addScaledVector(lmgAxis,distance-(upper+fore-.006));
-          const reach=Math.max(.01,Math.min(upper+fore-.006,distance));
+          const minimum=Math.abs(upper-fore)+.006;
+          if(distance<minimum)lmgShoulder.addScaledVector(lmgAxis,distance-minimum);
+          const reach=THREE.MathUtils.clamp(distance,minimum,upper+fore-.006);
           const along=(upper*upper-fore*fore+reach*reach)/(2*reach),height=Math.sqrt(Math.max(0,upper*upper-along*along));
-          lmgBend.set(0,-1,.35).addScaledVector(lmgAxis,-lmgAxis.dot(lmgBend)).normalize();
+          lmgBend.set(-1,-.35,.15).addScaledVector(lmgAxis,-lmgAxis.dot(lmgBend)).normalize();
           lmgElbow.copy(lmgShoulder).addScaledVector(lmgAxis,along).addScaledVector(lmgBend,height);
           elbow.copy(lmgElbow);
           const upperArm=assembly.parts.supportUpperArm;

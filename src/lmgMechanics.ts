@@ -7,7 +7,7 @@ export const LMG = Object.freeze({
   lift: .36, open: .44, eject: .56, pickup: .36, insert: .70,
   feed: .40, slap: .48, chamber: 1, close: .45,
   coverAngle: -1.15, contact: .43, lock: .72, chargeTravel: .050,
-  coverPoint: [0, .031, .210] as const,
+  coverPoint: [0, .031, .270] as const,
   palmPoint: [0, .021, -.023] as const,
   boxGrip: [-.086, -.055, .035] as const,
   boxRotation: [-Math.PI/2, -Math.PI/2, 0] as const,
@@ -36,7 +36,7 @@ export function lmgPhaseSeconds(phase:ReloadPhase) {return LMG[phase as keyof ty
 export function createLmgAnimator(assembly:WeaponAssembly) {
   const box=assembly.parts.magazine,fresh=assembly.parts.freshMagazine,cover=assembly.parts.feedTray,bolt=assembly.parts.bolt;
   const origin=box.position.clone(),q0=box.quaternion.clone(),hinge=cover.position.clone(),bolt0=bolt.position.clone();
-  const carry=new THREE.Vector3(-.03,-.25,-.43),rotation=new THREE.Quaternion().setFromEuler(new THREE.Euler(.16,-.10,-.20));
+  const carry=new THREE.Vector3(.08,-.25,-.32),rotation=new THREE.Quaternion().setFromEuler(new THREE.Euler(.12,.40,-.12));
   return (state:WeaponSlotState|null|undefined)=>{
     box.position.copy(origin);box.quaternion.copy(q0);box.visible=true;
     fresh.position.copy(origin);fresh.quaternion.copy(q0);fresh.visible=false;
@@ -90,7 +90,7 @@ export function createLmgHandAnimator() {
   function coverPose(assembly:WeaponAssembly) {
     const cover=assembly.parts.feedTray;cover.updateWorldMatrix(true,false);assembly.root.updateWorldMatrix(true,false);
     inverse.copy(assembly.root.matrixWorld).invert();matrix.multiplyMatrices(inverse,cover.matrixWorld);
-    matrix.decompose(a,qa,scale);coverRotation.copy(qa).multiply(flat);
+    matrix.decompose(a,qa,scale);coverRotation.copy(flat);
     coverWrist.fromArray(LMG.coverPoint).applyMatrix4(matrix);
     a.fromArray(LMG.palmPoint).applyQuaternion(coverRotation);coverWrist.sub(a);
   }
@@ -106,16 +106,23 @@ export function createLmgHandAnimator() {
     let flatness=0;
     if(phase==='lift') {
       const reach=lmgEase(p);target.lerpVectors(support,coverWrist,reach);orientation.slerpQuaternions(supportRotation,coverRotation,reach);flatness=reach;
-    } else if(phase==='open') {target.copy(coverWrist);orientation.copy(coverRotation);flatness=1;
+    } else if(phase==='open') {target.copy(coverWrist);orientation.copy(coverRotation);flatness=.65;
     } else if(phase==='eject') {
       const reach=lmgEase(p/.32);target.lerpVectors(coverWrist,b,reach);orientation.slerpQuaternions(coverRotation,qb,reach);flatness=1-reach;
     } else if(phase==='feed') {
       const reach=lmgEase(p/.55);target.lerp(b.fromArray(LMG.feedWrist),reach);orientation.slerp(flat,reach);flatness=reach*.75;
     } else if(phase==='slap') {
       target.copy(coverWrist);orientation.copy(coverRotation);flatness=1;
-      if(p<.28) {
-        target.y+=.085;target.lerpVectors(b.fromArray(LMG.feedWrist),target,lmgEase(p/.28));orientation.slerpQuaternions(flat,coverRotation,lmgEase(p/.28));
-      } else if(p<LMG.contact)target.y+=.085*(1-lmgEase((p-.28)/(LMG.contact-.28)));
+      if(p<LMG.contact) {
+        // Present the open glove while raised, then flex palm-down on the
+        // descent. The wrist is solved from the palm surface throughout.
+        qb.setFromEuler(euler.set(-.15,0,-.25));
+        const reach=lmgEase(p/.28),drop=lmgEase((p-.28)/(LMG.contact-.28));
+        orientation.slerpQuaternions(flat,qb,reach);orientation.slerp(flat,drop);
+        b.copy(coverWrist).add(a.fromArray(LMG.palmPoint).applyQuaternion(flat));
+        b.y+=.060*(1-drop);b.sub(a.fromArray(LMG.palmPoint).applyQuaternion(orientation));
+        target.lerpVectors(a.fromArray(LMG.feedWrist),b,reach);
+      }
     } else if(phase==='chamber') {
       partPose(assembly,assembly.parts.bolt,LMG.controlGrip,LMG.controlRotation,b,qb);
       const reach=lmgEase(p/.23);target.lerpVectors(q.phases[0].phase==='chamber'?support:coverWrist,b,reach);orientation.slerpQuaternions(q.phases[0].phase==='chamber'?supportRotation:coverRotation,qb,reach);flatness=1-reach;

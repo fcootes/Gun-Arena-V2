@@ -123,7 +123,7 @@ export function playWeaponReloadAudio(weapon: WeaponDef, state: WeaponSlotState)
     smgReloads.set(state,{sequence:q,started:false,speed:q.phases[0].duration/base,chamberOnly});
     updateSmgReloadAudio(state);return true;
   }
-  if (weapon.id === 'lmg' && ['lift','chamber'].includes(state.reloadSequence.phases[0].phase)) { stopWeaponReloadAudio(); AUDIO.lmgAuto.stop(); AUDIO.lmgFire.stop(); return true; }
+  if (weapon.id === 'lmg' && ['lift','chamber'].includes(state.reloadSequence.phases[0].phase)) { stopWeaponReloadAudio(); AUDIO.lmgAuto.stop(); return true; }
   if (weapon.id === 'br') { stopWeaponReloadAudio(); AUDIO.brBurst.stop(); return true; }
   if (weapon.id === 'sniper') {
     stopWeaponReloadAudio();

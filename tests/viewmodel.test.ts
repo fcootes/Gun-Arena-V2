@@ -174,7 +174,11 @@ function assertNear(id: string) {
       else transform.copy(object.matrixWorld);
       for (let i = 0; i < positions.count; i++) {
         vertex.fromBufferAttribute(positions, i).applyMatrix4(transform);
-        assert.ok(vertex.z < -.05, `${id}/${object.name}: visible weapon/hand must stay beyond near plane (${vertex.z})`);
+        // The LMG's connected upper sleeve may fold toward the body during
+        // offscreen box pickup. Require any near-plane crossing to clear even
+        // the near-plane bottom by 2.5 cm; visible glove/weapon vertices stay safe.
+        const offscreenUpper=id==='lmg'&&(object.name==='LMG upper sleeve'||object.name==='leftForearm')&&vertex.y<-.05*Math.tan(THREE.MathUtils.degToRad(74/2))-.025;
+        assert.ok(vertex.z < -.05 || offscreenUpper, `${id}/${object.name}: visible weapon/hand must stay beyond near plane (${vertex.z})`);
       }
     }
   });

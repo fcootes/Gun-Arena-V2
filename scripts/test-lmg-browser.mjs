@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
@@ -16,7 +16,7 @@ const server=await createServer({logLevel:'error',server:{host:'127.0.0.1',port,
  transform(code,id){
   if(id.endsWith('/src/WeaponStudio.tsx'))return code.replace('    controls.maxDistance = 5;',`    controls.maxDistance = 5;
     window.__lmgStudio={hold:false,view(angle){this.hold=true;controls.enabled=false;weapon.rotation.set(0,-Math.PI/2,0);weapon.position.set(-.005,.055,0);
-    camera.position.set(...(angle==='top'?[0,.85,.001]:angle==='three-quarter'?[-.48,.28,.73]:[0,.02,.92]));controls.target.set(0,0,0);camera.lookAt(0,0,0);camera.updateProjectionMatrix();renderer.render(scene,camera);return renderer.domElement.toDataURL('image/png').split(',')[1];}};`)
+    camera.position.set(...(angle==='top'?[0,1.55,.001]:angle==='three-quarter'?[-.72,.42,1.35]:[0,.02,1.60]));controls.target.set(0,0,0);camera.lookAt(0,0,0);camera.updateProjectionMatrix();renderer.render(scene,camera);return renderer.domElement.toDataURL('image/png').split(',')[1];}};`)
    .replace('      controls.update();','      if(!window.__lmgStudio?.hold)controls.update();').replace('      renderer.render(scene, camera);','      if(!window.__lmgStudio?.hold)renderer.render(scene,camera);');
   if(!id.endsWith('/src/App.tsx'))return;
   const needle='    // Main Game Loop';assert.equal(code.split(needle).length,2);
@@ -55,8 +55,10 @@ try{
   HTMLCanvasElement.prototype.requestPointerLock=()=>Promise.reject(Error('embedded LMG acceptance'));
   window.__lmgAudio=[];const play=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){if(/lmg_/.test(this.src))window.__lmgAudio.push({src:this.src.split('/').pop(),rate:this.playbackRate,offset:this.currentTime});return play.call(this);};
  });
+ if(process.env.LMG_LIVE_ONLY!=='1') {
  await page.goto(`http://127.0.0.1:${port}/__lmg-studio`);await page.waitForFunction(()=>!!window.__lmgStudio);
  for(const angle of ['side','top','three-quarter']){writeFileSync(resolve(output,`model-${angle}.png`),Buffer.from(await page.evaluate(a=>window.__lmgStudio.view(a),angle),'base64'));console.log('Captured model '+angle);}
+ }
  if(process.env.LMG_STUDIO_ONLY==='1'){assert.deepEqual(errors,[]);checks.push('Production WeaponStudio side/top/three-quarter');}
  else{
  await page.goto(`http://127.0.0.1:${port}`);
@@ -65,7 +67,8 @@ try{
  await page.getByRole('button',{name:'Select TEAM DEATHMATCH',exact:true}).click();await page.getByRole('button',{name:/OUTDOOR ARENA TRAINING FIELD/}).click();
  await page.locator('input[type="range"][min="1"][max="20"]').press('Home');await page.getByRole('button',{name:'DEPLOY SELECTED SCENARIO',exact:true}).click();
  await page.waitForFunction(()=>window.__lmg?.state==='playing');
- for(const [name,action,t]of [
+ if(process.env.LMG_LIVE_ONLY==='1')evidence.push(...JSON.parse(readFileSync(resolve(output,'poses.json'),'utf8')));
+ for(const [name,action,t]of process.env.LMG_LIVE_ONLY==='1'?[]:[
   ['ready','idle',0],['cover-start','tactical',.492],['cover-open','tactical',.82],
   ['box-removal','tactical',1.248],['box-fitted','tactical',2.44],['hand-raised','tactical',2.9544],
   ['slap-contact','tactical',3.1656],['cover-closed','tactical',3.40],['empty-charging','empty',3.72],['ads-recovery','ads',0],
@@ -78,6 +81,7 @@ try{
  assert.equal(byName('slap-contact').phase,'slap');assert.ok(Math.abs(byName('slap-contact').cover)<1e-8);
  assert.equal(byName('empty-charging').phase,'chamber');assert.ok(Math.abs(byName('empty-charging').bolt[2]-.075)<1e-7);
  assert.equal(byName('ads-recovery').ammo,100);checks.push('Ten production App cover/box/slap/chamber/ADS poses plus WeaponStudio side/top/three-quarter');
+ if(process.env.LMG_POSES_ONLY!=='1') {
  // Live keyboard/mouse actions traverse the actual input/state/audio code.
  console.log('Checking live R, pause and resume');
  await page.evaluate(()=>{window.__lmg.renderer.setPixelRatio(.5);window.__lmg.hold=false;window.__lmg.equip(43);});await page.keyboard.press('r');await page.waitForFunction(()=>!!window.__lmg.ws.reloading);
@@ -87,12 +91,14 @@ try{
  await page.evaluate(()=>window.__lmg.equip(5));await page.mouse.click(900,350);await page.waitForFunction(()=>window.__lmg.ws.ammo<5);await page.mouse.down();await page.waitForFunction(()=>!!window.__lmg.ws.reloading,null,{timeout:180000});await page.mouse.up();await page.waitForFunction(()=>!window.__lmg.ws.reloading,null,{timeout:180000});assert.equal(await page.evaluate(()=>window.__lmg.ws.ammo),100);
  await page.mouse.click(900,350);await page.waitForFunction(()=>window.__lmg.ws.ammo===99);
  console.log('Checking switch cancellation');
- await page.evaluate(()=>window.__lmg.equip(0));await page.keyboard.press('r');await page.waitForFunction(()=>!!window.__lmg.ws.reloading);await page.keyboard.press('2');await page.waitForFunction(()=>window.__lmg.weapon.id==='ar');await page.keyboard.press('1');await page.waitForFunction(()=>window.__lmg.weapon.id==='lmg');assert.equal(await page.evaluate(()=>!!window.__lmg.ws.reloading),false);
+ await page.evaluate(()=>window.__lmg.equip(0));await page.keyboard.press('r');await page.waitForFunction(()=>window.__lmg.ws.ammo===100&&window.__lmg.ws.needsChamber);
+ const seatedAmmo=await page.evaluate(()=>window.__lmg.ws.ammo);await page.mouse.click(900,350);assert.equal(await page.evaluate(()=>window.__lmg.ws.ammo),seatedAmmo,'Unchambered inserted ammo cannot fire');await page.keyboard.press('2');await page.waitForFunction(()=>window.__lmg.weapon.id==='ar');await page.keyboard.press('1');await page.waitForFunction(()=>window.__lmg.weapon.id==='lmg');assert.equal(await page.evaluate(()=>!!window.__lmg.ws.reloading),false);
  await page.keyboard.press('r');await page.waitForFunction(()=>!window.__lmg.ws.reloading,null,{timeout:180000});
  console.log('Checking sprint and ADS');
  await page.keyboard.down('w');await page.keyboard.down('Shift');await page.waitForFunction(()=>window.__lmg.player.sprinting);const ammo=await page.evaluate(()=>window.__lmg.ws.ammo);await page.mouse.click(900,350);assert.equal(await page.evaluate(()=>window.__lmg.ws.ammo),ammo);await page.keyboard.up('Shift');await page.keyboard.up('w');
  await page.mouse.down({button:'right'});await page.waitForFunction(()=>window.__lmg.player.aiming);await page.mouse.up({button:'right'});
  console.log('Checking death/redeployment');
+ await page.evaluate(()=>window.__lmg.equip(0));await page.keyboard.press('r');await page.waitForFunction(()=>!!window.__lmg.ws.reloading);
  await page.evaluate(()=>window.__lmg.kill());await page.waitForFunction(()=>!window.__lmg.player.alive);await page.getByRole('button',{name:'[ PLAY AGAIN ]',exact:true}).click();await page.waitForFunction(()=>window.__lmg.state==='playing'&&window.__lmg.player.alive,null,{timeout:180000});
  await page.evaluate(()=>{window.__lmg.hold=true;window.__lmg.equip(100);window.__lmg.tick(0);});const reset=await page.evaluate(()=>window.__lmg.sample());assert.ok(reset.magVisible&&!reset.freshVisible);assert.equal(reset.reloading,false);
  const audio=await page.evaluate(()=>window.__lmgAudio);assert.ok(audio.some(a=>a.src.startsWith('lmg_box_release')));assert.ok(audio.some(a=>a.src.startsWith('lmg_box_seat')));assert.ok(audio.some(a=>a.src.startsWith('lmg_charge')));assert.ok(audio.some(a=>a.src.startsWith('lmg_fire_sustain')));
@@ -119,6 +125,7 @@ try{
   checks.push('Nine-second 10 FPS clock-stepped production viewmodel clip over frozen real-game backdrop; event-synchronized existing LMG audio; cover impact remains missing');
  }
 
+ }
  }
  assert.deepEqual(errors,[]);writeFileSync(resolve(output,'validation.json'),JSON.stringify({renderer:'Chromium SwiftShader; actual App/WeaponStudio',evidence,checks,errors},null,2)+'\n');console.log('PASS: '+checks.join('; '));
 }finally{clearTimeout(deadline);await browser?.close();await server.close();}

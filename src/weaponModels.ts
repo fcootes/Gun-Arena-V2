@@ -746,7 +746,7 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     for(let n=0;n<4;n++)box('Exposed feed guide tooth',.009,.018,.016,-.024+n*.016,.045,-.067,edge);
     const cover=group('feedTray',0,.058,-.18);
     box('Hinged feed cover shell',.092,.025,.29,0,.0125,.145,steel,cover);
-    box('Cover composite contact pad',.070,.005,.145,0,.028,.180,polymer,cover);
+    box('Cover composite contact pad',.070,.005,.180,0,.028,.200,polymer,cover);
     box('Cover rear latch',.029,.020,.020,0,.009,.294,dark,cover);
     for(const side of [-1,1])box('Cover hinge ear',.014,.032,.029,side*.047,.058,-.18,dark);
     tube('Captive cover hinge pin',.007,.110,0,.058,-.18,edge).rotation.set(0,0,Math.PI/2);
@@ -772,7 +772,7 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     }
     if(options.firstPerson) {
       const arm=group('supportUpperArm');arm.name='leftUpperArm';root.add(arm);arm.visible=false;
-      mesh('LMG upper sleeve',new THREE.CylinderGeometry(.058,.074,1,12,1),polymer,0,0,0,arm);
+      mesh('LMG upper sleeve',new THREE.CapsuleGeometry(.061,.32,6,12).scale(1,1/.32,1),polymer,0,0,0,arm);
     }
     grip();screws(-.12,5);
     const bolt=group('bolt',-.054,.022,.025);

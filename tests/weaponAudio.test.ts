@@ -385,3 +385,7 @@ stopWeaponAudio();playLmgFire(1);playLmgFire(2);const sustain=AUDIO.lmgAuto.pool
 for(let n=3;n<80;n++)playLmgFire(n);assert.equal(sustain.currentTime,1.3);assert.equal(sustain.plays,starts,'Sustained LMG retains one uninterrupted voice through many firing events');
 pauseWeaponAudio();assert.ok(sustain.paused);resumeWeaponAudio();assert.equal(sustain.currentTime,1.3);stopWeaponAudio();resumeWeaponAudio();assert.ok(sustain.paused);assert.equal(sustain.currentTime,0);
 console.log('PASS: LMG isolated box/charging events, no duplicate/mislabeled cover sound, native class rates, late-event skip, .115 s lead and uninterrupted 3.565 s sustain with pause/reset');
+
+stopWeaponAudio();playLmgFire(1,true);const lastLmgReport=latest(AUDIO.lmgFire),autoReload:WeaponSlotState={ammo:0,reserve:300};
+beginWeaponReload(weapon('lmg'),autoReload);playWeaponReloadAudio(weapon('lmg'),autoReload);
+assert.equal(lastLmgReport.paused,false,'Immediate empty auto-reload preserves the final report tail');stopWeaponAudio();
