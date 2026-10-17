@@ -22,9 +22,7 @@ Two magazine groups share baked geometry/materials. Old/fresh visibility exchang
 
 The supplied Master Chief running image informed the raised, secure right-handed pistol carry and reciprocal free left arm. First person uses the existing gameplay `sprinting`, grounded and movement flags. It does not infer sprint from camera motion.
 
-An explicit pistol sprint blend eases in/out with elapsed time. The existing deterministic movement/bob phase supplies the cadence. The right wrist stays fixed to its firing-grip attachment while the pistol/right arm follows a restrained athletic carry. The left wrist position and quaternion are calculated independently in camera space and transformed back to weapon space; its forearm is solved from the posed cuff toward the existing torso bend target. Thus weapon motion cannot drag the left wrist around as a fixed support attachment. Fingers relax during the swing and recover on exit.
-
-ADS, crouch/stop, reload, switching and reset recover the standard two-handed grip. Pause freezes the manager before any clock, joint or blend advances. The local third-person actor also swings its left arm and keeps the pistol parented to the right forearm; this path does not change bot/faction rig logic.
+The current sprint uses a shared, speed-scaled complete stride pair, C2 authored trajectories, shoulder/elbow forward kinematics, a constrained right-hand carry, independent left running fist, footfall compression, subtle wrist lag and critically damped transitions. The local third-person actor reads the same gait. See [sprint biomechanics and current visual evidence](../pistol-sprint-gait/README.md) for architecture, cadence, validation and the continuous in-game clip.
 
 ## Preserved behavior and ownership
 
@@ -46,12 +44,8 @@ Reproduce game checks with `npm run test:pistol:browser`. Set `PISTOL_STUDIO_ONL
 
 ## Review evidence
 
-![Original and rebuilt side profile](evidence/model-comparison.jpg)
+[Current sprint contact sheet, continuous cycle and validation](../pistol-sprint-gait/README.md). Prior local model/reload evidence remains preserved in the backup checkpoint.
 
-![One-handed sprint: ready, release, two swing phases, recovery and ADS](evidence/sprint-contact-sheet.jpg)
+## Preview
 
-The individual captures include original/new side profiles, front/rear three-quarter views, hip/ADS, tactical removal/insertion/restored ready, empty slide lock/seated magazine/release/forward/restored ready, and sprint release/two swing phases/recovery/ADS. Captures retain full 1280×720 framing; JPEG versions are stored for compact review.
-
-## Preview limitation
-
-Vercel integration created preview attempts on the existing `gun-arena-v2` project. The intermediate sprint head reported a failed deployment in GitHub. Both deployment-list and deployment-inspection calls returned HTTP 403 for scope `fcootes` / team `team_cEtZBHn6ymqZWTvyGsE6vJda`; no Vercel CLI is installed. This prevents reading cloud build logs or independently verifying a ready exact-head preview. The final PR status is the source of truth for its latest attempt. No production deployment, promotion, merge or protection change was made.
+The existing `gun-arena-v2` project creates non-production previews for PR #20. Vercel's GitHub commit status confirms successful deployment of source checkpoint `5d0dd1b9d001a67144733a6c05847740e5c775bf`. See [the current gait report](../pistol-sprint-gait/README.md) and PR checks for the latest evidence head. Direct deployment-inspection API access remains blocked by HTTP 403 for scope `fcootes`; the exact-head association is checked through Vercel's status on the GitHub SHA. No production deployment, promotion, merge or protection change was made.
