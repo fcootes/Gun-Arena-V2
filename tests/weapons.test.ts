@@ -73,7 +73,7 @@ const semanticFeatures: Record<string, string[]> = {
   shotgun: ['Pump groove', 'Tubular magazine', 'Ghost ring'],
   sniper: ['Barrel flute', 'Optic', 'Riser'],
   pistol: ['Slide serration', 'Trigger guard'],
-  smg: ['Wire stock', 'Folding foregrip'],
+  smg: ['SC-32 monolithic', 'Telescoping brace', 'Captive charging', 'Straight double stack'],
   lmg: ['Feed tray', 'Side ammunition', 'Bipod'],
   br: ['Carry', 'Long stroke', 'charging'],
   laser: ['Energy coil', 'plasma cell', 'heat exhaust'],

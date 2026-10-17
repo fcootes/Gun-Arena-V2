@@ -35,7 +35,9 @@
     "test:shotgun:browser": "node scripts/test-shotgun-browser.mjs",
     "test:pistol": "node --import tsx tests/pistol.test.ts",
     "test:pistol:sprint": "node --import tsx tests/pistolSprint.test.ts",
-    "test:pistol:browser": "node scripts/test-pistol-browser.mjs"
+    "test:pistol:browser": "node scripts/test-pistol-browser.mjs",
+    "test:smg": "node --import tsx tests/smg.test.ts",
+    "test:smg:browser": "node scripts/test-smg-browser.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",

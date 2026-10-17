@@ -79,7 +79,9 @@ export const VIEWMODEL_GRIPS: Readonly<Record<WeaponModelId, ViewmodelGrip>> = {
       followPart: 'bolt', partOffset: [-.075, -.060, .025] },
     reloadReach: [-.048, -.045, .015],
   }),
-  smg: grip(primary(), vertical(-.18, -.039, -.10), { hip: [.135, -.205, -.34], aim: [0, -.145, -.34] }),
+  smg: grip(primary(.125), under(-.205, -.078), {
+    hip: [.135, -.230, -.315], aim: [0, -.108, -.335], sleeveLength: .235,
+  }),
   lmg: grip(primary(), under(-.27), { hip: [.17, -.245, -.40], aim: [0, -.105, -.40], sprint: [-.035, -.30, -.48], sprintRotation: [-.12, .52, -.12] }),
   br: grip(primary(.145,.041,-.108), under(-.27,-.078), {
     hip: [.14, -.225, -.38], sleeveLength: .25, aim: [0, -.105, -.38],

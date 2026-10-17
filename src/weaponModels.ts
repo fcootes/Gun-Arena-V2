@@ -670,7 +670,67 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     ],.036,polymer);
     optic();parts.optic.position.y=.07;
     box('Optic saddle seat',.046,.006,.160,0,.155,-.030,steel);
-  } else if (['ar', 'smg', 'sniper', 'lmg'].includes(id)) {
+  } else if (id === 'smg') {
+    // Original SC-32 blowback chassis: tapered short upper, straight narrow
+    // magazine and twin-rail brace, with no rifle gas tube/buffer silhouette.
+    steel.color.setHex(0x495159); steel.metalness=.62; steel.roughness=.48;
+    polymer.color.setHex(0x2b3238); dark.color.setHex(0x242b31);
+    silhouette('SC-32 monolithic upper',[
+      [-.285,.012],[-.267,.052],[-.10,.065],[.128,.055],
+      [.15,.025],[.14,-.025],[-.26,-.025],
+    ],.064,steel);
+    silhouette('SC-32 lower chassis',[
+      [-.115,-.023],[.135,-.023],[.13,-.057],[.075,-.067],
+      [.015,-.056],[-.012,-.088],[-.094,-.088],
+    ],.052,polymer);
+    box('Upper manufacturing seam',.065,.002,.26,0,-.025,.005,dark);
+    grip(.125);
+    const well=group('magwell',0,-.065,-.055);
+    box('Flared magazine housing',.047,.045,.071,0,0,0,polymer,well);
+    const mag=group('magazine',0,-.075,-.055);
+    silhouette('Straight double stack magazine',[
+      [-.027,0],[.027,0],[.030,-.155],[-.027,-.155],
+    ],.029,dark,mag);
+    box('Magazine floorplate',.037,.012,.063,0,-.157,.001,polymer,mag);
+    for(const side of [-1,1]) {
+      for(const z of [-.013,.012])box('Magazine pressed groove',.002,.112,.003,side*.015,-.078,z,rubber,mag);
+      for(let n=0;n<5;n++)box('Handguard cooling slot',.002,.012,.016,side*.033,.015,-.15-n*.025,rubber);
+    }
+    box('Contoured handguard underside',.061,.032,.16,0,-.032,-.21,polymer);
+    box('Front hand stop',.058,.025,.012,0,-.057,-.286,polymer);
+    for(let n=0;n<5;n++)box('Underside traction rib',.058,.003,.008,0,-.049,-.157-n*.024,rubber);
+    // Near-side slide nested in a fixed receiver guide. Its 34 mm action never
+    // reaches the rear cap (z=.14), even at full mechanical extension.
+    box('Charging slot recess',.003,.013,.105,-.033,.040,-.062,rubber);
+    box('Charging slot upper lip',.006,.004,.112,-.033,.049,-.062,dark);
+    const bolt=group('bolt',-.043,.040,-.095);
+    box('Captive charging stem',.026,.010,.016,0,0,0,steel,bolt);
+    box('Serrated charging paddle',.014,.021,.027,-.016,0,0,edge,bolt);
+    for(let n=0;n<3;n++)box('Charging paddle knurl',.002,.018,.002,-.024,0,-.008+n*.008,dark,bolt);
+    box('Ejection port recess',.002,.022,.070,.033,.025,-.022,rubber);
+    const carrier=group('carrier',.034,.025,-.022);
+    box('Internal blowback carrier',.003,.015,.050,0,0,0,edge,carrier);
+    box('Magazine release paddle',.008,.016,.017,-.029,-.045,-.092,dark);
+    box('Ambidextrous selector',.009,.009,.022,-.031,-.022,.098,edge);
+    rail(-.065,.32,.068);
+    const sights=group('sights');
+    for(const z of [.087,-.259]) {
+      box('Sight pedestal',.035,.014,.024,0,.082,z,dark,sights);
+      for(const side of [-1,1])box('Sight protective ear',.006,.022,.013,side*.013,.098,z,steel,sights);
+    }
+    box('Front sight post',.003,.016,.005,0,.097,-.259,edge,sights);
+    box('Rear notch base',.021,.005,.006,0,.090,.087,steel,sights);
+    tube('Recessed barrel',.012,.055,0,.012,-.308,steel);
+    tube('Compact ported muzzle housing',.021,.041,0,.012,-.341,dark);
+    ring('Muzzle crown',.010,.003,0,.012,-.363,edge);
+    muzzle.position.set(0,.012,-.365);
+    box('Rear receiver cap',.062,.061,.014,0,.013,.145,dark);
+    const brace=group('stock',0,0,.15);
+    for(const side of [-1,1])box('Telescoping brace rail',.009,.012,.18,side*.024,.025,.09,steel,brace);
+    box('Compact brace butt',.045,.104,.022,0,-.016,.18,polymer,brace);
+    box('Brace shoulder pad',.043,.095,.009,0,-.016,.194,rubber,brace);
+    screws(-.10,4);
+  } else if (['ar', 'sniper', 'lmg'].includes(id)) {
     const long = id === 'sniper',
       compact = id === 'smg';
     box(
@@ -1411,7 +1471,7 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     parent.userData.features = featureNames;
   }
   bake(body);
-  if ((id === 'br' || id === 'pistol') && options.firstPerson) {
+  if ((id === 'br' || id === 'pistol' || id === 'smg') && options.firstPerson) {
     const fresh = parts.magazine.clone(true); fresh.name = 'freshMagazine'; fresh.visible = false;
     body.add(fresh); parts.freshMagazine = fresh;
   }

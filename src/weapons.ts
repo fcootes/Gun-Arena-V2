@@ -1,3 +1,4 @@
+import { createSmgAnimator } from './smgMechanics';
 import { createPistolSprintController, PISTOL_SPRINT, type PistolSprintPose } from './pistolSprint';
 import { createPistolAnimator } from './pistolMechanics';
 import * as THREE from 'three';
@@ -314,6 +315,7 @@ export function createViewmodelManager(): ViewmodelManager {
       effects: WeaponMuzzleEffect;
       brReload?: ReturnType<typeof createBattleRifleAnimator>;
       pistolAnimation?: ReturnType<typeof createPistolAnimator>;
+      smgAnimation?: ReturnType<typeof createSmgAnimator>;
       pose: Map<
         THREE.Object3D,
         { position: THREE.Vector3; quaternion: THREE.Quaternion }
@@ -438,7 +440,7 @@ export function createViewmodelManager(): ViewmodelManager {
         quaternion: part.quaternion.clone(),
       }),
     );
-    model = { assembly, effects, pose, brReload:id === 'br' ? createBattleRifleAnimator(assembly) : undefined, pistolAnimation:id === 'pistol' ? createPistolAnimator(assembly) : undefined };
+    model = { assembly, effects, pose, smgAnimation:id === 'smg' ? createSmgAnimator(assembly) : undefined, brReload:id === 'br' ? createBattleRifleAnimator(assembly) : undefined, pistolAnimation:id === 'pistol' ? createPistolAnimator(assembly) : undefined };
     models.set(id, model);
     return model;
   }
@@ -561,7 +563,8 @@ export function createViewmodelManager(): ViewmodelManager {
       assembly.root.rotation.x += recoilRotation * blend;
     }
     const sequence = ws?.reloadSequence;
-    if (selected.pistolAnimation) selected.pistolAnimation(ws, Math.sin((slideTimer / .12) * Math.PI));
+    if (selected.smgAnimation) selected.smgAnimation(ws, Math.sin((boltTimer / .07) * Math.PI));
+    else if (selected.pistolAnimation) selected.pistolAnimation(ws, Math.sin((slideTimer / .12) * Math.PI));
     else if (ws?.reloading && sequence && selected.brReload) selected.brReload(sequence);
     else if (ws?.reloading && sequence) {
       const phase = sequence.phases[sequence.index];
