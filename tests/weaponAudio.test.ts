@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { WEAPONS } from '../src/weapons';
-import { beginWeaponReload, advanceWeaponReload, interruptShellReload } from '../src/weaponReload';
+import { beginWeaponReload, advanceWeaponReload, cancelWeaponReload, interruptShellReload } from '../src/weaponReload';
 import type { WeaponSlotState } from '../src/types';
 import { SNIPER, beginSniperCycle, requireSniperBolt } from '../src/sniperMechanics';
 import { beginShotgunCycle } from '../src/shotgunMechanics';
@@ -376,7 +376,17 @@ const chamberLmg:WeaponSlotState={ammo:100,reserve:200,needsChamber:true};beginW
 const boxes=[plays(AUDIO.lmgBoxOut),plays(AUDIO.lmgBoxIn)],charges=plays(AUDIO.lmgCharge);
 advanceWeaponReload(weapon('lmg'),chamberLmg,5,undefined,undefined,undefined,undefined,playLmgMechanicalEvent);
 assert.deepEqual([plays(AUDIO.lmgBoxOut),plays(AUDIO.lmgBoxIn)],boxes);assert.equal(plays(AUDIO.lmgCharge),charges,'A skipped obsolete charging clip is not replayed');
-assert.equal(AUDIO.lmgFire.duration,2.8636458333333334,'Single shot preserves the final direct report and recorded decay');
+assert.equal(AUDIO.lmgFire.duration,1.20,'Single shot retains its attack with a smooth quieter decay');
 assert.equal(AUDIO.lmgAuto.duration,.92,'Eight distinct .115 s source-report windows');
-assert.equal(AUDIO.lmgCoverClose.duration,.3195,'Approved hatch impact with brief latch decay');
+assert.equal(AUDIO.lmgCoverClose.duration,.3185,'Original WAV second clang and brief latch decay');
 console.log('PASS: LMG isolated box/charge/approved cover cues, one cue per contact, class rates, late skip and cleanup; M60 asset durations');
+
+for(const speed of [1,.75,.9]) {
+ stopWeaponAudio();const state:WeaponSlotState={ammo:43,reserve:300};beginWeaponReload(weapon('lmg'),state,speed);const initial=plays(AUDIO.lmgCoverClose);
+ advanceWeaponReload(weapon('lmg'),state,(3.1656-.001)*speed,undefined,undefined,undefined,undefined,playLmgMechanicalEvent);assert.equal(plays(AUDIO.lmgCoverClose),initial);
+ advanceWeaponReload(weapon('lmg'),state,.002*speed,undefined,undefined,undefined,undefined,playLmgMechanicalEvent);assert.equal(plays(AUDIO.lmgCoverClose),initial+1,'Original second-clang cue coincides with lock');
+ advanceWeaponReload(weapon('lmg'),state,100,undefined,undefined,undefined,undefined,playLmgMechanicalEvent);assert.equal(plays(AUDIO.lmgCoverClose),initial+1);
+ const cancelled:WeaponSlotState={ammo:0,reserve:300};beginWeaponReload(weapon('lmg'),cancelled,speed);advanceWeaponReload(weapon('lmg'),cancelled,3.10*speed,undefined,undefined,undefined,undefined,playLmgMechanicalEvent);cancelWeaponReload(cancelled);
+ advanceWeaponReload(weapon('lmg'),cancelled,100,undefined,undefined,undefined,undefined,playLmgMechanicalEvent);assert.equal(plays(AUDIO.lmgCoverClose),initial+1,'Cancellation before closure adds no impact');
+}
+console.log('PASS: original WAV cover impact exactly once at 3.1656 s with class scaling; cancelled pre-lock reloads remain silent');

@@ -36,6 +36,9 @@ export function prepareWeaponAudio(ids: readonly string[]): void {
   if (ids.includes('lmg')) void lmgFireAudio.prepare();
   const wanted = new Set(ids.map(id => id === 'laser' ? 'plasma' : id));
   for (const key of Object.keys(weaponUrls)) {
+    // The sustain file is decoded by LmgFireAudio; its legacy HTML loop
+    // voice is never played. Avoid fetching/preloading a second unused copy.
+    if (key === 'lmgAuto') continue;
     const family = key.startsWith('laser') ? 'plasma' : key.match(/^[a-z]+(?=[A-Z])/)?.[0];
     if (family && wanted.has(family)) AUDIO[key as keyof typeof weaponUrls].prepare();
   }
@@ -115,7 +118,7 @@ export const playLmgMechanicalEvent: LmgListener = (event,speed,late) => {
   const track=event==='extract'?AUDIO.lmgBoxOut:event==='seat'?AUDIO.lmgBoxIn:
     event==='cover'?AUDIO.lmgCoverClose:AUDIO.lmgCharge;
   const offset=Math.max(0,late)/speed;
-  const clip=track.duration||(event==='extract'?.215:event==='cover'?.3195:.330);
+  const clip=track.duration||(event==='extract'?.215:event==='cover'?.3185:.330);
   if(offset<clip)track.play(1,true,1/speed,offset);
 };
 

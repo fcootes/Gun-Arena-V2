@@ -1,3 +1,5 @@
+> Current audio hotfix: [quieter echo, 100-round diagnosis and original WAV hatch](../lmg-audio-hotfix/README.md). Earlier audio details below are historical; current hatch audio uses the supplied original PCM WAV. Accepted animation is unchanged.
+
 # HMG-100 final polish — native approval pending
 
 Continues draft [PR #23](https://github.com/fcootes/Gun-Arena-V2/pull/23) on `feat/lmg-weapon-fidelity`, from verified head `8c730902d6787e28b057c6d06ba85fc75fdf43a9`. References Issue #16. No merge, production promotion or Railgun work.

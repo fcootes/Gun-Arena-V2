@@ -1,0 +1,4495 @@
+{
+  "shots": [
+    {
+      "shot": 1,
+      "ammo": 99,
+      "gameplayTime": 19.3615,
+      "perf": 19361.60000000056
+    },
+    {
+      "shot": 2,
+      "ammo": 98,
+      "gameplayTime": 20.18860000000056,
+      "perf": 20188.60000000056
+    },
+    {
+      "shot": 3,
+      "ammo": 97,
+      "gameplayTime": 20.391600000000558,
+      "perf": 20391.60000000056
+    },
+    {
+      "shot": 4,
+      "ammo": 96,
+      "gameplayTime": 20.6775,
+      "perf": 20677.5
+    },
+    {
+      "shot": 5,
+      "ammo": 95,
+      "gameplayTime": 21.017799999999813,
+      "perf": 21017.900000000373
+    },
+    {
+      "shot": 6,
+      "ammo": 94,
+      "gameplayTime": 21.354799999999813,
+      "perf": 21354.799999999814
+    },
+    {
+      "shot": 7,
+      "ammo": 93,
+      "gameplayTime": 21.609299999999813,
+      "perf": 21609.299999999814
+    },
+    {
+      "shot": 8,
+      "ammo": 92,
+      "gameplayTime": 21.888,
+      "perf": 21888
+    },
+    {
+      "shot": 9,
+      "ammo": 91,
+      "gameplayTime": 22.181900000000372,
+      "perf": 22181.900000000373
+    },
+    {
+      "shot": 10,
+      "ammo": 90,
+      "gameplayTime": 22.484700000000185,
+      "perf": 22484.700000000186
+    },
+    {
+      "shot": 11,
+      "ammo": 89,
+      "gameplayTime": 22.810900000000373,
+      "perf": 22810.900000000373
+    },
+    {
+      "shot": 12,
+      "ammo": 88,
+      "gameplayTime": 23.19740000000037,
+      "perf": 23197.400000000373
+    },
+    {
+      "shot": 13,
+      "ammo": 87,
+      "gameplayTime": 23.5745,
+      "perf": 23574.5
+    },
+    {
+      "shot": 14,
+      "ammo": 86,
+      "gameplayTime": 23.888799999999815,
+      "perf": 23888.799999999814
+    },
+    {
+      "shot": 15,
+      "ammo": 85,
+      "gameplayTime": 24.258799999999813,
+      "perf": 24258.799999999814
+    },
+    {
+      "shot": 16,
+      "ammo": 84,
+      "gameplayTime": 24.5705,
+      "perf": 24570.5
+    },
+    {
+      "shot": 17,
+      "ammo": 83,
+      "gameplayTime": 25.003,
+      "perf": 25003.10000000056
+    },
+    {
+      "shot": 18,
+      "ammo": 82,
+      "gameplayTime": 25.3825,
+      "perf": 25382.5
+    },
+    {
+      "shot": 19,
+      "ammo": 81,
+      "gameplayTime": 25.714,
+      "perf": 25714
+    },
+    {
+      "shot": 20,
+      "ammo": 80,
+      "gameplayTime": 26.0745,
+      "perf": 26074.5
+    },
+    {
+      "shot": 21,
+      "ammo": 79,
+      "gameplayTime": 26.463799999999814,
+      "perf": 26463.799999999814
+    },
+    {
+      "shot": 22,
+      "ammo": 78,
+      "gameplayTime": 26.757700000000185,
+      "perf": 26757.700000000186
+    },
+    {
+      "shot": 23,
+      "ammo": 77,
+      "gameplayTime": 27.05860000000056,
+      "perf": 27058.60000000056
+    },
+    {
+      "shot": 24,
+      "ammo": 76,
+      "gameplayTime": 27.3905,
+      "perf": 27390.5
+    },
+    {
+      "shot": 25,
+      "ammo": 75,
+      "gameplayTime": 27.76140000000037,
+      "perf": 27761.400000000373
+    },
+    {
+      "shot": 26,
+      "ammo": 74,
+      "gameplayTime": 28.214700000000185,
+      "perf": 28214.700000000186
+    },
+    {
+      "shot": 27,
+      "ammo": 73,
+      "gameplayTime": 28.571299999999813,
+      "perf": 28571.299999999814
+    },
+    {
+      "shot": 28,
+      "ammo": 72,
+      "gameplayTime": 28.791200000000185,
+      "perf": 28791.200000000186
+    },
+    {
+      "shot": 29,
+      "ammo": 71,
+      "gameplayTime": 29.167299999999813,
+      "perf": 29167.299999999814
+    },
+    {
+      "shot": 30,
+      "ammo": 70,
+      "gameplayTime": 29.496,
+      "perf": 29496
+    },
+    {
+      "shot": 31,
+      "ammo": 69,
+      "gameplayTime": 29.863,
+      "perf": 29863.799999999814
+    },
+    {
+      "shot": 32,
+      "ammo": 68,
+      "gameplayTime": 30.174200000000187,
+      "perf": 30174.200000000186
+    },
+    {
+      "shot": 33,
+      "ammo": 67,
+      "gameplayTime": 30.67960000000056,
+      "perf": 30679.60000000056
+    },
+    {
+      "shot": 34,
+      "ammo": 66,
+      "gameplayTime": 30.8725,
+      "perf": 30872.5
+    },
+    {
+      "shot": 35,
+      "ammo": 65,
+      "gameplayTime": 31.181799999999814,
+      "perf": 31181.799999999814
+    },
+    {
+      "shot": 36,
+      "ammo": 64,
+      "gameplayTime": 31.50090000000037,
+      "perf": 31500.900000000373
+    },
+    {
+      "shot": 37,
+      "ammo": 63,
+      "gameplayTime": 31.850400000000374,
+      "perf": 31850.400000000373
+    },
+    {
+      "shot": 38,
+      "ammo": 62,
+      "gameplayTime": 32.21760000000056,
+      "perf": 32217.60000000056
+    },
+    {
+      "shot": 39,
+      "ammo": 61,
+      "gameplayTime": 32.5825,
+      "perf": 32582.5
+    },
+    {
+      "shot": 40,
+      "ammo": 60,
+      "gameplayTime": 32.963200000000185,
+      "perf": 32963.200000000186
+    },
+    {
+      "shot": 41,
+      "ammo": 59,
+      "gameplayTime": 33.30429999999981,
+      "perf": 33304.299999999814
+    },
+    {
+      "shot": 42,
+      "ammo": 58,
+      "gameplayTime": 33.65990000000037,
+      "perf": 33659.90000000037
+    },
+    {
+      "shot": 43,
+      "ammo": 57,
+      "gameplayTime": 33.9995,
+      "perf": 33999.5
+    },
+    {
+      "shot": 44,
+      "ammo": 56,
+      "gameplayTime": 34.351,
+      "perf": 34351
+    },
+    {
+      "shot": 45,
+      "ammo": 55,
+      "gameplayTime": 34.60990000000037,
+      "perf": 34610
+    },
+    {
+      "shot": 46,
+      "ammo": 54,
+      "gameplayTime": 34.98679999999981,
+      "perf": 34986.799999999814
+    },
+    {
+      "shot": 47,
+      "ammo": 53,
+      "gameplayTime": 35.30129999999981,
+      "perf": 35301.299999999814
+    },
+    {
+      "shot": 48,
+      "ammo": 52,
+      "gameplayTime": 35.5935,
+      "perf": 35593.5
+    },
+    {
+      "shot": 49,
+      "ammo": 51,
+      "gameplayTime": 35.89879999999982,
+      "perf": 35898.799999999814
+    },
+    {
+      "shot": 50,
+      "ammo": 50,
+      "gameplayTime": 36.412,
+      "perf": 36412
+    },
+    {
+      "shot": 51,
+      "ammo": 49,
+      "gameplayTime": 36.804799999999815,
+      "perf": 36804.90000000037
+    },
+    {
+      "shot": 52,
+      "ammo": 48,
+      "gameplayTime": 37.51560000000056,
+      "perf": 37515.60000000056
+    },
+    {
+      "shot": 53,
+      "ammo": 47,
+      "gameplayTime": 37.706,
+      "perf": 37706
+    },
+    {
+      "shot": 54,
+      "ammo": 46,
+      "gameplayTime": 38.27379999999982,
+      "perf": 38273.799999999814
+    },
+    {
+      "shot": 55,
+      "ammo": 45,
+      "gameplayTime": 38.91279999999981,
+      "perf": 38912.799999999814
+    },
+    {
+      "shot": 56,
+      "ammo": 44,
+      "gameplayTime": 39.107700000000186,
+      "perf": 39107.799999999814
+    },
+    {
+      "shot": 57,
+      "ammo": 43,
+      "gameplayTime": 40.07790000000037,
+      "perf": 40077.90000000037
+    },
+    {
+      "shot": 58,
+      "ammo": 42,
+      "gameplayTime": 40.29560000000056,
+      "perf": 40295.60000000056
+    },
+    {
+      "shot": 59,
+      "ammo": 41,
+      "gameplayTime": 40.60390000000037,
+      "perf": 40603.90000000037
+    },
+    {
+      "shot": 60,
+      "ammo": 40,
+      "gameplayTime": 41.360400000000375,
+      "perf": 41360.40000000037
+    },
+    {
+      "shot": 61,
+      "ammo": 39,
+      "gameplayTime": 41.56240000000037,
+      "perf": 41562.5
+    },
+    {
+      "shot": 62,
+      "ammo": 38,
+      "gameplayTime": 41.90679999999981,
+      "perf": 41906.799999999814
+    },
+    {
+      "shot": 63,
+      "ammo": 37,
+      "gameplayTime": 42.197600000000556,
+      "perf": 42197.60000000056
+    },
+    {
+      "shot": 64,
+      "ammo": 36,
+      "gameplayTime": 42.552700000000186,
+      "perf": 42552.700000000186
+    },
+    {
+      "shot": 65,
+      "ammo": 35,
+      "gameplayTime": 42.862200000000186,
+      "perf": 42862.200000000186
+    },
+    {
+      "shot": 66,
+      "ammo": 34,
+      "gameplayTime": 43.17410000000056,
+      "perf": 43174.10000000056
+    },
+    {
+      "shot": 67,
+      "ammo": 33,
+      "gameplayTime": 43.461700000000185,
+      "perf": 43461.700000000186
+    },
+    {
+      "shot": 68,
+      "ammo": 32,
+      "gameplayTime": 43.7905,
+      "perf": 43790.5
+    },
+    {
+      "shot": 69,
+      "ammo": 31,
+      "gameplayTime": 44.10360000000056,
+      "perf": 44103.700000000186
+    },
+    {
+      "shot": 70,
+      "ammo": 30,
+      "gameplayTime": 44.45860000000056,
+      "perf": 44458.60000000056
+    },
+    {
+      "shot": 71,
+      "ammo": 29,
+      "gameplayTime": 44.77579999999981,
+      "perf": 44775.799999999814
+    },
+    {
+      "shot": 72,
+      "ammo": 28,
+      "gameplayTime": 45.1555,
+      "perf": 45155.5
+    },
+    {
+      "shot": 73,
+      "ammo": 27,
+      "gameplayTime": 45.863400000000375,
+      "perf": 45863.40000000037
+    },
+    {
+      "shot": 74,
+      "ammo": 26,
+      "gameplayTime": 46.05470000000019,
+      "perf": 46054.700000000186
+    },
+    {
+      "shot": 75,
+      "ammo": 25,
+      "gameplayTime": 46.814200000000184,
+      "perf": 46814.200000000186
+    },
+    {
+      "shot": 76,
+      "ammo": 24,
+      "gameplayTime": 46.99779999999981,
+      "perf": 46997.799999999814
+    },
+    {
+      "shot": 77,
+      "ammo": 23,
+      "gameplayTime": 47.354,
+      "perf": 47354
+    },
+    {
+      "shot": 78,
+      "ammo": 22,
+      "gameplayTime": 47.612200000000186,
+      "perf": 47612.200000000186
+    },
+    {
+      "shot": 79,
+      "ammo": 21,
+      "gameplayTime": 47.95560000000056,
+      "perf": 47955.60000000056
+    },
+    {
+      "shot": 80,
+      "ammo": 20,
+      "gameplayTime": 48.24929999999981,
+      "perf": 48249.299999999814
+    },
+    {
+      "shot": 81,
+      "ammo": 19,
+      "gameplayTime": 48.571400000000374,
+      "perf": 48571.40000000037
+    },
+    {
+      "shot": 82,
+      "ammo": 18,
+      "gameplayTime": 48.8795,
+      "perf": 48879.5
+    },
+    {
+      "shot": 83,
+      "ammo": 17,
+      "gameplayTime": 49.17060000000056,
+      "perf": 49170.60000000056
+    },
+    {
+      "shot": 84,
+      "ammo": 16,
+      "gameplayTime": 49.47270000000019,
+      "perf": 49472.700000000186
+    },
+    {
+      "shot": 85,
+      "ammo": 15,
+      "gameplayTime": 49.799400000000375,
+      "perf": 49799.40000000037
+    },
+    {
+      "shot": 86,
+      "ammo": 14,
+      "gameplayTime": 50.25420000000019,
+      "perf": 50254.200000000186
+    },
+    {
+      "shot": 87,
+      "ammo": 13,
+      "gameplayTime": 50.46540000000037,
+      "perf": 50465.40000000037
+    },
+    {
+      "shot": 88,
+      "ammo": 12,
+      "gameplayTime": 50.7615,
+      "perf": 50761.5
+    },
+    {
+      "shot": 89,
+      "ammo": 11,
+      "gameplayTime": 51.01170000000019,
+      "perf": 51011.700000000186
+    },
+    {
+      "shot": 90,
+      "ammo": 10,
+      "gameplayTime": 51.373,
+      "perf": 51373
+    },
+    {
+      "shot": 91,
+      "ammo": 9,
+      "gameplayTime": 51.66660000000056,
+      "perf": 51666.60000000056
+    },
+    {
+      "shot": 92,
+      "ammo": 8,
+      "gameplayTime": 52.49579999999981,
+      "perf": 52495.799999999814
+    },
+    {
+      "shot": 93,
+      "ammo": 7,
+      "gameplayTime": 52.770900000000374,
+      "perf": 52770.90000000037
+    },
+    {
+      "shot": 94,
+      "ammo": 6,
+      "gameplayTime": 53.20040000000037,
+      "perf": 53200.40000000037
+    },
+    {
+      "shot": 95,
+      "ammo": 5,
+      "gameplayTime": 53.57540000000037,
+      "perf": 53575.40000000037
+    },
+    {
+      "shot": 96,
+      "ammo": 4,
+      "gameplayTime": 53.90329999999982,
+      "perf": 53903.299999999814
+    },
+    {
+      "shot": 97,
+      "ammo": 3,
+      "gameplayTime": 54.2655,
+      "perf": 54265.5
+    },
+    {
+      "shot": 98,
+      "ammo": 2,
+      "gameplayTime": 54.60090000000037,
+      "perf": 54600.90000000037
+    },
+    {
+      "shot": 99,
+      "ammo": 1,
+      "gameplayTime": 55.01410000000056,
+      "perf": 55014.200000000186
+    },
+    {
+      "shot": 100,
+      "ammo": 0,
+      "gameplayTime": 55.41890000000037,
+      "perf": 55418.90000000037
+    }
+  ],
+  "audio": {
+    "starts": [
+      {
+        "shot": 1,
+        "variant": "lead",
+        "ammo": 99,
+        "gameplayTime": 19.3615,
+        "bufferFrames": 137455,
+        "start": 0.6533333333333333,
+        "contextTime": 0.6533333333333333,
+        "perf": 19363.200000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          1.4066666666666667
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              1.3946666666666667
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              1.3946666666666667
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              1.4066666666666667
+            ]
+          }
+        ],
+        "disconnectedAt": 1.4746666666666666
+      },
+      {
+        "shot": 2,
+        "variant": 0,
+        "ammo": 98,
+        "gameplayTime": 20.18860000000056,
+        "bufferFrames": 137455,
+        "start": 1.3946666666666667,
+        "contextTime": 1.3946666666666667,
+        "perf": 20188.799999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          1.5853333333333333
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              1.5733333333333333
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              1.5733333333333333
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              1.5853333333333333
+            ]
+          }
+        ],
+        "disconnectedAt": 1.592
+      },
+      {
+        "shot": 3,
+        "variant": 1,
+        "ammo": 97,
+        "gameplayTime": 20.391600000000558,
+        "bufferFrames": 137455,
+        "start": 1.5733333333333333,
+        "contextTime": 1.5733333333333333,
+        "perf": 20391.799999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          1.8066666666666666
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              1.7946666666666666
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              1.7946666666666666
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              1.8066666666666666
+            ]
+          }
+        ],
+        "disconnectedAt": 1.816
+      },
+      {
+        "shot": 4,
+        "variant": 2,
+        "ammo": 96,
+        "gameplayTime": 20.6775,
+        "bufferFrames": 137455,
+        "start": 1.7946666666666666,
+        "contextTime": 1.7946666666666666,
+        "perf": 20677.700000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          2.086666666666667
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              2.074666666666667
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              2.074666666666667
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              2.086666666666667
+            ]
+          }
+        ],
+        "disconnectedAt": 2.096
+      },
+      {
+        "shot": 5,
+        "variant": 3,
+        "ammo": 95,
+        "gameplayTime": 21.017799999999813,
+        "bufferFrames": 137455,
+        "start": 2.074666666666667,
+        "contextTime": 2.074666666666667,
+        "perf": 21018.10000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          2.3773333333333335
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              2.3653333333333335
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              2.3653333333333335
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              2.3773333333333335
+            ]
+          }
+        ],
+        "disconnectedAt": 2.3866666666666667
+      },
+      {
+        "shot": 6,
+        "variant": 4,
+        "ammo": 94,
+        "gameplayTime": 21.354799999999813,
+        "bufferFrames": 137455,
+        "start": 2.3653333333333335,
+        "contextTime": 2.3653333333333335,
+        "perf": 21354.900000000373,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          2.588
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              2.576
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              2.576
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              2.588
+            ]
+          }
+        ],
+        "disconnectedAt": 2.5973333333333333
+      },
+      {
+        "shot": 7,
+        "variant": 5,
+        "ammo": 93,
+        "gameplayTime": 21.609299999999813,
+        "bufferFrames": 137455,
+        "start": 2.576,
+        "contextTime": 2.576,
+        "perf": 21609.60000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          2.828
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              2.816
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              2.816
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              2.828
+            ]
+          }
+        ],
+        "disconnectedAt": 2.848
+      },
+      {
+        "shot": 8,
+        "variant": 6,
+        "ammo": 92,
+        "gameplayTime": 21.888,
+        "bufferFrames": 137455,
+        "start": 2.816,
+        "contextTime": 2.816,
+        "perf": 21888.200000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          3.06
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              3.048
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              3.048
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              3.06
+            ]
+          }
+        ],
+        "disconnectedAt": 3.066666666666667
+      },
+      {
+        "shot": 9,
+        "variant": 7,
+        "ammo": 91,
+        "gameplayTime": 22.181900000000372,
+        "bufferFrames": 137455,
+        "start": 3.048,
+        "contextTime": 3.048,
+        "perf": 22182.200000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          3.2893333333333334
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              3.2773333333333334
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              3.2773333333333334
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              3.2893333333333334
+            ]
+          }
+        ],
+        "disconnectedAt": 3.2986666666666666
+      },
+      {
+        "shot": 10,
+        "variant": 0,
+        "ammo": 90,
+        "gameplayTime": 22.484700000000185,
+        "bufferFrames": 137455,
+        "start": 3.2773333333333334,
+        "contextTime": 3.288,
+        "perf": 22485,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          3.550666666666667
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              3.538666666666667
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              3.538666666666667
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              3.550666666666667
+            ]
+          }
+        ],
+        "disconnectedAt": 3.56
+      },
+      {
+        "shot": 11,
+        "variant": 1,
+        "ammo": 89,
+        "gameplayTime": 22.810900000000373,
+        "bufferFrames": 137455,
+        "start": 3.538666666666667,
+        "contextTime": 3.538666666666667,
+        "perf": 22811,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          3.8413333333333335
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              3.8293333333333335
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              3.8293333333333335
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              3.8413333333333335
+            ]
+          }
+        ],
+        "disconnectedAt": 3.8586666666666667
+      },
+      {
+        "shot": 12,
+        "variant": 2,
+        "ammo": 88,
+        "gameplayTime": 23.19740000000037,
+        "bufferFrames": 137455,
+        "start": 3.8293333333333335,
+        "contextTime": 3.8293333333333335,
+        "perf": 23197.60000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          4.110666666666666
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              4.0986666666666665
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              4.0986666666666665
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              4.110666666666666
+            ]
+          }
+        ],
+        "disconnectedAt": 4.1306666666666665
+      },
+      {
+        "shot": 13,
+        "variant": 3,
+        "ammo": 87,
+        "gameplayTime": 23.5745,
+        "bufferFrames": 137455,
+        "start": 4.0986666666666665,
+        "contextTime": 4.0986666666666665,
+        "perf": 23574.700000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          4.361333333333333
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              4.349333333333333
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              4.349333333333333
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              4.361333333333333
+            ]
+          }
+        ],
+        "disconnectedAt": 4.370666666666667
+      },
+      {
+        "shot": 14,
+        "variant": 4,
+        "ammo": 86,
+        "gameplayTime": 23.888799999999815,
+        "bufferFrames": 137455,
+        "start": 4.349333333333333,
+        "contextTime": 4.349333333333333,
+        "perf": 23888.900000000373,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          4.651999999999999
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              4.64
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              4.64
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              4.651999999999999
+            ]
+          }
+        ],
+        "disconnectedAt": 4.661333333333333
+      },
+      {
+        "shot": 15,
+        "variant": 5,
+        "ammo": 85,
+        "gameplayTime": 24.258799999999813,
+        "bufferFrames": 137455,
+        "start": 4.64,
+        "contextTime": 4.645333333333333,
+        "perf": 24259.10000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          4.934666666666666
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              4.922666666666666
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              4.922666666666666
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              4.934666666666666
+            ]
+          }
+        ],
+        "disconnectedAt": 4.941333333333334
+      },
+      {
+        "shot": 16,
+        "variant": 6,
+        "ammo": 84,
+        "gameplayTime": 24.5705,
+        "bufferFrames": 137455,
+        "start": 4.922666666666666,
+        "contextTime": 4.922666666666666,
+        "perf": 24570.700000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          5.294666666666666
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              5.282666666666667
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              5.282666666666667
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              5.294666666666666
+            ]
+          }
+        ],
+        "disconnectedAt": 5.333333333333333
+      },
+      {
+        "shot": 17,
+        "variant": 7,
+        "ammo": 83,
+        "gameplayTime": 25.003,
+        "bufferFrames": 137455,
+        "start": 5.282666666666667,
+        "contextTime": 5.293333333333333,
+        "perf": 25016,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          5.603999999999999
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              5.592
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              5.592
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              5.603999999999999
+            ]
+          }
+        ],
+        "disconnectedAt": 5.613333333333333
+      },
+      {
+        "shot": 18,
+        "variant": 0,
+        "ammo": 82,
+        "gameplayTime": 25.3825,
+        "bufferFrames": 137455,
+        "start": 5.592,
+        "contextTime": 5.592,
+        "perf": 25382.700000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          5.8759999999999994
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              5.864
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              5.864
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              5.8759999999999994
+            ]
+          }
+        ],
+        "disconnectedAt": 5.904
+      },
+      {
+        "shot": 19,
+        "variant": 1,
+        "ammo": 81,
+        "gameplayTime": 25.714,
+        "bufferFrames": 137455,
+        "start": 5.864,
+        "contextTime": 5.864,
+        "perf": 25714.10000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          6.177333333333333
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              6.165333333333334
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              6.165333333333334
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              6.177333333333333
+            ]
+          }
+        ],
+        "disconnectedAt": 6.1946666666666665
+      },
+      {
+        "shot": 20,
+        "variant": 2,
+        "ammo": 80,
+        "gameplayTime": 26.0745,
+        "bufferFrames": 137455,
+        "start": 6.165333333333334,
+        "contextTime": 6.165333333333334,
+        "perf": 26074.799999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          6.508
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              6.496
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              6.496
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              6.508
+            ]
+          }
+        ],
+        "disconnectedAt": 6.514666666666667
+      },
+      {
+        "shot": 21,
+        "variant": 3,
+        "ammo": 79,
+        "gameplayTime": 26.463799999999814,
+        "bufferFrames": 137455,
+        "start": 6.496,
+        "contextTime": 6.496,
+        "perf": 26463.900000000373,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          6.726666666666667
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              6.714666666666667
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              6.714666666666667
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              6.726666666666667
+            ]
+          }
+        ],
+        "disconnectedAt": 6.746666666666667
+      },
+      {
+        "shot": 22,
+        "variant": 4,
+        "ammo": 78,
+        "gameplayTime": 26.757700000000185,
+        "bufferFrames": 137455,
+        "start": 6.714666666666667,
+        "contextTime": 6.714666666666667,
+        "perf": 26757.900000000373,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          6.958666666666666
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              6.946666666666666
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              6.946666666666666
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              6.958666666666666
+            ]
+          }
+        ],
+        "disconnectedAt": 6.965333333333334
+      },
+      {
+        "shot": 23,
+        "variant": 5,
+        "ammo": 77,
+        "gameplayTime": 27.05860000000056,
+        "bufferFrames": 137455,
+        "start": 6.946666666666666,
+        "contextTime": 6.946666666666666,
+        "perf": 27058.799999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          7.228
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              7.216
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              7.216
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              7.228
+            ]
+          }
+        ],
+        "disconnectedAt": 7.237333333333333
+      },
+      {
+        "shot": 24,
+        "variant": 6,
+        "ammo": 76,
+        "gameplayTime": 27.3905,
+        "bufferFrames": 137455,
+        "start": 7.216,
+        "contextTime": 7.216,
+        "perf": 27390.700000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          7.5
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              7.488
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              7.488
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              7.5
+            ]
+          }
+        ],
+        "disconnectedAt": 7.506666666666667
+      },
+      {
+        "shot": 25,
+        "variant": 7,
+        "ammo": 75,
+        "gameplayTime": 27.76140000000037,
+        "bufferFrames": 137455,
+        "start": 7.488,
+        "contextTime": 7.488,
+        "perf": 27761.700000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          7.870666666666666
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              7.858666666666666
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              7.858666666666666
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              7.870666666666666
+            ]
+          }
+        ],
+        "disconnectedAt": 7.8773333333333335
+      },
+      {
+        "shot": 26,
+        "variant": 0,
+        "ammo": 74,
+        "gameplayTime": 28.214700000000185,
+        "bufferFrames": 137455,
+        "start": 7.858666666666666,
+        "contextTime": 7.858666666666666,
+        "perf": 28247.900000000373,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          8.121333333333334
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              8.109333333333334
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              8.109333333333334
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              8.121333333333334
+            ]
+          }
+        ],
+        "disconnectedAt": 8.138666666666667
+      },
+      {
+        "shot": 27,
+        "variant": 1,
+        "ammo": 73,
+        "gameplayTime": 28.571299999999813,
+        "bufferFrames": 137455,
+        "start": 8.109333333333334,
+        "contextTime": 8.109333333333334,
+        "perf": 28571.299999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          8.3
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              8.288
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              8.288
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              8.3
+            ]
+          }
+        ],
+        "disconnectedAt": 8.309333333333333
+      },
+      {
+        "shot": 28,
+        "variant": 2,
+        "ammo": 72,
+        "gameplayTime": 28.791200000000185,
+        "bufferFrames": 137455,
+        "start": 8.288,
+        "contextTime": 8.288,
+        "perf": 28791.299999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          8.601333333333335
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              8.589333333333334
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              8.589333333333334
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              8.601333333333335
+            ]
+          }
+        ],
+        "disconnectedAt": 8.618666666666666
+      },
+      {
+        "shot": 29,
+        "variant": 3,
+        "ammo": 71,
+        "gameplayTime": 29.167299999999813,
+        "bufferFrames": 137455,
+        "start": 8.589333333333334,
+        "contextTime": 8.589333333333334,
+        "perf": 29167.5,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          8.881333333333334
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              8.869333333333334
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              8.869333333333334
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              8.881333333333334
+            ]
+          }
+        ],
+        "disconnectedAt": 8.890666666666666
+      },
+      {
+        "shot": 30,
+        "variant": 4,
+        "ammo": 70,
+        "gameplayTime": 29.496,
+        "bufferFrames": 137455,
+        "start": 8.869333333333334,
+        "contextTime": 8.869333333333334,
+        "perf": 29496.200000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          9.172
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              9.16
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              9.16
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              9.172
+            ]
+          }
+        ],
+        "disconnectedAt": 9.181333333333333
+      },
+      {
+        "shot": 31,
+        "variant": 5,
+        "ammo": 69,
+        "gameplayTime": 29.863,
+        "bufferFrames": 137455,
+        "start": 9.16,
+        "contextTime": 9.16,
+        "perf": 29863.799999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          9.444
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              9.432
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              9.432
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              9.444
+            ]
+          }
+        ],
+        "disconnectedAt": 9.450666666666667
+      },
+      {
+        "shot": 32,
+        "variant": 6,
+        "ammo": 68,
+        "gameplayTime": 30.174200000000187,
+        "bufferFrames": 137455,
+        "start": 9.432,
+        "contextTime": 9.432,
+        "perf": 30174.299999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          9.833333333333334
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              9.821333333333333
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              9.821333333333333
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              9.833333333333334
+            ]
+          }
+        ],
+        "disconnectedAt": 9.850666666666667
+      },
+      {
+        "shot": 33,
+        "variant": 7,
+        "ammo": 67,
+        "gameplayTime": 30.67960000000056,
+        "bufferFrames": 137455,
+        "start": 9.821333333333333,
+        "contextTime": 9.821333333333333,
+        "perf": 30679.900000000373,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          9.993333333333334
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              9.981333333333334
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              9.981333333333334
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              9.993333333333334
+            ]
+          }
+        ],
+        "disconnectedAt": 10.002666666666666
+      },
+      {
+        "shot": 34,
+        "variant": 0,
+        "ammo": 66,
+        "gameplayTime": 30.8725,
+        "bufferFrames": 137455,
+        "start": 9.981333333333334,
+        "contextTime": 9.981333333333334,
+        "perf": 30872.700000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          10.225333333333333
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              10.213333333333333
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              10.213333333333333
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              10.225333333333333
+            ]
+          }
+        ],
+        "disconnectedAt": 10.232
+      },
+      {
+        "shot": 35,
+        "variant": 1,
+        "ammo": 65,
+        "gameplayTime": 31.181799999999814,
+        "bufferFrames": 137455,
+        "start": 10.213333333333333,
+        "contextTime": 10.213333333333333,
+        "perf": 31182,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          10.494666666666667
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              10.482666666666667
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              10.482666666666667
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              10.494666666666667
+            ]
+          }
+        ],
+        "disconnectedAt": 10.512
+      },
+      {
+        "shot": 36,
+        "variant": 2,
+        "ammo": 64,
+        "gameplayTime": 31.50090000000037,
+        "bufferFrames": 137455,
+        "start": 10.482666666666667,
+        "contextTime": 10.482666666666667,
+        "perf": 31501,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          10.756
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              10.744
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              10.744
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              10.756
+            ]
+          }
+        ],
+        "disconnectedAt": 10.762666666666666
+      },
+      {
+        "shot": 37,
+        "variant": 3,
+        "ammo": 63,
+        "gameplayTime": 31.850400000000374,
+        "bufferFrames": 137455,
+        "start": 10.744,
+        "contextTime": 10.744,
+        "perf": 31850.5,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          11.076
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              11.064
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              11.064
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              11.076
+            ]
+          }
+        ],
+        "disconnectedAt": 11.085333333333333
+      },
+      {
+        "shot": 38,
+        "variant": 4,
+        "ammo": 62,
+        "gameplayTime": 32.21760000000056,
+        "bufferFrames": 137455,
+        "start": 11.064,
+        "contextTime": 11.064,
+        "perf": 32219,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          11.348
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              11.336
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              11.336
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              11.348
+            ]
+          }
+        ],
+        "disconnectedAt": 11.354666666666667
+      },
+      {
+        "shot": 39,
+        "variant": 5,
+        "ammo": 61,
+        "gameplayTime": 32.5825,
+        "bufferFrames": 137455,
+        "start": 11.336,
+        "contextTime": 11.336,
+        "perf": 32582.900000000373,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          11.617333333333335
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              11.605333333333334
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              11.605333333333334
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              11.617333333333335
+            ]
+          }
+        ],
+        "disconnectedAt": 11.634666666666666
+      },
+      {
+        "shot": 40,
+        "variant": 6,
+        "ammo": 60,
+        "gameplayTime": 32.963200000000185,
+        "bufferFrames": 137455,
+        "start": 11.605333333333334,
+        "contextTime": 11.605333333333334,
+        "perf": 32963.299999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          11.908000000000001
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              11.896
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              11.896
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              11.908000000000001
+            ]
+          }
+        ],
+        "disconnectedAt": 11.917333333333334
+      },
+      {
+        "shot": 41,
+        "variant": 7,
+        "ammo": 59,
+        "gameplayTime": 33.30429999999981,
+        "bufferFrames": 137455,
+        "start": 11.896,
+        "contextTime": 11.896,
+        "perf": 33304.5,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          12.209333333333333
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              12.197333333333333
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              12.197333333333333
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              12.209333333333333
+            ]
+          }
+        ],
+        "disconnectedAt": 12.226666666666667
+      },
+      {
+        "shot": 42,
+        "variant": 0,
+        "ammo": 58,
+        "gameplayTime": 33.65990000000037,
+        "bufferFrames": 137455,
+        "start": 12.197333333333333,
+        "contextTime": 12.197333333333333,
+        "perf": 33659.90000000037,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          12.518666666666666
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              12.506666666666666
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              12.506666666666666
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              12.518666666666666
+            ]
+          }
+        ],
+        "disconnectedAt": 12.538666666666666
+      },
+      {
+        "shot": 43,
+        "variant": 1,
+        "ammo": 57,
+        "gameplayTime": 33.9995,
+        "bufferFrames": 137455,
+        "start": 12.506666666666666,
+        "contextTime": 12.506666666666666,
+        "perf": 33999.700000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          12.790666666666667
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              12.778666666666666
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              12.778666666666666
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              12.790666666666667
+            ]
+          }
+        ],
+        "disconnectedAt": 12.797333333333333
+      },
+      {
+        "shot": 44,
+        "variant": 2,
+        "ammo": 56,
+        "gameplayTime": 34.351,
+        "bufferFrames": 137455,
+        "start": 12.778666666666666,
+        "contextTime": 12.778666666666666,
+        "perf": 34351.10000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          13.001333333333333
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              12.989333333333333
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              12.989333333333333
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              13.001333333333333
+            ]
+          }
+        ],
+        "disconnectedAt": 13.018666666666666
+      },
+      {
+        "shot": 45,
+        "variant": 3,
+        "ammo": 55,
+        "gameplayTime": 34.60990000000037,
+        "bufferFrames": 137455,
+        "start": 12.989333333333333,
+        "contextTime": 12.989333333333333,
+        "perf": 34610.10000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          13.310666666666668
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              13.298666666666668
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              13.298666666666668
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              13.310666666666668
+            ]
+          }
+        ],
+        "disconnectedAt": 13.32
+      },
+      {
+        "shot": 46,
+        "variant": 4,
+        "ammo": 54,
+        "gameplayTime": 34.98679999999981,
+        "bufferFrames": 137455,
+        "start": 13.298666666666668,
+        "contextTime": 13.298666666666668,
+        "perf": 34986.90000000037,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          13.582666666666666
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              13.570666666666666
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              13.570666666666666
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              13.582666666666666
+            ]
+          }
+        ],
+        "disconnectedAt": 13.589333333333334
+      },
+      {
+        "shot": 47,
+        "variant": 5,
+        "ammo": 53,
+        "gameplayTime": 35.30129999999981,
+        "bufferFrames": 137455,
+        "start": 13.570666666666666,
+        "contextTime": 13.570666666666666,
+        "perf": 35301.5,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          13.822666666666667
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              13.810666666666666
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              13.810666666666666
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              13.822666666666667
+            ]
+          }
+        ],
+        "disconnectedAt": 13.821333333333333
+      },
+      {
+        "shot": 48,
+        "variant": 6,
+        "ammo": 52,
+        "gameplayTime": 35.5935,
+        "bufferFrames": 137455,
+        "start": 13.810666666666666,
+        "contextTime": 13.810666666666666,
+        "perf": 35593.60000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          14.062666666666667
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              14.050666666666666
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              14.050666666666666
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              14.062666666666667
+            ]
+          }
+        ],
+        "disconnectedAt": 14.069333333333333
+      },
+      {
+        "shot": 49,
+        "variant": 7,
+        "ammo": 51,
+        "gameplayTime": 35.89879999999982,
+        "bufferFrames": 137455,
+        "start": 14.050666666666666,
+        "contextTime": 14.050666666666666,
+        "perf": 35899,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          14.513333333333334
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              14.501333333333333
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              14.501333333333333
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              14.513333333333334
+            ]
+          }
+        ],
+        "disconnectedAt": 14.552
+      },
+      {
+        "shot": 50,
+        "variant": 0,
+        "ammo": 50,
+        "gameplayTime": 36.412,
+        "bufferFrames": 137455,
+        "start": 14.501333333333333,
+        "contextTime": 14.501333333333333,
+        "perf": 36412.200000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          14.844000000000001
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              14.832
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              14.832
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              14.844000000000001
+            ]
+          }
+        ],
+        "disconnectedAt": 15.384
+      },
+      {
+        "shot": 51,
+        "variant": 1,
+        "ammo": 49,
+        "gameplayTime": 36.804799999999815,
+        "bufferFrames": 137455,
+        "start": 14.832,
+        "contextTime": 14.832,
+        "perf": 36805,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          15.396
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              15.384
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              15.384
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              15.396
+            ]
+          }
+        ],
+        "disconnectedAt": 15.413333333333334
+      },
+      {
+        "shot": 52,
+        "variant": 2,
+        "ammo": 48,
+        "gameplayTime": 37.51560000000056,
+        "bufferFrames": 137455,
+        "start": 15.384,
+        "contextTime": 15.384,
+        "perf": 37515.700000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          15.545333333333334
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              15.533333333333333
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              15.533333333333333
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              15.545333333333334
+            ]
+          }
+        ],
+        "disconnectedAt": 15.554666666666666
+      },
+      {
+        "shot": 53,
+        "variant": 3,
+        "ammo": 47,
+        "gameplayTime": 37.706,
+        "bufferFrames": 137455,
+        "start": 15.533333333333333,
+        "contextTime": 15.533333333333333,
+        "perf": 37706.10000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          15.985333333333333
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              15.973333333333333
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              15.973333333333333
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              15.985333333333333
+            ]
+          }
+        ],
+        "disconnectedAt": 16.525333333333332
+      },
+      {
+        "shot": 54,
+        "variant": 4,
+        "ammo": 46,
+        "gameplayTime": 38.27379999999982,
+        "bufferFrames": 137455,
+        "start": 15.973333333333333,
+        "contextTime": 15.973333333333333,
+        "perf": 38274,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          16.548000000000002
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              16.536
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              16.536
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              16.548000000000002
+            ]
+          }
+        ],
+        "disconnectedAt": 16.576
+      },
+      {
+        "shot": 55,
+        "variant": 5,
+        "ammo": 45,
+        "gameplayTime": 38.91279999999981,
+        "bufferFrames": 137455,
+        "start": 16.536,
+        "contextTime": 16.536,
+        "perf": 38912.90000000037,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          16.729333333333333
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              16.717333333333332
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              16.717333333333332
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              16.729333333333333
+            ]
+          }
+        ],
+        "disconnectedAt": 17.528
+      },
+      {
+        "shot": 56,
+        "variant": 6,
+        "ammo": 44,
+        "gameplayTime": 39.107700000000186,
+        "bufferFrames": 137455,
+        "start": 16.717333333333332,
+        "contextTime": 16.717333333333332,
+        "perf": 39107.90000000037,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          17.550666666666668
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              17.538666666666668
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              17.538666666666668
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              17.550666666666668
+            ]
+          }
+        ],
+        "disconnectedAt": 17.578666666666667
+      },
+      {
+        "shot": 57,
+        "variant": 7,
+        "ammo": 43,
+        "gameplayTime": 40.07790000000037,
+        "bufferFrames": 137455,
+        "start": 17.538666666666668,
+        "contextTime": 17.538666666666668,
+        "perf": 40078,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          17.729333333333333
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              17.717333333333332
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              17.717333333333332
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              17.729333333333333
+            ]
+          }
+        ],
+        "disconnectedAt": 17.768
+      },
+      {
+        "shot": 58,
+        "variant": 0,
+        "ammo": 42,
+        "gameplayTime": 40.29560000000056,
+        "bufferFrames": 137455,
+        "start": 17.717333333333332,
+        "contextTime": 17.717333333333332,
+        "perf": 40295.799999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          18.001333333333335
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              17.989333333333335
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              17.989333333333335
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              18.001333333333335
+            ]
+          }
+        ],
+        "disconnectedAt": 18.578666666666667
+      },
+      {
+        "shot": 59,
+        "variant": 1,
+        "ammo": 41,
+        "gameplayTime": 40.60390000000037,
+        "bufferFrames": 137455,
+        "start": 17.989333333333335,
+        "contextTime": 17.989333333333335,
+        "perf": 40604,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          18.601333333333333
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              18.589333333333332
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              18.589333333333332
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              18.601333333333333
+            ]
+          }
+        ],
+        "disconnectedAt": 18.621333333333332
+      },
+      {
+        "shot": 60,
+        "variant": 2,
+        "ammo": 40,
+        "gameplayTime": 41.360400000000375,
+        "bufferFrames": 137455,
+        "start": 18.589333333333332,
+        "contextTime": 18.589333333333332,
+        "perf": 41360.5,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          18.772000000000002
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              18.76
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              18.76
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              18.772000000000002
+            ]
+          }
+        ],
+        "disconnectedAt": 18.781333333333333
+      },
+      {
+        "shot": 61,
+        "variant": 3,
+        "ammo": 39,
+        "gameplayTime": 41.56240000000037,
+        "bufferFrames": 137455,
+        "start": 18.76,
+        "contextTime": 18.76,
+        "perf": 41562.60000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          19.084
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              19.072
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              19.072
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              19.084
+            ]
+          }
+        ],
+        "disconnectedAt": 19.101333333333333
+      },
+      {
+        "shot": 62,
+        "variant": 4,
+        "ammo": 38,
+        "gameplayTime": 41.90679999999981,
+        "bufferFrames": 137455,
+        "start": 19.072,
+        "contextTime": 19.072,
+        "perf": 41906.90000000037,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          19.302666666666667
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              19.290666666666667
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              19.290666666666667
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              19.302666666666667
+            ]
+          }
+        ],
+        "disconnectedAt": 19.341333333333335
+      },
+      {
+        "shot": 63,
+        "variant": 5,
+        "ammo": 37,
+        "gameplayTime": 42.197600000000556,
+        "bufferFrames": 137455,
+        "start": 19.290666666666667,
+        "contextTime": 19.290666666666667,
+        "perf": 42197.700000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          19.574666666666666
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              19.562666666666665
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              19.562666666666665
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              19.574666666666666
+            ]
+          }
+        ],
+        "disconnectedAt": 19.581333333333333
+      },
+      {
+        "shot": 64,
+        "variant": 6,
+        "ammo": 36,
+        "gameplayTime": 42.552700000000186,
+        "bufferFrames": 137455,
+        "start": 19.562666666666665,
+        "contextTime": 19.562666666666665,
+        "perf": 42552.90000000037,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          19.814666666666668
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              19.802666666666667
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              19.802666666666667
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              19.814666666666668
+            ]
+          }
+        ],
+        "disconnectedAt": 19.82133333333333
+      },
+      {
+        "shot": 65,
+        "variant": 7,
+        "ammo": 35,
+        "gameplayTime": 42.862200000000186,
+        "bufferFrames": 137455,
+        "start": 19.802666666666667,
+        "contextTime": 19.802666666666667,
+        "perf": 42862.299999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          20.076
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              20.064
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              20.064
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              20.076
+            ]
+          }
+        ],
+        "disconnectedAt": 20.082666666666668
+      },
+      {
+        "shot": 66,
+        "variant": 0,
+        "ammo": 34,
+        "gameplayTime": 43.17410000000056,
+        "bufferFrames": 137455,
+        "start": 20.064,
+        "contextTime": 20.064,
+        "perf": 43174.200000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          20.326666666666668
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              20.314666666666668
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              20.314666666666668
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              20.326666666666668
+            ]
+          }
+        ],
+        "disconnectedAt": 20.333333333333332
+      },
+      {
+        "shot": 67,
+        "variant": 1,
+        "ammo": 33,
+        "gameplayTime": 43.461700000000185,
+        "bufferFrames": 137455,
+        "start": 20.314666666666668,
+        "contextTime": 20.314666666666668,
+        "perf": 43461.799999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          20.636
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              20.624
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              20.624
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              20.636
+            ]
+          }
+        ],
+        "disconnectedAt": 20.642666666666667
+      },
+      {
+        "shot": 68,
+        "variant": 2,
+        "ammo": 32,
+        "gameplayTime": 43.7905,
+        "bufferFrames": 137455,
+        "start": 20.624,
+        "contextTime": 20.624,
+        "perf": 43790.799999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          20.897333333333332
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              20.88533333333333
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              20.88533333333333
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              20.897333333333332
+            ]
+          }
+        ],
+        "disconnectedAt": 20.936
+      },
+      {
+        "shot": 69,
+        "variant": 3,
+        "ammo": 31,
+        "gameplayTime": 44.10360000000056,
+        "bufferFrames": 137455,
+        "start": 20.88533333333333,
+        "contextTime": 20.88533333333333,
+        "perf": 44103.799999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          21.228
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              21.216
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              21.216
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              21.228
+            ]
+          }
+        ],
+        "disconnectedAt": 21.234666666666666
+      },
+      {
+        "shot": 70,
+        "variant": 4,
+        "ammo": 30,
+        "gameplayTime": 44.45860000000056,
+        "bufferFrames": 137455,
+        "start": 21.216,
+        "contextTime": 21.216,
+        "perf": 44458.799999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          21.486666666666668
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              21.474666666666668
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              21.474666666666668
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              21.486666666666668
+            ]
+          }
+        ],
+        "disconnectedAt": 21.506666666666668
+      },
+      {
+        "shot": 71,
+        "variant": 5,
+        "ammo": 29,
+        "gameplayTime": 44.77579999999981,
+        "bufferFrames": 137455,
+        "start": 21.474666666666668,
+        "contextTime": 21.474666666666668,
+        "perf": 44776,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          21.809333333333335
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              21.797333333333334
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              21.797333333333334
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              21.809333333333335
+            ]
+          }
+        ],
+        "disconnectedAt": 22.378666666666668
+      },
+      {
+        "shot": 72,
+        "variant": 6,
+        "ammo": 28,
+        "gameplayTime": 45.1555,
+        "bufferFrames": 137455,
+        "start": 21.797333333333334,
+        "contextTime": 21.797333333333334,
+        "perf": 45155.700000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          22.390666666666668
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              22.378666666666668
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              22.378666666666668
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              22.390666666666668
+            ]
+          }
+        ],
+        "disconnectedAt": 22.408
+      },
+      {
+        "shot": 73,
+        "variant": 7,
+        "ammo": 27,
+        "gameplayTime": 45.863400000000375,
+        "bufferFrames": 137455,
+        "start": 22.378666666666668,
+        "contextTime": 22.381333333333334,
+        "perf": 45863.60000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          22.569333333333333
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              22.557333333333332
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              22.557333333333332
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              22.569333333333333
+            ]
+          }
+        ],
+        "disconnectedAt": 23.189333333333334
+      },
+      {
+        "shot": 74,
+        "variant": 0,
+        "ammo": 26,
+        "gameplayTime": 46.05470000000019,
+        "bufferFrames": 137455,
+        "start": 22.557333333333332,
+        "contextTime": 22.557333333333332,
+        "perf": 46055.10000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          23.201333333333334
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              23.189333333333334
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              23.189333333333334
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              23.201333333333334
+            ]
+          }
+        ],
+        "disconnectedAt": 23.218666666666667
+      },
+      {
+        "shot": 75,
+        "variant": 1,
+        "ammo": 25,
+        "gameplayTime": 46.814200000000184,
+        "bufferFrames": 137455,
+        "start": 23.189333333333334,
+        "contextTime": 23.189333333333334,
+        "perf": 46814.299999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          23.372
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              23.36
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              23.36
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              23.372
+            ]
+          }
+        ],
+        "disconnectedAt": 23.381333333333334
+      },
+      {
+        "shot": 76,
+        "variant": 2,
+        "ammo": 24,
+        "gameplayTime": 46.99779999999981,
+        "bufferFrames": 137455,
+        "start": 23.36,
+        "contextTime": 23.36,
+        "perf": 46997.90000000037,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          23.622666666666667
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              23.610666666666667
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              23.610666666666667
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              23.622666666666667
+            ]
+          }
+        ],
+        "disconnectedAt": 23.64
+      },
+      {
+        "shot": 77,
+        "variant": 3,
+        "ammo": 23,
+        "gameplayTime": 47.354,
+        "bufferFrames": 137455,
+        "start": 23.610666666666667,
+        "contextTime": 23.610666666666667,
+        "perf": 47354.10000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          23.844
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              23.832
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              23.832
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              23.844
+            ]
+          }
+        ],
+        "disconnectedAt": 23.850666666666665
+      },
+      {
+        "shot": 78,
+        "variant": 4,
+        "ammo": 22,
+        "gameplayTime": 47.612200000000186,
+        "bufferFrames": 137455,
+        "start": 23.832,
+        "contextTime": 23.832,
+        "perf": 47612.40000000037,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          24.073333333333334
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              24.061333333333334
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              24.061333333333334
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              24.073333333333334
+            ]
+          }
+        ],
+        "disconnectedAt": 24.082666666666668
+      },
+      {
+        "shot": 79,
+        "variant": 5,
+        "ammo": 21,
+        "gameplayTime": 47.95560000000056,
+        "bufferFrames": 137455,
+        "start": 24.061333333333334,
+        "contextTime": 24.061333333333334,
+        "perf": 47955.700000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          24.353333333333335
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              24.341333333333335
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              24.341333333333335
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              24.353333333333335
+            ]
+          }
+        ],
+        "disconnectedAt": 24.362666666666666
+      },
+      {
+        "shot": 80,
+        "variant": 6,
+        "ammo": 20,
+        "gameplayTime": 48.24929999999981,
+        "bufferFrames": 137455,
+        "start": 24.341333333333335,
+        "contextTime": 24.341333333333335,
+        "perf": 48249.700000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          24.644000000000002
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              24.632
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              24.632
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              24.644000000000002
+            ]
+          }
+        ],
+        "disconnectedAt": 24.653333333333332
+      },
+      {
+        "shot": 81,
+        "variant": 7,
+        "ammo": 19,
+        "gameplayTime": 48.571400000000374,
+        "bufferFrames": 137455,
+        "start": 24.632,
+        "contextTime": 24.632,
+        "perf": 48571.60000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          24.876
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              24.864
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              24.864
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              24.876
+            ]
+          }
+        ],
+        "disconnectedAt": 24.882666666666665
+      },
+      {
+        "shot": 82,
+        "variant": 0,
+        "ammo": 18,
+        "gameplayTime": 48.8795,
+        "bufferFrames": 137455,
+        "start": 24.864,
+        "contextTime": 24.864,
+        "perf": 48879.60000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          25.12666666666667
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              25.11466666666667
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              25.11466666666667
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              25.12666666666667
+            ]
+          }
+        ],
+        "disconnectedAt": 25.133333333333333
+      },
+      {
+        "shot": 83,
+        "variant": 1,
+        "ammo": 17,
+        "gameplayTime": 49.17060000000056,
+        "bufferFrames": 137455,
+        "start": 25.11466666666667,
+        "contextTime": 25.11466666666667,
+        "perf": 49170.799999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          25.366666666666667
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              25.354666666666667
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              25.354666666666667
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              25.366666666666667
+            ]
+          }
+        ],
+        "disconnectedAt": 25.370666666666665
+      },
+      {
+        "shot": 84,
+        "variant": 2,
+        "ammo": 16,
+        "gameplayTime": 49.47270000000019,
+        "bufferFrames": 137455,
+        "start": 25.354666666666667,
+        "contextTime": 25.354666666666667,
+        "perf": 49472.799999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          25.625333333333334
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              25.613333333333333
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              25.613333333333333
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              25.625333333333334
+            ]
+          }
+        ],
+        "disconnectedAt": 25.634666666666668
+      },
+      {
+        "shot": 85,
+        "variant": 3,
+        "ammo": 15,
+        "gameplayTime": 49.799400000000375,
+        "bufferFrames": 137455,
+        "start": 25.613333333333333,
+        "contextTime": 25.613333333333333,
+        "perf": 49799.60000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          25.96666666666667
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              25.954666666666668
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              25.954666666666668
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              25.96666666666667
+            ]
+          }
+        ],
+        "disconnectedAt": 25.976
+      },
+      {
+        "shot": 86,
+        "variant": 4,
+        "ammo": 14,
+        "gameplayTime": 50.25420000000019,
+        "bufferFrames": 137455,
+        "start": 25.954666666666668,
+        "contextTime": 25.954666666666668,
+        "perf": 50254.299999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          26.148
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              26.136
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              26.136
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              26.148
+            ]
+          }
+        ],
+        "disconnectedAt": 26.152
+      },
+      {
+        "shot": 87,
+        "variant": 5,
+        "ammo": 13,
+        "gameplayTime": 50.46540000000037,
+        "bufferFrames": 137455,
+        "start": 26.136,
+        "contextTime": 26.136,
+        "perf": 50465.5,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          26.369333333333334
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              26.357333333333333
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              26.357333333333333
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              26.369333333333334
+            ]
+          }
+        ],
+        "disconnectedAt": 26.376
+      },
+      {
+        "shot": 88,
+        "variant": 6,
+        "ammo": 12,
+        "gameplayTime": 50.7615,
+        "bufferFrames": 137455,
+        "start": 26.357333333333333,
+        "contextTime": 26.357333333333333,
+        "perf": 50761.60000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          26.577333333333335
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              26.565333333333335
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              26.565333333333335
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              26.577333333333335
+            ]
+          }
+        ],
+        "disconnectedAt": 26.586666666666666
+      },
+      {
+        "shot": 89,
+        "variant": 7,
+        "ammo": 11,
+        "gameplayTime": 51.01170000000019,
+        "bufferFrames": 137455,
+        "start": 26.565333333333335,
+        "contextTime": 26.565333333333335,
+        "perf": 51011.700000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          26.849333333333334
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              26.837333333333333
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              26.837333333333333
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              26.849333333333334
+            ]
+          }
+        ],
+        "disconnectedAt": 26.856
+      },
+      {
+        "shot": 90,
+        "variant": 0,
+        "ammo": 10,
+        "gameplayTime": 51.373,
+        "bufferFrames": 137455,
+        "start": 26.837333333333333,
+        "contextTime": 26.837333333333333,
+        "perf": 51373.10000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          27.06
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              27.048
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              27.048
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              27.06
+            ]
+          }
+        ],
+        "disconnectedAt": 27.709333333333333
+      },
+      {
+        "shot": 91,
+        "variant": 1,
+        "ammo": 9,
+        "gameplayTime": 51.66660000000056,
+        "bufferFrames": 137455,
+        "start": 27.048,
+        "contextTime": 27.048,
+        "perf": 51666.799999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          27.732
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              27.72
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              27.72
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              27.732
+            ]
+          }
+        ],
+        "disconnectedAt": 27.749333333333333
+      },
+      {
+        "shot": 92,
+        "variant": 2,
+        "ammo": 8,
+        "gameplayTime": 52.49579999999981,
+        "bufferFrames": 137455,
+        "start": 27.72,
+        "contextTime": 27.72,
+        "perf": 52496,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          27.932000000000002
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              27.92
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              27.92
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              27.932000000000002
+            ]
+          }
+        ],
+        "disconnectedAt": 28.301333333333332
+      },
+      {
+        "shot": 93,
+        "variant": 3,
+        "ammo": 7,
+        "gameplayTime": 52.770900000000374,
+        "bufferFrames": 137455,
+        "start": 27.92,
+        "contextTime": 27.92,
+        "perf": 52771,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          28.313333333333333
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              28.301333333333332
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              28.301333333333332
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              28.313333333333333
+            ]
+          }
+        ],
+        "disconnectedAt": 28.36
+      },
+      {
+        "shot": 94,
+        "variant": 4,
+        "ammo": 6,
+        "gameplayTime": 53.20040000000037,
+        "bufferFrames": 137455,
+        "start": 28.301333333333332,
+        "contextTime": 28.301333333333332,
+        "perf": 53200.5,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          28.652
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              28.64
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              28.64
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              28.652
+            ]
+          }
+        ],
+        "disconnectedAt": 28.672
+      },
+      {
+        "shot": 95,
+        "variant": 5,
+        "ammo": 5,
+        "gameplayTime": 53.57540000000037,
+        "bufferFrames": 137455,
+        "start": 28.64,
+        "contextTime": 28.64,
+        "perf": 53575.5,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          28.953333333333333
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              28.941333333333333
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              28.941333333333333
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              28.953333333333333
+            ]
+          }
+        ],
+        "disconnectedAt": 28.970666666666666
+      },
+      {
+        "shot": 96,
+        "variant": 6,
+        "ammo": 4,
+        "gameplayTime": 53.90329999999982,
+        "bufferFrames": 137455,
+        "start": 28.941333333333333,
+        "contextTime": 28.941333333333333,
+        "perf": 53903.40000000037,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          29.233333333333334
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              29.221333333333334
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              29.221333333333334
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              29.233333333333334
+            ]
+          }
+        ],
+        "disconnectedAt": 29.253333333333334
+      },
+      {
+        "shot": 97,
+        "variant": 7,
+        "ammo": 3,
+        "gameplayTime": 54.2655,
+        "bufferFrames": 137455,
+        "start": 29.221333333333334,
+        "contextTime": 29.221333333333334,
+        "perf": 54265.700000000186,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          29.505333333333333
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              29.493333333333332
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              29.493333333333332
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              29.505333333333333
+            ]
+          }
+        ],
+        "disconnectedAt": 29.533333333333335
+      },
+      {
+        "shot": 98,
+        "variant": 0,
+        "ammo": 2,
+        "gameplayTime": 54.60090000000037,
+        "bufferFrames": 137455,
+        "start": 29.493333333333332,
+        "contextTime": 29.493333333333332,
+        "perf": 54601.10000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          29.846666666666668
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              29.834666666666667
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              29.834666666666667
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              29.846666666666668
+            ]
+          }
+        ],
+        "disconnectedAt": 29.85333333333333
+      },
+      {
+        "shot": 99,
+        "variant": 1,
+        "ammo": 1,
+        "gameplayTime": 55.01410000000056,
+        "bufferFrames": 137455,
+        "start": 29.834666666666667,
+        "contextTime": 29.834666666666667,
+        "perf": 55014.299999999814,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [
+          30.166666666666668
+        ],
+        "gains": [
+          {
+            "method": "cancelScheduledValues",
+            "args": [
+              30.154666666666667
+            ]
+          },
+          {
+            "method": "setValueAtTime",
+            "args": [
+              1,
+              30.154666666666667
+            ]
+          },
+          {
+            "method": "linearRampToValueAtTime",
+            "args": [
+              0,
+              30.166666666666668
+            ]
+          }
+        ],
+        "disconnectedAt": 30.173333333333332
+      },
+      {
+        "shot": 100,
+        "variant": 2,
+        "ammo": 0,
+        "gameplayTime": 55.41890000000037,
+        "bufferFrames": 137455,
+        "start": 30.154666666666667,
+        "contextTime": 30.154666666666667,
+        "perf": 55419.10000000056,
+        "duration": 2.8636458333333334,
+        "loop": false,
+        "rate": 1,
+        "stops": [],
+        "gains": []
+      }
+    ],
+    "states": [],
+    "decodes": 2,
+    "contexts": 1,
+    "disconnected": 99
+  },
+  "state": "playing",
+  "reloading": false,
+  "errors": [],
+  "warnings": [
+    "THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.",
+    "THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead."
+  ]
+}

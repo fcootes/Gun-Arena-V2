@@ -2,7 +2,7 @@
   "sample_rate": 48000,
   "channels": 2,
   "fire_interval_seconds": 0.115,
-  "quality": "MP3-derived PCM WAV. No restoration of MP3 losses; mono M60 duplicated to stereo. No compression, limiter or pitch processing.",
+  "quality": "Firing is MP3-derived; no restoration of MP3 losses, mono M60 duplicated to stereo. Hatch is original PCM WAV-derived. No compression, limiter or pitch processing.",
   "sources": [
     {
       "file": "538302__franklinrook1984__authentic-m60-firing.mp3",
@@ -17,35 +17,72 @@
       "decoded_peak": 0.874413788318634
     },
     {
-      "file": "718441__rudmer_rotteveel__metal_hatch_small_close_02-hq-preview.mp3",
+      "file": "718441__rudmer_rotteveel__metal_hatch_small_close_02.wav",
       "title": "Metal_Hatch_Small_Close_02",
       "creator": "Rudmer_Rotteveel",
       "url": "https://freesound.org/people/Rudmer_Rotteveel/sounds/718441/",
       "licence": "CC0 1.0",
       "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "sha256": "5af35b3f7e98dd52ccee0315e3f5172f386a8f8e4190cde4807480bf41e53509",
-      "download_url": "https://cdn.freesound.org/previews/718/718441_4921277-hq.mp3",
-      "original_format": "Original listed as 44.1 kHz stereo PCM16 WAV; login required. Derived from official HQ MP3 preview of the same approved recording, 44.1 kHz stereo VBR.",
+      "sha256": "b868514403bdae7817f60eda9b807d2403d12b4f602e88dd6bc272a7f27b986e",
+      "supplied_as": "Exact original WAV attachment",
+      "original_format": "44.1 kHz stereo PCM16 WAV",
       "decoded_seconds": 4.284229166666667
     }
   ],
+  "runtime_variants": {
+    "count": 8,
+    "attack_join_seconds": 0.103,
+    "tail_blend_seconds": 0.012,
+    "tail_source": "lmg_fire_lead.wav",
+    "playback": "One native-rate cached report per real shot; no free-running future reports"
+  },
   "files": [
     {
       "filename": "lmg_fire_lead.wav",
-      "frames": 137455,
-      "duration_seconds": 2.8636458333333334,
+      "frames": 57600,
+      "duration_seconds": 1.2,
       "sample_rate": 48000,
       "channels": 2,
       "format": "PCM16 WAV",
-      "peak_dbfs": -7.691913112572436,
-      "sha256": "8f74a5e6c3a33534d001768a1ad2b23cb892966accd6e6de6193a2a2bf4d9b59",
+      "peak_dbfs": -7.71636386588051,
+      "sha256": "a71c671b1cdf73b2fdb868789bc094b570d666445a3e76f27bb6457761b5bae0",
       "source": "538302__franklinrook1984__authentic-m60-firing.mp3",
       "start_seconds": 6.773875,
-      "end_seconds": 9.637520833333333,
+      "end_seconds": 7.9738750000000005,
       "gain": 0.58,
       "attack_fade_seconds": 0.00025,
-      "tail_fade_seconds": 0.15,
-      "reason": "Final direct report near 6.78 s plus entire recorded decay; residual preceding room sound cannot be perfectly separated. No later attack is added."
+      "tail_fade_seconds": 0.04,
+      "gain_envelope": {
+        "interpolation": "smoothstep in dB",
+        "knots_seconds_db": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.055,
+            0.0
+          ],
+          [
+            0.2,
+            -12.0
+          ],
+          [
+            0.65,
+            -16.0
+          ],
+          [
+            1.0,
+            -24.0
+          ],
+          [
+            1.2,
+            -60.0
+          ]
+        ],
+        "unchanged_direct_report_seconds": 0.055
+      },
+      "reason": "Final direct report near 6.78 s; initial 55 ms unchanged, reflected energy attenuated smoothly by 12\u201324 dB before a quiet natural ending. No runtime release gate or added report."
     },
     {
       "filename": "lmg_fire_sustain.wav",
@@ -108,20 +145,20 @@
     },
     {
       "filename": "lmg_feed_cover_close.wav",
-      "frames": 15336,
-      "duration_seconds": 0.3195,
+      "frames": 15288,
+      "duration_seconds": 0.3185,
       "sample_rate": 48000,
       "channels": 2,
       "format": "PCM16 WAV",
-      "peak_dbfs": -3.937720159307867,
-      "sha256": "289f1a0dfaaa7c2211fcb5eac447ecd7c291bc0ee3e1456da890e97da6ef3ba2",
-      "source": "718441__rudmer_rotteveel__metal_hatch_small_close_02-hq-preview.mp3",
-      "start_seconds": 1.7805,
+      "peak_dbfs": -3.657681235231529,
+      "sha256": "1f7fa50e73b37a7a15319cfa10d221a3c5738c7bc66454a6c71400b8f3b1b616",
+      "source": "718441__rudmer_rotteveel__metal_hatch_small_close_02.wav",
+      "start_seconds": 1.7815,
       "end_seconds": 2.1,
       "gain": 2.4,
       "attack_fade_seconds": 0.00025,
       "tail_fade_seconds": 0.03,
-      "reason": "Main metal closure impact near 1.784 s and brief latch/metal decay; preceding movement/light contact excluded."
+      "reason": "Second, louder metal closure from original PCM WAV, with attack near 1.782 s and short latch decay. Earlier .55 s clang and preceding movement excluded; existing gain unchanged."
     },
     {
       "filename": "lmg_box_release.wav",

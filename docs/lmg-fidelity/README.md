@@ -1,3 +1,5 @@
+> Current audio hotfix: [quieter echo, 100-round diagnosis and original WAV hatch](../lmg-audio-hotfix/README.md). Earlier audio details below are historical; current hatch audio uses the supplied original PCM WAV. Accepted animation is unchanged.
+
 > Latest pass: [LMG final polish](../lmg-final-polish/README.md) replaces the firing audio, adds the approved hatch recording and corrects reload arm posing. This document records the earlier PR checkpoint.
 
 # Heavy LMG fidelity — HMG-100

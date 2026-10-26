@@ -1,0 +1,30 @@
+{
+  "baseline": "a25793d311b8c11aa8ee77e7852183854bd432bf",
+  "order": "Old 8 s, silence 1 s, new 8 s",
+  "events": "Tap at .1 s and three-shot burst at 3.4 s in each section",
+  "loudness": "Initial 55 ms PCM samples are identical. No normalisation of the echo or overall clip.",
+  "echo_windows": [
+    {
+      "start": 0.2,
+      "end": 0.65,
+      "before_rms": 0.13417370533649717,
+      "after_rms": 0.026740827368505228,
+      "reduction_db": -14.009851461574481
+    },
+    {
+      "start": 0.35,
+      "end": 0.75,
+      "before_rms": 0.13808185026035588,
+      "after_rms": 0.024407726060613328,
+      "reduction_db": -15.052185549421214
+    },
+    {
+      "start": 0.65,
+      "end": 1.0,
+      "before_rms": 0.09957538871702172,
+      "after_rms": 0.012508441806010042,
+      "reduction_db": -18.01897596129412
+    }
+  ],
+  "continuous": "Separate browser evidence renders 100 native Web Audio reports and records actual game input timing"
+}

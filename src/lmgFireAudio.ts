@@ -61,9 +61,9 @@ export class LmgFireAudio {
     void this.prepare();
     const context = this.context;
     if (!context) return;
-    void context.resume().catch(() => {});
     if (!this.lead) {
       this.pending = { shot, volume, at: performance.now(), generation: this.generation };
+      if (context.state === 'suspended') void context.resume().catch(() => {});
       return;
     }
     const now = context.currentTime;
@@ -91,6 +91,9 @@ export class LmgFireAudio {
       if (this.retiring === voice) this.retiring = null;
     };
     source.start(now);
+    // Queue the complete voice before restarting a suspended audio clock.
+    // Running contexts need no asynchronous state command on each round.
+    if (context.state === 'suspended') void context.resume().catch(() => {});
   }
 
   pause(): void {
