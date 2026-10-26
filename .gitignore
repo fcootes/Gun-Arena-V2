@@ -8,3 +8,5 @@ coverage/
 !.env.example
 
 /performance-results/
+
+/work/

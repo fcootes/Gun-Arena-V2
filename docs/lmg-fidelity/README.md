@@ -1,3 +1,5 @@
+> Latest pass: [LMG final polish](../lmg-final-polish/README.md) replaces the firing audio, adds the approved hatch recording and corrects reload arm posing. This document records the earlier PR checkpoint.
+
 # Heavy LMG fidelity — HMG-100
 
 Starting main: `a00bdc6cb91d407285e0a05eae102cf7699a9981` (merged SMG PR #22). Branch: `feat/lmg-weapon-fidelity`, directly from fetched `origin/main`. One draft PR against main; no merge or production promotion. PR #21 is not a prerequisite.

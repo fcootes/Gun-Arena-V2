@@ -38,7 +38,7 @@
     "test:pistol:browser": "node scripts/test-pistol-browser.mjs",
     "test:smg": "node --import tsx tests/smg.test.ts",
     "test:smg:browser": "node scripts/test-smg-browser.mjs",
-    "test:lmg": "node --import tsx tests/lmg.test.ts",
+    "test:lmg": "node --import tsx tests/lmg.test.ts && node --import tsx tests/lmgFireAudio.test.ts",
     "test:lmg:browser": "node scripts/test-lmg-browser.mjs"
   },
   "dependencies": {

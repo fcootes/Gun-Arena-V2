@@ -414,18 +414,25 @@ export function createFirstPersonHands() {
         elbow.z = Math.min(-.14, Math.max(elbow.z, attachmentPosition.z + .22));
         if (pistolSprintBlend > 0) elbow.lerp(sprint![side].elbow, pistolSprintBlend);
         if(id==='lmg'&&side==='left'&&stage) {
-          // LMG-only two-bone reach: the raised cover requires a real upper
-          // sleeve, rather than exposing a chopped elbow or stretching forearms.
-          // A small camera-space shoulder lean absorbs the final reach limit.
+          // Camera-local shoulder and pole: root cant never rotates the torso
+          // anchor. Keep the elbow down/forward, outside the receiver silhouette.
+          // A bounded torso lean absorbs reach extremes; solve again from the
+          // adjusted anchor so both actual bone lengths share the same distance.
           const upper=.32,fore=config.sleeveLength;
-          lmgShoulder.set(-.19,-.43,-.16);lmgAxis.subVectors(attachmentPosition,lmgShoulder);
-          const distance=lmgAxis.length();lmgAxis.normalize();
-          if(distance>upper+fore-.006)lmgShoulder.addScaledVector(lmgAxis,distance-(upper+fore-.006));
-          const minimum=Math.abs(upper-fore)+.006;
-          if(distance<minimum)lmgShoulder.addScaledVector(lmgAxis,distance-minimum);
-          const reach=THREE.MathUtils.clamp(distance,minimum,upper+fore-.006);
-          const along=(upper*upper-fore*fore+reach*reach)/(2*reach),height=Math.sqrt(Math.max(0,upper*upper-along*along));
-          lmgBend.set(-1,-.35,.15).addScaledVector(lmgAxis,-lmgAxis.dot(lmgBend)).normalize();
+          lmgShoulder.set(-.26,-.43,-.22);
+          lmgAxis.subVectors(attachmentPosition,lmgShoulder);
+          let distance=lmgAxis.length();
+          lmgAxis.divideScalar(Math.max(distance,1e-8));
+          const maximum=upper+fore-.012,minimum=Math.abs(upper-fore)+.025;
+          const lean=THREE.MathUtils.clamp(distance-maximum,0,.10);
+          lmgShoulder.addScaledVector(lmgAxis,lean);
+          lmgAxis.subVectors(attachmentPosition,lmgShoulder);
+          distance=lmgAxis.length();lmgAxis.divideScalar(Math.max(distance,1e-8));
+          const reach=THREE.MathUtils.clamp(distance,minimum,maximum);
+          const along=(upper*upper-fore*fore+reach*reach)/(2*reach);
+          const height=Math.sqrt(Math.max(0,upper*upper-along*along));
+          lmgBend.set(-.70,-1,-.65);
+          lmgBend.addScaledVector(lmgAxis,-lmgAxis.dot(lmgBend)).normalize();
           lmgElbow.copy(lmgShoulder).addScaledVector(lmgAxis,along).addScaledVector(lmgBend,height);
           elbow.copy(lmgElbow);
           const upperArm=assembly.parts.supportUpperArm;

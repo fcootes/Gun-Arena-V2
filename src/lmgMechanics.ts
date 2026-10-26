@@ -9,7 +9,7 @@ export const LMG = Object.freeze({
   coverAngle: -1.15, contact: .43, lock: .72, chargeTravel: .050,
   coverPoint: [0, .031, .270] as const,
   palmPoint: [0, .021, -.023] as const,
-  boxGrip: [-.086, -.055, .035] as const,
+  boxGrip: [-.086, -.020, .035] as const,
   boxRotation: [-Math.PI/2, -Math.PI/2, 0] as const,
   controlGrip: [-.036, -.020, .065] as const,
   controlRotation: [-Math.PI/2, -Math.PI/2, 0] as const,
@@ -36,7 +36,7 @@ export function lmgPhaseSeconds(phase:ReloadPhase) {return LMG[phase as keyof ty
 export function createLmgAnimator(assembly:WeaponAssembly) {
   const box=assembly.parts.magazine,fresh=assembly.parts.freshMagazine,cover=assembly.parts.feedTray,bolt=assembly.parts.bolt;
   const origin=box.position.clone(),q0=box.quaternion.clone(),hinge=cover.position.clone(),bolt0=bolt.position.clone();
-  const carry=new THREE.Vector3(.08,-.25,-.32),rotation=new THREE.Quaternion().setFromEuler(new THREE.Euler(.12,.40,-.12));
+  const carry=new THREE.Vector3(-.04,-.39,-.53),boxCarry=new THREE.Vector3(-.04,-.22,-.53),workCarry=new THREE.Vector3(),rotation=new THREE.Quaternion().setFromEuler(new THREE.Euler(.08,.25,.06));
   return (state:WeaponSlotState|null|undefined)=>{
     box.position.copy(origin);box.quaternion.copy(q0);box.visible=true;
     fresh.position.copy(origin);fresh.quaternion.copy(q0);fresh.visible=false;
@@ -46,19 +46,24 @@ export function createLmgAnimator(assembly:WeaponAssembly) {
     if(!stage||!q)return;
     const p=q.elapsed/stage.duration,phase=stage.phase,exchange=q.phases[0].phase==='lift';
     const lift=phase==='lift'?lmgEase(p):phase==='close'?1-lmgEase(p):exchange?1:lmgEase(p/.20);
-    assembly.root.position.lerp(carry,lift);assembly.root.quaternion.slerp(rotation,lift);
+    // Bring the side box into the lower view while it is handled. Smoothly
+    // lower the receiver again before reaching the cover; the glove remains
+    // visible at the box rather than following the elbow offscreen.
+    const boxWork=phase==='eject'?lmgEase(p/.32):phase==='pickup'||phase==='insert'?1:phase==='feed'?1-lmgEase(p/.55):0;
+    workCarry.lerpVectors(carry,boxCarry,boxWork);
+    assembly.root.position.lerp(workCarry,lift);assembly.root.quaternion.slerp(rotation,lift);
     cover.rotation.x=lmgCoverAngle(phase,p);
     if(exchange) {
       if(phase==='eject') {
-        const out=lmgEase((p-.35)/.65);box.position.x-=.14*out;box.position.y-=.12*out;
+        const out=lmgEase((p-.35)/.65);box.position.x-=.14*out;box.position.y-=.07*out;
       } else if(phase==='pickup') {
         const stow=lmgEase(p/.45),acquire=lmgEase((p-.45)/.55);
-        box.position.x-=.14+.10*stow;box.position.y-=.12+.15*stow;box.visible=p<.45;
-        fresh.position.x-=.24-.10*acquire;fresh.position.y-=.27-.15*acquire;fresh.visible=p>=.45;
+        box.position.x-=.14+.10*stow;box.position.y-=.07+.10*stow;box.visible=p<.45;
+        fresh.position.x-=.24-.10*acquire;fresh.position.y-=.17-.10*acquire;fresh.visible=p>=.45;
       } else if(phase==='insert') {
         box.visible=false;fresh.visible=true;
         const approach=lmgEase(p/.70),seat=lmgEase((p-.70)/.30);
-        fresh.position.x-=(.14-.025*approach)*(1-seat);fresh.position.y-=.12*(1-approach);
+        fresh.position.x-=(.14-.025*approach)*(1-seat);fresh.position.y-=.07*(1-approach);
         const hit=Math.sin(Math.PI*THREE.MathUtils.clamp((p-.90)/.10,0,1));assembly.root.position.x+=hit*.004;
       } else if(['feed','slap','chamber','close'].includes(phase)) {box.visible=false;fresh.visible=true;}
       // Hide the complete path before the box detaches; restore only after a
@@ -116,11 +121,11 @@ export function createLmgHandAnimator() {
       if(p<LMG.contact) {
         // Present the open glove while raised, then flex palm-down on the
         // descent. The wrist is solved from the palm surface throughout.
-        qb.setFromEuler(euler.set(-.15,0,-.25));
+        qb.setFromEuler(euler.set(-1.10,0,-.12));
         const reach=lmgEase(p/.28),drop=lmgEase((p-.28)/(LMG.contact-.28));
         orientation.slerpQuaternions(flat,qb,reach);orientation.slerp(flat,drop);
         b.copy(coverWrist).add(a.fromArray(LMG.palmPoint).applyQuaternion(flat));
-        b.y+=.060*(1-drop);b.sub(a.fromArray(LMG.palmPoint).applyQuaternion(orientation));
+        b.y+=.025*(1-drop);b.sub(a.fromArray(LMG.palmPoint).applyQuaternion(orientation));
         target.lerpVectors(a.fromArray(LMG.feedWrist),b,reach);
       }
     } else if(phase==='chamber') {

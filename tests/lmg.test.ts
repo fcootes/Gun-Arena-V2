@@ -21,6 +21,22 @@ for(const hz of [30,60,144])for(const speed of [1,.75,.9])for(const ammo of [0,1
  const events:LmgEvent[]=[];let contacts=0,sawRaised=false,sawOpen=false,charged=false,previous:THREE.Vector3|undefined;
  while(s.reloading) {
   advanceWeaponReload(gun,s,1/hz,undefined,undefined,undefined,undefined,event=>events.push(event));const before=JSON.stringify(s);tick(1/hz);assert.equal(JSON.stringify(s),before,'Rendering never changes readiness or ammo');
+  if(s.reloading) {
+   root.updateMatrixWorld(true);
+   const upper=root.getObjectByName('leftUpperArm')!,forearm=root.getObjectByName('leftForearm')!;
+   const shoulder=new THREE.Vector3(0,-.5,0).applyMatrix4(upper.matrixWorld);
+   const elbow=new THREE.Vector3(0,.5,0).applyMatrix4(upper.matrixWorld);
+   const foreJoint=new THREE.Vector3(0,-.5,0).applyMatrix4(forearm.matrixWorld);
+   assert.ok(shoulder.distanceTo(new THREE.Vector3(-.26,-.43,-.22))<=.100001,'Bounded torso-relative shoulder');
+   near(upper.scale.y,.32);near(forearm.scale.y,.292);
+   assert.ok(elbow.distanceTo(foreJoint)<.007,'Both sleeves meet at the solved elbow');
+   assert.ok(elbow.x<-.09&&elbow.y<-.23&&elbow.z<-.14,'Elbow remains low, left and forward of camera');
+   for(const fov of [64,74,90]) {
+    const camera=new THREE.PerspectiveCamera(fov,1280/720,.05,100);
+    const screen=elbow.clone().project(camera);
+    assert.ok(screen.y<-.45||screen.x<-.7,'Elbow stays in the lower/left periphery across camera FOVs');
+   }
+  }
   near(right.position.distanceTo(right0),0);near(cover.position.distanceTo(hinge),0);assert.equal(s.ammo!+s.reserve!,ammo+300);
   const q=s.reloadSequence;if(!q)break;const phase=q.phases[q.index].phase,p=q.elapsed/q.phases[q.index].duration;
   near(cover.rotation.x,lmgCoverAngle(phase,p));assert.ok(cover.rotation.x<=1e-8&&cover.rotation.x>=LMG.coverAngle-1e-8);
@@ -29,7 +45,7 @@ for(const hz of [30,60,144])for(const speed of [1,.75,.9])for(const ammo of [0,1
    localPoint(root,left,LMG.palmPoint,palm);localPoint(root,cover,LMG.coverPoint);near(palm.distanceTo(anchor),0);
    if(phase==='slap'){contacts++;if(p>=LMG.lock)near(cover.rotation.x,0);}
   }
-  if(phase==='slap'&&p<LMG.contact){localPoint(root,left,LMG.palmPoint,palm);localPoint(root,cover,LMG.coverPoint);sawRaised ||= palm.y-anchor.y>.030;}
+  if(phase==='slap'&&p<LMG.contact){localPoint(root,left,LMG.palmPoint,palm);localPoint(root,cover,LMG.coverPoint);sawRaised ||= palm.y-anchor.y>.015;}
   if(phase==='eject')sawOpen=true;
   if(phase==='eject'&&p>=.32||phase==='pickup'||phase==='insert') {
    const part=phase==='pickup'&&p>=.45||phase==='insert'?fresh:old;localPoint(root,part,LMG.boxGrip);near(left.position.distanceTo(anchor),0);
@@ -63,9 +79,16 @@ const slow:WeaponSlotState={ammo:0,reserve:300},events:LmgEvent[]=[];beginWeapon
 function sample(hz:number,t:number) {
  const vm=createViewmodelManager(),s={ammo:0,reserve:300};vm.update(0,gun,s,false,false,true,false,false,false,0,true,true);beginWeaponReload(gun,s);
  for(let time=0;time<t-1e-10;){const dt=Math.min(1/hz,t-time);time+=dt;advanceWeaponReload(gun,s,dt);vm.update(dt,gun,s,false,false,true,false,false,false,0,true,true);}
- const root=vm.root.getObjectByName('Weapon_lmg')!,left=root.getObjectByName('leftHand')!;const value={hand:left.position.clone(),rotation:left.quaternion.clone(),cover:root.getObjectByName('feedTray')!.rotation.x};vm.dispose();return value;
+ const root=vm.root.getObjectByName('Weapon_lmg')!,left=root.getObjectByName('leftHand')!;root.updateMatrixWorld(true);const value={elbow:new THREE.Vector3(0,.5,0).applyMatrix4(root.getObjectByName('leftUpperArm')!.matrixWorld),hand:left.position.clone(),rotation:left.quaternion.clone(),cover:root.getObjectByName('feedTray')!.rotation.x};vm.dispose();return value;
 }
-for(const t of [.18,.6,1.1,1.6,2,2.6,2.95,3.08,3.1656,3.28,3.8,4.5]){const a=sample(30,t),b=sample(144,t);near(a.hand.distanceTo(b.hand),0);assert.ok(a.rotation.angleTo(b.rotation)<1e-7);near(a.cover,b.cover);}
+for(const t of [.18,.6,1.1,1.6,2,2.6,2.95,3.08,3.1656,3.28,3.8,4.5]){const a=sample(30,t),b=sample(144,t);near(a.hand.distanceTo(b.hand),0);assert.ok(a.rotation.angleTo(b.rotation)<1e-7);near(a.cover,b.cover);near(a.elbow.distanceTo(b.elbow),0);}
+// Sample either side of every authoritative boundary, including the box-work
+// camera hold transition; exact part contact must not hide a wrist/elbow snap.
+for(const t of [.36,.80,1.36,1.72,2.42,2.82,3.30,4.30]) {
+ const a=sample(144,t-1e-6),b=sample(144,t+1e-6);
+ assert.ok(a.hand.distanceTo(b.hand)<.0001&&a.elbow.distanceTo(b.elbow)<.0001,'Phase boundary remains continuous');
+ assert.ok(a.rotation.angleTo(b.rotation)<.0001,'Wrist orientation remains continuous');
+}
 const vm=createViewmodelManager();vm.prepare(['lmg']);const g=new THREE.BufferGeometry(),m=new THREE.MeshStandardMaterial(),o=new THREE.Object3D(),s:WeaponSlotState={ammo:0,reserve:300};beginWeaponReload(gun,s);
 while(s.reloading){advanceWeaponReload(gun,s,1/60);vm.update(1/60,gun,s,false,false,true,false,false,false,0,true,true);}const g2=new THREE.BufferGeometry(),m2=new THREE.MeshStandardMaterial(),o2=new THREE.Object3D();assert.equal(g2.id,g.id+1);assert.equal(Reflect.get(m2,'id'),Reflect.get(m,'id')+1);assert.equal(o2.id,o.id+1);g.dispose();g2.dispose();m.dispose();m2.dispose();vm.dispose();
 const bare=createWeaponAssembly('lmg');assert.equal(bare.parts.freshMagazine,undefined);disposeWeaponObject(bare.root);

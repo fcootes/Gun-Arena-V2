@@ -162,16 +162,9 @@ for (const [id, track, offset] of [
   stopWeaponAudio();
 }
 
-const lmgShots = plays(AUDIO.lmgFire), lmgLoops = plays(AUDIO.lmgAuto);
-playLmgFire(1); assert.equal(plays(AUDIO.lmgFire), lmgShots + 1);
-assert.equal(plays(AUDIO.lmgAuto), lmgLoops);
-playLmgFire(2); playLmgFire(3); playLmgFire(4);
-assert.equal(plays(AUDIO.lmgAuto), lmgLoops + 1, 'LMG loop starts once after first report');
-assert.ok(AUDIO.lmgFire.pool.every(a => a.paused));
-playLmgFire(5, true);
-assert.equal(plays(AUDIO.lmgFire), lmgShots + 2, 'Last LMG round has one complete report');
-assert.ok(AUDIO.lmgAuto.pool.every(a => a.paused), 'Empty magazine cannot leave a loop running');
-playLmgFire(6);
+const lmgLoops = plays(AUDIO.lmgAuto);
+for(let n=1;n<=6;n++)playLmgFire(n,n===5);
+assert.equal(plays(AUDIO.lmgAuto),lmgLoops,'LMG never starts a free-running HTML loop; report lifecycle tested with WebAudio backend');
 const lmgReload: WeaponSlotState = { ammo: 30, reserve: 100 };
 beginWeaponReload(weapon('lmg'), lmgReload); playWeaponReloadAudio(weapon('lmg'), lmgReload);
 assert.ok(AUDIO.lmgAuto.pool.every(a => a.paused), 'Reload cancels LMG fire loop');
@@ -185,7 +178,7 @@ for (const count of [1, 2, 3]) {
   assert.equal(plays(AUDIO.brSingle) - singleBefore, count === 3 ? 0 : count);
   stopWeaponAudio();
 }
-console.log('PASS: new reload/chamber profiles, one LMG loop, exactly three/two/one BR reports');
+console.log('PASS: new reload/chamber profiles, LMG without HTML loop, exactly three/two/one BR reports');
 
 const warmBefore = plays(AUDIO.minigunWindup), fireBefore = plays(AUDIO.minigunFire);
 updateMinigunWeaponAudio(.05); updateMinigunWeaponAudio(.2); updateMinigunWeaponAudio(.4);
@@ -367,25 +360,23 @@ for(const [key,url]of Object.entries(LMG_MECHANICAL_AUDIO_URLS)) {
 }
 for(const hz of [30,60,144])for(const speed of [1,.75,.9])for(const ammo of [0,43]) {
  stopWeaponAudio();const ws:WeaponSlotState={ammo,reserve:300},w=weapon('lmg');beginWeaponReload(w,ws,speed);
- const before=[plays(AUDIO.lmgBoxOut),plays(AUDIO.lmgBoxIn),plays(AUDIO.lmgCharge)];playWeaponReloadAudio(w,ws);
+ const before=[plays(AUDIO.lmgBoxOut),plays(AUDIO.lmgBoxIn),plays(AUDIO.lmgCharge),plays(AUDIO.lmgCoverClose)];playWeaponReloadAudio(w,ws);
  assert.ok(AUDIO.lmgReloadTactical.pool.every(a=>a.paused)&&AUDIO.lmgReloadEmpty.pool.every(a=>a.paused),'No duplicate composite');
  while(ws.reloading)advanceWeaponReload(w,ws,1/hz,undefined,undefined,undefined,undefined,playLmgMechanicalEvent);
- assert.deepEqual([plays(AUDIO.lmgBoxOut)-before[0],plays(AUDIO.lmgBoxIn)-before[1],plays(AUDIO.lmgCharge)-before[2]],[1,1,ammo?0:1]);
+ assert.deepEqual([plays(AUDIO.lmgBoxOut)-before[0],plays(AUDIO.lmgBoxIn)-before[1],plays(AUDIO.lmgCharge)-before[2],plays(AUDIO.lmgCoverClose)-before[3]],[1,1,ammo?0:1,1]);
  assert.ok(Math.abs(latest(AUDIO.lmgBoxIn).playbackRate-1/speed)<1e-8);
  const coverBefore=Object.values(AUDIO).reduce((n,t)=>n+plays(t),0);playLmgMechanicalEvent('cover',speed,0);
- assert.equal(Object.values(AUDIO).reduce((n,t)=>n+plays(t),0),coverBefore,'Missing cover cue is not faked with a shot or magazine/AR sound');
- stopWeaponReloadAudio();assert.ok([AUDIO.lmgBoxOut,AUDIO.lmgBoxIn,AUDIO.lmgCharge].every(t=>t.pool.every(a=>a.paused&&a.currentTime===0)));
+ assert.equal(Object.values(AUDIO).reduce((n,t)=>n+plays(t),0),coverBefore+1,'Approved cover event plays exactly its own track');
+ assert.equal(latest(AUDIO.lmgCoverClose).playbackRate,1/speed);
+ playLmgMechanicalEvent('cover',speed,.10);assert.equal(latest(AUDIO.lmgCoverClose).currentTime,.10/speed);
+ const closed=plays(AUDIO.lmgCoverClose);playLmgMechanicalEvent('cover',speed,1);assert.equal(plays(AUDIO.lmgCoverClose),closed,'Obsolete late closure is skipped');
+ stopWeaponReloadAudio();assert.ok([AUDIO.lmgBoxOut,AUDIO.lmgBoxIn,AUDIO.lmgCharge,AUDIO.lmgCoverClose].every(t=>t.pool.every(a=>a.paused&&a.currentTime===0)));
 }
 const chamberLmg:WeaponSlotState={ammo:100,reserve:200,needsChamber:true};beginWeaponReload(weapon('lmg'),chamberLmg);playWeaponReloadAudio(weapon('lmg'),chamberLmg);
 const boxes=[plays(AUDIO.lmgBoxOut),plays(AUDIO.lmgBoxIn)],charges=plays(AUDIO.lmgCharge);
 advanceWeaponReload(weapon('lmg'),chamberLmg,5,undefined,undefined,undefined,undefined,playLmgMechanicalEvent);
 assert.deepEqual([plays(AUDIO.lmgBoxOut),plays(AUDIO.lmgBoxIn)],boxes);assert.equal(plays(AUDIO.lmgCharge),charges,'A skipped obsolete charging clip is not replayed');
-assert.equal(AUDIO.lmgFire.duration,.115,'Opening report now fills the actual .115 s firing interval');assert.equal(AUDIO.lmgAuto.duration,3.565,'Sustain no longer repeats a five-report file');
-stopWeaponAudio();playLmgFire(1);playLmgFire(2);const sustain=AUDIO.lmgAuto.pool[0]as unknown as MockAudio;sustain.currentTime=1.3;const starts=sustain.plays;
-for(let n=3;n<80;n++)playLmgFire(n);assert.equal(sustain.currentTime,1.3);assert.equal(sustain.plays,starts,'Sustained LMG retains one uninterrupted voice through many firing events');
-pauseWeaponAudio();assert.ok(sustain.paused);resumeWeaponAudio();assert.equal(sustain.currentTime,1.3);stopWeaponAudio();resumeWeaponAudio();assert.ok(sustain.paused);assert.equal(sustain.currentTime,0);
-console.log('PASS: LMG isolated box/charging events, no duplicate/mislabeled cover sound, native class rates, late-event skip, .115 s lead and uninterrupted 3.565 s sustain with pause/reset');
-
-stopWeaponAudio();playLmgFire(1,true);const lastLmgReport=latest(AUDIO.lmgFire),autoReload:WeaponSlotState={ammo:0,reserve:300};
-beginWeaponReload(weapon('lmg'),autoReload);playWeaponReloadAudio(weapon('lmg'),autoReload);
-assert.equal(lastLmgReport.paused,false,'Immediate empty auto-reload preserves the final report tail');stopWeaponAudio();
+assert.equal(AUDIO.lmgFire.duration,2.8636458333333334,'Single shot preserves the final direct report and recorded decay');
+assert.equal(AUDIO.lmgAuto.duration,.92,'Eight distinct .115 s source-report windows');
+assert.equal(AUDIO.lmgCoverClose.duration,.3195,'Approved hatch impact with brief latch decay');
+console.log('PASS: LMG isolated box/charge/approved cover cues, one cue per contact, class rates, late skip and cleanup; M60 asset durations');

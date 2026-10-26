@@ -1,3 +1,4 @@
+import { LmgFireAudio } from './lmgFireAudio';
 import type { LmgListener } from './lmgMechanics';
 import { SMG } from './smgMechanics';
 import type { BattleRifleListener } from './battleRifleMechanics';
@@ -16,7 +17,7 @@ const reloadProfiles = {
 };
 const reloadTracks = [
   AUDIO.smgReloadTactical, AUDIO.smgReloadEmpty,
-  AUDIO.lmgReloadTactical, AUDIO.lmgReloadEmpty, AUDIO.lmgBoxOut, AUDIO.lmgBoxIn, AUDIO.lmgCharge,
+  AUDIO.lmgReloadTactical, AUDIO.lmgReloadEmpty, AUDIO.lmgBoxOut, AUDIO.lmgBoxIn, AUDIO.lmgCharge, AUDIO.lmgCoverClose,
   AUDIO.brReloadTactical, AUDIO.brReloadEmpty, AUDIO.brMagazineOut, AUDIO.brMagazineIn, AUDIO.brCharge,
   AUDIO.arReloadTactical, AUDIO.arReloadEmpty,
   AUDIO.pistolReloadTactical, AUDIO.pistolReloadEmpty,
@@ -27,8 +28,12 @@ const reloadTracks = [
 const weaponUrls = { ...LMG_MECHANICAL_AUDIO_URLS, ...FIRST_BATCH_AUDIO_URLS, ...SECOND_BATCH_AUDIO_URLS, ...THIRD_BATCH_AUDIO_URLS, ...BR_MECHANICAL_AUDIO_URLS };
 const weaponTracks = Object.keys(weaponUrls).map(key => AUDIO[key as keyof typeof weaponUrls]);
 
+const lmgFireAudio = new LmgFireAudio(SECOND_BATCH_AUDIO_URLS.lmgFire,
+  SECOND_BATCH_AUDIO_URLS.lmgAuto);
+
 /** Prime only recordings for the current loadout and spawned actors; later shots stay lazy. */
 export function prepareWeaponAudio(ids: readonly string[]): void {
+  if (ids.includes('lmg')) void lmgFireAudio.prepare();
   const wanted = new Set(ids.map(id => id === 'laser' ? 'plasma' : id));
   for (const key of Object.keys(weaponUrls)) {
     const family = key.startsWith('laser') ? 'plasma' : key.match(/^[a-z]+(?=[A-Z])/)?.[0];
@@ -36,7 +41,7 @@ export function prepareWeaponAudio(ids: readonly string[]): void {
   }
 }
 export function releaseWeaponAudio(): void {
-  stopWeaponAudio();
+  stopWeaponAudio(); lmgFireAudio.release();
   for (const track of Object.values(AUDIO)) track.release();
 }
 
@@ -104,13 +109,13 @@ export function updateSmgReloadAudio(state: WeaponSlotState): void {
   if(offset<clip)track.play(1,true,1/pending.speed,Math.max(0,offset));
 }
 
-/** Isolated cuts from the original LMG composites. No full composite is also
- * played. The clock still emits cover contact, but its distinct asset is
- * genuinely missing; never mislabel a magazine/AR/gunshot as a cover slam. */
+/** Discrete cues from the authoritative contact clock; no full composite. */
 export const playLmgMechanicalEvent: LmgListener = (event,speed,late) => {
-  if(event==='cover')return;
-  const track=event==='extract'?AUDIO.lmgBoxOut:event==='seat'?AUDIO.lmgBoxIn:AUDIO.lmgCharge;
-  const offset=Math.max(0,late)/speed,clip=track.duration||(event==='extract'?.215:.330);
+  if (!Number.isFinite(speed) || speed <= 0) return;
+  const track=event==='extract'?AUDIO.lmgBoxOut:event==='seat'?AUDIO.lmgBoxIn:
+    event==='cover'?AUDIO.lmgCoverClose:AUDIO.lmgCharge;
+  const offset=Math.max(0,late)/speed;
+  const clip=track.duration||(event==='extract'?.215:event==='cover'?.3195:.330);
   if(offset<clip)track.play(1,true,1/speed,offset);
 };
 
@@ -167,6 +172,7 @@ export function stopWeaponReloadAudio(): void {
 }
 
 export function stopWeaponAudio(): void {
+  lmgFireAudio.stop();
   weaponTracks.forEach(track => track.stop());
   minigunPhase = 'idle';
   partialBursts = new WeakSet<WeaponSlotState>();
@@ -177,10 +183,12 @@ export function stopWeaponAudio(): void {
 }
 
 export function pauseWeaponAudio(): void {
+  lmgFireAudio.pause();
   weaponTracks.forEach(track => track.pause());
 }
 
 export function resumeWeaponAudio(): void {
+  lmgFireAudio.resume();
   weaponTracks.forEach(track => track.resume());
 }
 
@@ -194,9 +202,9 @@ export function playBattleRifleFire(state: WeaponSlotState, start: boolean): voi
   } else if (partialBursts.has(state)) AUDIO.brSingle.play();
 }
 
-export function playLmgFire(shotNumber: number, lastShot = false): void {
-  if (shotNumber <= 1 || lastShot) { AUDIO.lmgAuto.stop(); AUDIO.lmgFire.play(); }
-  else { AUDIO.lmgFire.stop(); AUDIO.lmgAuto.playContinuous(); }
+export function playLmgFire(shotNumber: number, _lastShot = false): void {
+  // Last rounds follow exactly the same path; no loop-to-lead replacement.
+  lmgFireAudio.play(shotNumber, AUDIO.lmgFire.volume);
 }
 
 export function playAutomaticWeaponFire(id: 'smg' | 'laser', shotNumber: number, lastShot = false): void {
