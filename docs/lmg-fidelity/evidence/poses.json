@@ -1,0 +1,430 @@
+[
+  {
+    "name": "ready",
+    "ammo": 43,
+    "reserve": 300,
+    "reloading": false,
+    "needsChamber": false,
+    "progress": 0,
+    "root": [
+      0.17,
+      -0.2580050100267919,
+      -0.375
+    ],
+    "right": [
+      0.038,
+      -0.1,
+      0.145
+    ],
+    "left": [
+      -0.036,
+      -0.098,
+      -0.32
+    ],
+    "mag": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "fresh": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "bolt": [
+      -0.054,
+      0.022,
+      0.025
+    ],
+    "cover": 0,
+    "upper": false,
+    "magVisible": true,
+    "freshVisible": false
+  },
+  {
+    "name": "cover-start",
+    "ammo": 43,
+    "reserve": 300,
+    "reloading": true,
+    "needsChamber": false,
+    "phase": "open",
+    "progress": 0.30000000000000104,
+    "root": [
+      0.08,
+      -0.25,
+      -0.32
+    ],
+    "right": [
+      0.038,
+      -0.1,
+      0.145
+    ],
+    "left": [
+      -7.120200262722418e-15,
+      0.17742893136607793,
+      0.09509144258632526
+    ],
+    "mag": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "fresh": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "bolt": [
+      -0.054,
+      0.022,
+      0.025
+    ],
+    "cover": -0.24840000000000145,
+    "upper": true,
+    "magVisible": true,
+    "freshVisible": false
+  },
+  {
+    "name": "cover-open",
+    "ammo": 43,
+    "reserve": 300,
+    "reloading": true,
+    "needsChamber": false,
+    "phase": "eject",
+    "progress": 0.03571428571428749,
+    "root": [
+      0.08,
+      -0.25,
+      -0.32
+    ],
+    "right": [
+      0.038,
+      -0.1,
+      0.145
+    ],
+    "left": [
+      -0.007540199568953646,
+      0.3248868400598637,
+      -0.07399477001505379
+    ],
+    "mag": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "fresh": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "bolt": [
+      -0.054,
+      0.022,
+      0.025
+    ],
+    "cover": -1.15,
+    "upper": true,
+    "magVisible": true,
+    "freshVisible": false
+  },
+  {
+    "name": "box-removal",
+    "ammo": 43,
+    "reserve": 300,
+    "reloading": true,
+    "needsChamber": false,
+    "phase": "eject",
+    "progress": 0.8000000000000034,
+    "root": [
+      0.08,
+      -0.25,
+      -0.32
+    ],
+    "right": [
+      0.038,
+      -0.1,
+      0.145
+    ],
+    "left": [
+      -0.3263932635411969,
+      -0.19290851160673778,
+      0.010000000000001424
+    ],
+    "mag": [
+      -0.24039326354119347,
+      -0.13790851160673726,
+      -0.025
+    ],
+    "fresh": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "bolt": [
+      -0.054,
+      0.022,
+      0.025
+    ],
+    "cover": -1.15,
+    "upper": true,
+    "magVisible": true,
+    "freshVisible": false
+  },
+  {
+    "name": "box-fitted",
+    "ammo": 100,
+    "reserve": 243,
+    "reloading": true,
+    "needsChamber": false,
+    "phase": "feed",
+    "progress": 0.04999999999997501,
+    "root": [
+      0.08,
+      -0.25,
+      -0.32
+    ],
+    "right": [
+      0.038,
+      -0.1,
+      0.145
+    ],
+    "left": [
+      -0.21427347858753662,
+      -0.09545830202855515,
+      0.008486100676193115
+    ],
+    "mag": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "fresh": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "bolt": [
+      -0.054,
+      0.022,
+      0.025
+    ],
+    "cover": -1.15,
+    "upper": true,
+    "magVisible": false,
+    "freshVisible": true
+  },
+  {
+    "name": "hand-raised",
+    "ammo": 100,
+    "reserve": 243,
+    "reloading": true,
+    "needsChamber": false,
+    "phase": "slap",
+    "progress": 0.2799999999999483,
+    "root": [
+      0.08,
+      -0.25,
+      -0.32
+    ],
+    "right": [
+      0.038,
+      -0.1,
+      0.145
+    ],
+    "left": [
+      -0.005195483144348548,
+      0.3604277674121935,
+      -0.0722216965973682
+    ],
+    "mag": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "fresh": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "bolt": [
+      -0.054,
+      0.022,
+      0.025
+    ],
+    "cover": -1.15,
+    "upper": true,
+    "magVisible": false,
+    "freshVisible": true
+  },
+  {
+    "name": "slap-contact",
+    "ammo": 100,
+    "reserve": 243,
+    "reloading": true,
+    "needsChamber": false,
+    "phase": "slap",
+    "progress": 0.719999999999935,
+    "root": [
+      0.08,
+      -0.25,
+      -0.32
+    ],
+    "right": [
+      0.038,
+      -0.1,
+      0.145
+    ],
+    "left": [
+      -3.583012359031912e-15,
+      0.11200000000000071,
+      0.11100000000000741
+    ],
+    "mag": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "fresh": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "bolt": [
+      -0.054,
+      0.022,
+      0.025
+    ],
+    "cover": 0,
+    "upper": true,
+    "magVisible": false,
+    "freshVisible": true
+  },
+  {
+    "name": "cover-closed",
+    "ammo": 100,
+    "reserve": 243,
+    "reloading": true,
+    "needsChamber": false,
+    "phase": "close",
+    "progress": 0.22222222222213692,
+    "root": [
+      0.09135802469135007,
+      -0.25118336953239084,
+      -0.3269410150891584
+    ],
+    "right": [
+      0.038,
+      -0.1,
+      0.145
+    ],
+    "left": [
+      -0.004543209876540025,
+      0.08549794238685048,
+      0.05660768175587451
+    ],
+    "mag": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "fresh": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "bolt": [
+      -0.054,
+      0.022,
+      0.025
+    ],
+    "cover": 0,
+    "upper": true,
+    "magVisible": false,
+    "freshVisible": true
+  },
+  {
+    "name": "empty-charging",
+    "ammo": 100,
+    "reserve": 200,
+    "reloading": true,
+    "needsChamber": true,
+    "phase": "chamber",
+    "progress": 0.4199999999999523,
+    "root": [
+      0.08,
+      -0.25,
+      -0.32
+    ],
+    "right": [
+      0.038,
+      -0.1,
+      0.145
+    ],
+    "left": [
+      -0.09000000000000204,
+      0.0019999999999993495,
+      0.14000000000000282
+    ],
+    "mag": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "fresh": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "bolt": [
+      -0.054,
+      0.022,
+      0.07500000000000001
+    ],
+    "cover": 0,
+    "upper": true,
+    "magVisible": false,
+    "freshVisible": true
+  },
+  {
+    "name": "ads-recovery",
+    "ammo": 100,
+    "reserve": 200,
+    "reloading": false,
+    "needsChamber": false,
+    "progress": 0,
+    "root": [
+      0.000002324613331165695,
+      -0.10367618104022587,
+      -0.3999996581450984
+    ],
+    "right": [
+      0.038,
+      -0.1,
+      0.145
+    ],
+    "left": [
+      -0.036,
+      -0.098,
+      -0.32
+    ],
+    "mag": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "fresh": [
+      -0.132,
+      -0.045,
+      -0.025
+    ],
+    "bolt": [
+      -0.054,
+      0.022,
+      0.025
+    ],
+    "cover": 0,
+    "upper": false,
+    "magVisible": true,
+    "freshVisible": false
+  }
+]

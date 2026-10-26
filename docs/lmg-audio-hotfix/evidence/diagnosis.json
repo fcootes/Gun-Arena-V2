@@ -1,0 +1,51 @@
+{
+  "before-browser": {
+    "rounds": 100,
+    "audio_starts": 100,
+    "contexts": 1,
+    "decodes": 2,
+    "resumes": "not instrumented; prior code resumes every shot",
+    "rendering": "Actual App rendered using SwiftShader at reduced resolution",
+    "gameplay_interval_ms": {
+      "min": 183.59999999962895,
+      "median": 331.8999999994396,
+      "max": 970.2000000001831
+    },
+    "audio_interval_ms": {
+      "min": 149.33333333333286,
+      "median": 271.99999999999847,
+      "max": 821.3333333333353
+    },
+    "shot_50": {
+      "gameplay_gap_ms": 513.2000000001824,
+      "audio_gap_ms": 450.66666666666674,
+      "variant": 0,
+      "call_latency_ms": 0.20000000018626451
+    }
+  },
+  "after-browser": {
+    "rounds": 100,
+    "audio_starts": 100,
+    "contexts": 1,
+    "decodes": 2,
+    "resumes": 0,
+    "rendering": "Frozen canvas for audio isolation; real App logic/input continues",
+    "gameplay_interval_ms": {
+      "min": 115.69999999925429,
+      "median": 157.7000000001867,
+      "max": 237.00000000000188
+    },
+    "audio_interval_ms": {
+      "min": 80.00000000000007,
+      "median": 130.6666666666665,
+      "max": 200.00000000000108
+    },
+    "shot_50": {
+      "gameplay_gap_ms": 149.7999999998143,
+      "audio_gap_ms": 130.6666666666665,
+      "variant": 0,
+      "call_latency_ms": 0.20000000018626451
+    }
+  },
+  "diagnosis": "No missing start, weak report slot, bank restart or context suspension established. The baseline visible gap at 50 accompanies a late gameplay event under software rendering. This does not prove the native-laptop cause. Isolated offline Web Audio renders all 100 expected attacks and wraps at .115 s within one audio quantum. Native gap needs retest; do not claim it definitively fixed."
+}

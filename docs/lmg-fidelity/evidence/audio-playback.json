@@ -1,0 +1,67 @@
+[
+  {
+    "src": "lmg_box_release.wav",
+    "rate": 1.3333333333333333,
+    "offset": 0.03693333333296078
+  },
+  {
+    "src": "lmg_box_seat.wav",
+    "rate": 1.3333333333333335,
+    "offset": 0.02293333333296068
+  },
+  {
+    "src": "lmg_fire_lead.wav",
+    "rate": 1,
+    "offset": 0
+  },
+  {
+    "src": "lmg_fire_lead.wav",
+    "rate": 1,
+    "offset": 0
+  },
+  {
+    "src": "lmg_fire_sustain.wav",
+    "rate": 1,
+    "offset": 0
+  },
+  {
+    "src": "lmg_fire_lead.wav",
+    "rate": 1,
+    "offset": 0
+  },
+  {
+    "src": "lmg_box_release.wav",
+    "rate": 1.3333333333333333,
+    "offset": 0.004
+  },
+  {
+    "src": "lmg_box_seat.wav",
+    "rate": 1.3333333333333335,
+    "offset": 0.056666
+  },
+  {
+    "src": "lmg_charge.wav",
+    "rate": 1.3333333333333333,
+    "offset": 0.05999999999999992
+  },
+  {
+    "src": "lmg_fire_lead.wav",
+    "rate": 1,
+    "offset": 0
+  },
+  {
+    "src": "lmg_box_release.wav",
+    "rate": 1.3333333333333333,
+    "offset": 0.004
+  },
+  {
+    "src": "lmg_box_seat.wav",
+    "rate": 1.3333333333333335,
+    "offset": 0.056666
+  },
+  {
+    "src": "lmg_charge.wav",
+    "rate": 1.3333333333333333,
+    "offset": 0.026666
+  }
+]

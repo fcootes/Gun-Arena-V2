@@ -211,11 +211,18 @@ export const BR_MECHANICAL_AUDIO_URLS = {
   brCharge: new URL('./assets/audio/weapons/br-fidelity/br_charge.wav', import.meta.url).href,
 };
 
+export const LMG_MECHANICAL_AUDIO_URLS = {
+  lmgBoxOut: new URL('./assets/audio/weapons/lmg-fidelity/lmg_box_release.wav', import.meta.url).href,
+  lmgBoxIn: new URL('./assets/audio/weapons/lmg-fidelity/lmg_box_seat.wav', import.meta.url).href,
+  lmgCoverClose: new URL('./assets/audio/weapons/lmg-fidelity/lmg_feed_cover_close.wav', import.meta.url).href,
+  lmgCharge: new URL('./assets/audio/weapons/lmg-fidelity/lmg_charge.wav', import.meta.url).href,
+};
+
 export const SECOND_BATCH_AUDIO_URLS = {
   smgReloadEmpty: new URL('./assets/audio/weapons/batch2/smg_reload_empty.wav', import.meta.url).href,
   smgReloadTactical: new URL('./assets/audio/weapons/batch2/smg_reload_tactical.wav', import.meta.url).href,
-  lmgFire: new URL('./assets/audio/weapons/batch2/lmg_fire_single.wav', import.meta.url).href,
-  lmgAuto: new URL('./assets/audio/weapons/batch2/lmg_fire_auto_loop.wav', import.meta.url).href,
+  lmgFire: new URL('./assets/audio/weapons/lmg-fidelity/lmg_fire_lead.wav', import.meta.url).href,
+  lmgAuto: new URL('./assets/audio/weapons/lmg-fidelity/lmg_fire_sustain.wav', import.meta.url).href,
   lmgReloadTactical: new URL('./assets/audio/weapons/batch2/lmg_reload_tactical.wav', import.meta.url).href,
   lmgReloadEmpty: new URL('./assets/audio/weapons/batch2/lmg_reload_empty.wav', import.meta.url).href,
   brSingle: new URL('./assets/audio/weapons/batch2/br_fire_single.wav', import.meta.url).href,
@@ -310,6 +317,10 @@ export const AUDIO = {
   smgReloadEmpty: new SoundTrack(SECOND_BATCH_AUDIO_URLS.smgReloadEmpty, 2),
   smgReloadTactical: new SoundTrack(SECOND_BATCH_AUDIO_URLS.smgReloadTactical, 2),
   lmgAuto: new SoundTrack(SECOND_BATCH_AUDIO_URLS.lmgAuto, 1, true),
+  lmgBoxOut: new SoundTrack(LMG_MECHANICAL_AUDIO_URLS.lmgBoxOut, 1),
+  lmgBoxIn: new SoundTrack(LMG_MECHANICAL_AUDIO_URLS.lmgBoxIn, 1),
+  lmgCoverClose: new SoundTrack(LMG_MECHANICAL_AUDIO_URLS.lmgCoverClose, 1),
+  lmgCharge: new SoundTrack(LMG_MECHANICAL_AUDIO_URLS.lmgCharge, 1),
   lmgReloadTactical: new SoundTrack(SECOND_BATCH_AUDIO_URLS.lmgReloadTactical, 2),
   lmgReloadEmpty: new SoundTrack(SECOND_BATCH_AUDIO_URLS.lmgReloadEmpty, 2),
   brSingle: new SoundTrack(SECOND_BATCH_AUDIO_URLS.brSingle, 6),

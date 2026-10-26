@@ -1,0 +1,209 @@
+{
+  "sample_rate": 48000,
+  "channels": 2,
+  "fire_interval_seconds": 0.115,
+  "quality": "Firing is MP3-derived; no restoration of MP3 losses, mono M60 duplicated to stereo. Hatch is original PCM WAV-derived. No compression, limiter or pitch processing.",
+  "sources": [
+    {
+      "file": "538302__franklinrook1984__authentic-m60-firing.mp3",
+      "title": "Authentic M60 Firing.mp3",
+      "creator": "FranklinRook1984",
+      "url": "https://freesound.org/people/FranklinRook1984/sounds/538302/",
+      "licence": "CC0 1.0",
+      "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sha256": "42f2e24f73bc2344c8db511b0d3a451fba47da5d2fa6689d7db9fa536787e269",
+      "original_format": "MP3, 44.1 kHz, mono, 320 kbps",
+      "decoded_seconds": 9.637520833333333,
+      "decoded_peak": 0.874413788318634
+    },
+    {
+      "file": "718441__rudmer_rotteveel__metal_hatch_small_close_02.wav",
+      "title": "Metal_Hatch_Small_Close_02",
+      "creator": "Rudmer_Rotteveel",
+      "url": "https://freesound.org/people/Rudmer_Rotteveel/sounds/718441/",
+      "licence": "CC0 1.0",
+      "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sha256": "b868514403bdae7817f60eda9b807d2403d12b4f602e88dd6bc272a7f27b986e",
+      "supplied_as": "Exact original WAV attachment",
+      "original_format": "44.1 kHz stereo PCM16 WAV",
+      "decoded_seconds": 4.284229166666667
+    }
+  ],
+  "runtime_variants": {
+    "count": 8,
+    "attack_join_seconds": 0.103,
+    "tail_blend_seconds": 0.012,
+    "tail_source": "lmg_fire_lead.wav",
+    "playback": "One native-rate cached report per real shot; no free-running future reports"
+  },
+  "files": [
+    {
+      "filename": "lmg_fire_lead.wav",
+      "frames": 57600,
+      "duration_seconds": 1.2,
+      "sample_rate": 48000,
+      "channels": 2,
+      "format": "PCM16 WAV",
+      "peak_dbfs": -7.71636386588051,
+      "sha256": "a71c671b1cdf73b2fdb868789bc094b570d666445a3e76f27bb6457761b5bae0",
+      "source": "538302__franklinrook1984__authentic-m60-firing.mp3",
+      "start_seconds": 6.773875,
+      "end_seconds": 7.9738750000000005,
+      "gain": 0.58,
+      "attack_fade_seconds": 0.00025,
+      "tail_fade_seconds": 0.04,
+      "gain_envelope": {
+        "interpolation": "smoothstep in dB",
+        "knots_seconds_db": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.055,
+            0.0
+          ],
+          [
+            0.2,
+            -12.0
+          ],
+          [
+            0.65,
+            -16.0
+          ],
+          [
+            1.0,
+            -24.0
+          ],
+          [
+            1.2,
+            -60.0
+          ]
+        ],
+        "unchanged_direct_report_seconds": 0.055
+      },
+      "reason": "Final direct report near 6.78 s; initial 55 ms unchanged, reflected energy attenuated smoothly by 12\u201324 dB before a quiet natural ending. No runtime release gate or added report."
+    },
+    {
+      "filename": "lmg_fire_sustain.wav",
+      "frames": 44160,
+      "duration_seconds": 0.92,
+      "sample_rate": 48000,
+      "channels": 2,
+      "format": "PCM16 WAV",
+      "peak_dbfs": -6.3394648187398674,
+      "sha256": "dbf5dc535f6749c589e8c4c9a63c4c37d420775ecd6f2a706a7ea8e6b1766bd2",
+      "source": "538302__franklinrook1984__authentic-m60-firing.mp3",
+      "report_windows": [
+        {
+          "start_seconds": 5.193,
+          "end_seconds": 5.308,
+          "frames": 5520
+        },
+        {
+          "start_seconds": 5.313,
+          "end_seconds": 5.428,
+          "frames": 5520
+        },
+        {
+          "start_seconds": 5.4305,
+          "end_seconds": 5.5455000000000005,
+          "frames": 5520
+        },
+        {
+          "start_seconds": 5.549,
+          "end_seconds": 5.664000000000001,
+          "frames": 5520
+        },
+        {
+          "start_seconds": 5.6665,
+          "end_seconds": 5.7775,
+          "frames": 5328
+        },
+        {
+          "start_seconds": 5.7785,
+          "end_seconds": 5.8895,
+          "frames": 5328
+        },
+        {
+          "start_seconds": 5.8905,
+          "end_seconds": 6.0035,
+          "frames": 5424
+        },
+        {
+          "start_seconds": 6.0045,
+          "end_seconds": 6.1155,
+          "frames": 5328
+        }
+      ],
+      "report_interval_seconds": 0.115,
+      "reports": 8,
+      "gain": 0.58,
+      "attack_fade_seconds": 0.00025,
+      "report_end_fade_seconds": 0.005,
+      "method": "Eight real report windows placed at 5520-frame spacing; no pitch or whole-recording speed change. Boundaries fade to zero; native seam listening still required."
+    },
+    {
+      "filename": "lmg_feed_cover_close.wav",
+      "frames": 15288,
+      "duration_seconds": 0.3185,
+      "sample_rate": 48000,
+      "channels": 2,
+      "format": "PCM16 WAV",
+      "peak_dbfs": -3.657681235231529,
+      "sha256": "1f7fa50e73b37a7a15319cfa10d221a3c5738c7bc66454a6c71400b8f3b1b616",
+      "source": "718441__rudmer_rotteveel__metal_hatch_small_close_02.wav",
+      "start_seconds": 1.7815,
+      "end_seconds": 2.1,
+      "gain": 2.4,
+      "attack_fade_seconds": 0.00025,
+      "tail_fade_seconds": 0.03,
+      "reason": "Second, louder metal closure from original PCM WAV, with attack near 1.782 s and short latch decay. Earlier .55 s clang and preceding movement excluded; existing gain unchanged."
+    },
+    {
+      "filename": "lmg_box_release.wav",
+      "frames": 10320,
+      "duration_seconds": 0.215,
+      "sample_rate": 48000,
+      "channels": 2,
+      "format": "PCM16 WAV",
+      "peak_dbfs": -3.155255652547675,
+      "sha256": "b2ece5db07ae4d841670c8ed9a4d7d66b4cbf1a9ac50b24cbc0f70c7b6e4ee29",
+      "source": "batch2/lmg_reload_tactical.wav",
+      "start_seconds": 0.9166041666666667,
+      "end_seconds": 1.1316041666666667
+    },
+    {
+      "filename": "lmg_box_seat.wav",
+      "frames": 15840,
+      "duration_seconds": 0.33,
+      "sample_rate": 48000,
+      "channels": 2,
+      "format": "PCM16 WAV",
+      "peak_dbfs": -2.229439425807263,
+      "sha256": "d3a29622cf07d3dc3a892e973dfa596ca5c7d044f1a7410f35bdd8d1dc7ea21e",
+      "source": "batch2/lmg_reload_tactical.wav",
+      "start_seconds": 2.2757916666666667,
+      "end_seconds": 2.6057916666666667
+    },
+    {
+      "filename": "lmg_charge.wav",
+      "frames": 15840,
+      "duration_seconds": 0.33,
+      "sample_rate": 48000,
+      "channels": 2,
+      "format": "PCM16 WAV",
+      "peak_dbfs": -3.1301343065476637,
+      "sha256": "3ff6cc690827dfd4c3c50e18872dd8f997c15249f2fa360c03e80845352f78fe",
+      "source": "batch2/lmg_reload_empty.wav",
+      "start_seconds": 4.275,
+      "end_seconds": 4.605
+    }
+  ],
+  "cover_event": {
+    "phase": "slap",
+    "progress": 0.72,
+    "baseline_seconds": 3.1656
+  },
+  "listening_status": "Waveform/transient analysis and browser playback checked. Subjective native-laptop listening approval pending."
+}

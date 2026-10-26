@@ -1,0 +1,12 @@
+{
+  "order": "Old 13 s; 1 s silence; new 13 s",
+  "events": "Tap at .15 s; three shots at 3.6 s; 20 shots at 7 s; .115 s cadence",
+  "method": "Fire-window RMS matched, common peak-safe gain; no limiter; offline render of event-driven report selection and 12 ms previous-tail fade",
+  "original_fire_window_rms": [
+    0.17721847253301093,
+    0.10957785947347964
+  ],
+  "common_headroom_factor": 1.0,
+  "peak_before": 0.5520109539806304,
+  "peak_after": 0.6725023599863326
+}

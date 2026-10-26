@@ -1,0 +1,27 @@
+{
+  "commit": "a25793d311b8c11aa8ee77e7852183854bd432bf",
+  "first_55ms_pcm_sha256": "94cfc661743c91ba2bc34d7746c5f6dfdeeae600da330dcf967c23ceb9e35c93",
+  "echo_windows": [
+    {
+      "start": 0.2,
+      "end": 0.65,
+      "rms": 0.13417370533649717
+    },
+    {
+      "start": 0.35,
+      "end": 0.75,
+      "rms": 0.13808185026035588
+    },
+    {
+      "start": 0.65,
+      "end": 1.0,
+      "rms": 0.09957538871702172
+    }
+  ],
+  "unchanged_sha256": {
+    "lmg_box_release.wav": "b2ece5db07ae4d841670c8ed9a4d7d66b4cbf1a9ac50b24cbc0f70c7b6e4ee29",
+    "lmg_box_seat.wav": "d3a29622cf07d3dc3a892e973dfa596ca5c7d044f1a7410f35bdd8d1dc7ea21e",
+    "lmg_charge.wav": "3ff6cc690827dfd4c3c50e18872dd8f997c15249f2fa360c03e80845352f78fe",
+    "lmg_fire_sustain.wav": "dbf5dc535f6749c589e8c4c9a63c4c37d420775ecd6f2a706a7ea8e6b1766bd2"
+  }
+}
