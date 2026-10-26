@@ -79,10 +79,10 @@ export function WeaponStudio({ weaponId }: { weaponId: string }) {
     let effects: WeaponMuzzleEffect = createWeaponMuzzleEffect(
       weapon.userData.weaponAssembly,
     );
-    let fireTime = 0;
+    let fireTime = 0,railPreviewCharging=false;
     firePreviewRef.current = () => {
-      effects.trigger();
-      fireTime = 0.4;
+      if(weaponIdRef.current==='railgun'){effects.reset();fireTime=1.24;railPreviewCharging=true;}
+      else{effects.trigger();fireTime=.4;}
     };
     weapon.rotation.y = Math.PI / 2;
     const modelBounds = new THREE.Box3(),
@@ -114,7 +114,7 @@ export function WeaponStudio({ weaponId }: { weaponId: string }) {
       weapon.position.set(0, 0, 0);
       buildWeaponMesh(weapon, id);
       effects = createWeaponMuzzleEffect(weapon.userData.weaponAssembly);
-      fireTime = 0;
+      fireTime = 0;railPreviewCharging=false;
       centerModel();
       fitCamera();
     };
@@ -151,10 +151,11 @@ export function WeaponStudio({ weaponId }: { weaponId: string }) {
         dt = Math.min(0.05, (now - previous) / 1000);
       previous = now;
       fireTime = Math.max(0, fireTime - dt);
+      if(railPreviewCharging&&fireTime<=.04){railPreviewCharging=false;effects.trigger();}
       effects.update(dt);
       weapon.userData.weaponAssembly.update(
         dt,
-        currentWeaponId === 'railgun' ? (fireTime > 0 ? 1 : 0.15) : 0,
+        currentWeaponId === 'railgun' && railPreviewCharging ? Math.min(1,(1.24-fireTime)/1.2) : 0,
         currentWeaponId === 'minigun' && fireTime > 0 ? dt * 40 : 0,
       );
       controls.update();

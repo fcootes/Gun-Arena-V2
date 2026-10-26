@@ -1,3 +1,4 @@
+import {createRailgunMuzzleEffect} from './railgunEffects';
 import * as THREE from 'three';
 import type { WeaponModelId, WeaponAssembly } from './weaponModels';
 
@@ -122,18 +123,7 @@ export const MUZZLE_PROFILES: Record<WeaponModelId, MuzzleProfile> = {
     energy: false,
     rear: false,
   },
-  railgun: {
-    life: 0.2,
-    width: 0.28,
-    length: 1.25,
-    light: 14,
-    radius: 12,
-    smoke: 2,
-    sparks: 22,
-    star: 9,
-    energy: true,
-    rear: false,
-  },
+  railgun: {life:.04,width:.05,length:.04,light:.9,radius:.7,smoke:3,sparks:3,star:0,energy:true,rear:false},
   rocket: {
     life: 0.22,
     width: 0.5,
@@ -170,6 +160,7 @@ export interface WeaponMuzzleEffect {
 export function createWeaponMuzzleEffect(
   assembly: WeaponAssembly,
 ): WeaponMuzzleEffect {
+  if(assembly.root.userData.weaponId==='railgun')return createRailgunMuzzleEffect(assembly);
   const id = assembly.root.userData.weaponId as WeaponModelId,
     p = MUZZLE_PROFILES[id];
   const root = new THREE.Group();

@@ -1,3 +1,6 @@
+import {createRailgunAnimator} from './railgunMechanics';
+import type {WeaponSlotState} from './types';
+import {buildRailgunModel} from './railgunModel';
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -22,7 +25,7 @@ export interface WeaponAssembly {
   muzzle: THREE.Object3D;
   backblast: THREE.Object3D;
   parts: Record<string, THREE.Object3D>;
-  update: (dt: number, charge?: number, spin?: number) => void;
+  update: (dt: number, charge?: number, spin?: number, state?:WeaponSlotState) => void;
 }
 
 /** Models face -Z; characters face +Z and cameras look down -Z.
@@ -92,6 +95,7 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
   root.name = `Weapon_${id}`;
   root.userData.weaponId = id;
   const parts: Record<string, THREE.Object3D> = {};
+  let railgunUpdate: ((charge:number,time:number)=>void)|undefined;
   const metalTexture = finishTexture(false),
     gripTexture = finishTexture(true);
   const steel = new THREE.MeshStandardMaterial({
@@ -1294,82 +1298,8 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     box('Top mechanical sight', 0.056, 0.03, 0.04, 0, 0.117, -0.04, dark);
     muzzle.position.set(0, 0, -0.64);
   } else if (id === 'railgun') {
-    box('Capacitor receiver', 0.085, 0.11, 0.26, 0, 0, 0.09, dark);
-    stock();
-    grip();
-    rail(-0.055, 0.34, 0.084);
-    optic();
-    const cell = group('magazine', 0, -0.005, 0.015);
-    tube('Capacitor bank', 0.035, 0.13, 0, 0, 0, steel, cell);
-    for (const y of [-0.045, 0.062]) {
-      box('Parallel conductive rail', 0.035, 0.023, 0.63, 0, y, -0.4, steel);
-      box(
-        'Conductive rail core',
-        0.016,
-        0.007,
-        0.64,
-        0,
-        y + (y > 0 ? -0.014 : 0.014),
-        -0.4,
-        glow,
-      );
-    }
-    for (let i = 0; i < 6; i++) {
-      box(
-        'Magnetic accelerator housing',
-        0.092,
-        0.13,
-        0.024,
-        0,
-        0.008,
-        -0.19 - i * 0.091,
-        dark,
-      );
-      box(
-        'Coil indicator',
-        0.094,
-        0.012,
-        0.026,
-        0,
-        0.008,
-        -0.19 - i * 0.091,
-        glow,
-      );
-    }
-    for (const side of [-1, 1]) {
-      tube(
-        'Hydraulic recoil damper',
-        0.013,
-        0.19,
-        side * 0.057,
-        0.001,
-        0.185,
-        steel,
-      );
-      tube('Damper piston', 0.007, 0.08, side * 0.057, 0.001, 0.31, edge);
-    }
-    const arcMaterial = new THREE.ShaderMaterial({
-      uniforms: { time: { value: 0 }, charge: { value: 0 } },
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      side: THREE.DoubleSide,
-      vertexShader:
-        'varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-      fragmentShader:
-        'varying vec2 vUv;uniform float time;uniform float charge;void main(){float wave=.5+.27*sin(vUv.x*39.+time*23.)+.1*sin(vUv.x*97.-time*45.);float arc=pow(max(0.,1.-abs(vUv.y-wave)*35.),3.);gl_FragColor=vec4(vec3(.12,.55,1.)*3.,arc*(.12+charge*.88));\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}',
-    });
-    const arc = mesh(
-      'Dynamic rail arcs',
-      new THREE.PlaneGeometry(0.59, 0.12),
-      arcMaterial,
-      0,
-      0.01,
-      -0.41,
-    );
-    arc.rotation.y = Math.PI / 2;
-    parts.arc = arc;
-    muzzle.position.set(0, 0.01, -0.74);
+    const model=buildRailgunModel(body,parts,{steel,dark,polymer,rubber,edge,glow},!!options.firstPerson);
+    muzzle.position.fromArray(model.muzzle);railgunUpdate=model.update;
   } else if (id === 'rocket') {
     tube(
       'Composite launch tube',
@@ -1472,12 +1402,7 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     backblast.position.set(0, -0.005, 0.18);
   }
 
-  if (id === 'railgun') {
-    const cell = group('magazine', 0, -.055, .14);
-    box('Removable capacitor bank', .07, .055, .11, 0, 0, 0, dark, cell);
-    box('Capacitor charge contacts', .075, .01, .07, 0, .028, 0, glow, cell);
-  }
-  if (id === 'laser' || id === 'railgun' || id === 'minigun') {
+  if (id === 'laser' || id === 'minigun') {
     const vent = group('vent', .052, .03, .02);
     box('Articulated coolant vent', .009, .037, .095, 0, 0, 0, steel, vent);
   }
@@ -1541,6 +1466,10 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     parent.userData.features = featureNames;
   }
   bake(body);
+  if(id==='railgun'){
+    const fresh=parts.freshSlug.children[0] as THREE.Mesh,seated=parts.chamberedSlug.children[0] as THREE.Mesh;
+    seated.geometry.dispose();seated.geometry=fresh.geometry;
+  }
   if ((id === 'br' || id === 'pistol' || id === 'smg' || id === 'lmg') && options.firstPerson) {
     const fresh = parts.magazine.clone(true); fresh.name = 'freshMagazine'; fresh.visible = false;
     body.add(fresh); parts.freshMagazine = fresh;
@@ -1566,12 +1495,12 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
   else metalTexture.dispose();
   if (!used.has(polymer)) gripTexture.dispose();
   let time = 0;
-  return {
+  const assembly:WeaponAssembly={
     root,
     muzzle,
     backblast,
     parts,
-    update(dt, charge = 0, spin = 0) {
+    update(dt, charge = 0, spin = 0, state) {
       time += dt;
       if (parts.rotor) parts.rotor.rotation.z += spin;
       if (parts.arc) {
@@ -1579,9 +1508,12 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
         m.uniforms.time.value = time;
         m.uniforms.charge.value = charge;
       }
-      if (id === 'railgun') glow.emissiveIntensity = 0.8 + charge * 4;
+      railgunUpdate?.(charge,time);
+      if(state)railgunParts?.(state);
       if (id === 'laser')
         glow.emissiveIntensity = 2.3 + Math.sin(time * 5) * 0.3;
     },
   };
+  const railgunParts=id==='railgun'?createRailgunAnimator(assembly,false):undefined;
+  return assembly;
 }

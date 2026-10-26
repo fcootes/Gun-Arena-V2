@@ -1,0 +1,13 @@
+{
+  "processing": "None. Existing runtime WAV bytes retained. No reload recordings imported.",
+  "files": [
+    {
+      "path": "src/assets/audio/weapons/batch3/railgun_charge.wav",
+      "sha256": "ef796bfcbd5d1d7ef0268e9732052e4ac0d95c5b948f436bed1f46690c54fa93"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch3/railgun_fire_single.wav",
+      "sha256": "0ad7f12b3e72056240e6bd42a4d5e5f7c6cd3c8c5ae2e0bf690d635cd42ac7c8"
+    }
+  ]
+}

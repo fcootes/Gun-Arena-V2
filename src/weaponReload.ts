@@ -1,3 +1,4 @@
+import {beginRailgunReload,advanceRailgunReload,type RailgunListener} from './railgunMechanics';
 import { LMG, lmgCue, lmgPhaseSeconds, type LmgListener } from './lmgMechanics';
 import { SMG } from './smgMechanics';
 import type { WeaponDef, WeaponSlotState } from './types';
@@ -5,10 +6,10 @@ import { SHOTGUN, advanceShotgunCycle, beginShotgunCycle, type ShotgunEventListe
 import { SNIPER, advanceSniperAction, type SniperBoltListener } from './sniperMechanics';
 import { BATTLE_RIFLE, brCueTime, type BattleRifleListener } from './battleRifleMechanics';
 
-export type ReloadPhase = 'open' | 'eject' | 'pickup' | 'insert' | 'chamber' | 'close' | 'vent' | 'lift' | 'feed' | 'slap';
+export type ReloadPhase = 'open' | 'eject' | 'pickup' | 'insert' | 'chamber' | 'close' | 'vent' | 'lift' | 'feed' | 'slap' | 'present' | 'unlock' | 'retract' | 'lock' | 'recover';
 export type ReloadPhaseListener = (phase: ReloadPhase, duration: number, empty: boolean) => void;
 export interface ReloadSequence {
-  kind: 'magazine' | 'shell' | 'battery' | 'tube' | 'cylinder' | 'vent';
+  kind: 'magazine' | 'shell' | 'battery' | 'tube' | 'cylinder' | 'vent' | 'railgun';
   phases: { phase: ReloadPhase; duration: number }[];
   index: number;
   elapsed: number;
@@ -18,6 +19,7 @@ export interface ReloadSequence {
   shellSeated?: boolean;
   brCuePlayed?: boolean;
   lmgCuePlayed?: boolean;
+  railgunStartCover?:number;railgunStartLatch?:number;railgunSpeed?:number;railgunCuePlayed?:boolean;railgunHadCarrier?:boolean;railgunRecoveryOnly?:boolean;
 }
 
 export function cancelWeaponReload(state: WeaponSlotState) {
@@ -26,6 +28,7 @@ export function cancelWeaponReload(state: WeaponSlotState) {
 
 export function beginWeaponReload(weapon: WeaponDef, state: WeaponSlotState, multiplier = 1, playerHandling = true): boolean {
   if (weapon.type !== 'weapon' || state.reloading || (state.boltCycleT ?? 0) > 0) return false;
+  if(weapon.id==='railgun'&&playerHandling)return beginRailgunReload(state,multiplier);
   const vent = weapon.id === 'laser' || weapon.id === 'minigun';
   const chamberOnly = !!state.needsChamber && (state.ammo ?? 0) > 0;
   if (!chamberOnly && (vent ? (state.heat ?? 0) <= 0 : (state.ammo ?? 0) >= (weapon.mag ?? 0) || (state.reserve ?? 0) <= 0)) return false;
@@ -96,8 +99,9 @@ export function beginWeaponReload(weapon: WeaponDef, state: WeaponSlotState, mul
 }
 
 /** Advance through phase boundaries without losing shell events on slow frames. */
-export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, delta: number, onPhaseStart?: ReloadPhaseListener, onShotgunEvent?: ShotgunEventListener, onSniperBolt?: SniperBoltListener, onBattleRifle?: BattleRifleListener, onLmg?: LmgListener): number {
+export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, delta: number, onPhaseStart?: ReloadPhaseListener, onShotgunEvent?: ShotgunEventListener, onSniperBolt?: SniperBoltListener, onBattleRifle?: BattleRifleListener, onLmg?: LmgListener, onRailgun?:RailgunListener): number {
   if (!Number.isFinite(delta) || delta <= 0) return 0;
+  if(weapon.id==='railgun'&&state.reloadSequence?.kind==='railgun')return advanceRailgunReload(state,delta,onRailgun,onPhaseStart);
   if (weapon.id === 'sniper') advanceSniperAction(state, delta, onSniperBolt);
   else if (weapon.id === 'shotgun' && state.shotgunCycle) advanceShotgunCycle(state, delta, onShotgunEvent);
   else state.boltCycleT = Math.max(0, (state.boltCycleT ?? 0) - delta);

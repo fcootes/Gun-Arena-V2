@@ -114,13 +114,13 @@ for (const id of WEAPON_MODEL_IDS) {
     const serialized = JSON.stringify(state); step(vm, id, 1 / 60, state);
     assert.equal(JSON.stringify(state), serialized, 'Presentation never changes reload/ammo/audio state');
     assert.ok(right.position.distanceTo(anchoredRight) < 1e-8, `${id}: firing hand stays attached during reload`);
-    if(id==='lmg')weapon(vm,id).updateMatrixWorld(true);
+    if(id==='lmg'||id==='railgun')weapon(vm,id).updateMatrixWorld(true);
     for (const side of ['right', 'left'] as const) {
       const sleeve = pair.getObjectByName(`${side}Forearm`)!;
       sleeveEnd.set(0, -.5, 0).applyMatrix4(sleeve.matrixWorld);
       assert.ok(sleeve.scale.y <= VIEWMODEL_GRIPS[id].sleeveLength + .012001, `${id}: anatomical forearm never stretches to a remote elbow`);
-      if(id==='lmg'&&side==='left'&&state.reloading) {
-        const upper=weapon(vm,id).getObjectByName('leftUpperArm')!;
+      if((id==='lmg'||id==='railgun')&&side==='left'&&state.reloading) {
+        const upper=weapon(vm,id).getObjectByName(id==='railgun'?'railgunLeftUpperArm':'leftUpperArm')!;
         assert.ok(upper.visible&&Math.abs(upper.scale.y-.32)<1e-7,'LMG raised contact has an anatomical upper arm');
         const joint=new THREE.Vector3(0,.5,0).applyMatrix4(upper.matrixWorld);
         assert.ok(joint.distanceTo(sleeveEnd)<.007,'LMG forearm meets the upper sleeve without a visible chopped end');
@@ -177,7 +177,7 @@ function assertNear(id: string) {
         // The LMG's connected upper sleeve may fold toward the body during
         // offscreen box pickup. Require any near-plane crossing to clear even
         // the near-plane bottom by 2.5 cm; visible glove/weapon vertices stay safe.
-        const offscreenUpper=id==='lmg'&&(object.name==='LMG upper sleeve'||object.name==='leftForearm')&&vertex.y<-.05*Math.tan(THREE.MathUtils.degToRad(74/2))-.025;
+        const offscreenUpper=(id==='lmg'||id==='railgun')&&(object.name==='LMG upper sleeve'||object.name==='Railgun upper sleeve'||object.name==='leftForearm')&&vertex.y<-.05*Math.tan(THREE.MathUtils.degToRad(74/2))-.025;
         assert.ok(vertex.z < -.05 || offscreenUpper, `${id}/${object.name}: visible weapon/hand must stay beyond near plane (${vertex.z})`);
       }
     }

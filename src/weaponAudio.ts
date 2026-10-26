@@ -1,3 +1,4 @@
+import type {RailgunListener} from './railgunMechanics';
 import { LmgFireAudio } from './lmgFireAudio';
 import type { LmgListener } from './lmgMechanics';
 import { SMG } from './smgMechanics';
@@ -112,6 +113,9 @@ export function updateSmgReloadAudio(state: WeaponSlotState): void {
   if(offset<clip)track.play(1,true,1/pending.speed,Math.max(0,offset));
 }
 
+/** Six physical markers are deliberately silent pending approved W02 Foley. */
+export const playRailgunMechanicalEvent:RailgunListener=(_event,_speed,_late)=>{};
+
 /** Discrete cues from the authoritative contact clock; no full composite. */
 export const playLmgMechanicalEvent: LmgListener = (event,speed,late) => {
   if (!Number.isFinite(speed) || speed <= 0) return;
@@ -132,6 +136,7 @@ export function playWeaponReloadAudio(weapon: WeaponDef, state: WeaponSlotState)
     updateSmgReloadAudio(state);return true;
   }
   if (weapon.id === 'lmg' && ['lift','chamber'].includes(state.reloadSequence.phases[0].phase)) { stopWeaponReloadAudio(); AUDIO.lmgAuto.stop(); return true; }
+  if(weapon.id==='railgun'){stopWeaponReloadAudio();updateRailgunWeaponAudio(false,0);return true;}
   if (weapon.id === 'br') { stopWeaponReloadAudio(); AUDIO.brBurst.stop(); return true; }
   if (weapon.id === 'sniper') {
     stopWeaponReloadAudio();

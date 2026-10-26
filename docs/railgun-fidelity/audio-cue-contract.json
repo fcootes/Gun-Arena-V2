@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "weapon": "railgun",
+  "implementation": [
+    "src/railgunMechanics.ts",
+    "src/weaponReload.ts",
+    "src/weaponAudio.ts"
+  ],
+  "status": "Markers implemented. Reload Foley intentionally absent pending approved recordings.",
+  "baselineReloadSeconds": 2.8,
+  "chargeSeconds": 1.2,
+  "clock": "Authoritative player reload state; never wall timers or a second animation clock.",
+  "phases": [
+    {
+      "phase": "present",
+      "baselineDurationSeconds": 0.28
+    },
+    {
+      "phase": "unlock",
+      "baselineDurationSeconds": 0.24
+    },
+    {
+      "phase": "retract",
+      "baselineDurationSeconds": 0.35
+    },
+    {
+      "phase": "eject",
+      "baselineDurationSeconds": 0.16
+    },
+    {
+      "phase": "pickup",
+      "baselineDurationSeconds": 0.4
+    },
+    {
+      "phase": "insert",
+      "baselineDurationSeconds": 0.55
+    },
+    {
+      "phase": "close",
+      "baselineDurationSeconds": 0.37
+    },
+    {
+      "phase": "lock",
+      "baselineDurationSeconds": 0.2
+    },
+    {
+      "phase": "recover",
+      "baselineDurationSeconds": 0.25
+    }
+  ],
+  "events": [
+    {
+      "event": "railgun_breech_unlock",
+      "baselineSeconds": 0.52,
+      "physicalAction": "Cross-bolt fully disengaged; hand on unlock lever.",
+      "audioRecommendation": "Short loaded metal detent; no electrical or gunshot layer."
+    },
+    {
+      "event": "railgun_breech_open",
+      "baselineSeconds": 0.87,
+      "physicalAction": "Captive slide reaches its rear stop with chamber exposed.",
+      "audioRecommendation": "Heavy guided slide ending in a restrained stop contact."
+    },
+    {
+      "event": "railgun_carrier_eject",
+      "baselineSeconds": 0.8988,
+      "physicalAction": "Extractor releases the small spent conductive carrier.",
+      "audioRecommendation": "Small metal release/tick; optional brief carrier rattle, not a projectile report."
+    },
+    {
+      "event": "railgun_slug_seat",
+      "baselineSeconds": 1.98,
+      "physicalAction": "One fresh kinetic slug reaches the V-block; ammunition transfers here.",
+      "audioRecommendation": "Dense short metal seating contact; no battery insertion sound."
+    },
+    {
+      "event": "railgun_breech_close",
+      "baselineSeconds": 2.35,
+      "physicalAction": "Slider reaches the closed receiver seat after hand contact.",
+      "audioRecommendation": "Weighted short guided metal closure, separate from final lock."
+    },
+    {
+      "event": "railgun_breech_lock",
+      "baselineSeconds": 2.55,
+      "physicalAction": "Cross-bolt is fully engaged and cover secured.",
+      "audioRecommendation": "Precise mechanical locking detent; no extra closing slam."
+    }
+  ],
+  "listener": {
+    "signature": "(event: RailgunEvent, speed: number, late: number) => void",
+    "speed": "Duration multiplier (e.g. 0.75 means 25% shorter). Physical event time = baselineSeconds * speed. Future Foley playback rate = 1 / speed.",
+    "late": "Elapsed game seconds after this physical event within the advancing frame. Future source offset = late / speed. Skip clips already exhausted at that offset.",
+    "lateFrames": "All crossed contacts emit in order once, including multiple events in a single frame.",
+    "interruption": "Cancellation discards future contacts, retains actual cover/latch/carrier/seated state. Resume plans omit completed ejection/insertion. Physical closure/lock can emit only if performed by the new plan.",
+    "pause": "Pause freezes the authoritative cursor; no wall timer or queued Foley.",
+    "switchDeathReset": "Existing switch/death/lobby cancellation removes the active sequence. New loadout/redeploy states begin clean. No audio voice or timer is allocated by these markers.",
+    "readiness": "Slug transfer at 1.98 s does not permit charge. Cover is closed at 2.35 s, lock finishes at 2.55 s, readiness returns at 2.80 s after recovery.",
+    "legacyAudio": "Railgun reload is handled silently, suppressing generic reload composites. Existing charge/fire recordings remain unchanged."
+  }
+}

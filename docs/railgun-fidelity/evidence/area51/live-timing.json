@@ -1,0 +1,44 @@
+{
+  "wallReloadSeconds": 16.401800000000744,
+  "frameCount": 62,
+  "meanFrameSeconds": 0.049999999999999954,
+  "rendering": "Real App RAF and gameplay simulation, cached static scene background, 640x360 canvas, software WebGL, diagnostic hemisphere lighting, shadows and postprocessing disabled; no clock stepping or retiming. This diagnostic footage does not validate full-scene/native rendering performance.",
+  "cues": [
+    {
+      "event": "railgun_breech_unlock",
+      "speed": 1,
+      "late": 0.029999999999999985,
+      "wall": 98425.80000000075
+    },
+    {
+      "event": "railgun_breech_open",
+      "speed": 1,
+      "late": 0.029999999999999985,
+      "wall": 100436.5
+    },
+    {
+      "event": "railgun_carrier_eject",
+      "speed": 1,
+      "late": 0.0011999999999999858,
+      "wall": 100436.5
+    },
+    {
+      "event": "railgun_slug_seat",
+      "speed": 1,
+      "late": 0.019999999999999865,
+      "wall": 107100.69999999925
+    },
+    {
+      "event": "railgun_breech_close",
+      "speed": 1,
+      "late": 0,
+      "wall": 109212
+    },
+    {
+      "event": "railgun_breech_lock",
+      "speed": 1,
+      "late": 1.3877787807814457e-17,
+      "wall": 110417
+    }
+  ]
+}
