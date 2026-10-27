@@ -309,7 +309,7 @@ export function createFirstPersonHands() {
           if (state?.shotgunCycle?.kind === 'chamber') left.target.lerpVectors(left.phaseStart, supportGrip, shotgunEase(state.shotgunCycle.elapsed / (state.shotgunCycle.duration * SHOTGUN.recovery / SHOTGUN.cycle)));
         }
       }
-      if(id==='railgun'){railgunHand(assembly,state,supportGrip,config.left.rotation,left.target,left.orientation);curl=stage?.phase==='insert'?1.05-.45*THREE.MathUtils.smoothstep(sequence!.elapsed/stage.duration,.40,.70):stage?.phase==='pickup'?1.05:config.left.curl;}
+      if(id==='railgun'){railgunHand(assembly,state,supportGrip,config.left.rotation,left.target,left.orientation);curl=stage&&['insert','pickup','lowerCradle'].includes(stage.phase)?1.05:config.left.curl;}
       if (id === 'lmg') {
         lmgSupportRotation.setFromEuler(euler.set(...config.left.rotation));
         const flatness=lmgHand(assembly,state,supportGrip,lmgSupportRotation,left.target,left.orientation);

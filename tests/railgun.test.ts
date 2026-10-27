@@ -13,7 +13,7 @@ const gun=WEAPONS.find(w=>w.id==='railgun')!;
 assert.deepEqual([gun.damage,gun.mag,gun.reserve,gun.fireRate,gun.range,gun.kick,gun.adsFov],[160,1,30,1.3,500,.12,32]);
 const near=(a:number,b:number,e=1e-7)=>assert.ok(Math.abs(a-b)<e,`${a} != ${b}`);
 const events:RailgunEvent[]=['railgun_breech_unlock','railgun_breech_open','railgun_carrier_eject','railgun_slug_seat','railgun_breech_close','railgun_breech_lock'];
-const eventTimes=[.52,.87,.8988,1.98,2.35,2.55];
+const eventTimes=[.40,.75,1.006,1.91,2.48,2.66];
 for(const hz of [30,60,144])for(const speed of [1,.75,.9,1.2]){
  const s:WeaponSlotState={ammo:0,reserve:30};markRailgunFired(s);assert.ok(beginWeaponReload(gun,s,speed));near(s.totalReloadT!,2.8*speed);assert.equal(beginWeaponReload(gun,s),false);
  const cues:RailgunEvent[]=[],times:number[]=[];let time=0;
@@ -35,7 +35,7 @@ const bot:WeaponSlotState={ammo:0,reserve:30};beginWeaponReload(gun,bot,1,false)
 
 const bare=createWeaponAssembly('railgun');assert.equal(bare.parts.magazine,undefined,'Fixed capacitors are never ammunition');
 for(const name of ['breechCover','breechSlide','breechLatch','breechLock','loadingChamber','chamberSeat','freshSlug','chamberedSlug','spentCarrier','carrierEjectionPort','opticBridge'])assert.ok(bare.parts[name],name);
-const f=new THREE.Box3().setFromObject(bare.parts.opticBridge),coverClosed=new THREE.Box3().setFromObject(bare.parts.breechCover);assert.ok(f.max.z<coverClosed.min.z-.05,'Fixed scope bridge clears all rearward cover travel');
+assert.equal(bare.parts.opticBridge.parent,bare.parts.breechSlide);assert.equal(bare.parts.breechCover.parent,bare.parts.breechSlide);assert.equal(bare.parts.chamberedSlug.parent,bare.parts.cartridgeCradle);
 const meshes:THREE.Mesh[]=[];bare.parts.loadingChamber.traverse(o=>{if(o instanceof THREE.Mesh)meshes.push(o);});
 const ray=new THREE.Raycaster(new THREE.Vector3(0,.3,.125),new THREE.Vector3(0,-1,0));const hits=ray.intersectObjects(meshes,false);assert.ok(hits.length>0&&hits[0].point.y<.025,'Actual top-open loading cavity reaches the low floor');
 let draws=0;bare.root.traverse(o=>{if(o instanceof THREE.Mesh)draws++;});assert.ok(draws<24,'Mechanical detail is material-batched');disposeWeaponObject(bare.root);
@@ -50,9 +50,9 @@ for(const fps of [30,60,144]){
  while(s.reloading){advanceWeaponReload(gun,s,1/fps);const before=JSON.stringify(s);tick(1/fps);assert.equal(JSON.stringify(s),before,'Visuals do not mutate gameplay readiness');root.updateMatrixWorld(true);near(right.position.distanceTo(right0),0);
   if(!s.reloading)break;const q=s.reloadSequence!,stage=q.phases[q.index],p=q.elapsed/stage.duration;
   const cover=root.getObjectByName('breechCover')!,slide=root.getObjectByName('breechSlide')!,fresh=root.getObjectByName('freshSlug')!;
-  near(slide.position.z,RAILGUN.slideTravel*s.railgunBreech!.cover);
+  near(slide.position.z,-RAILGUN.slideTravel*s.railgunBreech!.cover);
   if(stage.phase==='unlock'||stage.phase==='lock'&&p>=.25){palm.set(0,.040,-.023).applyMatrix4(hand.matrixWorld);const lever=new THREE.Vector3(-.013,.004,.022).applyMatrix4(root.getObjectByName('breechLatch')!.matrixWorld);near(palm.distanceTo(lever),0);}
-  if(stage.phase==='retract'&&p>=.20||stage.phase==='close'&&p>=.30){local(root,cover,RAILGUN.coverGrip);near(hand.position.distanceTo(point),0);}
+  if(stage.phase==='slideForward'&&p>=.20||stage.phase==='close'&&p>=.30){local(root,cover,RAILGUN.coverGrip);near(hand.position.distanceTo(point),0);}
   if(stage.phase==='insert'||stage.phase==='pickup'&&p>=.25){
    root.updateMatrixWorld(true);palm.set(0,.040,-.023).applyMatrix4(hand.matrixWorld);palm.applyMatrix4(new THREE.Matrix4().copy(fresh.matrixWorld).invert());
    near(Math.hypot(palm.x,palm.y),.0155);assert.ok(palm.z>=-.04501&&palm.z<=-.02999);assert.ok(fresh.visible);
@@ -60,7 +60,7 @@ for(const fps of [30,60,144]){
   if(stage.phase==='insert')assert.equal(s.ammo,0,'No early chambered ammunition');
   const upper=root.getObjectByName('railgunLeftUpperArm')!,fore=root.getObjectByName('leftForearm')!;
   const elbow=new THREE.Vector3(0,.5,0).applyMatrix4(upper.matrixWorld),joint=new THREE.Vector3(0,-.5,0).applyMatrix4(fore.matrixWorld);
-  assert.ok(elbow.distanceTo(joint)<.007,`Connected elbow ${stage.phase}/${p}`);assert.ok(elbow.x<-.05&&elbow.y<-.17,`Compact peripheral support elbow ${stage.phase}/${p}: ${elbow.toArray()}`);
+  assert.ok(elbow.distanceTo(joint)<.007,`Connected elbow ${stage.phase}/${p}: gap=${elbow.distanceTo(joint)} elbow=${elbow.toArray()} joint=${joint.toArray()}`);assert.ok(elbow.x<-.05&&elbow.y<-.17,`Compact peripheral support elbow ${stage.phase}/${p}: ${elbow.toArray()}`);
   if(last)assert.ok(hand.position.distanceTo(last)<6/fps,`No wrist teleport ${fps}Hz ${stage.phase}/${p}: ${hand.position.distanceTo(last)}`);last=hand.position.clone();
  }
  vm.dispose();
@@ -78,13 +78,13 @@ for(let n=0;n<100;n++){fx.trigger();fx.update(1/144);assert.equal(points.geometr
 const continuous=createViewmodelManager();
 function poseAt(time:number){const s:WeaponSlotState={ammo:0,reserve:30};beginWeaponReload(gun,s);advanceWeaponReload(gun,s,time);continuous.update(0,gun,s,false,false,true,false,false,false,0,true,true);const root=continuous.root.getObjectByName('Weapon_railgun')!,hand=root.getObjectByName('leftHand')!,upper=root.getObjectByName('railgunLeftUpperArm')!;root.updateMatrixWorld(true);return {hand:hand.getWorldPosition(new THREE.Vector3()),rotation:hand.getWorldQuaternion(new THREE.Quaternion()),elbow:new THREE.Vector3(0,.5,0).applyMatrix4(upper.matrixWorld)};}
 let boundary=0;
-for(const duration of [.28,.24,.35,.16,.40,.55,.37,.20]){boundary+=duration;const before=poseAt(boundary-1e-6),after=poseAt(boundary+1e-6);assert.ok(before.hand.distanceTo(after.hand)<.0001,`Continuous wrist at ${boundary}`);assert.ok(before.rotation.angleTo(after.rotation)<.001,`Continuous orientation at ${boundary}`);assert.ok(before.elbow.distanceTo(after.elbow)<.0001,`Continuous elbow at ${boundary}`);}
+for(const duration of [.22,.18,.35,.32,.34,.50,.23,.34,.18]){boundary+=duration;const before=poseAt(boundary-1e-6),after=poseAt(boundary+1e-6);assert.ok(before.hand.distanceTo(after.hand)<.0001,`Continuous wrist at ${boundary}`);assert.ok(before.rotation.angleTo(after.rotation)<.001,`Continuous orientation at ${boundary}`);assert.ok(before.elbow.distanceTo(after.elbow)<.0001,`Continuous elbow at ${boundary}`);}
 continuous.dispose();
 
 // Third-person uses the very same parts-only animator without moving the actor's
 // weapon attachment. Closed shroud clears the actual seated projectile volume.
 const actorModel=createWeaponAssembly('railgun'),actorState:WeaponSlotState={ammo:0,reserve:30};actorModel.root.position.set(1,2,3);actorModel.root.rotation.set(.2,.4,.1);const actorPosition=actorModel.root.position.clone(),actorRotation=actorModel.root.quaternion.clone();beginWeaponReload(gun,actorState);
-for(let n=0;n<170;n++){advanceWeaponReload(gun,actorState,1/60);actorModel.update(1/60,0,0,actorState);near(actorModel.root.position.distanceTo(actorPosition),0);near(actorModel.root.quaternion.angleTo(actorRotation),0);near(actorModel.parts.breechSlide.position.z,RAILGUN.slideTravel*actorState.railgunBreech!.cover);}
+for(let n=0;n<170;n++){advanceWeaponReload(gun,actorState,1/60);actorModel.update(1/60,0,0,actorState);near(actorModel.root.position.distanceTo(actorPosition),0);near(actorModel.root.quaternion.angleTo(actorRotation),0);near(actorModel.parts.breechSlide.position.z,-RAILGUN.slideTravel*actorState.railgunBreech!.cover);}
 actorModel.root.position.set(0,0,0);actorModel.root.quaternion.identity();actorModel.root.updateMatrixWorld(true);const lid=new THREE.Box3().setFromObject(actorModel.parts.breechCover),slug=new THREE.Box3().setFromObject(actorModel.parts.chamberedSlug);assert.ok(lid.min.y>slug.max.y+.002,'Seated slug clears underside of locked shroud');disposeWeaponObject(actorModel.root);
 
 // Execute actual App charge and piercing handlers; assertions do not reproduce

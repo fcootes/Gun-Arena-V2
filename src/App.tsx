@@ -3487,6 +3487,7 @@ export default function App() {
         }
 
         // 3. Aim FoV transition
+        if(curW.id==='railgun'&&(curWs.reloading||!railgunBreechReady(curWs)))player.aiming=false;
         const targetFov = player.aiming ? (curW.adsFov ?? HIP_FOV) : HIP_FOV;
         let adsSpeed = 10;
         if (factionAlignmentRef.current === 'apex' && gearTierRef.current === 'specialized') {

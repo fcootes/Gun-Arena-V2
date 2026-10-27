@@ -1,3 +1,5 @@
+import {beginRailgunReload,advanceRailgunReload,markRailgunFired} from './railgunMechanics';
+import type {WeaponSlotState} from './types';
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -10,6 +12,7 @@ import {
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
 export function WeaponStudio({ weaponId }: { weaponId: string }) {
+  const reloadPreviewRef = useRef<() => void>(() => {});
   const firePreviewRef = useRef<() => void>(() => {});
   const setWeaponRef = useRef<(id: string) => void>(() => {});
   const weaponIdRef = useRef(weaponId);
@@ -79,8 +82,11 @@ export function WeaponStudio({ weaponId }: { weaponId: string }) {
     let effects: WeaponMuzzleEffect = createWeaponMuzzleEffect(
       weapon.userData.weaponAssembly,
     );
-    let fireTime = 0,railPreviewCharging=false;
+    const railReady:WeaponSlotState={ammo:1};
+    let fireTime = 0,railPreviewCharging=false,railReload:WeaponSlotState|undefined;
+    reloadPreviewRef.current=()=>{if(weaponIdRef.current!=='railgun')return;fireTime=0;railPreviewCharging=false;effects.reset();railReload={ammo:0,reserve:1};markRailgunFired(railReload);beginRailgunReload(railReload);};
     firePreviewRef.current = () => {
+      railReload=undefined;
       if(weaponIdRef.current==='railgun'){effects.reset();fireTime=1.24;railPreviewCharging=true;}
       else{effects.trigger();fireTime=.4;}
     };
@@ -114,7 +120,7 @@ export function WeaponStudio({ weaponId }: { weaponId: string }) {
       weapon.position.set(0, 0, 0);
       buildWeaponMesh(weapon, id);
       effects = createWeaponMuzzleEffect(weapon.userData.weaponAssembly);
-      fireTime = 0;railPreviewCharging=false;
+      fireTime = 0;railPreviewCharging=false;railReload=undefined;
       centerModel();
       fitCamera();
     };
@@ -153,10 +159,12 @@ export function WeaponStudio({ weaponId }: { weaponId: string }) {
       fireTime = Math.max(0, fireTime - dt);
       if(railPreviewCharging&&fireTime<=.04){railPreviewCharging=false;effects.trigger();}
       effects.update(dt);
+      if(railReload)advanceRailgunReload(railReload,dt);
       weapon.userData.weaponAssembly.update(
         dt,
         currentWeaponId === 'railgun' && railPreviewCharging ? Math.min(1,(1.24-fireTime)/1.2) : 0,
         currentWeaponId === 'minigun' && fireTime > 0 ? dt * 40 : 0,
+        currentWeaponId==='railgun'?(railReload??railReady):undefined,
       );
       controls.update();
       renderer.render(scene, camera);
@@ -168,7 +176,8 @@ export function WeaponStudio({ weaponId }: { weaponId: string }) {
       observer.disconnect();
       controls.dispose();
       setWeaponRef.current = () => {};
-      firePreviewRef.current = () => {};
+      firePreviewRef.current = () => {
+      railReload=undefined;};
       disposeBotVisuals(scene);
       environment.dispose();
       renderer.dispose();
@@ -188,6 +197,10 @@ export function WeaponStudio({ weaponId }: { weaponId: string }) {
       <div className="absolute left-4 bottom-3 pointer-events-none text-[9px] tracking-[.2em] text-cyan-200">
         OPTICAL TESTING VAULT / {weaponId.toUpperCase()} — DRAG TO INSPECT
       </div>
+      {weaponId==='railgun' && <button type="button" onClick={()=>reloadPreviewRef.current()}
+        className="absolute top-3 left-3 px-3 py-2 text-[9px] tracking-widest text-slate-100 border border-white/25 bg-black/60">
+        TEST RELOAD
+      </button>}
       <button
         type="button"
         onClick={() => firePreviewRef.current()}

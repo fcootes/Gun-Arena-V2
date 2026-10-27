@@ -21,22 +21,31 @@ export function buildRailgunModel(body:THREE.Group,parts:Record<string,THREE.Obj
  for(const side of [-1,1]){
   if(side>0)box('Rear receiver wall',.018,.050,.205,side*.046,.020,.125,steel,chamber);else{box('Scalloped near-side loading sill',.018,.018,.205,side*.046,.004,.125,steel,chamber);for(const z of [.030,.224])box('Loading well end buttress',.018,.050,.028,side*.046,.020,z,steel,chamber);}
   box('Inset armoured receiver cheek',.009,.038,.150,side*.059,-.005,.13,polymer);
-  if(side>0)box('Visible captive guide housing',.012,.015,.235,side*.076,.051,.135,dark);else for(const z of [.050,.210])box('Guide with ejection clearance',.012,.015,.080,side*.076,.051,z,dark);
+  box('Continuous fixed slide guide',.012,.015,.530,side*.076,.051,-.015,dark);
   if(!firstPerson)tube('Hydraulic stock recoil guide',.011,.17,side*.044,-.013,.27,steel);
   if(!firstPerson)tube('Recoil guide piston',.006,.045,side*.044,-.013,.32,edge);
  }
- const seat=group('chamberSeat',0,.020,.132);
- for(const side of [-1,1])box('Slug V-block seating rail',.010,.010,.132,side*.0135,.0035,0,edge,seat).rotation.z=side*Math.PI/4;
+ // Front trunnion is fixed; negative X rotation raises the stockward end.
+ const cradle=group('cartridgeCradle',0,.020,.035);
+ const seat=group('chamberSeat',0,0,.097,cradle);
+ box('Hinged cartridge tray',.051,.009,.180,0,-.001,.093,steel,cradle);
+ for(const side of [-1,1]){
+  box('Tray retention cheek',.008,.017,.170,side*.024,.007,.093,steel,cradle);
+  tube('Fixed cradle trunnion',.012,.018,side*.037,.020,.035,steel).rotation.set(0,0,Math.PI/2);
+ }
+
+ for(const side of [-1,1])box('Slug V-block seating rail',.010,.010,.132,side*.0135,.0035,.097,steel,cradle).rotation.z=side*Math.PI/4;
  box('Forward chamber stop',.056,.031,.012,0,.028,.027,steel);
  box('Rear chamber stop',.056,.031,.012,0,.028,.224,steel);
  const ejection=group('carrierEjectionPort',-.060,.033,.125);
  box('Ejection opening lower lip',.012,.012,.047,0,-.019,0,edge,ejection);
  box('Carrier extractor claw',.010,.015,.017,.016,.005,.020,edge,ejection);
- // Sliding undercarriage and cover remain captive and separately addressable.
+ // Fixed rails support the entire forward-sliding receiver at both stops.
  const slide=group('breechSlide');
  for(const side of [-1,1]){
-  for(const z of [.025,.225])box('Guide structural standoff',.042,.025,.025,side*.060,.043,z,steel);
-  box('Captive upper runner',.009,.012,.215,side*.076,.069,.130,edge,slide);
+  for(const z of [-.255,.225])box('Guide structural standoff',.042,.025,.025,side*.060,.043,z,steel);
+  box('Captive upper runner',.009,.012,.460,side*.076,.069,-.005,edge,slide);
+  box('Upper receiver structural connector',.026,.054,.400,side*.048,.090,-.090,polymer,slide);
   box('Slider keyed shoe',.018,.021,.055,side*.073,.065,.185,dark,slide);
  }
  const cover=group('breechCover',0,.082,.125,slide);
@@ -46,7 +55,7 @@ export function buildRailgunModel(body:THREE.Group,parts:Record<string,THREE.Obj
  for(const side of [-1,1])for(let n=0;n<4;n++)box('Cover grip serration',.004,.018,.012,side*.080,-.001,-.045+n*.028,steel,cover);
  box('Near-side sliding handle bridge',.030,.015,.085,-.092,-.004,.035,polymer,cover);
  box('Near-side knurled cover handle',.012,.019,.060,-.106,-.004,.035,steel,cover);
- const latch=group('breechLatch',-.082,.048,.195);
+ const latch=group('breechLatch',-.082,.048,.195,slide);
  tube('Latch hinge axle',.009,.026,0,0,0,steel,latch).rotation.set(0,0,Math.PI/2);
  box('Mechanical unlock lever',.020,.011,.052,-.012,.004,.022,steel,latch);
  const lock=group('breechLock',-.066,.046,.195);box('Visible cross-bolt lock',.020,.017,.028,0,0,0,edge,lock);
@@ -85,10 +94,10 @@ export function buildRailgunModel(body:THREE.Group,parts:Record<string,THREE.Obj
  // Front termination frames the real projectile channel; no solid plate over it.
  for(const side of [-1,1])box('Muzzle rail termination',.021,.072,.034,side*.039,.023,-.818,steel);
  for(const y of [-.010,.056])box('Muzzle collar crossmember',.065,.010,.034,0,y,-.818,dark);
- // Fixed optic bridge is entirely forward of the rear loading chamber.
- const optic=group('opticBridge');
- for(const side of [-1,1])box('Fixed optic bridge strut',.012,.050,.19,side*.038,.088,-.267,dark,optic);
- box('Fixed optic mounting saddle',.086,.012,.218,0,.118,-.267,steel,optic);
+ // The saddle, scope and shroud share one rigid upper receiver.
+ const optic=group('opticBridge',0,0,0,slide);
+ for(const side of [-1,1])box('Sliding optic bridge strut',.012,.050,.19,side*.038,.088,-.267,dark,optic);
+ box('Sliding optic mounting saddle',.086,.012,.218,0,.118,-.267,steel,optic);
  for(const z of [-.335,-.196])box('Optic clamping foot',.059,.020,.021,0,.132,z,dark,optic);
  tube('Scope tube',.023,.182,0,.157,-.266,dark,optic,.023,firstPerson);
  for(const z of [-.358,-.174])tube('Scope bell',.028,.016,0,.157,z,steel,optic,.026,true);
@@ -96,10 +105,10 @@ export function buildRailgunModel(body:THREE.Group,parts:Record<string,THREE.Obj
   const ring=mesh('Optic retaining ring',new THREE.TorusGeometry(.026,.004,5,16),steel,0,.157,z,optic);ring.rotation.z=.1;
  }
  box('Optic elevation turret',.026,.019,.025,0,.186,-.258,dark,optic);
- for(const side of [-1,1])box('Precision witness marking',.0015,.009,.020,side*.025,.166,-.24,edge,optic);
+ for(const side of [-1,1])box('Precision witness marking',.0015,.009,.020,side*.025,.166,-.24,steel,optic);
  // Reusable ammunition: one fresh slug, one seated slug, one small spent ring.
  function slug(name:string){const g=group(name);tube('Kinetic steel slug',.0155,.130,0,0,0,edge,g);tube('Conductive slug base',.0175,.016,0,0,.073,edge,g);tube('Tungsten projectile nose',.0155,.034,0,0,-.079,edge,g,.003);g.visible=false;return g;}
- const fresh=slug('freshSlug'),loaded=slug('chamberedSlug');loaded.position.set(0,.039,.132);loaded.visible=true;
+ const fresh=slug('freshSlug'),loaded=slug('chamberedSlug');cradle.add(loaded);loaded.position.set(0,.019,.097);loaded.visible=true;
  const carrier=group('spentCarrier',0,.039,.125);tube('Spent conductive carrier sleeve',.016,.024,0,0,0,edge,carrier,.016,true);tube('Spent carrier retaining flange',.018,.005,0,0,.011,edge,carrier,.018,true);carrier.visible=false;
  if(firstPerson){const upper=group('supportUpperArm');upper.name='railgunLeftUpperArm';mesh('Railgun upper sleeve',new THREE.CapsuleGeometry(.054,.32,5,10).scale(1,1/.32,1),polymer,0,0,0,upper);upper.visible=false;}
  // Economical etched markings, geometry-batched and readable without textures.

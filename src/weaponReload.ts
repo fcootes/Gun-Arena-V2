@@ -6,7 +6,7 @@ import { SHOTGUN, advanceShotgunCycle, beginShotgunCycle, type ShotgunEventListe
 import { SNIPER, advanceSniperAction, type SniperBoltListener } from './sniperMechanics';
 import { BATTLE_RIFLE, brCueTime, type BattleRifleListener } from './battleRifleMechanics';
 
-export type ReloadPhase = 'open' | 'eject' | 'pickup' | 'insert' | 'chamber' | 'close' | 'vent' | 'lift' | 'feed' | 'slap' | 'present' | 'unlock' | 'retract' | 'lock' | 'recover';
+export type ReloadPhase = 'open' | 'eject' | 'pickup' | 'insert' | 'chamber' | 'close' | 'vent' | 'lift' | 'feed' | 'slap' | 'present' | 'unlock' | 'retract' | 'slideForward' | 'raiseCradle' | 'lowerCradle' | 'lock' | 'recover';
 export type ReloadPhaseListener = (phase: ReloadPhase, duration: number, empty: boolean) => void;
 export interface ReloadSequence {
   kind: 'magazine' | 'shell' | 'battery' | 'tube' | 'cylinder' | 'vent' | 'railgun';
@@ -19,7 +19,7 @@ export interface ReloadSequence {
   shellSeated?: boolean;
   brCuePlayed?: boolean;
   lmgCuePlayed?: boolean;
-  railgunStartCover?:number;railgunStartLatch?:number;railgunSpeed?:number;railgunCuePlayed?:boolean;railgunHadCarrier?:boolean;railgunRecoveryOnly?:boolean;
+  railgunEjectTilt?:number;railgunStartCradle?:number;railgunStartCover?:number;railgunStartLatch?:number;railgunSpeed?:number;railgunCuePlayed?:boolean;railgunHadCarrier?:boolean;railgunRecoveryOnly?:boolean;
 }
 
 export function cancelWeaponReload(state: WeaponSlotState) {

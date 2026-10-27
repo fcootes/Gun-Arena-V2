@@ -1,4 +1,4 @@
-import {createRailgunAnimator} from './railgunMechanics';
+import {createRailgunAnimator,railgunBreechReady} from './railgunMechanics';
 import { createLmgAnimator } from './lmgMechanics';
 import { createSmgAnimator } from './smgMechanics';
 import { createPistolSprintController, PISTOL_SPRINT, type PistolSprintPose } from './pistolSprint';
@@ -474,6 +474,7 @@ export function createViewmodelManager(): ViewmodelManager {
     const ws = Array.isArray(states)
       ? states[typeof slotOrWeapon === 'number' ? slotOrWeapon : 0]
       : states;
+    if(w.id==='railgun'&&(ws?.reloading||ws&&!railgunBreechReady(ws)))aiming=false;
     root.visible = true;
     time += dt;
     bob += dt * (sprinting ? 14 : 9.5);

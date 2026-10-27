@@ -178,7 +178,7 @@ function assertNear(id: string) {
         // offscreen box pickup. Require any near-plane crossing to clear even
         // the near-plane bottom by 2.5 cm; visible glove/weapon vertices stay safe.
         const offscreenUpper=(id==='lmg'||id==='railgun')&&(object.name==='LMG upper sleeve'||object.name==='Railgun upper sleeve'||object.name==='leftForearm')&&vertex.y<-.05*Math.tan(THREE.MathUtils.degToRad(74/2))-.025;
-        assert.ok(vertex.z < -.05 || offscreenUpper, `${id}/${object.name}: visible weapon/hand must stay beyond near plane (${vertex.z})`);
+        assert.ok(vertex.z < -.05 || offscreenUpper, `${id}/${object.parent?.name}/${object.name}: visible weapon/hand must stay beyond near plane (${vertex.toArray()})`);
       }
     }
   });
