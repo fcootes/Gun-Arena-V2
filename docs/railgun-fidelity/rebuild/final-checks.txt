@@ -1,0 +1,96 @@
+
+> gun-arena-v2@0.0.0 lint
+> tsc --noEmit
+
+
+> gun-arena-v2@0.0.0 build
+> vite build
+
+vite v6.4.4 building for production...
+transforming...
+✓ 101 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                                 3.37 kB │ gzip:   1.21 kB
+dist/assets/plasma_chamber_insert-CNDNZEqU.wav                 30.76 kB
+dist/assets/plasma_fire_single-D0IjigXU.wav                    31.72 kB
+dist/assets/lmg_box_release-DSHqYSt2.wav                       41.32 kB
+dist/assets/br_mag_remove-DTUfROVh.wav                         47.85 kB
+dist/assets/br_charge-CC-SeEgi.wav                             47.85 kB
+dist/assets/lmg_feed_cover_close-_r9lrVNr.wav                  61.20 kB
+dist/assets/lmg_box_seat-CbqpauaZ.wav                          63.40 kB
+dist/assets/lmg_charge-3zIaaHqY.wav                            63.40 kB
+dist/assets/shotgun_reload_shell_insert-BU_IxnJE.wav           75.52 kB
+dist/assets/shotgun_pump-D4I_3IIO.wav                          80.68 kB
+dist/assets/smg_fire_single-D_p1kfL5.wav                       84.52 kB
+dist/assets/minigun_warmup-CRzokXtF.wav                        96.04 kB
+dist/assets/br_mag_insert-CnNswe00.wav                        105.64 kB
+dist/assets/shotgun_reload_shell_insert_empty-DmFCATmS.wav    106.49 kB
+dist/assets/br_reload_tactical-44u6Ge6E.wav                   143.81 kB
+dist/assets/sniper_fire_single-CREar2y0.wav                   149.80 kB
+dist/assets/br_fire_single-CXmXP82y.wav                       157.48 kB
+dist/assets/sniper_fire_with_bolt-ExwP6_gZ.wav                163.24 kB
+dist/assets/sniper_bolt_cycle-Cb9Mzjid.wav                    163.24 kB
+dist/assets/ar_fire_single-C5vmyHtD.wav                       170.92 kB
+dist/assets/lmg_fire_sustain-DC9HbZVy.wav                     176.68 kB
+dist/assets/br_fire_burst_3-CF-Jy6zQ.wav                      186.28 kB
+dist/assets/plasma_fire_auto_loop-iYQ2ci9P.wav                211.24 kB
+dist/assets/pistol_fire_single-DaCkoGDJ.wav                   215.08 kB
+dist/assets/smg_reload_tactical-vTAW0HJh.wav                  215.70 kB
+dist/assets/pistol_reload_tactical-C7ScYSDJ.wav               227.68 kB
+dist/assets/lmg_fire_lead-3Gb-sBfb.wav                        230.44 kB
+dist/assets/railgun_charge-D9SiYAfb.wav                       230.44 kB
+dist/assets/br_reload_empty-BMe_5_4j.wav                      253.48 kB
+dist/assets/minigun_spin_down-DM-a2uzf.wav                    268.84 kB
+dist/assets/sniper_reload_tactical-BJDnpCP6.wav               323.52 kB
+dist/assets/smg_fire_auto_loop-BtYYMCHK.wav                   331.82 kB
+dist/assets/minigun_fire_auto_loop-C0umsVzs.wav               345.64 kB
+dist/assets/shotgun_fire_single-Cl_R7u2_.wav                  361.00 kB
+dist/assets/ar_reload_tactical-DiSwx-iM.wav                   371.45 kB
+dist/assets/smg_reload_empty-BTXvlvx5.wav                     380.20 kB
+dist/assets/minigun_cooling_hiss-CJoccMz4.wav                 384.04 kB
+dist/assets/minigun_overheat-DE6yWt_v.wav                     384.04 kB
+dist/assets/pistol_reload_empty-BsASj1C1.wav                  401.32 kB
+dist/assets/plasma_cooling_hiss-BcIyrCT4.wav                  422.44 kB
+dist/assets/plasma_reload_empty-CeXiGbBC.wav                  422.44 kB
+dist/assets/railgun_fire_single-CFg_3Wgg.wav                  460.84 kB
+dist/assets/ar_fire_auto_loop-CM1uqqsX.wav                    506.92 kB
+dist/assets/sniper_reload_empty-Kue3AdrL.wav                  570.28 kB
+dist/assets/lmg_reload_tactical-vD9wVL--.wav                  629.04 kB
+dist/assets/ar_reload_empty-DSLjvbdg.wav                      654.76 kB
+dist/assets/lmg_reload_empty-OaGZp1-n.wav                   1,064.49 kB
+dist/assets/index-BUWCmdpj.css                                 85.41 kB │ gzip:  15.02 kB
+dist/assets/index-3o3V73se.js                               1,469.67 kB │ gzip: 427.77 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 7.33s
+
+> gun-arena-v2@0.0.0 test:railgun
+> node --import tsx tests/railgun.test.ts && node --import tsx tests/railgunRebuild.test.ts
+
+PASS: 2.8 s authoritative reload, class modifiers, one slug/carrier and six cues, interruptions/lock guard, real cavity/scope clearance, rig contact and peripheral connected arms, 30/60/144 Hz, cached resources and compact pooled discharge
+PASS: every boundary has continuous wrist/orientation/elbow; third-person shares physical state; actual App retains early release, 1.2 s charge, one discharge, piercing, full-range damage, recoil and muzzle origin
+PASS: forward rigid scope/upper, fixed 32-degree hinge, ejection and seating continuity, closure clearance/order, interrupted cradle recovery, exact ADS return and owned resource disposal
+
+> gun-arena-v2@0.0.0 test:viewmodel
+> node --import tsx tests/viewmodel.test.ts
+
+PASS: twelve explicit metre-scale grip configurations, palm orientation, specialty handles and unchanged bare assemblies
+PASS: repeated twelve-weapon switching reuses one hand pair, instance buffers and absolute holding transforms
+PASS: zero per-frame geometry, material or scene-object construction after preparation
+PASS: smooth frame-rate-independent ADS, scope visibility, pause/resume and death/redeployment reset
+PASS: independent support-hand reaches and recovery across all reload families without changing their state machines
+PASS: legacy and explicit teardown release shared geometry/material/texture and instanced buffers exactly once
+PASS: full visible weapon/instanced-hand vertex bounds across all twelve hip/ADS/sprint and full reload sequences
+PASS: calibrated palm/finger/wrist contact, compact screen silhouette, lowered lateral sprint/stop/ADS and exact AR empty-only charging contact
+PASS: eleven lowered lateral sprint profiles plus right-handed raised pistol carry
+
+> gun-arena-v2@0.0.0 test:railgun
+> node --import tsx tests/railgun.test.ts && node --import tsx tests/railgunRebuild.test.ts
+
+PASS: 2.8 s authoritative reload, class modifiers, one slug/carrier and six cues, interruptions/lock guard, real cavity/scope clearance, rig contact and peripheral connected arms, 30/60/144 Hz, cached resources and compact pooled discharge
+PASS: every boundary has continuous wrist/orientation/elbow; third-person shares physical state; actual App retains early release, 1.2 s charge, one discharge, piercing, full-range damage, recoil and muzzle origin
+PASS: forward rigid scope/upper, fixed 32-degree hinge, ejection and seating continuity, closure clearance/order, interrupted cradle recovery, exact ADS return and owned resource disposal

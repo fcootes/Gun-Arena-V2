@@ -1,0 +1,57 @@
+Starting live controls
+Live early release passed {
+  ammo: 1,
+  reserve: 30,
+  reloading: false,
+  reloadT: undefined,
+  phase: undefined,
+  breech: undefined,
+  charge: 0,
+  charging: false,
+  shots: 0,
+  state: 'playing',
+  slot: 0,
+  aiming: false,
+  sprinting: false,
+  crouching: false,
+  thirdPerson: false,
+  frames: 14
+}
+Live charged shot passed {
+  ammo: 0,
+  reserve: 30,
+  reloading: true,
+  reloadT: 2.7246000000000934,
+  phase: 'present',
+  breech: { cover: 0, cradle: 0, latch: 0, carrier: true, seated: false },
+  charge: 0,
+  charging: false,
+  shots: 1,
+  state: 'playing',
+  slot: 0,
+  aiming: false,
+  sprinting: false,
+  crouching: false,
+  thirdPerson: false,
+  frames: 40
+}
+Live full reload passed {
+  ammo: 1,
+  reserve: 29,
+  reloading: false,
+  reloadT: 0,
+  phase: undefined,
+  breech: { cover: 0, cradle: 0, latch: 0, carrier: false, seated: true },
+  charge: 0,
+  charging: false,
+  shots: 1,
+  state: 'playing',
+  slot: 0,
+  aiming: false,
+  sprinting: false,
+  crouching: false,
+  thirdPerson: false,
+  frames: 62
+}
+PASS: live input, charge, reload, interruption, pause, switch, ADS/sprint/third person and death
+PASS: production Railgun scene/studio captures
