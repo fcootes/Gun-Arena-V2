@@ -5,7 +5,7 @@ import {resolve} from 'node:path';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 const output=resolve(process.env.RAILGUN_OUTPUT??'docs/railgun-fidelity/evidence');mkdirSync(output,{recursive:true});
-const baseline=process.env.RAILGUN_BASELINE==='1',port=3150,errors=[];
+const baseline=process.env.RAILGUN_BASELINE==='1',port=Number(process.env.RAILGUN_PORT??3150),errors=[];
 const server=await createServer({logLevel:'error',server:{host:'127.0.0.1',port,strictPort:true},plugins:[{name:'railgun-evidence',enforce:'pre',
  configureServer(s){s.middlewares.use('/__railgun-studio',async(_req,res)=>{res.setHeader('Content-Type','text/html');res.end(await s.transformIndexHtml('/__railgun-studio',`<html><head><link rel="stylesheet" href="/src/index.css"><style>body{margin:0}#root>[aria-label]{height:720px!important;width:1280px}</style></head><body><div id="root"></div><script type="module" src="/@id/__x00__railgun-fixture"></script></body></html>`));});},
  resolveId(id){if(id==='\0railgun-fixture')return id;},load(id){if(id==='\0railgun-fixture')return `import React from'react';import{createRoot}from'react-dom/client';import{WeaponStudio}from'/src/WeaponStudio.tsx';createRoot(document.getElementById('root')).render(React.createElement(WeaponStudio,{weaponId:'railgun'}));`;},
