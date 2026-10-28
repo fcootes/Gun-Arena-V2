@@ -1,0 +1,17 @@
+Captured Armory ready-side
+Captured Armory ready-three-quarter
+Captured Armory tray-open
+Captured Armory old-cylinder-out
+Captured Armory fresh-cylinder
+Captured Armory thermal-shutters
+Rendered swap 0/84
+Rendered swap 20/84
+Rendered swap 40/84
+Rendered swap 60/84
+Rendered swap 80/84
+Rendered vent 0/38
+Rendered vent 20/38
+Rendered fire 0/45
+Rendered fire 20/45
+Rendered fire 40/45
+PASS production PR-100 browser evidence

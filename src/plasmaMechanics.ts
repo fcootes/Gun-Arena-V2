@@ -16,10 +16,11 @@ export function addPlasmaSupply(state:Pick<WeaponSlotState,'reserve'>,charges:nu
 export function plasmaReady(s:WeaponSlotState){const b=s.plasma;return !s.reloading&&!s.overheated&&(s.heat??0)<100&&(s.ammo??0)>0&&(!b||(b.loaded&&b.tray<1e-8&&b.latch<1e-8&&b.shutters<1e-8));}
 export function beginPlasmaAction(s:WeaponSlotState,multiplier=1,force?:'swap'|'vent'){
   if(s.reloading)return false;
-  s.reserve=sealedReserve(s.reserve??0);s.ammo=THREE.MathUtils.clamp(s.ammo??60,0,60);
-  const heat=s.heat??0,spare=s.reserve>=60;
-  const mode=s.overheated?'vent':force??((s.ammo===0&&spare)?'swap':heat>=65?'vent':s.ammo<60&&spare?'swap':s.ammo===60&&heat>=10?'vent':undefined);
-  if(!mode||mode==='swap'&&(!spare||s.ammo===60)||mode==='vent'&&heat<=0&&!s.overheated)return false;
+  const reserve=sealedReserve(s.reserve??0),ammo=THREE.MathUtils.clamp(s.ammo??60,0,60);
+  const heat=s.heat??0,spare=reserve>=60;
+  const mode=s.overheated?'vent':force??((ammo===0&&spare)?'swap':heat>=65?'vent':ammo<60&&spare?'swap':ammo===60&&heat>=10?'vent':undefined);
+  if(!mode||mode==='swap'&&(!spare||ammo===60)||mode==='vent'&&heat<=0&&!s.overheated)return false;
+  if(mode==='swap'){s.reserve=reserve;s.ammo=ammo;}
   const physical=s.plasma??={tray:0,latch:0,shutters:0,loaded:true};
   const speed=Math.max(.1,Number.isFinite(multiplier)?multiplier:1);
   const phases=(mode==='swap'?PLASMA.swap:PLASMA.thermal).map(([phase,duration])=>({phase,duration:duration*speed}));

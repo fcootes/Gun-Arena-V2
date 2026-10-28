@@ -31,6 +31,7 @@ for(const speed of [.75,.9,1,1.2])for(const cut of [.1,.3,.6,.9,1.1,1.41,1.43,1.
  const saved=[ws.ammo,ws.reserve];advanceWeaponReload(gun,ws,100);assert.deepEqual([ws.ammo,ws.reserve],saved);
  if(ws.ammo!<60){assert.ok(beginWeaponReload(gun,ws,speed));advanceWeaponReload(gun,ws,100);assert.deepEqual([ws.ammo,ws.reserve],[60,120]);}
 }
+const legacyVent:WeaponSlotState={ammo:45,reserve:100,heat:80};beginPlasmaAction(legacyVent);advancePlasmaAction(legacyVent,100);assert.deepEqual([legacyVent.ammo,legacyVent.reserve],[45,100],'Venting preserves even legacy partial reserve counters');
 const contacts: {event:string;time:number}[]=[],contactState:WeaponSlotState={ammo:20,reserve:180};beginPlasmaAction(contactState);advancePlasmaAction(contactState,3,(event,_speed,late)=>contacts.push({event,time:3-late}));
 assert.deepEqual(contacts.map(c=>c.event),['tray_unlock','tray_open','cooling_pulse','cylinder_remove','cylinder_seat','tray_close','tray_lock']);contacts.forEach((c,n)=>near(c.time,[.45,.87,.87,1.42,1.86,2.32,2.54][n]));
 const supply:WeaponSlotState={reserve:180};addPlasmaSupply(supply,45);assert.equal(supply.reserve,240);
