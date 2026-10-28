@@ -1,3 +1,4 @@
+import {advancePlasmaFire,advancePlasmaCooling,beginPlasmaAction,addPlasmaSupply} from './plasmaMechanics';
 import { updateAbominationCombat, poseSpartan } from "./area51Bosses";
 import { WEAPONS } from './weapons';
 import { advanceWeaponReload, beginWeaponReload, interruptShellReload } from './weaponReload';
@@ -1460,6 +1461,8 @@ export interface CombatSystemsContext {
   radarPing?: (x: number, z: number, type: 'gunfire' | 'zombie') => void;
   /** Called whenever a splash/penetrator kill should pay out. */
   needsAmmo?: () => boolean;
+  onPlasmaHit?: (bot:Bot,head:boolean,point:THREE.Vector3)=>void;
+  firePlasmaBot?: (bot:Bot,target:THREE.Vector3,damage:number)=>boolean;
   onBotShot?: (bot: Bot, weapon: WeaponDef) => void;
   onExplosionHit?: (target: Bot | 'player', damage: number) => void;
 }
@@ -3073,6 +3076,7 @@ export function updateClassCombatBot(bot: Bot, dt: number, ctx: CombatSystemsCon
   const def = WEAPONS.find(w => w.id === bot.weaponType) ?? WEAPONS[0];
   const ws = state.weaponState ??= { ammo: def.mag, reserve: def.reserve };
   advanceWeaponReload(def, ws, dt);
+  if(def.id==='laser'){advancePlasmaCooling(ws,dt);if(ws.overheated&&!ws.reloading)beginPlasmaAction(ws,1,'vent');}
   state.thinkTimer -= dt; state.pathTimer -= dt; state.healCooldown -= dt; state.supplyCooldown -= dt; state.grenadeCooldown -= dt;
   bot.suppression = Math.max(0, (bot.suppression ?? 0) - dt * .18);
   const alliedPlayer = bot.team === ctx.player.team && ctx.player.alive;
@@ -3158,7 +3162,7 @@ export function updateClassCombatBot(bot: Bot, dt: number, ctx: CombatSystemsCon
     if (lowAmmo) {
       state.supplies--; state.supplyCooldown = 20;
       const pack = ctx.world.createGroundPickup(bot.pos.x, bot.pos.z, bot.weaponTypeIndex, 45); pack.group.userData.ammoPack = true; pack.label='SUPPORT AMMO PACK';
-      for (const ally of allies) if (ally.alive && ally.classAI?.weaponState && bot.pos.distanceTo(ally.pos) < 8) ally.classAI.weaponState.reserve = Math.min(Math.max(180,ally.classAI.weaponState.reserve??0), (ally.classAI.weaponState.reserve ?? 0) + 30);
+      for (const ally of allies) if (ally.alive && ally.classAI?.weaponState && bot.pos.distanceTo(ally.pos) < 8) {if(ally.weaponType==='laser')addPlasmaSupply(ally.classAI.weaponState,60);else ally.classAI.weaponState.reserve = Math.min(Math.max(180,ally.classAI.weaponState.reserve??0), (ally.classAI.weaponState.reserve ?? 0) + 30);}
       ctx.pushKillFeed(`${bot.callsign ?? 'SUPPORT'}: AMMO PACK DROPPED`, true);
     }
   }
@@ -3200,6 +3204,17 @@ export function updateClassCombatBot(bot: Bot, dt: number, ctx: CombatSystemsCon
     const grenade = spawnProjectile(ctx.scene,'M32_GRENADE',aiOrigin,aiDirection.normalize(),bot.team,false,bot.id);
     if (grenade) { grenade.ownerBotRef = bot; state.grenades--; state.grenadeCooldown = 15; }
   }
+  if(def.id==='laser'){
+    if(!ws.reloading&&(ws.ammo??0)<=0)beginPlasmaAction(ws);
+    advancePlasmaFire(ws,dt,true,()=>{
+      aiOrigin.copy(threat.pos);if(threat.target!=='player')aiOrigin.y+=1.25;
+      const miss=(1-tuning.accuracy*(1-(bot.suppression??0)*.6))*distance*.12;
+      aiOrigin.x+=(Math.random()-.5)*miss;aiOrigin.y+=(Math.random()-.5)*miss;
+      const fired=ctx.firePlasmaBot?.(bot,aiOrigin,12*tuning.damageMultiplier)??false;
+      if(fired){bot.weaponEffects?.trigger();ctx.onBotShot?.(bot,def);}return fired;
+    },tuning.fireRateMultiplier*(role==='support'?.65:1));
+    if(ws.overheated&&!ws.reloading)beginPlasmaAction(ws,1,'vent');return;
+  }
   if (bot.fireTimer > 0 || (ws.boltCycleT ?? 0) > 0) return;
   if (def.arsenalId) {
     const fired = fireBotLauncher(ctx.scene,bot,threat.pos.clone().add(new THREE.Vector3(0,1,0)),tuning.damageMultiplier);
@@ -3210,7 +3225,7 @@ export function updateClassCombatBot(bot: Bot, dt: number, ctx: CombatSystemsCon
   ws.pendingReloadShot = false;
   if ((ws.ammo ?? 0) <= 0) { beginWeaponReload(def,ws,1,false); return; }
   ws.ammo = (ws.ammo ?? 0) - 1;
-  if(def.id==='laser'||def.id==='minigun'){ws.heat=Math.min(100,(ws.heat??0)+(def.id==='laser'?2:3));if(ws.heat>=100)beginWeaponReload(def,ws,1,false);}
+  if(def.id==='minigun'){ws.heat=Math.min(100,(ws.heat??0)+3);if(ws.heat>=100)beginWeaponReload(def,ws,1,false);}
   if (def.id === 'sniper') ws.boltCycleT = .85;
   bot.fireTimer = (def.id==='smg'?.35:def.id==='lmg'?.55:def.id==='pistol'?.7:def.id==='shotgun'?1.4:def.id==='sniper'?1.6:def.id==='br'?.8:def.id==='laser'?.3:def.id==='minigun'?.15:def.id==='railgun'?2:1)*tuning.fireRateMultiplier*(role==='support'?.65:1);
   bot.weaponEffects?.trigger(); ctx.onBotShot?.(bot,def);

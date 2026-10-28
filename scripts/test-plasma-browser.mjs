@@ -1,0 +1,77 @@
+import {chromium} from 'playwright';
+import {createServer} from 'vite';
+import {mkdirSync,writeFileSync} from 'node:fs';
+import {resolve} from 'node:path';
+import {execFileSync} from 'node:child_process';
+import assert from 'node:assert/strict';
+const output=resolve(process.env.PLASMA_OUTPUT??'docs/plasma-fidelity/evidence');mkdirSync(output,{recursive:true});
+const port=Number(process.env.PLASMA_PORT??3160),errors=[];
+const server=await createServer({logLevel:'error',server:{host:'127.0.0.1',port,strictPort:true,hmr:false},plugins:[{name:'plasma-evidence',enforce:'pre',
+ configureServer(s){s.middlewares.use('/__plasma-studio',async(_req,res)=>{res.setHeader('Content-Type','text/html');res.end(await s.transformIndexHtml('/__plasma-studio',`<html><head><link rel="stylesheet" href="/src/index.css"><style>body{margin:0}#root>[aria-label]{height:720px!important;width:1280px}</style></head><body><div id="root"></div><script type="module" src="/@id/__x00__plasma-fixture"></script></body></html>`));});},
+ resolveId(id){if(id==='\0plasma-fixture')return id;},load(id){if(id==='\0plasma-fixture')return `import React from'react';import{createRoot}from'react-dom/client';import{WeaponStudio}from'/src/WeaponStudio.tsx';createRoot(document.getElementById('root')).render(React.createElement(WeaponStudio,{weaponId:'laser'}));`;},
+ transform(code,id){
+ if(id.endsWith('/src/WeaponStudio.tsx'))return code.replace('    controls.maxDistance = 5;',`    controls.maxDistance = 5;
+ window.__plasmaStudio={hold:false,view(mode='ready',time=0,angle='three-quarter'){this.hold=true;controls.enabled=false;weapon.rotation.set(0,-Math.PI/2,0);weapon.position.set(0,0,0);
+ const s={ammo:mode==='swap'?20:60,reserve:180,heat:mode==='vent'?80:0};if(mode!=='ready'){beginPlasmaAction(s,1,mode);advancePlasmaAction(s,time);}weapon.userData.weaponAssembly.update(0,0,0,s);
+ const positions={side:[0,.1,2.1],'three-quarter':[-1.1,.7,1.7],front:[1.8,.25,0]};camera.position.set(...positions[angle]);controls.target.set(0,0,0);camera.lookAt(0,0,0);camera.updateProjectionMatrix();renderer.render(scene,camera);return renderer.domElement.toDataURL('image/png').split(',')[1];}};`).replace('      controls.update();','      if(!window.__plasmaStudio?.hold)controls.update();').replace('      renderer.render(scene, camera);','      if(!window.__plasmaStudio?.hold)renderer.render(scene,camera);');
+ if(!id.endsWith('/src/App.tsx'))return;
+ const needle='    // Main Game Loop';assert.equal(code.split(needle).length,2);
+ return code.replace(needle,`    const plasmaDef=WEAPONS.find(w=>w.id==='laser');
+ window.__plasma={scene,camera,renderer,player,manager:vmManager,pool:plasmaPool,hold:false,get state(){return gameStateRef.current;},get ws(){return currentSlotState();},
+ equip(ammo=60,heat=0){clearGameplayInput();stopWeaponAudio();cancelWeaponReload(currentSlotState());playerLoadout[0]=plasmaDef;playerLoadout[1]=WEAPONS[0];playerWeaponState[0]={ammo,reserve:180,heat};playerWeaponState[1]={ammo:30,reserve:90};switchSlot(0);player.aiming=false;player.health=player.maxHealth=100000;plasmaPool.clear();vmManager.resetEffects();},
+ tick(dt){vmManager.update(dt,plasmaDef,this.ws,false,false,true,false,false,false,0,true,true);},
+ pose(mode='ready',time=0){this.hold=true;this.equip(mode==='swap'?20:60,mode==='vent'?80:0);for(let n=0;n<30;n++)this.tick(1/60);if(mode==='swap'||mode==='vent'){beginPlasmaAction(this.ws,1,mode);advanceWeaponReload(plasmaDef,this.ws,time);this.tick(0);}camera.fov=HIP_FOV;camera.updateProjectionMatrix();return this.stats();},
+ start(mode){this.pose(mode,0);},
+ step(dt,fire=false,capture=true){advancePlasmaCooling(this.ws,dt);advanceWeaponReload(plasmaDef,this.ws,dt);advancePlasmaFire(this.ws,dt,fire,firePlasmaShot);this.tick(dt);plasmaPool.update(dt,getCombatContext());return capture?this.capture():this.stats();},
+ capture(){renderer.render(scene,camera);return renderer.domElement.toDataURL('image/png').split(',')[1];},
+ stats(){const q=this.ws.reloadSequence;return{ammo:this.ws.ammo,reserve:this.ws.reserve,heat:this.ws.heat,reloading:!!this.ws.reloading,kind:q?.kind,phase:q?.phases[q.index].phase,physical:this.ws.plasma,shots:player.shotsFired,bolts:plasmaPool.activeCount,aiming:player.aiming,thirdPerson,state:this.state};},
+ live(ammo=60,heat=0){this.equip(ammo,heat);player.classReloadMultiplier=1;this.hold=false;},
+ kill(){applyDamageToPlayer(999999,true,true,null);},
+ startRecording(){this.chunks=[];this.stream=renderer.domElement.captureStream(30);this.recorder=new MediaRecorder(this.stream,{mimeType:'video/webm;codecs=vp9',videoBitsPerSecond:1400000});this.recorder.ondataavailable=e=>this.chunks.push(e.data);this.recorder.start();},
+ async stopRecording(){await new Promise(resolve=>{this.recorder.onstop=resolve;this.recorder.stop();});this.stream.getTracks().forEach(t=>t.stop());const blob=new Blob(this.chunks,{type:'video/webm'});return await new Promise(resolve=>{const r=new FileReader();r.onload=()=>resolve(r.result.split(',')[1]);r.readAsDataURL(blob);});},
+ };
+`+needle).replace('      const dt = Math.min(0.05, clock.getDelta());','      const dt = Math.min(0.05, clock.getDelta());\n      if(window.__plasma?.hold)return;');
+ }}]});
+let browser;const deadline=setTimeout(()=>{void browser?.close();void server.close();},900000);
+try{
+ await server.listen();browser=await chromium.launch({headless:true,executablePath:'/usr/bin/chromium',args:['--no-sandbox','--single-process','--no-zygote','--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required']});const page=await browser.newPage({viewport:{width:1280,height:720}});page.setDefaultTimeout(180000);page.on('pageerror',e=>{errors.push(e.message);console.error(e.message);});
+ await page.addInitScript(()=>{window.__plasmaAudio=[];const play=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(...args){window.__plasmaAudio.push(this.src.split('/').pop());return play.apply(this,args);};HTMLCanvasElement.prototype.requestPointerLock=()=>Promise.reject(Error('embedded evidence'));let seed=49;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};});
+ if(process.env.PLASMA_SKIP_STUDIO!=='1'){
+ await page.goto(`http://127.0.0.1:${port}/__plasma-studio`);await page.waitForFunction(()=>!!window.__plasmaStudio);
+ for(const [name,mode,time,angle]of [['ready-side','ready',0,'side'],['ready-three-quarter','ready',0,'three-quarter'],['tray-open','swap',.90,'three-quarter'],['old-cylinder-out','swap',1.25,'three-quarter'],['fresh-cylinder','swap',1.70,'three-quarter'],['thermal-shutters','vent',.70,'three-quarter']]){
+ writeFileSync(resolve(output,'armory-'+name+'.png'),Buffer.from(await page.evaluate(({mode,time,angle})=>window.__plasmaStudio.view(mode,time,angle),{mode,time,angle}),'base64'));console.log('Captured Armory '+name);}
+ }
+ if(process.env.PLASMA_STUDIO_ONLY!=='1'){
+ await page.goto(`http://127.0.0.1:${port}`);await page.getByRole('button',{name:'BATTALION',exact:true}).click();await page.getByRole('slider',{name:'Battalion size'}).press('Home');await page.getByRole('button',{name:'[ GAME MODE ]',exact:true}).click();await page.getByRole('button',{name:'USMC',exact:true}).click();await page.getByRole('button',{name:'Select TEAM DEATHMATCH',exact:true}).click();await page.getByRole('button',{name:/AREA 51 SUBTERRANEAN FACILITY/}).click();await page.locator('input[type="range"][min="1"][max="20"]').press('Home');await page.getByRole('button',{name:'DEPLOY SELECTED SCENARIO',exact:true}).click();await page.waitForFunction(()=>window.__plasma?.state==='playing');
+ const samples=[];
+ if(process.env.PLASMA_LIVE_ONLY!=='1')for(const [name,mode,time]of [['ready','ready',0],['latch','swap',.4],['tray-extended','swap',.9],['old-removed','swap',1.3],['fresh-inserting','swap',1.7],['cartridge-seated','swap',1.86],['tray-return','swap',2.15],['locked','swap',2.54],['thermal-vent','vent',.75],['vent-recovered','vent',1.25]]){
+ samples.push({name,...await page.evaluate(({mode,time})=>window.__plasma.pose(mode,time),{mode,time})});writeFileSync(resolve(output,name+'.png'),Buffer.from(await page.evaluate(()=>window.__plasma.capture()),'base64'));console.log('Captured gameplay '+name);}
+ writeFileSync(resolve(output,'poses.json'),JSON.stringify(samples,null,2));
+ if(process.env.PLASMA_SCENE_RATES==='1'){
+ const rates=[];
+ for(const hz of [30,60,144]){const sample=await page.evaluate(hz=>{window.__plasma.pose('ready');const before=window.__plasma.player.shotsFired;for(let n=0;n<hz;n++)window.__plasma.step(1/hz,true,false);return {hz,...window.__plasma.stats(),shots:window.__plasma.player.shotsFired-before};},hz);assert.equal(sample.ammo,52);assert.equal(sample.shots,8);rates.push(sample);writeFileSync(resolve(output,'scene-'+hz+'hz.png'),Buffer.from(await page.evaluate(()=>window.__plasma.capture()),'base64'));}
+ writeFileSync(resolve(output,'scene-rates.json'),JSON.stringify(rates,null,2));
+ }
+ if(process.env.PLASMA_RENDER_VIDEO==='1'){
+ const frames=resolve(output,'frames');mkdirSync(frames,{recursive:true});let index=0;const states=[];
+ await page.evaluate(width=>{window.__plasma.renderer.setPixelRatio(1);window.__plasma.renderer.setSize(width,width*9/16,false);},Number(process.env.PLASMA_VIDEO_WIDTH??960));
+ for(const [mode,count]of (process.env.PLASMA_VIDEO_FIRE_ONLY==='1'?[['fire',45]]:[['swap',84],['vent',38],['fire',45]])){
+ await page.evaluate(mode=>window.__plasma.start(mode==='fire'?'ready':mode),mode);
+ for(let n=0;n<count;n++){const frame=await page.evaluate(fire=>window.__plasma.step(1/30,fire),mode==='fire');writeFileSync(resolve(frames,String(index++).padStart(3,'0')+'.png'),Buffer.from(frame,'base64'));states.push({mode,frame:index,...await page.evaluate(()=>window.__plasma.stats())});if(n%20===0)console.log('Rendered '+mode+' '+n+'/'+count);}
+ }
+ execFileSync('ffmpeg',['-y','-loglevel','error','-framerate','30','-i',resolve(frames,'%03d.png'),'-c:v','libx264','-pix_fmt','yuv420p','-crf','19','-movflags','+faststart',resolve(output,'reload-vent-fire-normal-speed.mp4')]);
+ writeFileSync(resolve(output,'video-provenance.json'),JSON.stringify({fps:30,frames:index,reloadSeconds:2.8,ventSeconds:1.25,fireSeconds:1.5,description:'Continuous production-clock reload, separate vent and discrete firing, offline export of actual App renderer in Area 51; world held still; actual lighting. Not real-time GPU performance evidence.',states},null,2));
+ }
+ if(process.env.PLASMA_LIVE==='1'){
+ const checks=[];await page.evaluate(()=>window.__plasma.live(60));await page.mouse.move(850,450);await page.mouse.down();await page.waitForFunction(()=>window.__plasma.ws.ammo<=56);await page.mouse.up();let s=await page.evaluate(()=>window.__plasma.stats());assert.ok(s.ammo<60);assert.ok(s.heat>0);checks.push('Actual LMB fires and consumes individual charges');
+ await page.evaluate(()=>window.__plasma.live(60,99));await page.mouse.down();await page.waitForFunction(()=>window.__plasma.ws.reloadSequence?.kind==='plasmaVent');await page.mouse.up();const hotAmmo=await page.evaluate(()=>window.__plasma.ws.ammo);await page.waitForFunction(()=>!window.__plasma.ws.reloading);assert.equal(await page.evaluate(()=>window.__plasma.ws.ammo),hotAmmo);checks.push('Overheat automatically starts separate thermal recovery without ammo refill');
+ await page.evaluate(()=>window.__plasma.live(20,0));await page.evaluate(()=>window.__plasma.startRecording());const started=await page.evaluate(()=>performance.now());await page.keyboard.press('KeyR');await page.waitForFunction(()=>window.__plasma.ws.reloadSequence?.kind==='plasmaSwap');await page.waitForFunction(()=>!window.__plasma.ws.reloading);const ended=await page.evaluate(()=>performance.now());writeFileSync(resolve(output,'live-reload-unretimed.webm'),Buffer.from(await page.evaluate(()=>window.__plasma.stopRecording()),'base64'));s=await page.evaluate(()=>window.__plasma.stats());assert.deepEqual([s.ammo,s.reserve],[60,120]);checks.push('Actual R at low heat replaces one sealed cylinder');
+ await page.evaluate(()=>window.__plasma.live(45,80));await page.keyboard.press('KeyR');await page.waitForFunction(()=>window.__plasma.ws.reloadSequence?.kind==='plasmaVent');await page.keyboard.press('KeyR');await page.waitForFunction(()=>!window.__plasma.ws.reloading);s=await page.evaluate(()=>window.__plasma.stats());assert.deepEqual([s.ammo,s.reserve],[45,180]);assert.ok(s.heat<5);checks.push('High-heat R vents with closed tray, no resource transfer and no repeat restart');
+ await page.evaluate(()=>window.__plasma.live(20,0));await page.keyboard.press('KeyR');await page.waitForFunction(()=>window.__plasma.ws.plasma?.tray>.2);await page.keyboard.press('KeyP');await page.waitForFunction(()=>window.__plasma.state==='paused');const paused=await page.evaluate(()=>window.__plasma.ws.reloadT);await page.evaluate(()=>new Promise(r=>setTimeout(r,150)));assert.equal(await page.evaluate(()=>window.__plasma.ws.reloadT),paused);await page.keyboard.press('KeyP');await page.keyboard.press('Digit2');await page.keyboard.press('Digit1');s=await page.evaluate(()=>window.__plasma.stats());assert.equal(s.reloading,false);assert.equal(s.physical.tray,0);checks.push('Pause freezes clock; switch cancels into a closed valid mechanism');
+ await page.evaluate(()=>window.__plasma.live(60));await page.mouse.down({button:'right'});await page.waitForFunction(()=>window.__plasma.player.aiming);await page.screenshot({path:resolve(output,'live-ads.png')});await page.mouse.up({button:'right'});await page.keyboard.down('KeyW');await page.keyboard.down('ShiftLeft');await page.waitForFunction(()=>window.__plasma.player.sprinting);await page.screenshot({path:resolve(output,'live-sprint.png')});await page.keyboard.up('ShiftLeft');await page.keyboard.up('KeyW');await page.keyboard.press('KeyV');await page.waitForFunction(()=>window.__plasma.stats().thirdPerson);await page.screenshot({path:resolve(output,'third-person.png')});await page.keyboard.press('KeyV');checks.push('ADS/sprint/third-person retain the white ceramic emitter');
+ await page.evaluate(()=>window.__plasma.live(20));await page.keyboard.press('KeyR');await page.waitForFunction(()=>window.__plasma.ws.reloading);await page.evaluate(()=>window.__plasma.kill());assert.equal(await page.evaluate(()=>window.__plasma.ws.reloading),false);checks.push('Death cancels action');
+ const audio=await page.evaluate(()=>window.__plasmaAudio);assert.ok(audio.some(x=>x.includes('plasma_fire_single')));assert.equal(audio.filter(x=>x.includes('plasma_fire_auto_loop')).length,0);writeFileSync(resolve(output,'live-validation.json'),JSON.stringify({checks,errors,wallReloadSeconds:(ended-started)/1000,rendering:'Actual App RAF, unretimed software WebGL',audio},null,2));console.log('PASS live plasma input');
+ }
+ }
+ assert.deepEqual(errors,[]);writeFileSync(resolve(output,'validation.json'),JSON.stringify({errors},null,2));console.log('PASS production PR-100 browser evidence');
+}catch(e){console.error(e);try{const p=browser?.contexts()[0]?.pages()[0];if(p){writeFileSync(resolve(output,'failure-state.json'),JSON.stringify(await p.evaluate(()=>window.__plasma?.stats()),null,2));await p.screenshot({path:resolve(output,'failure.png')});}}catch{}throw e;}finally{clearTimeout(deadline);await browser?.close();await server.close();}

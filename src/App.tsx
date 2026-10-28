@@ -1,3 +1,5 @@
+import {PLASMA,advancePlasmaFire,advancePlasmaCooling,beginPlasmaAction,addPlasmaSupply} from './plasmaMechanics';
+import {createPlasmaProjectilePool} from './plasmaProjectiles';
 import {canChargeRailgun,railgunBreechReady,markRailgunFired} from './railgunMechanics';
 import { lmgReloadStatus } from './lmgMechanics';
 import { beginSniperCycle, requireSniperBolt } from './sniperMechanics';
@@ -93,7 +95,7 @@ export const ARMORY_OPTIONS: ArmoryOption[] = [
   { id: 'smg', label: 'Rapid SMG', slotNum: '5' },
   { id: 'lmg', label: 'Heavy Drum LMG', slotNum: '6' },
   { id: 'br', label: 'Battle Rifle (Burst)', slotNum: '7' },
-  { id: 'laser', label: 'Covenant Laser', slotNum: '8' },
+  { id: 'laser', label: 'Plasma Repeater', slotNum: '8' },
   { id: 'minigun', label: 'Heavy Minigun', slotNum: '9' },
   { id: 'railgun', label: 'Tactical Railgun', slotNum: '0' }
 ];
@@ -669,19 +671,8 @@ export default function App() {
     }
 
 
-    // 3D Laser Plasma Beam mesh for continuous fire
-    const laserBeamGeo = new THREE.CylinderGeometry(0.015, 0.024, 1, 8);
-    laserBeamGeo.translate(0, 0.5, 0);
-    laserBeamGeo.rotateX(Math.PI / 2);
-    const laserBeamMat = new THREE.MeshBasicMaterial({
-      color: 0x3ae2ff,
-      transparent: true,
-      opacity: 0.85
-    });
-    const laserBeamMesh = new THREE.Mesh(laserBeamGeo, laserBeamMat);
-    laserBeamMesh.visible = false;
-    scene.add(laserBeamMesh);
-
+    const plasmaPool=createPlasmaProjectilePool(scene);
+    const plasmaOrigin=new THREE.Vector3(),plasmaTarget=new THREE.Vector3(),plasmaEye=new THREE.Vector3(),plasmaNdc=new THREE.Vector2(),plasmaAim=new THREE.Raycaster();
     // Crimson charge-up laser pointer beam for Kinetic Railgun
     const railgunLaserGeo = new THREE.CylinderGeometry(0.005, 0.008, 1, 6);
     railgunLaserGeo.translate(0, 0.5, 0);
@@ -735,7 +726,7 @@ export default function App() {
         actor.armLPivot.rotation.set(-.45,.25,0); actor.armRPivot.rotation.set(-.45,-.15,0);
         actor.armLLowerPivot.rotation.x=-.35; actor.armRLowerPivot.rotation.x=-.22; localPistolArms=false;
       }
-      actor.weaponAssembly?.update(delta,w.id==='railgun'?(currentSlotState().chargeTimer??0)/1.2:currentSlotState().chargeTimer??0,w.id==='minigun'?delta*30:0,w.id==='railgun'?currentSlotState():undefined);actor.weaponEffects?.update(delta);
+      actor.weaponAssembly?.update(delta,w.id==='railgun'?(currentSlotState().chargeTimer??0)/1.2:currentSlotState().chargeTimer??0,w.id==='minigun'?delta*30:0,w.id==='railgun'||w.id==='laser'?currentSlotState():undefined);actor.weaponEffects?.update(delta);
       vmManager.root.visible=false;
       camera.getWorldDirection(chaseDirection);chaseDirection.negate();
       chaseRay.set(player.pos,chaseDirection);chaseRay.far=3.2;
@@ -1295,7 +1286,7 @@ export default function App() {
         player.health = 0;
         player.alive = false;
         stopWeaponAudio();
-        playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } if (playerLoadout[i]?.id === 'sniper') { cancelWeaponReload(ws); ws.sniperCycle = undefined; ws.sniperRecoveryT = 0; ws.boltCycleT = 0; ws.needsChamber = true; } if (playerLoadout[i]?.id === 'br' || playerLoadout[i]?.id === 'pistol' || playerLoadout[i]?.id === 'lmg' || playerLoadout[i]?.id === 'railgun') cancelWeaponReload(ws); });
+        playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } if (playerLoadout[i]?.id === 'sniper') { cancelWeaponReload(ws); ws.sniperCycle = undefined; ws.sniperRecoveryT = 0; ws.boltCycleT = 0; ws.needsChamber = true; } if (playerLoadout[i]?.id === 'br' || playerLoadout[i]?.id === 'pistol' || playerLoadout[i]?.id === 'lmg' || playerLoadout[i]?.id === 'railgun'||playerLoadout[i]?.id === 'laser') cancelWeaponReload(ws); });
 
         if (matchConfig.mode === 'extraction') {
           pushKillFeed('MISSION FAILED: OPERATOR KILLED');
@@ -1328,6 +1319,8 @@ export default function App() {
             applyDamage:applyDamageToPlayer,heal:amount=>{player.health=Math.min(player.maxHealth,player.health+amount);}},
           needsAmmo:()=>playerWeaponState.some((ws,index)=>index<2&&(ws.reserve??0)<30),
           onBotShot:(bot,weapon)=>{radarPingsRef.current.push({x:bot.pos.x,z:bot.pos.z,timestamp:performance.now(),duration:1.5,type:'gunfire'});const audio=weapon.id==='sniper'?AUDIO.sniperShotWithBolt:weapon.id==='pistol'?AUDIO.pistolShot:weapon.id==='shotgun'?AUDIO.shotgunShot:weapon.id==='lmg'?AUDIO.lmgFire:weapon.id==='br'?AUDIO.brSingle:weapon.id==='smg'?AUDIO.smgFire:weapon.id==='laser'?AUDIO.plasmaSingle:weapon.id==='railgun'?AUDIO.railgunFire:AUDIO.arSingle;audio.play(getSpatialVolume(camera.position,bot.pos));},
+          firePlasmaBot:(bot,target,damage)=>{if(!bot.weaponAssembly)return false;bot.weaponAssembly.muzzle.getWorldPosition(plasmaOrigin);plasmaEye.copy(bot.pos).y+=1.4;return plasmaPool.spawn(plasmaOrigin,target,bot.team,bot,damage,1.7,plasmaEye,getCombatContext());},
+          onPlasmaHit:(bot,head)=>{player.shotsHit++;if(head)player.headshots++;flashHit(bot);showHitmarker(head);if(bot.isZombie)addPoints(10);},
           onExplosionHit:(target,amount)=>{if(target!== 'player'&&amount>0){showHitmarker(false);}}
       };
       sharedCombatContext.world = world;
@@ -1922,6 +1915,7 @@ export default function App() {
     }
 
     function clearMatchEntities() {
+      plasmaPool.clear();
       for (const timer of runtimeTimeouts) clearTimeout(timer);
       runtimeTimeouts.clear();
       const feed = containerRef.current?.querySelector('#killfeed');
@@ -2252,7 +2246,7 @@ export default function App() {
       if (w.type === 'weapon' && !canPlayerFire(player)) return;
 
       // Minigun and Railgun have distinct state-driven firing loops (spin warmup & charge sequence)
-      if (w.id === 'minigun' || w.id === 'railgun') {
+      if (w.id === 'minigun' || w.id === 'railgun' || w.id === 'laser') {
         return;
       }
 
@@ -2271,24 +2265,17 @@ export default function App() {
       if (ws.reloading || (ws.boltCycleT ?? 0) > 0) return;
       if (ws.needsChamber) { if (w.id !== 'sniper') reloadWeapon(); return; }
 
-      // Laser gun heat & overheat check
-      if (w.id === 'laser') {
-        if (ws.overheated) return;
-      }
-
       const now = performance.now() / 1000;
       if (now - (ws.lastFired ?? 0) < (w.fireRate ?? 0.2)) return;
 
-      if (w.id !== 'laser' && (ws.ammo ?? 0) <= 0) {
+      if ((ws.ammo ?? 0) <= 0) {
         reloadWeapon();
         return;
       }
 
       ws.lastFired = now;
       if (w.id === 'shotgun') ws.pendingReloadShot = false;
-      if (w.id !== 'laser') {
-        ws.ammo = (ws.ammo ?? 1) - 1;
-      }
+      ws.ammo = (ws.ammo ?? 1) - 1;
       player.continuousShots++;
 
       // Weapon specific recoil & sound execution
@@ -2312,18 +2299,6 @@ export default function App() {
         playBattleRifleFire(ws, true);
         ws.burstRemaining = (w.burstCount ?? 3) - 1;
         ws.burstTimer = w.burstRate ?? 0.075;
-      } else if (w.id === 'laser') {
-        // Covenant Laser Gun: plasma hum/beam + heat accumulation
-        vmManager.addRecoil(0.016, 0.022);
-        playAutomaticWeaponFire('laser', player.continuousShots, (ws.heat ?? 0) + 1.9 >= 100);
-        ws.heat = Math.min(100, (ws.heat ?? 0) + 1.9);
-        if (ws.heat >= 100) {
-          ws.heat = 100;
-          ws.overheated = true;
-          AUDIO.laserBeam.stop();
-          laserBeamMesh.visible = false;
-          reloadWeapon();
-        }
       } else if (w.id === 'sniper') {
         requireSniperBolt(ws);
         vmManager.addRecoil(0.055, 0.065);
@@ -2550,6 +2525,18 @@ export default function App() {
       }
     }
 
+    function firePlasmaShot():boolean {
+      const w=currentSlot(),ws=currentSlotState();if(w.id!=='laser'||!canPlayerFire(player))return false;
+      const camera=getFireCamera(),spread=player.aiming?(w.adsSpread??.003):(w.spread??.008);
+      plasmaNdc.set((Math.random()-.5)*spread*2,(Math.random()-.5)*spread*2);plasmaAim.setFromCamera(plasmaNdc,camera);plasmaAim.far=PLASMA.range;
+      const hit=plasmaAim.intersectObjects(world.hittableObjects,false).find(h=>h.object.userData.type!=='pickup');
+      plasmaTarget.copy(hit?.point??plasmaAim.ray.at(PLASMA.range,plasmaTarget));camera.getWorldPosition(plasmaEye);
+      if(thirdPerson&&thirdPersonActor?.weaponAssembly)thirdPersonActor.weaponAssembly.muzzle.getWorldPosition(plasmaOrigin);else vmManager.getMuzzlePosition(plasmaOrigin);
+      if(!plasmaPool.spawn(plasmaOrigin,plasmaTarget,player.team,'player',w.damage??12,w.headshotMult??1.7,plasmaEye,getCombatContext()))return false;
+      player.shotsFired++;player.continuousShots++;vmManager.addRecoil(.016,.022);recoilKick+=.009;recoilPitch+=.006;triggerPlayerFlash();
+      playAutomaticWeaponFire('laser',player.continuousShots);return true;
+    }
+
     function reloadWeapon() {
       const w = currentSlot();
       if (w.type !== 'weapon') return;
@@ -2577,7 +2564,7 @@ export default function App() {
       if (!beginWeaponReload(w, ws, player.classReloadMultiplier)) return;
       player.aiming = false;
       AUDIO.arSpray.stop(); AUDIO.lmgAuto.stop(); AUDIO.smgAuto.stop(); AUDIO.laserBeam.stop(); AUDIO.minigunFire.stop();
-      laserBeamMesh.visible = false; player.continuousShots = 0;
+      player.continuousShots = 0;
       if (!playWeaponReloadAudio(w, ws)) {
         if (ws.isTacticalReload) AUDIO.reloadTactical.play(1.0);
         else AUDIO.reloadEmpty.play(1.0);
@@ -2599,7 +2586,6 @@ export default function App() {
         AUDIO.minigunWindup.stop();
         AUDIO.railgunCharge.stop();
         updateRailgunWeaponAudio(false, 0);
-        laserBeamMesh.visible = false;
         railgunAimLaserMesh.visible = false;
         player.continuousShots = 0;
         player.isDrinking = false;
@@ -2669,7 +2655,7 @@ export default function App() {
       AUDIO.brBurst.stop();
       AUDIO.arSpray.stop(); AUDIO.lmgAuto.stop(); AUDIO.smgAuto.stop();
       AUDIO.laserBeam.stop(); AUDIO.minigunFire.stop(); AUDIO.minigunWindup.stop(); AUDIO.railgunCharge.stop();
-      laserBeamMesh.visible = railgunAimLaserMesh.visible = false;
+      railgunAimLaserMesh.visible = false;
     }
 
     const pauseHandler = () => {
@@ -2850,7 +2836,6 @@ export default function App() {
         AUDIO.minigunWindup.stop();
         AUDIO.railgunCharge.stop();
         updateRailgunWeaponAudio(false, 0);
-        laserBeamMesh.visible = false;
         railgunAimLaserMesh.visible = false;
         player.continuousShots = 0;
 
@@ -3055,12 +3040,12 @@ export default function App() {
 
     function stopMatchInput() {
       clearGameplayInput();
-      playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } if (playerLoadout[i]?.id === 'sniper') { cancelWeaponReload(ws); ws.sniperCycle = undefined; ws.sniperRecoveryT = 0; ws.boltCycleT = 0; ws.needsChamber = true; } if (playerLoadout[i]?.id === 'br' || playerLoadout[i]?.id === 'pistol' || playerLoadout[i]?.id === 'lmg' || playerLoadout[i]?.id === 'railgun') cancelWeaponReload(ws); });
+      playerWeaponState.forEach((ws, i) => { if (playerLoadout[i]?.id === 'shotgun') { cancelWeaponReload(ws); cancelShotgunCycle(ws); } if (playerLoadout[i]?.id === 'sniper') { cancelWeaponReload(ws); ws.sniperCycle = undefined; ws.sniperRecoveryT = 0; ws.boltCycleT = 0; ws.needsChamber = true; } if (playerLoadout[i]?.id === 'br' || playerLoadout[i]?.id === 'pistol' || playerLoadout[i]?.id === 'lmg' || playerLoadout[i]?.id === 'railgun'||playerLoadout[i]?.id === 'laser') cancelWeaponReload(ws); });
       player.vel.set(0, 0, 0);
       for (const sound of Object.values(AUDIO)) sound.stop();
       stopWeaponAudio(); updateRailgunWeaponAudio(false, 0);
       updateAdrenalineHeartbeat(false); audioManager.stop();
-      laserBeamMesh.visible = railgunAimLaserMesh.visible = false;
+      railgunAimLaserMesh.visible = false;
       if (document.pointerLockElement) { try { document.exitPointerLock?.(); } catch {} }
     }
 
@@ -3239,14 +3224,7 @@ export default function App() {
           const ws = playerWeaponState[i];
           if (!ws) return;
 
-          if (w.id === 'laser') {
-            // Passive cooling when not firing
-            if (!player.fireHeld || player.slotIndex !== i) {
-              if (ws.heat && ws.heat > 0) {
-                ws.heat = Math.max(0, ws.heat - dt * 26);
-              }
-            }
-          }
+          if(w.id==='laser'){advancePlasmaCooling(ws,dt);if(player.slotIndex===i&&ws.overheated&&!ws.reloading)beginPlasmaAction(ws,player.classReloadMultiplier,'vent');}
           const wasReloading = ws.reloading;
           // Inactive manual actions freeze at their actual handle position.
           if (w.id === 'sniper' && player.slotIndex !== i) return;
@@ -3262,6 +3240,11 @@ export default function App() {
 
         const curW = currentSlot();
         const curWs = currentSlotState();
+        if(curW.id==='laser'){
+          if(!curWs.reloading&&(curWs.ammo??0)<=0&&(curWs.reserve??0)>=60)reloadWeapon();
+          advancePlasmaFire(curWs,dt,player.fireHeld&&canPlayerFire(player)&&!world.facility?.controlsLocked,firePlasmaShot);
+          if(curWs.overheated&&!curWs.reloading)reloadWeapon();
+        }
         // A held shotgun trigger retries only the interrupt, never auto-fires.
         // Before the first seated shell the reload continues without a grant.
         if (player.fireHeld && curW.id === 'shotgun' && curWs.reloading) fireWeapon();
@@ -3433,33 +3416,6 @@ export default function App() {
           }
         }
 
-        // Covenant Laser Gun continuous plasma beam positioning
-        if (canPlayerFire(player) && curW.id === 'laser' && player.fireHeld && !curWs.overheated && !curWs.reloading) {
-          laserBeamMesh.visible = true;
-          const origin = camera.position.clone();
-          const dir = new THREE.Vector3();
-          getFireCamera().getWorldDirection(dir);
-          const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-          const startPt = origin.clone()
-            .add(dir.clone().multiplyScalar(0.35))
-            .add(right.clone().multiplyScalar(0.12))
-            .add(new THREE.Vector3(0, -0.09, 0));
-
-          const raycaster = new THREE.Raycaster(camera.position, dir, 0.1, curW.range ?? 95);
-          const hits = raycaster.intersectObjects(world.hittableObjects, false);
-          let endPt = camera.position.clone().add(dir.clone().multiplyScalar(curW.range ?? 95));
-          if (hits.length > 0) {
-            endPt = hits[0].point;
-            spawnImpactSpark(endPt, hits[0].object.userData.type === 'botpart');
-          }
-          const beamLen = startPt.distanceTo(endPt);
-          laserBeamMesh.position.copy(startPt);
-          laserBeamMesh.lookAt(endPt);
-          laserBeamMesh.scale.set(1, 1, Math.max(0.1, beamLen));
-        } else {
-          laserBeamMesh.visible = false;
-        }
-
         // Kinetic Railgun crimson laser pointer sight during 1.2s charge
         if (player.alive && curW.id === 'railgun' && curWs.charging) {
           railgunAimLaserMesh.visible = true;
@@ -3546,7 +3502,7 @@ export default function App() {
             if(supply){
               extPromptResult={interactionPrompt:supply.kind==='ammo'?'[E] REFILL LOADOUT AMMO':`[E] EQUIP ${WEAPONS[supply.weaponIndex!].name}`,isPromptObjective:false};
               if(keys.KeyE){keys.KeyE=false;
-                if(supply.kind==='ammo'){playerLoadout.forEach((w,i)=>{if(w.type==='weapon'){cancelWeaponReload(playerWeaponState[i]);cancelShotgunCycle(playerWeaponState[i]);playerWeaponState[i].sniperCycle=undefined;playerWeaponState[i].sniperRecoveryT=0;if(i===player.slotIndex)stopWeaponAudio();playerWeaponState[i].ammo=w.mag;playerWeaponState[i].reserve=w.reserve;playerWeaponState[i].needsChamber=false;if(w.id==='railgun')playerWeaponState[i].railgunBreech=undefined;playerWeaponState[i].pendingReloadShot=false;playerWeaponState[i].boltCycleT=0;}});pushKillFeed('FIELD AMMO REFILLED');}
+                if(supply.kind==='ammo'){playerLoadout.forEach((w,i)=>{if(w.type==='weapon'){cancelWeaponReload(playerWeaponState[i]);cancelShotgunCycle(playerWeaponState[i]);playerWeaponState[i].sniperCycle=undefined;playerWeaponState[i].sniperRecoveryT=0;if(i===player.slotIndex)stopWeaponAudio();playerWeaponState[i].ammo=w.mag;playerWeaponState[i].reserve=w.reserve;playerWeaponState[i].needsChamber=false;if(w.id==='railgun')playerWeaponState[i].railgunBreech=undefined;if(w.id==='laser'){playerWeaponState[i].plasma=undefined;playerWeaponState[i].heat=0;playerWeaponState[i].overheated=false;}playerWeaponState[i].pendingReloadShot=false;playerWeaponState[i].boltCycleT=0;}});pushKillFeed('FIELD AMMO REFILLED');}
                 else{stopWeaponAudio();cancelWeaponReload(playerWeaponState[0]);const w=WEAPONS[supply.weaponIndex!];playerLoadout[0]=w;playerWeaponState[0]={ammo:w.mag,reserve:w.reserve};switchSlot(0);pushKillFeed(`FIELD ARMORY: ${w.name}`);}
               }
             }
@@ -3616,18 +3572,18 @@ export default function App() {
               const pItem = nearestPickup;
               const wType = WEAPONS[pItem.typeIndex];
               if(pItem.group.userData.ammoPack){
-                playerWeaponState.slice(0,2).forEach(ws=>{ws.reserve=(ws.reserve??0)+pItem.ammo;});
-                pushKillFeed(`SUPPORT RESUPPLY: +${pItem.ammo} AMMO PER SLOT`);
+                playerWeaponState.slice(0,2).forEach((ws,i)=>{if(playerLoadout[i]?.id==='laser')addPlasmaSupply(ws,pItem.ammo);else ws.reserve=(ws.reserve??0)+pItem.ammo;});world.removeGroundPickup(pItem);
+                pushKillFeed(playerLoadout.slice(0,2).some(w=>w.id==='laser')?'SUPPORT RESUPPLY: GAS CARTRIDGE + AMMUNITION':`SUPPORT RESUPPLY: +${pItem.ammo} AMMO PER SLOT`);
               } else if (wType) {
                 if (wType.type === 'grenade') {
                   playerWeaponState[2].count = Math.min(6, (playerWeaponState[2].count ?? 0) + pItem.ammo);
                   pushKillFeed(`+${pItem.ammo} TACTICAL GRENADES`);
                 } else if (wType.id === playerLoadout[0].id) {
-                  playerWeaponState[0].reserve = (playerWeaponState[0].reserve ?? 0) + pItem.ammo;
-                  pushKillFeed(`+${pItem.ammo} ${playerLoadout[0].name} AMMO`);
+                  if(wType.id==='laser')addPlasmaSupply(playerWeaponState[0],pItem.ammo);else playerWeaponState[0].reserve = (playerWeaponState[0].reserve ?? 0) + pItem.ammo;
+                  pushKillFeed(wType.id==='laser'?`+${Math.ceil(pItem.ammo/60)} PLASMA CARTRIDGE(S)`:`+${pItem.ammo} ${playerLoadout[0].name} AMMO`);
                 } else if (wType.id === playerLoadout[1].id) {
-                  playerWeaponState[1].reserve = (playerWeaponState[1].reserve ?? 0) + pItem.ammo;
-                  pushKillFeed(`+${pItem.ammo} ${playerLoadout[1].name} AMMO`);
+                  if(wType.id==='laser')addPlasmaSupply(playerWeaponState[1],pItem.ammo);else playerWeaponState[1].reserve = (playerWeaponState[1].reserve ?? 0) + pItem.ammo;
+                  pushKillFeed(wType.id==='laser'?`+${Math.ceil(pItem.ammo/60)} PLASMA CARTRIDGE(S)`:`+${pItem.ammo} ${playerLoadout[1].name} AMMO`);
                 } else {
                   pushKillFeed(`COLLECTED ${wType.name} AMMO (+ $50 CONVERTED)`);
                   addPoints(50);
@@ -3789,7 +3745,7 @@ export default function App() {
             if (m.emissiveIntensity > 0) m.emissiveIntensity = Math.max(0, m.emissiveIntensity - dt * 4);
           });
           bot.weaponEffects?.update(dt);
-          bot.weaponAssembly?.update(dt,0,bot.weaponType==='minigun'?dt*30:0);
+          bot.weaponAssembly?.update(dt,0,bot.weaponType==='minigun'?dt*30:0,bot.weaponType==='laser'?bot.classAI?.weaponState:undefined);
           updateBotLauncherReload(bot,dt);
           if (bot.muzzleFlashT > 0 && bot.muzzleFlash) {
             bot.muzzleFlashT -= dt;
@@ -3936,6 +3892,7 @@ export default function App() {
         const combatContext = getCombatContext();
         updateTripods(dt,combatContext);
         updateProjectiles(dt,combatContext);
+        plasmaPool.update(dt,combatContext);
 
         if (profiler.enabled) aiTime = performance.now() - aiStart;
 
@@ -4153,7 +4110,7 @@ export default function App() {
         if (ammoEl) {
           if (curW.id === 'laser') {
             const heatPct = Math.round(activeWs.heat ?? 0);
-            hudDom.html(ammoEl, `${100 - heatPct}% <span class="reserve">CHARGE (HEAT ${heatPct}%)</span>`);
+            hudDom.html(ammoEl, `${activeWs.ammo??0} <span class="reserve">/ 60 · ${Math.floor((activeWs.reserve??0)/60)} SPARES · HEAT ${heatPct}%</span>`);
           } else if (curW.id === 'minigun') {
             const heatPct = Math.round(activeWs.heat ?? 0);
             hudDom.html(ammoEl, `${heatPct}% <span class="reserve">HEAT (MAX 100%)</span>`);
@@ -4169,9 +4126,7 @@ export default function App() {
         }
         if (reloadTagEl) {
           if (curW.id === 'laser') {
-            hudDom.text(reloadTagEl, activeWs.overheated
-              ? 'OVERHEATED! [R] TO VENT'
-              : (activeWs.reloading ? 'VENTING CORE…' : (player.fireHeld ? 'FIRING CONTINUOUS BEAM' : '')));
+            hudDom.text(reloadTagEl,activeWs.reloading?(activeWs.reloadSequence?.kind==='plasmaVent'?'THERMAL VENT — CARTRIDGE RETAINED':'REPLACING GAS CARTRIDGE'):activeWs.overheated?'OVERHEATED — COOLING':(activeWs.ammo??0)===0?'NO GAS — [R] REPLACE CARTRIDGE':'8 BOLTS/SEC · [R] REPLACE / COOL');
           } else if (curW.id === 'minigun') {
             hudDom.text(reloadTagEl, activeWs.overheated
               ? `OVERHEATED! VENTING ${(activeWs.ventTimer ?? 0).toFixed(1)}s`
@@ -4207,7 +4162,7 @@ export default function App() {
               if (!itemW || !itemWs) continue;
               if (itemW.type === 'consumable') hudDom.text(labelEl, `FIELD KIT (x${itemWs?.count ?? 0})`);
               else if (itemW.type === 'grenade') hudDom.text(labelEl, `GRENADES (x${itemWs?.count ?? 0})`);
-              else if (itemW.id === 'laser') hudDom.text(labelEl, `LASER (${Math.round(itemWs?.heat ?? 0)}%)`);
+              else if (itemW.id === 'laser') hudDom.text(labelEl, `PLASMA (${itemWs?.ammo??0}/60 · ${Math.round(itemWs?.heat??0)}% HEAT)`);
               else if (itemW.id === 'minigun') hudDom.text(labelEl, `MINIGUN (${Math.round(itemWs?.heat ?? 0)}%)`);
               else if (itemW.id === 'railgun') hudDom.text(labelEl, `RAILGUN (${itemWs?.ammo ?? 0})`);
               else hudDom.text(labelEl, `${itemW.name.toUpperCase()} (${itemWs?.ammo ?? 0})`);
@@ -4372,6 +4327,7 @@ export default function App() {
       disposeBotVisuals(vmManager.root);
       disposeBotTextureCache();
       world?.dispose();
+      plasmaPool.dispose();
       cleanupWorld(scene);
       clearOffshoreTextureImages();
       audioManager.dispose();

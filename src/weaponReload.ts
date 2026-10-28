@@ -1,3 +1,4 @@
+import {beginPlasmaAction,advancePlasmaAction,cancelPlasmaAction} from './plasmaMechanics';
 import {beginRailgunReload,advanceRailgunReload,type RailgunListener} from './railgunMechanics';
 import { LMG, lmgCue, lmgPhaseSeconds, type LmgListener } from './lmgMechanics';
 import { SMG } from './smgMechanics';
@@ -9,13 +10,14 @@ import { BATTLE_RIFLE, brCueTime, type BattleRifleListener } from './battleRifle
 export type ReloadPhase = 'open' | 'eject' | 'pickup' | 'insert' | 'chamber' | 'close' | 'vent' | 'lift' | 'feed' | 'slap' | 'present' | 'unlock' | 'retract' | 'slideForward' | 'raiseCradle' | 'lowerCradle' | 'lock' | 'recover';
 export type ReloadPhaseListener = (phase: ReloadPhase, duration: number, empty: boolean) => void;
 export interface ReloadSequence {
-  kind: 'magazine' | 'shell' | 'battery' | 'tube' | 'cylinder' | 'vent' | 'railgun';
+  kind: 'magazine' | 'shell' | 'battery' | 'tube' | 'cylinder' | 'vent' | 'railgun' | 'plasmaSwap' | 'plasmaVent';
   phases: { phase: ReloadPhase; duration: number }[];
   index: number;
   elapsed: number;
   empty: boolean;
   shellsRemaining: number;
   inserted: number;
+  plasmaHadCylinder?:boolean;plasmaStartHeat?:number;plasmaSpeed?:number;plasmaEvents?:number;
   shellSeated?: boolean;
   brCuePlayed?: boolean;
   lmgCuePlayed?: boolean;
@@ -23,13 +25,15 @@ export interface ReloadSequence {
 }
 
 export function cancelWeaponReload(state: WeaponSlotState) {
+  if(state.reloadSequence?.kind==='plasmaSwap'||state.reloadSequence?.kind==='plasmaVent')cancelPlasmaAction(state);
   state.reloading = false; state.reloadT = 0; state.reloadSequence = undefined;
 }
 
 export function beginWeaponReload(weapon: WeaponDef, state: WeaponSlotState, multiplier = 1, playerHandling = true): boolean {
   if (weapon.type !== 'weapon' || state.reloading || (state.boltCycleT ?? 0) > 0) return false;
+  if(weapon.id==='laser')return beginPlasmaAction(state,multiplier);
   if(weapon.id==='railgun'&&playerHandling)return beginRailgunReload(state,multiplier);
-  const vent = weapon.id === 'laser' || weapon.id === 'minigun';
+  const vent = weapon.id === 'minigun';
   const chamberOnly = !!state.needsChamber && (state.ammo ?? 0) > 0;
   if (!chamberOnly && (vent ? (state.heat ?? 0) <= 0 : (state.ammo ?? 0) >= (weapon.mag ?? 0) || (state.reserve ?? 0) <= 0)) return false;
   const empty = (state.ammo ?? 0) === 0;
@@ -74,9 +78,7 @@ export function beginWeaponReload(weapon: WeaponDef, state: WeaponSlotState, mul
     phases.push({phase:'close',duration:timing.close*speed});
   } else if (chamberOnly) { add('chamber', .25); add('close', .15);
   } else if (vent) {
-    kind = weapon.id === 'laser' ? 'battery' : 'vent'; add('vent', .25);
-    if (kind === 'battery') { add('eject', .2); add('insert', .35); }
-    add('close', kind === 'battery' ? .2 : .75);
+    kind = 'vent'; add('vent', .25);add('close', .75);
   } else if (weapon.id === 'railgun') {
     kind = 'battery'; add('vent', .2); add('eject', .2); add('insert', .4); add('close', .2);
   } else if (weapon.id === 'rocket') {
@@ -101,6 +103,7 @@ export function beginWeaponReload(weapon: WeaponDef, state: WeaponSlotState, mul
 /** Advance through phase boundaries without losing shell events on slow frames. */
 export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, delta: number, onPhaseStart?: ReloadPhaseListener, onShotgunEvent?: ShotgunEventListener, onSniperBolt?: SniperBoltListener, onBattleRifle?: BattleRifleListener, onLmg?: LmgListener, onRailgun?:RailgunListener): number {
   if (!Number.isFinite(delta) || delta <= 0) return 0;
+  if(weapon.id==='laser')return advancePlasmaAction(state,delta);
   if(weapon.id==='railgun'&&state.reloadSequence?.kind==='railgun')return advanceRailgunReload(state,delta,onRailgun,onPhaseStart);
   if (weapon.id === 'sniper') advanceSniperAction(state, delta, onSniperBolt);
   else if (weapon.id === 'shotgun' && state.shotgunCycle) advanceShotgunCycle(state, delta, onShotgunEvent);
@@ -144,7 +147,6 @@ export function advanceWeaponReload(weapon: WeaponDef, state: WeaponSlotState, d
           onPhaseStart?.(stage.phase, stage.duration, sequence.empty);
           continue;
         }
-      } else if (weapon.id === 'laser') { state.ammo = weapon.mag;
       } else {
         const take = Math.max(0, Math.min((weapon.mag ?? 0) - (state.ammo ?? 0), state.reserve ?? 0));
         state.ammo = (state.ammo ?? 0) + take; state.reserve = (state.reserve ?? 0) - take; sequence.inserted = take;

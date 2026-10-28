@@ -1,3 +1,5 @@
+import {buildPlasmaModel} from './plasmaModel';
+import {createPlasmaAnimator} from './plasmaAnimation';
 import {createRailgunAnimator} from './railgunMechanics';
 import type {WeaponSlotState} from './types';
 import {buildRailgunModel} from './railgunModel';
@@ -95,6 +97,7 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
   root.name = `Weapon_${id}`;
   root.userData.weaponId = id;
   const parts: Record<string, THREE.Object3D> = {};
+  let plasmaVisual: ReturnType<typeof buildPlasmaModel>|undefined;
   let railgunUpdate: ((charge:number,time:number)=>void)|undefined;
   const metalTexture = finishTexture(false),
     gripTexture = finishTexture(true);
@@ -1175,56 +1178,8 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       box('Rear sight white inset',.002,.002,.001,side*.009,.029,.087,sightPaint,slide);
     }
   } else if (id === 'laser') {
-    for (const side of [-1, 1]) {
-      const shell = silhouette(
-        'Plasma repeater shell',
-        [
-          [-0.54, 0.05],
-          [-0.45, 0.09],
-          [-0.12, 0.075],
-          [0.18, 0.01],
-          [0.12, -0.07],
-          [-0.02, -0.04],
-          [-0.32, -0.02],
-          [-0.5, -0.005],
-        ],
-        0.031,
-        purple,
-      );
-      shell.position.x = side * 0.052;
-      tube('Emitter prong', 0.018, 0.29, side * 0.05, 0.015, -0.39, steel);
-      const curve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(side * 0.06, 0.01, -0.1),
-        new THREE.Vector3(side * 0.07, 0.06, -0.25),
-        new THREE.Vector3(side * 0.05, 0.02, -0.48),
-      ]);
-      mesh(
-        'Energy coil conduit',
-        new THREE.TubeGeometry(curve, 20, 0.006, 8, false),
-        glow,
-        0,
-        0,
-        0,
-      );
-      for (let i = 0; i < 8; i++)
-        box(
-          'Glowing heat exhaust',
-          0.002,
-          0.018,
-          0.014,
-          side * 0.07,
-          0.052,
-          -0.1 - i * 0.032,
-          glow,
-        );
-    }
-    grip(0.11);
-    const cell = group('magazine', 0, -0.025, 0.05);
-    tube('Removable plasma cell', 0.031, 0.13, 0, 0, 0, glow, cell).rotation.x =
-      0;
-    tube('Optic emitter head', 0.025, 0.06, 0, 0.015, -0.47, glow);
-    ring('Emitter aperture', 0.03, 0.005, 0, 0.015, -0.505, dark);
-    muzzle.position.z = -0.515;
+    const ceramic=new THREE.MeshStandardMaterial({color:0xe6e3d3,roughness:.63,metalness:.08});materials.push(ceramic);
+    plasmaVisual=buildPlasmaModel(body,parts,{steel,dark,polymer,rubber,edge,glow,ceramic});muzzle.position.fromArray(plasmaVisual.muzzle);
   } else if (id === 'minigun') {
     tube('Electric drive motor', 0.08, 0.24, 0, 0, 0.085, dark);
     tube('Motor end cap', 0.082, 0.025, 0, 0, 0.217, steel);
@@ -1402,7 +1357,7 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     backblast.position.set(0, -0.005, 0.18);
   }
 
-  if (id === 'laser' || id === 'minigun') {
+  if (id === 'minigun') {
     const vent = group('vent', .052, .03, .02);
     box('Articulated coolant vent', .009, .037, .095, 0, 0, 0, steel, vent);
   }
@@ -1510,10 +1465,11 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       }
       railgunUpdate?.(charge,time);
       if(state)railgunParts?.(state);
-      if (id === 'laser')
-        glow.emissiveIntensity = 2.3 + Math.sin(time * 5) * 0.3;
+      if(plasmaParts)plasmaParts(state);
+      if(plasmaVisual){const q=state?.reloadSequence,stage=q?.phases[q.index],thermal=q?.kind==='plasmaVent',p=stage?q!.elapsed/stage.duration:0;const pulse=stage?.phase==='vent'?Math.sin(Math.PI*p):thermal&&stage?.phase==='open'?p:0;plasmaVisual.update(state?.heat??0,time,thermal,pulse);}
     },
   };
+  const plasmaParts=id==='laser'?createPlasmaAnimator(assembly,false):undefined;
   const railgunParts=id==='railgun'?createRailgunAnimator(assembly,false):undefined;
   return assembly;
 }

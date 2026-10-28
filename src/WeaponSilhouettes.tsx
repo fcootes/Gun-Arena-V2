@@ -333,36 +333,11 @@ export const WeaponSilhouette: React.FC<{ id: string; className?: string }> = ({
       );
 
     case 'laser':
-      // 8. PLASMA BEAM RIFLE (DIRECTED ENERGY)
-      // Condensed, organic curved alien plasma framework (Halo Reach / Covenant focus rifle style),
-      // sweeping top dorsal cowling, cooling louvers, lower structural loop, alien optics dome.
-      return (
-        <svg viewBox="0 0 220 70" className={className} fill="none" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
-          {/* Dorsal Curving Alien Cowling & Sight Dome */}
-          <path d="M 42 28 C 56 18, 92 16, 126 20 L 146 25 L 176 28" />
-          <path d="M 94 20 Q 108 14 122 20 Z" />
-          <circle cx="108" cy="18" r="1.5" />
-
-          {/* Organic Cooling Louvers / Vents */}
-          <line x1="94" y1="24" x2="132" y2="24" />
-          <line x1="96" y1="27" x2="130" y2="27" />
-          <line x1="98" y1="30" x2="128" y2="30" />
-
-          {/* Aerodynamic Snout & Needle Focus Emitter */}
-          <path d="M 146 25 L 176 28 L 186 31 L 176 34 L 146 37" />
-          <line x1="186" y1="30.5" x2="198" y2="31" />
-          <line x1="186" y1="31.5" x2="198" y2="31" />
-
-          {/* Rear Cowled Stock & Lower Structural Loop */}
-          <path d="M 42 28 C 34 34, 34 44, 42 48 L 66 48" />
-          <path d="M 50 46 L 80 46 L 92 36" />
-          <path d="M 54 42 L 76 42 L 84 36 Z" />
-
-          {/* Integrated Alien Grip & Energy Core */}
-          <path d="M 92 36 L 88 52 L 98 52 L 102 36" />
-          <ellipse cx="96" cy="34" rx="4" ry="4" />
-        </svg>
-      );
+      return <svg viewBox="0 0 220 70" className={className} fill="none" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 25 L45 20 L50 31 L45 42 L18 39 Z M22 28 L22 36 M45 25 L155 25 L155 39 L48 39 M54 39 L95 46 L105 39"/>
+        <path d="M155 26 L199 26 L199 46 L192 46 L187 37 L156 42 M112 39 L118 55 L132 55 L129 39 M132 39 L155 39 L161 46 L141 48 Z"/>
+        <rect x="103" y="28" width="42" height="9" rx="4"/><path d="M108 28 L108 37 M139 28 L139 37 M55 21 L148 21 M58 19 L61 21 M70 19 L73 21"/>
+      </svg>;
 
     case 'minigun':
       // 9. VULCAN ROTARY CANNON (SPECIAL HEAVY)

@@ -76,7 +76,7 @@ const semanticFeatures: Record<string, string[]> = {
   smg: ['SC-32 monolithic', 'Telescoping brace', 'Captive charging', 'Straight double stack'],
   lmg: ['Hinged feed cover', 'Side ammunition', 'bipod', 'Connected feed belt'],
   br: ['Carry', 'Long stroke', 'charging'],
-  laser: ['Energy coil', 'plasma cell', 'heat exhaust'],
+  laser: ['White ceramic', 'gas cylinder', 'cooling shutter'],
   minigun: ['Rotary barrel', 'Flexible ammunition', 'spade'],
   railgun: ['conductive rail', 'Hydraulic', 'Capacitor'],
   rocket: ['launch tube', 'exhaust cone', 'Flip up'],
@@ -106,6 +106,13 @@ for (const id of WEAPON_MODEL_IDS) {
   assert.ok(bounds.getSize(new THREE.Vector3()).length() < 2);
   assert.ok(assembly.muzzle.position.z < -0.1, `${id}: forward muzzle anchor`);
   const fx = createWeaponMuzzleEffect(assembly);
+  if(id==='laser'){
+    const flash=fx.root.children.find(o=>o instanceof THREE.Mesh) as THREE.Mesh;
+    const buffer=flash.geometry.attributes.position.array;
+    for(let shot=0;shot<150;shot++){fx.trigger();fx.update(.016);assert.equal(flash.geometry.attributes.position.array,buffer);}
+    fx.update(1);assert.equal(flash.visible,false);assert.equal((flash.material as THREE.MeshBasicMaterial).opacity,0);
+    assert.equal(fx.root.children.filter(o=>o instanceof THREE.Mesh).length,1,'Compact emitter pulse has no cone or ring');
+  }else{
   const points = fx.root.children.find(
     (o) => o instanceof THREE.Points,
   ) as THREE.Points;
@@ -123,6 +130,7 @@ for (const id of WEAPON_MODEL_IDS) {
       (a) => a === 0,
     ),
   );
+  }
   fingerprints.add(JSON.stringify(MUZZLE_PROFILES[id]));
   const resources = new Set<any>();
   assembly.root.traverse((o: any) => {
