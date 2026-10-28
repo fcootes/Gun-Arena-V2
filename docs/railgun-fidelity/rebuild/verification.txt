@@ -1,0 +1,45 @@
+Forward upper / hinged cradle rebuild validation
+
+PASS npm run lint (TypeScript)
+PASS npm run build (Vite production; existing bundle size warning)
+PASS npm run test:railgun (existing plus railgunRebuild suite)
+PASS npm run test:viewmodel (all twelve visible mesh/hand near-plane bounds)
+PASS npm run test:weapons (all twelve assemblies; Railgun remains <24 meshes)
+PASS npm run test:audio (all existing assets/weapon audio; no reload Foley)
+PASS npm run test:lmg (mechanics and sustained fire audio)
+PASS npm run test:controls
+PASS npm run test:runtime
+PASS npm run test:br
+PASS npm run test:sniper
+PASS npm run test:shotgun
+PASS npm run test:pistol
+PASS npm run test:smg
+PASS npm run test:tactical
+
+Focused numerical coverage:
+- rigid scope/shroud/latch parent ownership; negative-Z opening, positive-Z closing
+- fixed hinge position and lower chassis; 32-degree cradle rotation
+- ejection occurs only after housing clearance and sufficient cradle rise
+- continuous independent carrier trajectory across raise/pickup boundary
+- fresh slug and seated slug share exact position/orientation at seating
+- seated slug follows hinge; cradle reaches horizontal before closure
+- exact optic return and charge gate
+- interruptions before/after ejection, seating, lowering and closure
+- one transferred round; no duplicate carrier; class modifiers applied once
+- 30/60/144 FPS; continuous wrists and connected peripheral arms
+- no per-frame geometry/material/scene-object creation; owned resource disposal
+- existing actual App 1.2 s charge, early release, piercing, damage, recoil and muzzle
+
+Normal-speed video:
+96 frames at 30 FPS = 3.2 s, comprising the 2.8 s reload and 0.2 s ready
+bookends. Offline export uses the actual gameplay renderer, production mechanical
+clock and hands, actual Area 51 lighting, and a static world during capture.
+It is not a claim of real-time GPU performance. See video-provenance.json.
+
+PASS live browser: actual early-release/charged shot, R reload, pause, switch,
+recovery, ADS/sprint/crouch/third-person and death cancellation; zero page errors.
+PASS Armory closed/open/raised/lowering inspection captures; zero page errors.
+Raw live reload took 27.31 wall seconds in software WebGL; see live timing JSON.
+Native-laptop visual acceptance remains outstanding. Third-person weapon parts
+share the physical clock; the pre-existing body-hand rig remains its legacy pose.
+No merge or production promotion. No new reload sounds or W03 work.

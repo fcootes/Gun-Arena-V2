@@ -96,7 +96,7 @@ assert.ok(beginWeaponReload(weapon('ar'), resumed)); playWeaponReloadAudio(weapo
 assert.equal(latest(AUDIO.arReloadEmpty).currentTime, 2.2165, 'Chamber-only resume skips mag-out and mag-in sounds');
 stopWeaponAudio();
 const laterBatch: WeaponSlotState = { ammo: 0, reserve: 100 }; beginWeaponReload(weapon('railgun'), laterBatch);
-assert.equal(playWeaponReloadAudio(weapon('railgun'), laterBatch), false, 'Other weapons retain their existing audio path');
+assert.equal(playWeaponReloadAudio(weapon('railgun'), laterBatch), true, 'Railgun handles reload silently until approved Foley exists');
 console.log('PASS: tactical/empty selection, class reload duration, ammo preservation and chamber-only resume');
 
 const shotgun = weapon('shotgun');

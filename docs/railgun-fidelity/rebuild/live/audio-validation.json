@@ -1,0 +1,17 @@
+{
+  "sources": [
+    {
+      "source": "railgun_charge.wav",
+      "wall": 63073.799999999814
+    },
+    {
+      "source": "railgun_charge.wav",
+      "wall": 70625.69999999972
+    },
+    {
+      "source": "railgun_fire_single.wav",
+      "wall": 79986.19999999972
+    }
+  ],
+  "genericReloadPlays": 0
+}

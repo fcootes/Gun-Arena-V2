@@ -1,0 +1,11 @@
+{
+  "type": "Offline frame export of actual App renderer and production reload/hand animator",
+  "fps": 30,
+  "frames": 96,
+  "reloadSeconds": 2.8,
+  "bookendSeconds": 0.4,
+  "lighting": "Actual Area 51 scene lighting",
+  "world": "World held still during deterministic capture",
+  "performanceClaim": "This is normal-speed simulation playback; it does not demonstrate real-time GPU performance.",
+  "audio": "Silent; no reload Foley added"
+}

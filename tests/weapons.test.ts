@@ -115,7 +115,7 @@ for (const id of WEAPON_MODEL_IDS) {
     fx.update(0.016);
     assert.equal(points.geometry.attributes.position.array, buffer);
   }
-  assert.equal(points.geometry.attributes.position.count, 192);
+  assert.equal(points.geometry.attributes.position.count,id==='railgun'?32:192);
   assert.ok([...buffer].every(Number.isFinite));
   for (let tick = 0; tick < 200; tick++) fx.update(0.016);
   assert.ok(

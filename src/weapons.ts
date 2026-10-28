@@ -1,3 +1,4 @@
+import {createRailgunAnimator,railgunBreechReady} from './railgunMechanics';
 import { createLmgAnimator } from './lmgMechanics';
 import { createSmgAnimator } from './smgMechanics';
 import { createPistolSprintController, PISTOL_SPRINT, type PistolSprintPose } from './pistolSprint';
@@ -318,6 +319,7 @@ export function createViewmodelManager(): ViewmodelManager {
       pistolAnimation?: ReturnType<typeof createPistolAnimator>;
       smgAnimation?: ReturnType<typeof createSmgAnimator>;
       lmgAnimation?: ReturnType<typeof createLmgAnimator>;
+      railgunAnimation?:ReturnType<typeof createRailgunAnimator>;
       pose: Map<
         THREE.Object3D,
         { position: THREE.Vector3; quaternion: THREE.Quaternion }
@@ -442,7 +444,7 @@ export function createViewmodelManager(): ViewmodelManager {
         quaternion: part.quaternion.clone(),
       }),
     );
-    model = { assembly, effects, pose, lmgAnimation:id === 'lmg' ? createLmgAnimator(assembly) : undefined, smgAnimation:id === 'smg' ? createSmgAnimator(assembly) : undefined, brReload:id === 'br' ? createBattleRifleAnimator(assembly) : undefined, pistolAnimation:id === 'pistol' ? createPistolAnimator(assembly) : undefined };
+    model = { assembly, effects, pose, railgunAnimation:id==='railgun'?createRailgunAnimator(assembly):undefined, lmgAnimation:id === 'lmg' ? createLmgAnimator(assembly) : undefined, smgAnimation:id === 'smg' ? createSmgAnimator(assembly) : undefined, brReload:id === 'br' ? createBattleRifleAnimator(assembly) : undefined, pistolAnimation:id === 'pistol' ? createPistolAnimator(assembly) : undefined };
     models.set(id, model);
     return model;
   }
@@ -472,6 +474,7 @@ export function createViewmodelManager(): ViewmodelManager {
     const ws = Array.isArray(states)
       ? states[typeof slotOrWeapon === 'number' ? slotOrWeapon : 0]
       : states;
+    if(w.id==='railgun'&&(ws?.reloading||ws&&!railgunBreechReady(ws)))aiming=false;
     root.visible = true;
     time += dt;
     bob += dt * (sprinting ? 14 : 9.5);
@@ -565,7 +568,8 @@ export function createViewmodelManager(): ViewmodelManager {
       assembly.root.rotation.x += recoilRotation * blend;
     }
     const sequence = ws?.reloadSequence;
-    if (selected.lmgAnimation) selected.lmgAnimation(ws);
+    if(selected.railgunAnimation)selected.railgunAnimation(ws);
+    else if (selected.lmgAnimation) selected.lmgAnimation(ws);
     else if (selected.smgAnimation) selected.smgAnimation(ws, Math.sin((boltTimer / .07) * Math.PI));
     else if (selected.pistolAnimation) selected.pistolAnimation(ws, Math.sin((slideTimer / .12) * Math.PI));
     else if (ws?.reloading && sequence && selected.brReload) selected.brReload(sequence);

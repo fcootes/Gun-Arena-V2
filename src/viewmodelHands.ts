@@ -1,3 +1,4 @@
+import {createRailgunHandAnimator,createRailgunArmSolver} from './railgunMechanics';
 import { createLmgHandAnimator } from './lmgMechanics';
 import { SMG, smgEase, smgReach, smgSwap } from './smgMechanics';
 import type { PistolSprintPose } from './pistolSprint';
@@ -58,6 +59,7 @@ export function createFirstPersonHands() {
   const targetRotation = new THREE.Quaternion(), euler = new THREE.Euler(), attachmentPosition = new THREE.Vector3();
   const inverseWeaponRotation = new THREE.Quaternion();
   const lmgShoulder=new THREE.Vector3(), lmgAxis=new THREE.Vector3(), lmgBend=new THREE.Vector3(), lmgElbow=new THREE.Vector3();
+  const railgunHand=createRailgunHandAnimator(),railgunArm=createRailgunArmSolver(),railgunShoulder=new THREE.Vector3(),railgunElbow=new THREE.Vector3();
   const lmgHand = createLmgHandAnimator(), lmgSupportRotation = new THREE.Quaternion();
   const supportGrip = new THREE.Vector3(), shotgunPickup = new THREE.Vector3(-.078, -.170, -.03536);
   const shellPose = { x: 0, y: 0, z: 0, angle: 0 };
@@ -177,7 +179,7 @@ export function createFirstPersonHands() {
       const p = stage ? THREE.MathUtils.smoothstep(sequence!.elapsed / stage.duration, 0, 1) : 0;
       let curl = config.left.curl;
       let shellGrip = 0, shellPress = 0, brGrip = 0, pistolContact = 0;
-      if (stage && id !== 'br' && id !== 'pistol' && id !== 'smg' && id !== 'lmg') {
+      if (stage && id !== 'br' && id !== 'pistol' && id !== 'smg' && id !== 'lmg' && id !== 'railgun') {
         const part = stage.phase === 'chamber' ? assembly.parts.bolt ?? assembly.parts.slide ?? assembly.parts.pump :
           sequence!.kind === 'vent' ? assembly.parts.feedTray ?? assembly.parts.receiver :
           assembly.parts.magazine ?? assembly.parts.reloadRound ?? assembly.parts.vent ?? assembly.parts.receiver;
@@ -307,6 +309,7 @@ export function createFirstPersonHands() {
           if (state?.shotgunCycle?.kind === 'chamber') left.target.lerpVectors(left.phaseStart, supportGrip, shotgunEase(state.shotgunCycle.elapsed / (state.shotgunCycle.duration * SHOTGUN.recovery / SHOTGUN.cycle)));
         }
       }
+      if(id==='railgun'){railgunHand(assembly,state,supportGrip,config.left.rotation,left.target,left.orientation);curl=stage&&['insert','pickup','lowerCradle'].includes(stage.phase)?1.05:config.left.curl;}
       if (id === 'lmg') {
         lmgSupportRotation.setFromEuler(euler.set(...config.left.rotation));
         const flatness=lmgHand(assembly,state,supportGrip,lmgSupportRotation,left.target,left.orientation);
@@ -393,16 +396,16 @@ export function createFirstPersonHands() {
       right.wrist.position.copy(right.target); right.wrist.quaternion.copy(right.orientation);
       // AR control contact is authored against the current moving part, without
       // an exponential lag that would leave fingers behind the charging latch.
-      left.wrist.position.lerp(left.target, arChamber || id === 'lmg' || id === 'smg' || id === 'shotgun' || id === 'sniper' || id === 'br' || (id === 'pistol' && (!!stage || pistolSprintBlend > 1e-5)) ? 1 : alpha);
-      left.wrist.quaternion.slerp(left.orientation, arChamber || id === 'lmg' || id === 'smg' || id === 'shotgun' || id === 'sniper' || id === 'br' || (id === 'pistol' && (!!stage || pistolSprintBlend > 1e-5)) ? 1 : alpha);
+      left.wrist.position.lerp(left.target, arChamber || id === 'railgun' || id === 'lmg' || id === 'smg' || id === 'shotgun' || id === 'sniper' || id === 'br' || (id === 'pistol' && (!!stage || pistolSprintBlend > 1e-5)) ? 1 : alpha);
+      left.wrist.quaternion.slerp(left.orientation, arChamber || id === 'railgun' || id === 'lmg' || id === 'smg' || id === 'shotgun' || id === 'sniper' || id === 'br' || (id === 'pistol' && (!!stage || pistolSprintBlend > 1e-5)) ? 1 : alpha);
       // Solve the sleeve from its posed cuff toward a camera-local torso bend.
       // Receiver tilt must not rotate a cut-off sleeve end into the viewport.
       assembly.root.updateMatrix(); inverse.copy(assembly.root.matrix).invert();
-      if(assembly.parts.supportUpperArm)assembly.parts.supportUpperArm.visible=id==='lmg'&&!!stage;
+      if(assembly.parts.supportUpperArm)assembly.parts.supportUpperArm.visible=(id==='lmg'||id==='railgun')&&!!stage;
       for (const [side, hand] of sides) {
         const attachment = config[side];
         const targetCurl = side === 'left' ? curl : attachment.curl;
-        if(id==='lmg')hand.curl=targetCurl;
+        if(id==='lmg'||id==='railgun')hand.curl=targetCurl;
         else hand.curl += (targetCurl - hand.curl) * alpha;
         end.set(0, -.047, 0).applyQuaternion(hand.wrist.quaternion).add(hand.wrist.position);
         // Bend toward a local torso target rather than reaching across the screen.
@@ -439,6 +442,12 @@ export function createFirstPersonHands() {
           upperArm.position.copy(lmgShoulder).add(lmgElbow).multiplyScalar(.5).applyMatrix4(inverse);
           direction.subVectors(lmgElbow,lmgShoulder);upperArm.scale.set(1,direction.length(),1);
           direction.transformDirection(inverse);upperArm.quaternion.setFromUnitVectors(up,direction);
+          (upperArm.children[0] as THREE.Mesh).material=sleeveMaterial;
+        }
+        if(id==='railgun'&&side==='left'&&stage){
+          railgunArm(attachmentPosition,railgunShoulder,railgunElbow);elbow.copy(railgunElbow);
+          const upperArm=assembly.parts.supportUpperArm;upperArm.position.copy(railgunShoulder).add(railgunElbow).multiplyScalar(.5).applyMatrix4(inverse);
+          direction.subVectors(railgunElbow,railgunShoulder);upperArm.scale.set(1,direction.length(),1);direction.transformDirection(inverse);upperArm.quaternion.setFromUnitVectors(up,direction);
           (upperArm.children[0] as THREE.Mesh).material=sleeveMaterial;
         }
         elbow.applyMatrix4(inverse);

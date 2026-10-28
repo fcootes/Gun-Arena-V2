@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "weapon": "railgun",
+  "implementation": [
+    "src/railgunMechanics.ts",
+    "src/weaponReload.ts",
+    "src/weaponAudio.ts"
+  ],
+  "status": "Markers implemented. Reload Foley intentionally absent pending approved recordings.",
+  "baselineReloadSeconds": 2.8,
+  "chargeSeconds": 1.2,
+  "clock": "Authoritative player reload state; never wall timers or a second animation clock.",
+  "phases": [
+    {
+      "phase": "present",
+      "baselineDurationSeconds": 0.22
+    },
+    {
+      "phase": "unlock",
+      "baselineDurationSeconds": 0.18
+    },
+    {
+      "phase": "slideForward",
+      "baselineDurationSeconds": 0.35
+    },
+    {
+      "phase": "raiseCradle",
+      "baselineDurationSeconds": 0.32
+    },
+    {
+      "phase": "pickup",
+      "baselineDurationSeconds": 0.34
+    },
+    {
+      "phase": "insert",
+      "baselineDurationSeconds": 0.5
+    },
+    {
+      "phase": "lowerCradle",
+      "baselineDurationSeconds": 0.23
+    },
+    {
+      "phase": "close",
+      "baselineDurationSeconds": 0.34
+    },
+    {
+      "phase": "lock",
+      "baselineDurationSeconds": 0.18
+    },
+    {
+      "phase": "recover",
+      "baselineDurationSeconds": 0.14
+    }
+  ],
+  "events": [
+    {
+      "event": "railgun_breech_unlock",
+      "baselineSeconds": 0.4,
+      "physicalAction": "Upper receiver lock fully disengaged.",
+      "audioRecommendation": "Short loaded metal detent; no electrical or gunshot layer."
+    },
+    {
+      "event": "railgun_breech_open",
+      "baselineSeconds": 0.75,
+      "physicalAction": "Rigid upper receiver and scope reach the forward stop at local Z=-0.270 m.",
+      "audioRecommendation": "Heavy guided slide ending in a restrained stop contact."
+    },
+    {
+      "event": "railgun_carrier_eject",
+      "baselineSeconds": 1.006,
+      "physicalAction": "Spent sleeve expelled from the cradle at 89.6% of its 32-degree rise.",
+      "audioRecommendation": "Small metal release/tick; optional brief carrier rattle, not a projectile report."
+    },
+    {
+      "event": "railgun_slug_seat",
+      "baselineSeconds": 1.91,
+      "physicalAction": "One fresh slug seats in the raised cradle; ammunition transfers here.",
+      "audioRecommendation": "Dense short metal seating contact; no battery insertion sound."
+    },
+    {
+      "event": "railgun_breech_close",
+      "baselineSeconds": 2.48,
+      "physicalAction": "Cradle is horizontal; upper receiver reaches its rearward closed stop.",
+      "audioRecommendation": "Weighted short guided metal closure, separate from final lock."
+    },
+    {
+      "event": "railgun_breech_lock",
+      "baselineSeconds": 2.66,
+      "physicalAction": "Cross-bolt engages after closure.",
+      "audioRecommendation": "Precise mechanical locking detent; no extra closing slam."
+    }
+  ],
+  "listener": {
+    "signature": "(event: RailgunEvent, speed: number, late: number) => void",
+    "speed": "Duration multiplier (e.g. 0.75 means 25% shorter). Physical event time = baselineSeconds * speed. Future Foley playback rate = 1 / speed.",
+    "late": "Elapsed game seconds after this physical event within the advancing frame. Future source offset = late / speed. Skip clips already exhausted at that offset.",
+    "lateFrames": "All crossed contacts emit in order once, including multiple events in a single frame.",
+    "interruption": "Cancellation retains slide, cradle, latch, carrier and seating state. Recovery lowers a seated round before closing; completed ejection and insertion are omitted.",
+    "pause": "Pause freezes the authoritative cursor; no wall timer or queued Foley.",
+    "switchDeathReset": "Existing switch/death/lobby cancellation removes the active sequence. New loadout/redeploy states begin clean. No audio voice or timer is allocated by these markers.",
+    "readiness": "Slug seats at 1.91 s; cradle is horizontal at 2.14 s; upper closes at 2.48 s; lock finishes at 2.66 s; charge becomes available after recovery at 2.80 s.",
+    "legacyAudio": "Railgun reload is handled silently, suppressing generic reload composites. Existing charge/fire recordings remain unchanged."
+  }
+}

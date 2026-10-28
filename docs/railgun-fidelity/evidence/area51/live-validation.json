@@ -1,0 +1,11 @@
+{
+  "checks": [
+    "Real LMB early release cancels without consuming ammunition",
+    "Real held LMB fires one slug after the existing charge and starts reload",
+    "Real R reload consumes one slug, ejects one carrier, emits six distinct silent markers",
+    "Pause freezes cursor; switch cancels without resetting breech; unlocked breech cannot charge; R safely resumes",
+    "Real sprint/recovery, ADS and local third-person render",
+    "Actual damage/death cancels reload"
+  ],
+  "errors": []
+}

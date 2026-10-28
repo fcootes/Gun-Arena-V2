@@ -1,0 +1,361 @@
+[
+  {
+    "name": "ready",
+    "ammo": 1,
+    "reserve": 30,
+    "reloading": false,
+    "progress": 0,
+    "root": [
+      0.15,
+      -0.2330050100267919,
+      -0.42
+    ],
+    "hand": [
+      -0.036,
+      -0.09,
+      -0.25
+    ],
+    "cover": [
+      0,
+      0,
+      0
+    ],
+    "fresh": [
+      -0.29,
+      -0.29,
+      0.12
+    ]
+  },
+  {
+    "name": "ads",
+    "ammo": 1,
+    "reserve": 30,
+    "reloading": false,
+    "progress": 0,
+    "root": [
+      1.1373840641867833e-10,
+      -0.15814312269662864,
+      -0.42
+    ],
+    "hand": [
+      -0.036,
+      -0.09,
+      -0.25
+    ],
+    "cover": [
+      0,
+      0,
+      0
+    ],
+    "fresh": [
+      -0.29,
+      -0.29,
+      0.12
+    ]
+  },
+  {
+    "name": "unlocked",
+    "ammo": 0,
+    "reserve": 30,
+    "reloading": true,
+    "breech": {
+      "cover": 0,
+      "latch": 1,
+      "carrier": true,
+      "seated": false
+    },
+    "phase": "retract",
+    "progress": 0,
+    "root": [
+      -0.09,
+      -0.155,
+      -0.78
+    ],
+    "hand": [
+      -0.13272615548279654,
+      0.04365751799831545,
+      0.21700000000000028
+    ],
+    "cover": [
+      0,
+      0,
+      0
+    ],
+    "fresh": [
+      -0.29,
+      -0.29,
+      0.12
+    ]
+  },
+  {
+    "name": "retracted",
+    "ammo": 0,
+    "reserve": 30,
+    "reloading": true,
+    "breech": {
+      "cover": 1,
+      "latch": 1,
+      "carrier": true,
+      "seated": false
+    },
+    "phase": "eject",
+    "progress": 0,
+    "root": [
+      -0.09,
+      -0.155,
+      -0.78
+    ],
+    "hand": [
+      -0.12999999999999956,
+      0.0540000000000002,
+      0.3599999999999993
+    ],
+    "cover": [
+      0,
+      0.014,
+      0.2
+    ],
+    "fresh": [
+      -0.29,
+      -0.29,
+      0.12
+    ]
+  },
+  {
+    "name": "carrier-eject",
+    "ammo": 0,
+    "reserve": 30,
+    "reloading": true,
+    "breech": {
+      "cover": 1,
+      "latch": 1,
+      "carrier": false,
+      "seated": false
+    },
+    "phase": "eject",
+    "progress": 0.5000000000000131,
+    "root": [
+      -0.09,
+      -0.155,
+      -0.78
+    ],
+    "hand": [
+      -0.22925000000000367,
+      -0.13800000000000745,
+      0.22499999999999434
+    ],
+    "cover": [
+      0,
+      0.014,
+      0.2
+    ],
+    "fresh": [
+      -0.29,
+      -0.29,
+      0.12
+    ]
+  },
+  {
+    "name": "fresh-slug",
+    "ammo": 0,
+    "reserve": 30,
+    "reloading": true,
+    "breech": {
+      "cover": 1,
+      "latch": 1,
+      "carrier": false,
+      "seated": false
+    },
+    "phase": "insert",
+    "progress": 0,
+    "root": [
+      -0.09,
+      -0.155,
+      -0.78
+    ],
+    "hand": [
+      -0.20002333655901655,
+      0.08481974667476402,
+      0.1605648827645939
+    ],
+    "cover": [
+      0,
+      0.014,
+      0.2
+    ],
+    "fresh": [
+      -0.15,
+      0.12,
+      0.145
+    ]
+  },
+  {
+    "name": "inserting",
+    "ammo": 0,
+    "reserve": 30,
+    "reloading": true,
+    "breech": {
+      "cover": 1,
+      "latch": 1,
+      "carrier": false,
+      "seated": false
+    },
+    "phase": "insert",
+    "progress": 0.5272727272727352,
+    "root": [
+      -0.09,
+      -0.155,
+      -0.78
+    ],
+    "hand": [
+      -0.04354063400897566,
+      0.0997827977037675,
+      0.12432529295975475
+    ],
+    "cover": [
+      0,
+      0.014,
+      0.2
+    ],
+    "fresh": [
+      0,
+      0.1106123215627337,
+      0.132
+    ]
+  },
+  {
+    "name": "seated",
+    "ammo": 1,
+    "reserve": 29,
+    "reloading": true,
+    "breech": {
+      "cover": 1,
+      "latch": 1,
+      "carrier": false,
+      "seated": true
+    },
+    "phase": "close",
+    "progress": 0,
+    "root": [
+      -0.09,
+      -0.155,
+      -0.78
+    ],
+    "hand": [
+      1.3307842334502478e-15,
+      0.07750000000000012,
+      0.12699999999999967
+    ],
+    "cover": [
+      0,
+      0.014,
+      0.2
+    ],
+    "fresh": [
+      -0.29,
+      -0.29,
+      0.12
+    ]
+  },
+  {
+    "name": "closing",
+    "ammo": 1,
+    "reserve": 29,
+    "reloading": true,
+    "breech": {
+      "cover": 0.6177341413846582,
+      "latch": 1,
+      "carrier": false,
+      "seated": true
+    },
+    "phase": "close",
+    "progress": 0.5945945945945923,
+    "root": [
+      -0.09,
+      -0.155,
+      -0.78
+    ],
+    "hand": [
+      -0.12999999999999956,
+      0.0540000000000001,
+      0.283546828276929
+    ],
+    "cover": [
+      0,
+      0.014,
+      0.12354682827693164
+    ],
+    "fresh": [
+      -0.29,
+      -0.29,
+      0.12
+    ]
+  },
+  {
+    "name": "locking",
+    "ammo": 1,
+    "reserve": 29,
+    "reloading": true,
+    "breech": {
+      "cover": 0,
+      "latch": 0.012740740740768142,
+      "carrier": false,
+      "seated": true
+    },
+    "phase": "lock",
+    "progress": 0.949999999999945,
+    "root": [
+      -0.09,
+      -0.155,
+      -0.78
+    ],
+    "hand": [
+      -0.11831963070039375,
+      0.01232249412042842,
+      0.21700000000000028
+    ],
+    "cover": [
+      0,
+      0,
+      0
+    ],
+    "fresh": [
+      -0.29,
+      -0.29,
+      0.12
+    ]
+  },
+  {
+    "name": "recovered",
+    "ammo": 1,
+    "reserve": 29,
+    "reloading": false,
+    "breech": {
+      "cover": 0,
+      "latch": 0,
+      "carrier": false,
+      "seated": true
+    },
+    "progress": 0,
+    "root": [
+      0.15,
+      -0.2361013710851952,
+      -0.42
+    ],
+    "hand": [
+      -0.036,
+      -0.09,
+      -0.25
+    ],
+    "cover": [
+      0,
+      0,
+      0
+    ],
+    "fresh": [
+      -0.29,
+      -0.29,
+      0.12
+    ]
+  }
+]

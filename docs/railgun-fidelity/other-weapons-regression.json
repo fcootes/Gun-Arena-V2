@@ -1,0 +1,62 @@
+{
+  "baselineCommit": "3be03e3a8ed03245b2acf391fce5ed1a6ec45d9c",
+  "result": "identical",
+  "method": "SHA256 of definitions, material-batched geometry/materials and production viewmodel reload states/transforms at 0, 0.1, 0.6, 1.2 and 2.0 seconds, against an isolated main worktree. Object IDs/UUIDs excluded.",
+  "weapons": {
+    "ar": {
+      "definition": "084be27932e1c73670666db8ef1b0848767750be5ddf12254590928ecd75ee26",
+      "model": "5781c1e29e779ce91d1b4c23ac7d83fab4044980d68e7ba5a31eee8354004aa8",
+      "reload": "11a102215a781a03059a0336ef79e9a7663770af27f84be42029e759024231b3"
+    },
+    "shotgun": {
+      "definition": "53d9618a77ec4ccedb7dbda7e069ff0bda2a97163b9b9de1b24049b2e99c4217",
+      "model": "cd83a61fc8fe6b83172f8d3a7ef1ee279c94b8b519df78f72d12d21cf5270c68",
+      "reload": "b106c28a067e86a324287714ce94fd294df19c9bc2573fa6910044f6e2f22d72"
+    },
+    "sniper": {
+      "definition": "a739e106f56cfaac2c9b969b05a827454ccef60a568b9e4530dbae8a43e8df58",
+      "model": "e010f7dff6f831b935bfc745df6b79fa103bb189dd4693f3572a4859e0782354",
+      "reload": "e967b6e2b57f0f922c45a41c357f5027ef290f5a88550de0045f5283a44a8542"
+    },
+    "pistol": {
+      "definition": "79f26848af5eef280e4ac5b96b155bb78b81a35962f723165ac5b92bd50c1751",
+      "model": "54cddaa8aa605dd125e5b3705ac71915dfe485f920ee5f395c7940c90de0c08e",
+      "reload": "df8e9b6cdc36849f08561c264674976ffd564fa76dd1b62c3143558b52c7bca8"
+    },
+    "smg": {
+      "definition": "f0c4eb78d1be3d7245fec19e80d62a0f8de88fc38d0b4adaa8602498593c7ee3",
+      "model": "05d29a8920e4c81cadb14220765478143173b0f35249ae2a872b4a9b3d9d277b",
+      "reload": "dc38b89b43c1b827a6f0f532131bc52f6aa607f495a45d48628172d939bac8a4"
+    },
+    "lmg": {
+      "definition": "e4a01f10dea82c9f3be12ea3c8a5c07d851d0c0d9f5443aeedd588fdd0dad98d",
+      "model": "4583006308166ea7ad516486ce5ed9ec9dc4bbfa14ce03b4317ad0fabcbcae3f",
+      "reload": "e6c49949c8d201b45b12678e925ab72ea5fb429300588a8ae5781c21f7ce9949"
+    },
+    "br": {
+      "definition": "23619084d7ce1d9687f4e3d9a9a07b8c581ae6d6591850cbae459943828f9e7e",
+      "model": "9d59585d8e8642644dac000e893a97687301d1bac9c3c99dabd246ab2b09dc69",
+      "reload": "8c663bd68ad85090f256d8cc8e5e58ef255541d6e84f87010180181266f4d06f"
+    },
+    "laser": {
+      "definition": "2355523378c3fab2c2247a9bb4d46c578bfb25ff191581c82a0e919ab4e93f92",
+      "model": "9a1e40ba471060f748f3f475e46e227562b5ac150b54ff6bbbb25c4ab1bf1f4d",
+      "reload": "d2b292a3806a2d5d35a088389fe42beff9b699e2ec23aefeca1c1068f955e88f"
+    },
+    "minigun": {
+      "definition": "dc7360494bad812476eec295c5d89ea75888cf7013628d55029356fd9a5d8781",
+      "model": "bec968e3a29ff56a62f85fe1e1466698b7853c5803f76f73d617ca846219f08a",
+      "reload": "0026d9c9f0d6be3e98b0742dc8ff3f714242f3bacb7fdb4cf0bc0c0104ebcef3"
+    },
+    "rocket": {
+      "definition": "8bbbed091cc8d14b01d1e459ee709180d0644e060930b24268d1f84926aed5c9",
+      "model": "bccafaa6b2290655705a7d4e5d7cea9ca5733530a659367862cb2221ecee261a",
+      "reload": "8ff6814b4de1f0c2d719a1d369f819076510b403b655fd317e364d4039bbb079"
+    },
+    "grenade_launcher": {
+      "definition": "4e11f8418ff75bceef369e4b99a9c784e34e9a0e53096d7ad9d38844df79d8b2",
+      "model": "840a91c60a8c51da26eae0a925674c209177edf70a55e3a46de21493675cdd21",
+      "reload": "05291fa9bd1af1169b757862a422d8bb2781f1f30c485cdb44c2c0e0faf6261a"
+    }
+  }
+}

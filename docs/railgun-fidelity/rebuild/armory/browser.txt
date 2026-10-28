@@ -1,0 +1,6 @@
+Captured side
+Captured three-quarter
+Captured top
+Captured front
+Captured rear
+PASS: production Railgun scene/studio captures
