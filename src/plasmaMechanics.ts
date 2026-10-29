@@ -4,7 +4,7 @@ import type {WeaponSlotState} from './types';
 /** Metres in weapon space; every reload contact runs on the gameplay clock. */
 export const PLASMA=Object.freeze({
  capacity:60,reserve:180,interval:.125,speed:200,range:130,heatPerShot:2.5,cooling:16,vent:1.25,reload:2.20,
- cylinder:[-.008,.024,-.066] as const, cylinderRadius:.024,cylinderHalfLength:.103,
+ cylinder:[-.008,.024,-.066] as const, cylinderRadius:.028,cylinderHalfLength:.103,
  upperHinge:[-.053,.080,-.066] as const,lowerHinge:[-.053,-.045,-.066] as const,doorAngle:86*Math.PI/180,
  freshStart:[-.24,-.22,-.066] as const,freshAlign:[-.16,.024,-.066] as const,freshContact:[-.080,.024,-.066] as const,
  carry:[.125,-.222,-.416] as const,rotation:[.025,.08,-.18] as const,

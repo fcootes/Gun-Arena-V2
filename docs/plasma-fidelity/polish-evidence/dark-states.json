@@ -1,0 +1,141 @@
+[
+  {
+    "name": "marks-new",
+    "marks": 6,
+    "ammo": 52,
+    "reserve": 180,
+    "heat": 20,
+    "reloading": false,
+    "shots": 8,
+    "bolts": 0,
+    "aiming": false,
+    "thirdPerson": false,
+    "state": "playing"
+  },
+  {
+    "name": "marks-fading",
+    "marks": 6,
+    "ammo": 52,
+    "reserve": 180,
+    "heat": 20,
+    "reloading": false,
+    "shots": 8,
+    "bolts": 0,
+    "aiming": false,
+    "thirdPerson": false,
+    "state": "playing"
+  },
+  {
+    "name": "inside",
+    "ammo": 20,
+    "reserve": 180,
+    "heat": 0,
+    "reloading": true,
+    "kind": "plasmaSwap",
+    "phase": "open",
+    "physical": {
+      "upperDoor": 0.9999252500000001,
+      "lowerDoor": 0.9999117104668366,
+      "release": 1,
+      "lock": 0.00007474999999990128,
+      "shutters": 0,
+      "cartridgeInstalled": true,
+      "ejectionAge": -1
+    },
+    "shots": 8,
+    "bolts": 0,
+    "aiming": false,
+    "thirdPerson": false,
+    "state": "playing"
+  },
+  {
+    "name": "initial-pop",
+    "ammo": 0,
+    "reserve": 180,
+    "heat": 0,
+    "reloading": true,
+    "kind": "plasmaSwap",
+    "phase": "eject",
+    "physical": {
+      "upperDoor": 1,
+      "lowerDoor": 1,
+      "release": 1,
+      "lock": 0,
+      "shutters": 0,
+      "cartridgeInstalled": false,
+      "ejectionAge": 0.033333333299999934
+    },
+    "shots": 8,
+    "bolts": 0,
+    "aiming": false,
+    "thirdPerson": false,
+    "state": "playing"
+  },
+  {
+    "name": "cleared-doors",
+    "ammo": 0,
+    "reserve": 180,
+    "heat": 0,
+    "reloading": true,
+    "kind": "plasmaSwap",
+    "phase": "eject",
+    "physical": {
+      "upperDoor": 1,
+      "lowerDoor": 1,
+      "release": 1,
+      "lock": 0,
+      "shutters": 0,
+      "cartridgeInstalled": false,
+      "ejectionAge": 0.10000000000000003
+    },
+    "shots": 8,
+    "bolts": 0,
+    "aiming": false,
+    "thirdPerson": false,
+    "state": "playing"
+  },
+  {
+    "name": "fresh-seat",
+    "ammo": 60,
+    "reserve": 120,
+    "heat": 0,
+    "reloading": true,
+    "kind": "plasmaSwap",
+    "phase": "close",
+    "physical": {
+      "upperDoor": 1,
+      "lowerDoor": 1,
+      "release": 1,
+      "lock": 1,
+      "shutters": 0,
+      "cartridgeInstalled": true,
+      "ejectionAge": 1
+    },
+    "shots": 8,
+    "bolts": 0,
+    "aiming": false,
+    "thirdPerson": false,
+    "state": "playing"
+  },
+  {
+    "name": "closed-ready",
+    "ammo": 60,
+    "reserve": 120,
+    "heat": 0,
+    "reloading": false,
+    "physical": {
+      "upperDoor": 0,
+      "lowerDoor": 0,
+      "release": 0,
+      "lock": 1,
+      "shutters": 0,
+      "cartridgeInstalled": true,
+      "ejectionAge": -1
+    },
+    "shots": 8,
+    "bolts": 0,
+    "aiming": false,
+    "thirdPerson": false,
+    "state": "playing"
+  }
+]

@@ -1,6 +1,8 @@
-# PR-100 internal chamber refinement (PR #26)
+# PR-100 final polish (draft PR #26)
 
-Continues `feat/plasma-repeater-fidelity` from verified head `06f6d22c88ec1b6295d1936b9e22158692e5c5a2`. The former external tray and white muzzle blocks are replaced. PR #26 remains draft for native-laptop acceptance; no merge or production deployment is authorized by this work.
+Continues the approved internal-chamber design from verified head `43e87369dadc2f2bf3c5394628178fe71a17dd82` on `feat/plasma-repeater-fidelity`. This pass changes only bolt rendering, material-aware impacts/scorches, cartridge proportions and spent-cylinder impulse. The integrated ceramic emitter, hollow receiver, split doors, hands, ammunition/heat rules and 2.20 s reload remain approved. PR #26 stays draft for native-laptop acceptance.
+
+See [current screenshots, normal-speed export, validation and limitations](polish-evidence/README.md).
 
 ## Exterior and chamber
 
@@ -12,7 +14,7 @@ Hierarchy, all in weapon-local metres:
 
 - `receiver`: fixed chassis, internal seat surfaces, pressure contacts and ejector pad.
 - `cartridgeSeat`: fixed semantic attachment at **(−.008, .024, −.066)**; its static meshes join receiver batches.
-- `gasCylinder`: installed longitudinal cartridge, parented directly to receiver at **(−.008, .024, −.066)**. Radius ≤.024 m, total length .206 m.
+- `gasCylinder`: installed longitudinal cartridge, parented directly to receiver at **(−.008, .024, −.066)**. Maximum visual radius .028 m. Rounded graphite vessel radius .025 m (19% wider than .021 m), body length .156 m; capped pressure body .178 m instead of .206 m. Reinforced metallic caps/collars and a narrow cyan inspection strip replace the broad glowing glass appearance. Keyed end couplings retain the original .206 m seat span.
 - `chamberUpperDoor`: pivot **(−.053, .080, −.066)**; rotation about longitudinal **Z = −86°** when open.
 - `chamberLowerDoor`: pivot **(−.053, −.045, −.066)**; rotation about **Z = +86°** when open.
 - Each 6 mm-thick panel is 61.5 mm high and 222 mm long, with its centre 31.25 mm toward the receiver centre from its hinge. Four fixed hinge barrels remain mechanically attached to the receiver.
@@ -44,12 +46,13 @@ The right hand remains attached to its firing grip. The rifle cants around that 
 
 At .58 s the installed object hides and the preallocated spent object appears at the **same seated transform**. For baseline ejection age `t`, its local position is:
 
-- X = −.008 − .12 × smoothstep(clamp(t/.20)) − .16 × max(t−.20, 0)
-- Y = .024 + .34 × u − 3 × u², where u = max(t−.20, 0)
+- Let `p = 1 − exp(−t/.025)` and `u = max(t−.065, 0)`.
+- X = −.008 − .22 × p² − .45 × t
+- Y = .024 + .14 × u − 4.6 × u²
 - Z = −.066 + .035 × u
-- Rotation XYZ = (.45u, −.70u, 1.40u) radians.
+- Rotation XYZ = (4.5u, −2.8u, 7u) radians.
 
-The first .20 s is strictly transverse to clear the door envelope; the short upward/falling arc and rotation follow after clearance. It hides at **.66 baseline seconds of age**, below the first-person frame. Age comes from the authoritative scaled action clock and freezes on pause. Cancellation hides the cosmetic immediately; teardown disposes shared buffers/materials once. It never enters the projectile pool or pickup system.
+The first .065 s is strictly transverse. The spring-like pop travels over .12 m in the first 33 ms and over .30 m by .20 s; tumble and gravity begin only after door/receiver clearance. Actual cylinder vertices clear both doors and the actual articulated support glove at 240 Hz. It hides at **.66 baseline seconds of age**, below the first-person frame. Age comes from the authoritative scaled action clock and freezes on pause. Cancellation hides the cosmetic immediately; teardown disposes shared buffers/materials once. It never enters the projectile pool or pickup system.
 
 The fresh cylinder starts at **(−.240, −.220, −.066)**. It aligns at **(−.160, .024, −.066)** during the first 72% of insertion, then approaches **(−.080, .024, −.066)**. The slap pushes it to **(−.008, .024, −.066)**. At 1.58 s the fresh object is replaced by the installed object at exactly the same transform. The palm remains at a calibrated cartridge-relative contact, with fingers flattening during seating.
 
@@ -67,18 +70,27 @@ R precedence remains: active action → ignore; overheated → thermal recovery;
 
 ## Preserved gameplay and performance
 
-Eight physical bolts/second, .125 s cadence, 200 units/s velocity, 130-unit range, swept moving/static collisions, cover obstruction and damage attribution are unchanged. The 60/180 sealed-cartridge supply, damage 12, headshot 1.7×, 2.5 heat/shot, 16 heat/s passive cooling and .15 s cooling grace remain intact. Projectile and impact pool code is unchanged.
+Eight physical bolts/second, .125 s cadence, 200 units/s velocity, 130-unit range, swept moving/static collisions, cover obstruction and damage attribution are unchanged. The 60/180 sealed-cartridge supply, damage 12, headshot 1.7×, 2.5 heat/shot, 16 heat/s passive cooling and .15 s cooling grace remain intact. The existing 192-slot projectile pool and collision/damage winner selection remain authoritative; visual feedback observes the resolved hit. Only props already marked destructible call the existing environmental-damage interface, capped at one base shot (12).
 
 The bare model uses **21 meshes**, below the existing 24-mesh budget. Three cartridges share one baked vertex-coloured buffer and material. No reload creates meshes, geometry or materials. Disposal assertions release every owned resource once; six rendered Armory replacement cycles stabilize at **24 geometries / 4 textures** for the complete inspection scene. There are no new dynamic lights or changes to map/APEX preparation.
 
 Armory's real TEST CARTRIDGE / TEST THERMAL VENT / TEST MUZZLE EFFECT controls are exercised in the browser. INSPECT CHAMBER, PAUSE/RESUME and a 0–2.20 s pose slider allow intermediate review without changing any gameplay slot. Orbit/zoom supports either side, front and rear.
 
+## Bolt and impact rendering
+
+Three reused instanced draws render each velocity-aligned packet: a dense cyan-white shaped core, a constrained 32 mm-radius envelope and a tapered 32 cm wake. The full packet is under .45 m long versus 25 m spacing at 8 Hz/200 m/s. Small seeded shader variations animate intensity and tail distortion. No beam, per-shot mesh/material/texture, projectile light or fullscreen postprocess is added.
+
+A separate three-draw feedback pool holds **32 contact flashes** (.16 s), **192 spark/dust flecks** (≤.22 s), and **80 scorch marks**. A mark persists fully for 12 s, fades through 16 s, and is recycled oldest-first at capacity. Material metadata takes precedence, with conservative names/finish inference for existing concrete, metal, painted metal and stone. Metal/armour contacts produce a few warm sparks; mineral contacts produce restrained dust; shield contacts use a brief cyan arc. Actors receive transient feedback only.
+
+World marks use the actual intersected face point and inverse-transpose world normal, including instanced/nonuniform transforms. A 2 mm offset and polygon offset prevent z-fighting. Four footprint rays reject unsupported corners/curved surfaces. Invisible/collision-only/transparent geometry and generic unknown surfaces get no mark. Removed, destroyed, hidden or moved supports invalidate their static mark immediately; reset/map teardown releases all references. An AABB-only contact cannot create a floating decal. All buffers/materials/instance resources are preallocated and disposed once.
+
 ## Audio, validation and evidence
 
 Existing WAVs are unchanged. Cylinder seating now plays at **1.58 s**. The thermal hiss stays bounded to its independent vent window; cartridge reload has no thermal hiss or old sliding/composite sound. [The typed silent contact contract](audio-follow-up.md) lists missing W07 Foley.
 
-- [Validation and limitations](verification.txt)
+- [Final polish validation and evidence](polish-evidence/README.md)
+- [Prior refinement validation and limitations](verification.txt)
 - [Actual screenshots, videos and frame/state provenance](refinement-evidence/README.md)
 - [Exact changed-file manifest](refinement-evidence/changed-files.txt)
 
-The previous [evidence directory](evidence/README.md) and [audit](audit.md) are historical baseline records of the superseded tray mechanism. Use `refinement-evidence` to review the current implementation.
+The previous [evidence directory](evidence/README.md) and [audit](audit.md) are historical baseline records of the superseded tray mechanism. The earlier `refinement-evidence` documents the approved design before this polish; use `polish-evidence` for the latest visuals.

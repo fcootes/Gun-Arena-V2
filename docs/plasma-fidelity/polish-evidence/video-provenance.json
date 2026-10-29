@@ -1,0 +1,4818 @@
+{
+  "fps": 30,
+  "frames": 179,
+  "description": "Actual production App renderer, Area 51 lighting, two added material diagnostic targets; world held still. Offline 30 FPS normal-speed simulation playback, NOT real-time/native GPU performance evidence. Full uninterrupted 2.20 s swap; independent 1.25 s vent. Silent export.",
+  "states": [
+    {
+      "mode": "ready",
+      "frame": 1,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 4088,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "shots": 8,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "ready",
+      "frame": 2,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 4348,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "shots": 8,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "ready",
+      "frame": 3,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 4608,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "shots": 8,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "ready",
+      "frame": 4,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 4868,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "shots": 8,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "ready",
+      "frame": 5,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 5128,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "shots": 8,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "ready",
+      "frame": 6,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 5388,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "shots": 8,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "ready",
+      "frame": 7,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 5648,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "shots": 8,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "ready",
+      "frame": 8,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 5908,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "shots": 8,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "ready",
+      "frame": 9,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 6168,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "shots": 8,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "ready",
+      "frame": 10,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 6428,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "shots": 8,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "ready",
+      "frame": 11,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 6688,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "shots": 8,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "ready",
+      "frame": 12,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 6948,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "shots": 8,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "ready",
+      "frame": 13,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 7208,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "shots": 8,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "ready",
+      "frame": 14,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 7468,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "shots": 8,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "ready",
+      "frame": 15,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 7728,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "shots": 8,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 16,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 1,
+      "bolts": 0,
+      "draws": 7991,
+      "ammo": 59,
+      "reserve": 180,
+      "heat": 2.5,
+      "reloading": false,
+      "shots": 9,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 17,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 1,
+      "bolts": 0,
+      "draws": 8253,
+      "ammo": 59,
+      "reserve": 180,
+      "heat": 2.5,
+      "reloading": false,
+      "shots": 9,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 18,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 1,
+      "bolts": 0,
+      "draws": 8515,
+      "ammo": 59,
+      "reserve": 180,
+      "heat": 2.5,
+      "reloading": false,
+      "shots": 9,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 19,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 2,
+      "bolts": 0,
+      "draws": 8777,
+      "ammo": 58,
+      "reserve": 180,
+      "heat": 5,
+      "reloading": false,
+      "shots": 10,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 20,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 2,
+      "bolts": 0,
+      "draws": 9039,
+      "ammo": 58,
+      "reserve": 180,
+      "heat": 5,
+      "reloading": false,
+      "shots": 10,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 21,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 2,
+      "bolts": 0,
+      "draws": 9301,
+      "ammo": 58,
+      "reserve": 180,
+      "heat": 5,
+      "reloading": false,
+      "shots": 10,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 22,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 2,
+      "bolts": 0,
+      "draws": 9563,
+      "ammo": 58,
+      "reserve": 180,
+      "heat": 5,
+      "reloading": false,
+      "shots": 10,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 23,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 3,
+      "bolts": 0,
+      "draws": 9825,
+      "ammo": 57,
+      "reserve": 180,
+      "heat": 7.5,
+      "reloading": false,
+      "shots": 11,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 24,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 3,
+      "bolts": 0,
+      "draws": 10087,
+      "ammo": 57,
+      "reserve": 180,
+      "heat": 7.5,
+      "reloading": false,
+      "shots": 11,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 25,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 3,
+      "bolts": 0,
+      "draws": 10349,
+      "ammo": 57,
+      "reserve": 180,
+      "heat": 7.5,
+      "reloading": false,
+      "shots": 11,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 26,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 3,
+      "bolts": 0,
+      "draws": 10611,
+      "ammo": 57,
+      "reserve": 180,
+      "heat": 7.5,
+      "reloading": false,
+      "shots": 11,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 27,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 4,
+      "bolts": 0,
+      "draws": 10874,
+      "ammo": 56,
+      "reserve": 180,
+      "heat": 10,
+      "reloading": false,
+      "shots": 12,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 28,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 4,
+      "bolts": 0,
+      "draws": 11136,
+      "ammo": 56,
+      "reserve": 180,
+      "heat": 10,
+      "reloading": false,
+      "shots": 12,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 29,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 4,
+      "bolts": 0,
+      "draws": 11398,
+      "ammo": 56,
+      "reserve": 180,
+      "heat": 10,
+      "reloading": false,
+      "shots": 12,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 30,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 4,
+      "bolts": 1,
+      "draws": 11663,
+      "ammo": 55,
+      "reserve": 180,
+      "heat": 12.5,
+      "reloading": false,
+      "shots": 13,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 31,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 5,
+      "bolts": 0,
+      "draws": 11966,
+      "ammo": 55,
+      "reserve": 180,
+      "heat": 12.5,
+      "reloading": false,
+      "shots": 13,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 32,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 5,
+      "bolts": 0,
+      "draws": 12268,
+      "ammo": 55,
+      "reserve": 180,
+      "heat": 12.5,
+      "reloading": false,
+      "shots": 13,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 33,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 5,
+      "bolts": 0,
+      "draws": 12570,
+      "ammo": 55,
+      "reserve": 180,
+      "heat": 12.5,
+      "reloading": false,
+      "shots": 13,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 34,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 6,
+      "bolts": 0,
+      "draws": 12872,
+      "ammo": 54,
+      "reserve": 180,
+      "heat": 15,
+      "reloading": false,
+      "shots": 14,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 35,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 6,
+      "bolts": 0,
+      "draws": 13174,
+      "ammo": 54,
+      "reserve": 180,
+      "heat": 15,
+      "reloading": false,
+      "shots": 14,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 36,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 6,
+      "bolts": 0,
+      "draws": 13476,
+      "ammo": 54,
+      "reserve": 180,
+      "heat": 15,
+      "reloading": false,
+      "shots": 14,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 37,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 6,
+      "bolts": 0,
+      "draws": 13778,
+      "ammo": 54,
+      "reserve": 180,
+      "heat": 15,
+      "reloading": false,
+      "shots": 14,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 38,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 7,
+      "bolts": 0,
+      "draws": 14080,
+      "ammo": 53,
+      "reserve": 180,
+      "heat": 17.5,
+      "reloading": false,
+      "shots": 15,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 39,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 7,
+      "bolts": 0,
+      "draws": 14382,
+      "ammo": 53,
+      "reserve": 180,
+      "heat": 17.5,
+      "reloading": false,
+      "shots": 15,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 40,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 7,
+      "bolts": 0,
+      "draws": 14684,
+      "ammo": 53,
+      "reserve": 180,
+      "heat": 17.5,
+      "reloading": false,
+      "shots": 15,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 41,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 7,
+      "bolts": 0,
+      "draws": 14986,
+      "ammo": 53,
+      "reserve": 180,
+      "heat": 17.5,
+      "reloading": false,
+      "shots": 15,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 42,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 8,
+      "bolts": 0,
+      "draws": 15289,
+      "ammo": 52,
+      "reserve": 180,
+      "heat": 20,
+      "reloading": false,
+      "shots": 16,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 43,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 8,
+      "bolts": 0,
+      "draws": 15591,
+      "ammo": 52,
+      "reserve": 180,
+      "heat": 20,
+      "reloading": false,
+      "shots": 16,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 44,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 8,
+      "bolts": 0,
+      "draws": 15893,
+      "ammo": 52,
+      "reserve": 180,
+      "heat": 20,
+      "reloading": false,
+      "shots": 16,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "fire",
+      "frame": 45,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 8,
+      "bolts": 1,
+      "draws": 16198,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 22.5,
+      "reloading": false,
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 46,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 16500,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 22.5,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "present",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 47,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 16801,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 22.5,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "present",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 48,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 17102,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 22.5,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "present",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 49,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 17403,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 22.5,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "present",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 50,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 17703,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 22.233333333333334,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "present",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 51,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 18003,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 21.700000000000003,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "present",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 52,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 18303,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 21.16666666666667,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "present",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 53,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 18603,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 20.63333333333334,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "present",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 54,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 18903,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 20.10000000000001,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "present",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 55,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 19203,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 19.566666666666677,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "present",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0.33191319326324753,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 56,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 19503,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 19.033333333333346,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "present",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0.9184634408427996,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 57,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 19803,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 18.500000000000014,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "open",
+      "physical": {
+        "upperDoor": 0.028000000000000885,
+        "lowerDoor": 0.0013972219939182022,
+        "release": 1,
+        "lock": 0.9719999999999991,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 58,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 20103,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 17.966666666666683,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "open",
+      "physical": {
+        "upperDoor": 0.1754074074074093,
+        "lowerDoor": 0.10679768286409369,
+        "release": 1,
+        "lock": 0.8245925925925908,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 59,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 20403,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 17.43333333333335,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "open",
+      "physical": {
+        "upperDoor": 0.4005925925925949,
+        "lowerDoor": 0.32920407051253014,
+        "release": 1,
+        "lock": 0.5994074074074052,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 60,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 20703,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 16.90000000000002,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "open",
+      "physical": {
+        "upperDoor": 0.6480000000000021,
+        "lowerDoor": 0.5972713076354098,
+        "release": 1,
+        "lock": 0.35199999999999787,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 61,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 21002,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 16.36666666666669,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "open",
+      "physical": {
+        "upperDoor": 0.8620740740740759,
+        "lowerDoor": 0.8396543169289141,
+        "release": 1,
+        "lock": 0.13792592592592412,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 62,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 21300,
+      "ammo": 51,
+      "reserve": 180,
+      "heat": 15.833333333333357,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "open",
+      "physical": {
+        "upperDoor": 0.9872592592592598,
+        "lowerDoor": 0.9850080210892249,
+        "release": 1,
+        "lock": 0.012740740740740164,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 63,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 21598,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 15.300000000000026,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "eject",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.020000000000000302
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 64,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 21896,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 14.766666666666694,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "eject",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.05333333333333363
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 65,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 22194,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 14.233333333333363,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "eject",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.08666666666666696
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 66,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 22493,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 13.700000000000031,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "eject",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.12000000000000029
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 67,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 22793,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 13.1666666666667,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "eject",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.15333333333333363
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 68,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 23093,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 12.633333333333368,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "eject",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.18666666666666695
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 69,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 23394,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 12.100000000000037,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "insert",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.22000000000000028
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 70,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 23695,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 11.566666666666706,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "insert",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.25333333333333363
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 71,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 23996,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 11.033333333333374,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "insert",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.28666666666666707
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 72,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 24297,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 10.500000000000043,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "insert",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.3200000000000005
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 73,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 24597,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 9.966666666666711,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "insert",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.35333333333333394
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 74,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 24897,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 9.43333333333338,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "insert",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.3866666666666674
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 75,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 25197,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 8.900000000000048,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "insert",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.4200000000000008
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 76,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 25497,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 8.366666666666717,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "insert",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.45333333333333425
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 77,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 25797,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 7.833333333333384,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "insert",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.4866666666666677
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 78,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 26097,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 7.300000000000049,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "insert",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.520000000000001
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 79,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 26397,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 6.766666666666714,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "insert",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.5533333333333342
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 80,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 26697,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 6.233333333333379,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "insert",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.5866666666666674
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 81,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 26997,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 5.700000000000044,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "insert",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.6200000000000007
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 82,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 27297,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 5.166666666666709,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "insert",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.6533333333333339
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 83,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 27597,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 4.633333333333374,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "insert",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.6866666666666671
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 84,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 27897,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 4.100000000000039,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "insert",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.7200000000000003
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 85,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 28197,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 3.5666666666667055,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "insert",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.7533333333333335
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 86,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 28497,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 3.0333333333333723,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "slap",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0.014991978910775656,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.786666666666666
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 87,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 28797,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 2.500000000000039,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "slap",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0.12122955535464777,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.8199999999999992
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 88,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 29097,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 1.9666666666667059,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "slap",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0.2986980569786519,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.8533333333333324
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 89,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 29397,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 1.4333333333333727,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "slap",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0.5108688042032332,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.8866666666666656
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 90,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 29697,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 0.9000000000000394,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "slap",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0.7212131174488369,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.9199999999999988
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 91,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 29997,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 0.3666666666667062,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "slap",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0.8932023171359079,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.953333333333332
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 92,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 30297,
+      "ammo": 0,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "slap",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 1,
+        "lock": 0.9903077236848914,
+        "shutters": 0,
+        "cartridgeInstalled": false,
+        "ejectionAge": 0.9866666666666652
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 93,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 30597,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "close",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 0.9872592592592593,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.0199999999999985
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 94,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 30897,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "close",
+      "physical": {
+        "upperDoor": 1,
+        "lowerDoor": 1,
+        "release": 0.9164224965706449,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.0533333333333317
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 95,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 31197,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "close",
+      "physical": {
+        "upperDoor": 0.9657064471879288,
+        "lowerDoor": 0.9657064471879288,
+        "release": 0.7978491083676271,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.086666666666665
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 96,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 31497,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "close",
+      "physical": {
+        "upperDoor": 0.8437500000000002,
+        "lowerDoor": 0.8437500000000002,
+        "release": 0.6480000000000001,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.119999999999998
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 97,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 31797,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "close",
+      "physical": {
+        "upperDoor": 0.6639231824417012,
+        "lowerDoor": 0.6639231824417012,
+        "release": 0.4833360768175585,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.1533333333333313
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 98,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 32097,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "close",
+      "physical": {
+        "upperDoor": 0.45837620027434867,
+        "lowerDoor": 0.45837620027434867,
+        "release": 0.32031824417009613,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.1866666666666645
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 99,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 32397,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "close",
+      "physical": {
+        "upperDoor": 0.2592592592592594,
+        "lowerDoor": 0.2592592592592594,
+        "release": 0.17540740740740757,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.2199999999999978
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 100,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 32697,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "close",
+      "physical": {
+        "upperDoor": 0.09872256515775046,
+        "lowerDoor": 0.09872256515775046,
+        "release": 0.06506447187928688,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.253333333333331
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 101,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 32997,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "close",
+      "physical": {
+        "upperDoor": 0.008916323731138487,
+        "lowerDoor": 0.008916323731138487,
+        "release": 0.005750342935528119,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.2866666666666642
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 102,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 33297,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "recover",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.3199999999999974
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 103,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 33597,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "recover",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.3533333333333306
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 104,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 33897,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "recover",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.3866666666666638
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 105,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 34197,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "recover",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.419999999999997
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 106,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 34497,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "recover",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.4533333333333303
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 107,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 34797,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "recover",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.4866666666666635
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 108,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 35097,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "recover",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.5199999999999967
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 109,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 35397,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "recover",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.55333333333333
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 110,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 35697,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaSwap",
+      "phase": "recover",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": 1.5866666666666631
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "swap",
+      "frame": 111,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 35997,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "settled",
+      "frame": 112,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 36297,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "settled",
+      "frame": 113,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 36597,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "settled",
+      "frame": 114,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 36898,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "settled",
+      "frame": 115,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 37199,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "settled",
+      "frame": 116,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 37500,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "settled",
+      "frame": 117,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 37801,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "settled",
+      "frame": 118,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 38102,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "settled",
+      "frame": 119,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 38403,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "settled",
+      "frame": 120,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 38704,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "settled",
+      "frame": 121,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 39005,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "settled",
+      "frame": 122,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 39306,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "settled",
+      "frame": 123,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 39607,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "settled",
+      "frame": 124,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 39908,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "settled",
+      "frame": 125,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 40209,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "settled",
+      "frame": 126,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 9,
+      "bolts": 0,
+      "draws": 40510,
+      "ammo": 60,
+      "reserve": 120,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 127,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 40810,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 80,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "present",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 128,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 41110,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 80,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "present",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 129,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 41410,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 80,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "present",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 130,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 41710,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 80,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "present",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 131,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 42010,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 80,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "unlock",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 132,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 42310,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 80,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "unlock",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 133,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 42610,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 80,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "unlock",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 134,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 42910,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 80,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "unlock",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 135,
+      "memory": {
+        "geometries": 464,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 43210,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 80,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "open",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 136,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 43511,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 80,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "open",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0.07407407407407407,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 137,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 43812,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 80,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "open",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0.25925925925925924,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 138,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 44113,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 80,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "open",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0.4999999999999999,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 139,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 44414,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 80,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "open",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0.7407407407407407,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 140,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 44715,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 80,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "open",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0.9259259259259258,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 141,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 45015,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 80,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "vent",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 1,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 142,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 45316,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 78.98074074074074,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "vent",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 1,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 143,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 45617,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 76.11259259259259,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "vent",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 1,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 144,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 45918,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 71.68,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "vent",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 1,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 145,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 46219,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 65.9674074074074,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "vent",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 1,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 146,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 46520,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 59.25925925925925,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "vent",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 1,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 147,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 46821,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 51.84,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "vent",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 1,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 148,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 47122,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 43.99407407407408,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "vent",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 1,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 149,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 47423,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 36.00592592592592,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "vent",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 1,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 150,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 47724,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 28.15999999999997,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "vent",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 1,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 151,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 48025,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 20.740740740740698,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "vent",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 1,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 152,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 48326,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 14.032592592592534,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "vent",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 1,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 153,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 48627,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 8.319999999999936,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "vent",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 1,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 154,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 48928,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 3.8874074074073572,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "vent",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 1,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 155,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 49229,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 1.019259259259222,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "vent",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 1,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 156,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 49529,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "close",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 1,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 157,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 49829,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "close",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0.8737997256515775,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 158,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 50129,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "close",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0.5829903978052126,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 159,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 50429,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "close",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0.2592592592592593,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 160,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 50729,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "close",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0.03429355281207136,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 161,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 51029,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "recover",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 162,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 51329,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "recover",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 163,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 51629,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": true,
+      "kind": "plasmaVent",
+      "phase": "recover",
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "vent",
+      "frame": 164,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 51929,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "end",
+      "frame": 165,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 52229,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "end",
+      "frame": 166,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 52529,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "end",
+      "frame": 167,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 52829,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "end",
+      "frame": 168,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 53129,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "end",
+      "frame": 169,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 53429,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "end",
+      "frame": 170,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 53729,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "end",
+      "frame": 171,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 54029,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "end",
+      "frame": 172,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 54328,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "end",
+      "frame": 173,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 54627,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "end",
+      "frame": 174,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 54926,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "end",
+      "frame": 175,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 55225,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "end",
+      "frame": 176,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 55524,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "end",
+      "frame": 177,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 55823,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "end",
+      "frame": 178,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 56122,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    },
+    {
+      "mode": "end",
+      "frame": 179,
+      "memory": {
+        "geometries": 465,
+        "textures": 52
+      },
+      "marks": 0,
+      "bolts": 0,
+      "draws": 56421,
+      "ammo": 60,
+      "reserve": 180,
+      "heat": 0,
+      "reloading": false,
+      "physical": {
+        "upperDoor": 0,
+        "lowerDoor": 0,
+        "release": 0,
+        "lock": 1,
+        "shutters": 0,
+        "cartridgeInstalled": true,
+        "ejectionAge": -1
+      },
+      "shots": 17,
+      "aiming": false,
+      "thirdPerson": false,
+      "state": "playing"
+    }
+  ]
+}

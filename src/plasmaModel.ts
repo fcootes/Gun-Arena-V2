@@ -89,11 +89,23 @@ export function buildPlasmaModel(body:THREE.Group,parts:Record<string,THREE.Obje
  }
  // Three preallocated representations; baked buffers are shared by the factory.
  // The spent cylinder is cosmetic, hidden after a bounded trajectory, never spawned.
- const cylinderMaterial=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,metalness:.65,roughness:.48});
+ const cylinderMaterial=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,metalness:.65,roughness:.48,emissive:0x155c66,emissiveIntensity:.45});
+ cylinderMaterial.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n#ifdef USE_COLOR\n totalEmissiveRadiance *= step(.40,vColor.g)*step(.45,vColor.b);\n#endif');};
+ cylinderMaterial.customProgramCacheKey=()=> 'PR100-pressure-canister-v2';
  function cylinder(name:string){const g=group(name);
-  tube('Sealed cartridge pressure vessel',.021,.163,0,0,0,glow,g);
-  for(const z of [-.092,.092]){tube('Metal cartridge end cap',.024,.022,0,0,z,steel,g);tube('Keyed retention groove',.024,.005,0,0,z*.93,steel,g);}
-  box('Cartridge seating pad',.005,.018,.065,-.022,0,0,steel,g);g.traverse(object=>{if(object instanceof THREE.Mesh){const color=(object.material as THREE.MeshStandardMaterial).color,values=new Float32Array(object.geometry.attributes.position.count*3);for(let i=0;i<values.length;i+=3){values[i]=color.r;values[i+1]=color.g;values[i+2]=color.b;}object.geometry.setAttribute('color',new THREE.BufferAttribute(values,3));object.material=cylinderMaterial;}});g.visible=false;return g;
+  const profile=[[0,-.078],[.015,-.076],[.0235,-.069],[.025,-.056],[.025,.056],[.0235,.069],[.015,.076],[0,.078]];
+  const vessel=new THREE.LatheGeometry(profile.map(([r,z])=>new THREE.Vector2(r,z)),16).rotateX(Math.PI/2);
+  mesh('Rounded graphite cartridge pressure vessel',vessel,dark,0,0,0,g);
+  for(const z of [-.079,.079]){
+   tube('Reinforced metal cartridge end cap',.0275,.020,0,0,z,steel,g);
+   mesh('Rounded retaining collar',new THREE.TorusGeometry(.0246,.003,6,16),edge,0,0,z*.90,g);
+   // Keyed coupling span is unchanged so the existing seats still engage.
+   tube('Keyed pressure coupling',.011,.022,0,0,Math.sign(z)*.092,steel,g);
+  }
+  box('Recessed cyan gas inspection strip',.0025,.012,.072,-.025,.001,0,glow,g);
+  for(const z of [-.035,.035])tube('Narrow pressure inspection band',.0252,.005,0,0,z,glow,g);
+  box('Reinforced cartridge seating pad',.005,.019,.057,-.026,0,0,steel,g);
+  g.traverse(object=>{if(object instanceof THREE.Mesh){const color=(object.material as THREE.MeshStandardMaterial).color,values=new Float32Array(object.geometry.attributes.position.count*3);for(let i=0;i<values.length;i+=3){values[i]=color.r;values[i+1]=color.g;values[i+2]=color.b;}object.geometry.setAttribute('color',new THREE.BufferAttribute(values,3));object.material=cylinderMaterial;}});g.visible=false;return g;
  }
  cylinder('gasCylinder').position.fromArray(PLASMA.cylinder);
  cylinder('oldGasCylinder');cylinder('freshGasCylinder');

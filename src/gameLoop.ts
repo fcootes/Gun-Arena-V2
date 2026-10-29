@@ -1431,6 +1431,7 @@ export function updateBioMutantAI(bot: Bot, dt: number, ctx: BioMutantAIContext)
  * ===========================================================================*/
 
 export interface CombatPlayerProxy {
+  readonly shield?:number;
   pos: THREE.Vector3;
   yaw: number;
   pitch: number;

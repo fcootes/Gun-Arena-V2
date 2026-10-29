@@ -1315,7 +1315,7 @@ export default function App() {
       if (!sharedCombatContext) sharedCombatContext = {
           scene,camera,world,bots,damageBot,pushKillFeed,
           get squadDirective(){return squadDirectiveRef.current;},get focusTargetId(){return focusTargetIDRef.current;},
-          player:{pos:player.pos,get yaw(){return player.yaw;},get pitch(){return player.pitch;},get health(){return player.health;},get maxHealth(){return player.maxHealth;},get alive(){return player.alive;},get team(){return player.team;},
+          player:{pos:player.pos,get shield(){return player.shield;},get yaw(){return player.yaw;},get pitch(){return player.pitch;},get health(){return player.health;},get maxHealth(){return player.maxHealth;},get alive(){return player.alive;},get team(){return player.team;},
             applyDamage:applyDamageToPlayer,heal:amount=>{player.health=Math.min(player.maxHealth,player.health+amount);}},
           needsAmmo:()=>playerWeaponState.some((ws,index)=>index<2&&(ws.reserve??0)<30),
           onBotShot:(bot,weapon)=>{radarPingsRef.current.push({x:bot.pos.x,z:bot.pos.z,timestamp:performance.now(),duration:1.5,type:'gunfire'});const audio=weapon.id==='sniper'?AUDIO.sniperShotWithBolt:weapon.id==='pistol'?AUDIO.pistolShot:weapon.id==='shotgun'?AUDIO.shotgunShot:weapon.id==='lmg'?AUDIO.lmgFire:weapon.id==='br'?AUDIO.brSingle:weapon.id==='smg'?AUDIO.smgFire:weapon.id==='laser'?AUDIO.plasmaSingle:weapon.id==='railgun'?AUDIO.railgunFire:AUDIO.arSingle;audio.play(getSpatialVolume(camera.position,bot.pos));},

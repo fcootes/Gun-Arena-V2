@@ -13,11 +13,13 @@ export function plasmaFreshPose(phase:string,p:number,out:THREE.Vector3){
  return out;
 }
 const newAlign=new THREE.Vector3().fromArray(PLASMA.freshAlign),newContact=new THREE.Vector3().fromArray(PLASMA.freshContact),seated=new THREE.Vector3().fromArray(PLASMA.cylinder);
-/** Initial motion stays strictly transverse until the cylinder clears both doors. */
+export const PLASMA_EJECTION=Object.freeze({popDistance:.22,popTime:.025,drift:.45,fallStart:.065,upSpeed:.14,gravity:9.2});
+/** Spring impulse clears the doorway first; only then can the shell tumble. */
 export function plasmaEjectedPose(age:number,out:THREE.Vector3,rotation:THREE.Euler){
- const t=Math.max(0,age),fall=Math.max(0,t-.20);
- out.fromArray(PLASMA.cylinder);out.x-=.12*plasmaEase(t/.20)+.16*fall;out.y+=.34*fall-3.0*fall*fall;out.z+=.035*fall;
- rotation.set(.45*fall,-.7*fall,1.4*fall);
+ const t=Math.max(0,age),pop=1-Math.exp(-t/PLASMA_EJECTION.popTime),fall=Math.max(0,t-PLASMA_EJECTION.fallStart);
+ out.fromArray(PLASMA.cylinder);out.x-=PLASMA_EJECTION.popDistance*pop*pop+PLASMA_EJECTION.drift*t;
+ out.y+=PLASMA_EJECTION.upSpeed*fall-.5*PLASMA_EJECTION.gravity*fall*fall;out.z+=.035*fall;
+ rotation.set(4.5*fall,-2.8*fall,7*fall);
 }
 export function createPlasmaAnimator(assembly:WeaponAssembly,firstPerson=true){
  const a=assembly.parts,carryQ=new THREE.Quaternion().setFromEuler(new THREE.Euler(...PLASMA.rotation));

@@ -44,7 +44,8 @@
     "test:lmg:browser": "node scripts/test-lmg-browser.mjs",
     "test:railgun": "node --import tsx tests/railgun.test.ts && node --import tsx tests/railgunRebuild.test.ts",
     "test:railgun:browser": "node scripts/test-railgun-browser.mjs",
-    "test:plasma": "node --import tsx tests/plasma.test.ts"
+    "test:plasma": "node --import tsx tests/plasma.test.ts",
+    "test:plasma:polish": "node --import tsx tests/plasmaPolish.test.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",

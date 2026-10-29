@@ -1,3 +1,5 @@
+import {createPlasmaBoltVisuals} from './plasmaBoltVisuals';
+import {createPlasmaImpactEffects,plasmaSurface,type PlasmaSurface} from './plasmaImpactEffects';
 import * as THREE from 'three';
 import type {Bot} from './types';
 import type {CombatSystemsContext} from './gameLoop';
@@ -15,23 +17,25 @@ export function plasmaBoxEntry(origin:THREE.Vector3,delta:THREE.Vector3,b:{minX:
  return lo;
 }
 export function createPlasmaProjectilePool(scene:THREE.Scene,capacity=192){
- const coreGeometry=new THREE.SphereGeometry(1,6,4),coreMaterial=new THREE.MeshBasicMaterial({color:0xd7ffff,toneMapped:false});
- const haloGeometry=new THREE.SphereGeometry(1,6,4),haloMaterial=new THREE.MeshBasicMaterial({color:0x37cddd,transparent:true,opacity:.33,depthWrite:false,toneMapped:false});
- const impactMaterial=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.45,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false});
- const cores=new THREE.InstancedMesh(coreGeometry,coreMaterial,capacity),halos=new THREE.InstancedMesh(haloGeometry,haloMaterial,capacity),impacts=new THREE.InstancedMesh(haloGeometry,impactMaterial,32);
- const impactColor=new THREE.Color();for(let n=0;n<32;n++)impacts.setColorAt(n,impactColor);impacts.instanceColor!.setUsage(THREE.DynamicDrawUsage);
- const root=new THREE.Group();root.name='PR100ProjectilePool';root.add(cores,halos,impacts);scene.add(root);
- for(const mesh of [cores,halos,impacts]){mesh.frustumCulled=false;mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);mesh.count=0;}
+ const visual=createPlasmaBoltVisuals(capacity),feedback=createPlasmaImpactEffects(scene);
+ const root=new THREE.Group();root.name='PR100ProjectilePool';root.add(visual.root,feedback.root);scene.add(root);
+ let disposed=false;
  const bolts:PlasmaBolt[]=Array.from({length:capacity},()=>({active:false,position:new THREE.Vector3(),direction:new THREE.Vector3(),distance:0,life:0,team:'',owner:null,damage:0,headshot:1}));
- const flashes=Array.from({length:32},()=>({position:new THREE.Vector3(),life:0}));let flashIndex=0,disposed=false;
- const ray=new THREE.Raycaster(),hits:THREE.Intersection[]=[],delta=new THREE.Vector3(),direction=new THREE.Vector3(),relative=new THREE.Vector3(),relativeDelta=new THREE.Vector3(),point=new THREE.Vector3(),normal=new THREE.Vector3(0,0,1),scale=new THREE.Vector3(),matrix=new THREE.Matrix4(),quat=new THREE.Quaternion();
+ const ray=new THREE.Raycaster(),hits:THREE.Intersection[]=[],delta=new THREE.Vector3(),direction=new THREE.Vector3(),relative=new THREE.Vector3(),relativeDelta=new THREE.Vector3(),point=new THREE.Vector3(),contactNormal=new THREE.Vector3(),normalMatrix=new THREE.Matrix3(),worldMatrix=new THREE.Matrix4(),instanceMatrix=new THREE.Matrix4();
  const previous=new Map<number,THREE.Vector3>(),playerPrevious=new THREE.Vector3();let sampledPlayer=false;
  const bodyBox={minX:-.30,maxX:.30,minY:0,maxY:1.45,minZ:-.30,maxZ:.30},headBox={minX:-.22,maxX:.22,minY:1.45,maxY:1.92,minZ:-.22,maxZ:.22};
- function flash(position:THREE.Vector3){const f=flashes[flashIndex++%flashes.length];f.position.copy(position);f.life=.16;}
+ function worldFeedback(at:THREE.Vector3,incoming:THREE.Vector3,hit:THREE.Intersection|null){
+  contactNormal.copy(incoming).negate();
+  if(hit?.face&&hit.object instanceof THREE.Mesh){
+   worldMatrix.copy(hit.object.matrixWorld);if(hit.object instanceof THREE.InstancedMesh&&hit.instanceId!==undefined){hit.object.getMatrixAt(hit.instanceId,instanceMatrix);worldMatrix.multiply(instanceMatrix);}
+   normalMatrix.getNormalMatrix(worldMatrix);contactNormal.copy(hit.face.normal).applyMatrix3(normalMatrix).normalize();if(contactNormal.dot(incoming)>0)contactNormal.negate();
+   feedback.contact(hit.point,contactNormal,hit.object,plasmaSurface(hit.object,hit.face.materialIndex),hit.instanceId??-1);
+  }else feedback.contact(at,contactNormal);
+ }
  function solidFraction(from:THREE.Vector3,step:THREE.Vector3,ctx:CombatSystemsContext){let t=Infinity;for(const box of ctx.world.worldColliders)if(box.active&&box.maxX>=Math.min(from.x,from.x+step.x)&&box.minX<=Math.max(from.x,from.x+step.x)&&box.maxZ>=Math.min(from.z,from.z+step.z)&&box.minZ<=Math.max(from.z,from.z+step.z))t=Math.min(t,plasmaBoxEntry(from,step,box));return t;}
  function spawn(origin:THREE.Vector3,target:THREE.Vector3,team:string,owner:'player'|Bot,damage=12,headshot=1.7,eye?:THREE.Vector3,ctx?:CombatSystemsContext){
   if(disposed)return false;const b=bolts.find(b=>!b.active);if(!b)return false;
-  if(eye&&ctx){delta.subVectors(origin,eye);let t=solidFraction(eye,delta,ctx);const d=delta.length();if(d>1e-8){ray.set(eye,direction.copy(delta).normalize());ray.near=0;ray.far=d;hits.length=0;ray.intersectObjects(ctx.world.hittableObjects,false,hits);for(const h of hits)if(h.object.userData.type!=='botpart'&&h.object.userData.type!=='pickup')t=Math.min(t,h.distance/d);}if(t<=1){point.copy(eye).addScaledVector(delta,t);flash(point);return true;}}
+  if(eye&&ctx){delta.subVectors(origin,eye);let t=solidFraction(eye,delta,ctx);const d=delta.length();if(d>1e-8){ray.set(eye,direction.copy(delta).normalize());ray.near=0;ray.far=d;hits.length=0;ray.intersectObjects(ctx.world.hittableObjects,false,hits);for(const h of hits)if(h.object.userData.type!=='botpart'&&h.object.userData.type!=='pickup')t=Math.min(t,h.distance/d);}if(t<=1){point.copy(eye).addScaledVector(delta,t);const visible=hits.find(h=>h.object.userData.type!=='botpart'&&h.object.userData.type!=='pickup'&&Math.abs(h.distance-t*d)<.012)??null;worldFeedback(point,direction.copy(delta).normalize(),visible);if(visible?.object.userData.destructible&&!visible.object.userData.destroyed)ctx.world.damageEnvironmentalBlock?.(visible.object,Math.min(12,damage),visible.point);return true;}}
   b.active=true;b.position.copy(origin);b.direction.subVectors(target,origin).normalize();b.team=team;b.owner=owner;b.damage=damage;b.headshot=headshot;b.distance=0;b.life=PLASMA.range/PLASMA.speed+.05;return true;
  }
  function update(dt:number,ctx:CombatSystemsContext){
@@ -62,8 +66,19 @@ export function createPlasmaProjectilePool(scene:THREE.Scene,capacity=192){
    }
    b.position.addScaledVector(delta,Math.min(1,fraction));b.distance+=length*Math.min(1,fraction);b.life-=dt;
    if(fraction<=1){
-    flash(b.position);
     const owner=b.owner;
+    if(target){
+     contactNormal.copy(b.direction).negate();
+     const kind:PlasmaSurface=target==='player'?((ctx.player.shield??0)>0?'shield':'armour'):((target.armor??0)>0?'armour':target.isZombie?'body':'armour');
+     feedback.contact(b.position,contactNormal,null,kind);
+    }else{
+     // Metadata does not change the accepted collision/damage winner. A real
+     // mesh must agree with the solid contact before any surface mark is made.
+     const visible=hits.find(h=>h.object.userData.type!=='botpart'&&h.object.userData.type!=='pickup'&&Math.abs(h.distance-length*fraction)<.012)??null;
+     worldFeedback(b.position,b.direction,visible);
+     if(visible?.object.userData.destructible&&!visible.object.userData.destroyed)ctx.world.damageEnvironmentalBlock?.(visible.object,Math.min(12,b.damage*plasmaDamageFalloff(b.distance)),visible.point);
+    }
+
     if(target==='player'&&owner&&owner!=='player'&&ctx.player.team!==b.team)ctx.player.applyDamage(b.damage*plasmaDamageFalloff(b.distance)*(head?b.headshot:1),false,false,owner);
     else if(target&&target!=='player'&&target.team!==b.team&&owner){ctx.damageBot(target,b.damage*plasmaDamageFalloff(b.distance)*(head?b.headshot:1),head,owner,b.direction);if(owner==='player')ctx.onPlasmaHit?.(target,head,b.position);}
     b.active=false;b.owner=null;
@@ -74,11 +89,8 @@ export function createPlasmaProjectilePool(scene:THREE.Scene,capacity=192){
   playerPrevious.copy(ctx.player.pos);sampledPlayer=true;
   render(dt);
  }
- function render(dt=0){let n=0;for(const b of bolts)if(b.active){quat.setFromUnitVectors(normal,b.direction);scale.set(.035,.035,.12);matrix.compose(b.position,quat,scale);cores.setMatrixAt(n,matrix);scale.set(.065,.065,.28);matrix.compose(b.position,quat,scale);halos.setMatrixAt(n++,matrix);}cores.count=halos.count=n;
-  let f=0;for(const flash of flashes){flash.life=Math.max(0,flash.life-dt);if(flash.life>0){scale.setScalar(.035+(.16-flash.life)*.7);matrix.compose(flash.position,quat.identity(),scale);impacts.setMatrixAt(f,matrix);impactColor.setRGB(.25,.8,1).multiplyScalar(flash.life/.16);impacts.setColorAt(f++,impactColor);}}impacts.count=f;impacts.instanceColor!.needsUpdate=true;
-  cores.instanceMatrix.needsUpdate=halos.instanceMatrix.needsUpdate=impacts.instanceMatrix.needsUpdate=true;
- }
- function clear(){bolts.forEach(b=>{b.active=false;b.owner=null;});flashes.forEach(f=>f.life=0);previous.clear();sampledPlayer=false;cores.count=halos.count=impacts.count=0;}
- function dispose(){if(disposed)return;clear();disposed=true;root.removeFromParent();cores.dispose();halos.dispose();impacts.dispose();coreGeometry.dispose();haloGeometry.dispose();coreMaterial.dispose();haloMaterial.dispose();impactMaterial.dispose();root.clear();}
- return {root,bolts,spawn,update,render,clear,dispose,get activeCount(){return bolts.reduce((n,b)=>n+Number(b.active),0);}};
+ function render(dt=0){visual.render(bolts,dt);feedback.render(dt);}
+ function clear(){bolts.forEach(b=>{b.active=false;b.owner=null;});previous.clear();sampledPlayer=false;visual.clear();feedback.clear();}
+ function dispose(){if(disposed)return;clear();disposed=true;root.removeFromParent();visual.dispose();feedback.dispose();root.clear();}
+ return {root,bolts,feedback,spawn,update,render,clear,dispose,get activeCount(){return bolts.reduce((n,b)=>n+Number(b.active),0);}};
 }
