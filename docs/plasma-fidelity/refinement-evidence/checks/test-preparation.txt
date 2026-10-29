@@ -1,0 +1,13 @@
+
+> gun-arena-v2@0.0.0 test:preparation
+> node --import tsx tests/preparation.test.ts
+
+PASS: hidden mission geometry, frozen light counts, excluded lobby and exact visibility/layer restoration
+PASS: compact combat scene preserves transformed lighting, shadows and environment without traversing world geometry
+PASS: representative draw camera covers actual instance geometry
+PASS: real completion polling, cancellation/context failure cleanup and all shader-program completion
+PASS: real preparation includes unlit particle variants and restores camera, render target, shadow, scissor and scene state
+PASS: bounded multi-format batches retain every light-count draw, reduce fences and restore state on mid-draw cancellation
+PASS: immutable body-buffer reuse, independent damage materials, engine disposal and idempotent selected-viewmodel preparation
+PASS: silent mission-audio preparation, exact cue lengths, playback/loop reuse and context disposal
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

@@ -1,3 +1,5 @@
+> Historical initial-implementation audit. The current [internal chamber refinement](README.md) supersedes the tray and oversized muzzle design below.
+
 # W03 pre-change audit
 
 Base: main 6dd3b2d, including merged Railgun PR #24. Dedicated branch feat/plasma-repeater-fidelity; no changes to main.

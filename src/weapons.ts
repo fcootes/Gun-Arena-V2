@@ -169,7 +169,7 @@ export const WEAPONS: WeaponDef[] = [
     isLaser: true,
     mag: 60,
     reserve: 180,
-    reloadTime: 2.8, // Separate 1.25 s thermal action
+    reloadTime: 2.2, // Separate 1.25 s thermal action
     range: 130,
     auto: true,
     adsFov: 58,

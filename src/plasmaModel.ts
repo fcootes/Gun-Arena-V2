@@ -1,7 +1,8 @@
 import * as THREE from 'three';
+import {PLASMA,plasmaHeatColour} from './plasmaMechanics';
 import {RoundedBoxGeometry} from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 type Finish=Record<'steel'|'dark'|'polymer'|'rubber'|'edge'|'glow'|'ceramic',THREE.MeshStandardMaterial>;
-/** PR-100 exterior follows approved panels 1–2; tray and cooling are independent. */
+/** Continuous front shell, hollow internal cartridge bay and independent cooling. */
 export function buildPlasmaModel(body:THREE.Group,parts:Record<string,THREE.Object3D>,m:Finish){
  const {steel,dark,polymer,rubber,edge,glow,ceramic}=m;
  steel.color.setHex(0x505c63);steel.metalness=.7;steel.roughness=.48;dark.color.setHex(0x20292e);dark.roughness=.65;polymer.color.setHex(0x283236);polymer.roughness=.85;edge.color.setHex(0x9baeb3);glow.color.setHex(0x41b7bf);glow.emissive.setHex(0x1f9dab);glow.emissiveIntensity=.45;
@@ -10,21 +11,41 @@ export function buildPlasmaModel(body:THREE.Group,parts:Record<string,THREE.Obje
  function box(name:string,w:number,h:number,d:number,x:number,y:number,z:number,mat:THREE.Material,parent:THREE.Object3D=body){return mesh(name,new RoundedBoxGeometry(w,h,d,2,Math.min(w,h,d)*.15),mat,x,y,z,parent);}
  function tube(name:string,r:number,length:number,x:number,y:number,z:number,mat:THREE.Material,parent:THREE.Object3D=body,open=false){const o=mesh(name,new THREE.CylinderGeometry(r,r,length,12,1,open),mat,x,y,z,parent);o.rotation.x=Math.PI/2;return o;}
  function profile(name:string,points:number[][],width:number,mat:THREE.Material,parent:THREE.Object3D=body){const shape=new THREE.Shape();points.forEach(([z,y],i)=>i?shape.lineTo(z,y):shape.moveTo(z,y));shape.closePath();const g=new THREE.ExtrudeGeometry(shape,{depth:width,bevelEnabled:true,bevelSegments:2,bevelSize:.002,bevelThickness:.002,steps:1});g.rotateY(-Math.PI/2);g.translate(width/2,0,0);return mesh(name,g,mat,0,0,0,parent);}
- profile('Continuous graphite receiver',[[-.43,-.027],[-.43,.063],[-.35,.080],[.16,.073],[.21,.035],[.20,-.043],[-.31,-.043]],.094,dark);
- profile('Smooth lower power housing',[[-.40,-.025],[-.36,-.060],[-.16,-.090],[-.10,-.060],[.04,-.045],[.04,-.015]],.105,polymer);
+ // The chamber is EMPTY SPACE between structural walls, not a solid receiver
+ // with a hidden cylinder. End bulkheads sit beyond the cartridge end caps.
+ profile('Forward graphite receiver',[[-.430,-.027],[-.430,.063],[-.350,.080],[-.190,.080],[-.190,-.043],[-.310,-.043]],.094,dark);
+ profile('Rear graphite receiver',[[.058,-.043],[.058,.073],[.160,.073],[.210,.035],[.200,-.043]],.094,dark);
+ box('Chamber roof',.094,.014,.248,0,.073,-.066,dark);
+ box('Chamber floor',.094,.013,.248,0,-.0275,-.066,dark);
+ box('Chamber fixed right wall',.012,.077,.248,.041,.023,-.066,polymer);
+ for(const z of [-.184,.052])box('Chamber end bulkhead',.094,.086,.012,0,.024,z,dark);
+ profile('Smooth lower power housing',[[-.40,-.025],[-.36,-.060],[-.16,-.090],[-.10,-.060],[.04,-.045],[.04,-.025]],.105,polymer);
  for(const side of [-1,1]){
-  box('Receiver armoured side panel',.015,.059,.180,side*.053,.022,.104,polymer);
-  box('Protected plasma conduit',.004,.006,.265,side*.055,.029,-.282,glow);
-  box('Emitter conduit guard',.010,.015,.285,side*.058,.011,-.282,steel);
-  for(let n=0;n<6;n++)box('Heat-sink fin',.012,.023,.009,side*.040,.086,-.17+n*.028,steel);
+  box('Rear receiver armour',.009,.060,.132,side*.051,.022,.126,polymer);
+  box('Protected plasma conduit',.004,.005,.245,side*.048,.029,-.313,glow);
+  box('Emitter conduit guard',.006,.012,.245,side*.049,.012,-.313,steel);
+  for(let n=0;n<6;n++)box('Heat-sink fin',.012,.018,.009,side*.034,.085,-.17+n*.028,steel);
  }
- // Signature white ceramic emitter: upper and lower plates frame an actual recess.
- profile('White ceramic upper emitter',[[-.570,.054],[-.566,.094],[-.408,.105],[-.403,.061],[-.455,.042]],.147,ceramic);
- profile('White ceramic lower emitter',[[-.566,-.010],[-.557,-.057],[-.445,-.064],[-.413,-.021],[-.464,-.002]],.137,ceramic);
- for(const side of [-1,1])box('Ceramic aperture cheek',.024,.070,.051,side*.064,.023,-.541,ceramic);
- tube('Recessed emitter engineering rim',.045,.025,0,.023,-.544,steel,body,true);
- tube('Recessed cyan emitter core',.030,.012,0,.023,-.553,glow);
- for(const side of [-1,1])tube('Pressure conduit collar',.012,.047,side*.048,.024,-.466,steel);
+ // A single tapered octagonal shell joins the existing receiver. Ceramic is a
+ // flush material region of this shell; the nose has no separate white jaws.
+ const contour=[[-1,-.55],[-.62,-1],[.62,-1],[1,-.55],[1,.55],[.62,1],[-.62,1],[-1,.55]];
+ const stations=[[-.574,.041,.047],[-.548,.043,.049],[-.464,.047,.052],[-.385,.047,.055]];
+ function surface(name:string,vertices:number[][],mat:THREE.Material){
+  const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices.flat(),3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(vertices.flatMap(v=>[v[2]*4,v[1]*4]),2));geometry.computeVertexNormals();
+  // Custom loft triangles use both sides at the small recessed aperture.
+  return mesh(name,geometry,mat,0,0,0);
+ }
+ for(let band=0;band<stations.length-1;band++)for(let n=0;n<8;n++){
+  const next=(n+1)%8,[z0,w0,h0]=stations[band],[z1,w1,h1]=stations[band+1],a=contour[n],b=contour[next];
+  const p0=[a[0]*w0,.023+a[1]*h0,z0],p1=[b[0]*w0,.023+b[1]*h0,z0],p2=[b[0]*w1,.023+b[1]*h1,z1],p3=[a[0]*w1,.023+a[1]*h1,z1];
+  surface('Sculpted continuous emitter shell',[p0,p1,p2,p0,p2,p3],band<2&&[0,1,2,4,5,6].includes(n)?ceramic:dark);
+ }
+ for(let n=0;n<8;n++){
+  const next=(n+1)%8,a=contour[n],b=contour[next],p0=[a[0]*.041,.023+a[1]*.047,-.574],p1=[b[0]*.041,.023+b[1]*.047,-.574],p2=[b[0]*.032,.023+b[1]*.032,-.574],p3=[a[0]*.032,.023+a[1]*.032,-.574];
+  surface('Dark recessed aperture frame',[p0,p2,p1,p0,p3,p2],dark);
+ }
+ tube('Recessed discharge liner',.030,.035,0,.023,-.552,steel,body,true);
+ tube('Concentric cyan emitter',.023,.006,0,.023,-.564,glow);
  const stock=group('stock',0,0,.18);
  box('Integrated stock upper beam',.066,.035,.240,0,.053,.105,polymer,stock);
  profile('Skeleton stock lower brace',[[.02,-.036],[.06,-.053],[.215,-.027],[.235,.032],[.203,.036],[.184,-.004],[.035,-.009]],.043,polymer,stock);
@@ -43,48 +64,64 @@ export function buildPlasmaModel(body:THREE.Group,parts:Record<string,THREE.Obje
  for(const side of [-1,1])box('Connected upper vent rim',.012,.014,.300,side*.045,.095,-.086,steel);
  for(const z of [-.27,-.25,-.23,.01,.03,.05,.07])box('Upper rail key',.063,.006,.012,0,.109,z,dark);
  box('Rear sight notch',.031,.020,.015,0,.118,.063,dark);box('Front sight post',.006,.022,.013,0,.120,-.230,steel);
- // Telescoping rods remain engaged with receiver sockets throughout 140 mm travel.
- const guides=group('trayGuides');
- for(const z of [-.174,.040]){
-  box('Fixed side guide socket',.052,.025,.026,-.055,.004,z,steel,guides);
-  box('Guide socket root',.025,.045,.032,-.041,.012,z,steel,guides);
+ // Fixed internal seats leave a direct transverse loading/ejection path.
+ const seat=group('cartridgeSeat',...PLASMA.cylinder);
+ for(const z of [-.100,.100]){
+  box('Internal keyed end seat',.018,.050,.010,.034,0,z,steel,seat);
+  tube('Recessed cartridge contact',.012,.006,.014,0,z,edge,seat);
  }
- const tray=group('plasmaTray');
- for(const z of [-.174,.040]){
-  const rod=tube('Captive transverse guide rail',.006,.160,.003,.004,z,steel,tray);rod.rotation.set(0,0,Math.PI/2);
-  box('Guide carriage shoe',.032,.022,.030,-.077,.004,z,steel,tray);
+ box('Internal ejector spring pad',.008,.025,.055,.036,0,0,steel,seat);
+ const retaining=group('cartridgeRetention',.030,.024,-.066);
+ for(const z of [-.092,.092])box('Internal locking finger',.010,.014,.012,0,.013,z,steel,retaining);
+ for(const [name,pivot,sign] of [['chamberUpperDoor',PLASMA.upperHinge,-1],['chamberLowerDoor',PLASMA.lowerHinge,1]] as const){
+  const door=group(name,...pivot);
+  box('Flush split receiver armour',.006,.0615,.222,0,sign*.03125,0,polymer,door);
+  // Hinge barrels are fixed to the receiver; the door turns around their Z axis.
+  for(const z of [-.164,.032])tube('Connected longitudinal door hinge',.0045,.018,pivot[0],pivot[1],z,steel);
  }
- box('Side cartridge cradle floor',.070,.011,.240,-.077,.001,-.067,steel,tray);
- for(const z of [-.174,.040])box('Keyed cartridge end seat',.064,.034,.018,-.077,.017,z,dark,tray);
- box('Carriage protective side shield',.010,.029,.183,-.115,.006,-.067,dark,tray);
- box('Carriage support-hand handle',.014,.015,.075,-.128,.006,-.067,steel,tray);
- const clips=group('cartridgeClips',-.077,.008,-.067,tray);
- for(const z of [-.082,.082])box('Spring retaining clip',.060,.008,.011,0,.031,z,steel,clips);
- const latch=group('plasmaLatch',-.064,.047,.080);
- tube('Tray latch pivot',.007,.012,0,0,0,steel,latch).rotation.set(0,0,Math.PI/2);
- box('Tray retaining latch',.012,.013,.040,-.009,0,-.013,steel,latch);
- const thermal=group('thermalSwitch',-.055,.077,-.220);box('Dedicated thermal release',.010,.012,.027,-.055,.077,-.220,steel);
+ const release=group('chamberRelease',-.056,.041,.079);
+ box('Thumb release button',.009,.018,.022,0,0,0,steel,release);
+ const thermal=group('thermalSwitch',-.055,.077,-.220);
+ box('Dedicated thermal release',.010,.012,.027,0,0,0,steel,thermal);
  for(let n=0;n<3;n++){
   const shutter=group('coolingShutter'+n,0,.108,-.165+n*.055);
   box('Independent upper cooling shutter',.080,.007,.043,0,0,-.018,steel,shutter);
  }
- // Cylinder is independently removable; its cradle never leaves the weapon.
- function cylinder(name:string,parent:THREE.Object3D){const g=group(name,0,0,0,parent);
-  tube('Pressure-rated cyan gas cylinder',.021,.163,0,0,0,glow,g);
-  for(const z of [-.092,.092]){tube('Metal cartridge end cap',.024,.022,0,0,z,steel,g);tube('Keyed retention groove',.025,.005,0,0,z*.93,steel,g);}
-  box('Protected cylinder status strip',.007,.006,.115,-.021,.008,0,steel,g);g.visible=false;return g;
+ // Three preallocated representations; baked buffers are shared by the factory.
+ // The spent cylinder is cosmetic, hidden after a bounded trajectory, never spawned.
+ const cylinderMaterial=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,metalness:.65,roughness:.48});
+ function cylinder(name:string){const g=group(name);
+  tube('Sealed cartridge pressure vessel',.021,.163,0,0,0,glow,g);
+  for(const z of [-.092,.092]){tube('Metal cartridge end cap',.024,.022,0,0,z,steel,g);tube('Keyed retention groove',.024,.005,0,0,z*.93,steel,g);}
+  box('Cartridge seating pad',.005,.018,.065,-.022,0,0,steel,g);g.traverse(object=>{if(object instanceof THREE.Mesh){const color=(object.material as THREE.MeshStandardMaterial).color,values=new Float32Array(object.geometry.attributes.position.count*3);for(let i=0;i<values.length;i+=3){values[i]=color.r;values[i+1]=color.g;values[i+2]=color.b;}object.geometry.setAttribute('color',new THREE.BufferAttribute(values,3));object.material=cylinderMaterial;}});g.visible=false;return g;
  }
- cylinder('gasCylinder',tray).position.set(-.077,.031,-.067);
- cylinder('oldGasCylinder',body);cylinder('freshGasCylinder',body);
+ cylinder('gasCylinder').position.fromArray(PLASMA.cylinder);
+ cylinder('oldGasCylinder');cylinder('freshGasCylinder');
+ // All six recessed segments share one shader/draw; no per-frame buffer rebuild.
+ const indicator=group('ammoIndicator',-.057,-.043,-.075),vertices:number[]=[],indices:number[]=[];
+ for(let n=0;n<6;n++){
+  const z=-.038+n*.015,k=vertices.length/3;
+  vertices.push(0,-.002,z-.004,0,.002,z-.004,0,.002,z+.004,0,-.002,z+.004);indices.push(k,k+2,k+1,k,k+3,k+2);
+ }
+ const indicatorGeometry=new THREE.BufferGeometry();indicatorGeometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));indicatorGeometry.setAttribute('segment',new THREE.Float32BufferAttribute(Array.from({length:24},(_,i)=>Math.floor(i/4)),1));indicatorGeometry.setIndex(indices);
+ const indicatorMaterial=new THREE.ShaderMaterial({side:THREE.DoubleSide,uniforms:{ammo:{value:60}},vertexShader:'attribute float segment;varying float gasSegment;void main(){gasSegment=segment;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'uniform float ammo;varying float gasSegment;void main(){float level=clamp(ammo/10.-gasSegment,0.,1.);gl_FragColor=vec4(mix(vec3(.014,.035,.038),vec3(.10,.72,.80),level),1.);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>}'});
+ mesh('Six recessed cyan ammunition segments',indicatorGeometry,indicatorMaterial,0,0,0,indicator);
+ box('Recessed diagnostic bezel',.005,.010,.102,-.053,-.043,-.075,dark);
+ const heatMaterial=new THREE.MeshStandardMaterial({color:0x24383a,emissive:0x24383a,emissiveIntensity:.35,roughness:.6});
+ const heatIndicator=group('heatIndicator',-.052,.096,-.100);
+ box('Independent thermal status line',.003,.003,.095,0,0,0,heatMaterial,heatIndicator);
  const gas=new Float32Array(24*3),geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(gas,3).setUsage(THREE.DynamicDrawUsage));
  const material=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{density:{value:0}},
   vertexShader:'void main(){vec4 p=modelViewMatrix*vec4(position,1.);gl_PointSize=clamp(9./max(.2,-p.z),2.,18.);gl_Position=projectionMatrix*p;}',
   fragmentShader:'uniform float density;void main(){float r=length(gl_PointCoord-.5)*2.;float a=pow(max(0.,1.-r*r),2.)*density;gl_FragColor=vec4(.65,.78,.82,a);}'
  });
  const vapour=new THREE.Points(geometry,material);vapour.name='plasmaVapour';vapour.frustumCulled=false;body.add(vapour);parts.plasmaVapour=vapour;
- return {muzzle:[0,.023,-.574] as const,update(heat:number,phaseTime:number,thermal:boolean,pulse:number){
-  glow.emissiveIntensity=(.35+.55*heat/100)*(thermal?1:1-.30*pulse);vapour.visible=pulse>0;material.uniforms.density.value=.18*pulse;
-  for(let n=0;n<24;n++){const f=((n/24+phaseTime*1.6)%1);gas[n*3]=(thermal?0:-.217)+Math.sin(n*2.4+f*3)*.025*f;gas[n*3+1]=(thermal?.10:.04)+f*.13;gas[n*3+2]=-.10+Math.cos(n*1.7)*.045;}
+ return {muzzle:[0,.023,-.574] as const,update(heat:number,phaseTime:number,thermal:boolean,pulse:number,ammo=60){
+  indicatorMaterial.uniforms.ammo.value=ammo;
+  indicator.userData.ammo=ammo;
+  plasmaHeatColour(heat,heatMaterial.emissive);heatMaterial.color.copy(heatMaterial.emissive);heatMaterial.emissiveIntensity=.20+.70*Math.max(0,Math.min(1,heat/100));heatIndicator.userData.heat=heat;
+  glow.emissiveIntensity=.35;vapour.visible=pulse>0;material.uniforms.density.value=.18*pulse;
+  for(let n=0;n<24;n++){const f=((n/24+phaseTime*1.6)%1);gas[n*3]=Math.sin(n*2.4+f*3)*.025*f;gas[n*3+1]=.10+f*.13;gas[n*3+2]=-.10+Math.cos(n*1.7)*.045;}
   geometry.attributes.position.needsUpdate=vapour.visible;
  }};
 }

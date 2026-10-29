@@ -1,17 +1,19 @@
-# W07 audio follow-up — no scouting performed in W03
+# W07 audio follow-up — internal split chamber
 
-Usable existing audio retained: discrete plasma report, cylinder seating and a bounded segment of the cooling hiss. Source WAV bytes are unchanged. The beam loop and legacy reload composite are not used for W03.
+No new recordings or sound scouting. Existing discrete reports, cylinder seating and the bounded thermal hiss remain in use; all source WAVs and other weapons' audio are unchanged. The obsolete beam loop/reload composite are not used.
 
-Dedicated recordings still needed for later approval:
-
-| Silent contact | Base contact time | Desired recording |
+| Typed contact | Baseline time | Audio status |
 |---|---:|---|
-| Tray latch unlock | .45 s | Compact loaded metal detent |
-| Carriage reaches outer stop | .87 s | Short guided metal slide and stop |
-| Exposed gas handling pulse | .87 s | Subtle pressure release distinct from the thermal hiss |
-| Old cylinder removal | 1.42 s | Retention clip release / short handled canister contact |
-| Carriage reaches receiver stop | 2.32 s | Weighted short return slide |
-| Final latch lock | 2.54 s | Positive locking detent |
-| Thermal switch and shutter motion | .30/.50/1.15 s | Separate switch / small shutter open / shutter close contacts |
+| `chamber_release` | .38 s | Silent: thumb-operated loaded detent click needed |
+| `doors_open` | .58 s | Silent: two compact hinged armour panels reaching open stops |
+| `cylinder_eject` | .58 s | Silent: retention release / short forceful canister expulsion |
+| `cylinder_align` | 1.35 s | Silent: fresh cylinder first insertion/seat approach |
+| `cylinder_seat` | 1.58 s | Existing `plasma_chamber_insert.wav`; firm final seating/locking contact |
+| `doors_close` | 1.88 s | Silent: receiver panel closure and detent |
+| `ready` | 2.20 s | Silent: subtle grip/settling Foley if needed |
+| `thermal_open` + `cooling_pulse` | .50 s in the separate vent action | Existing cooling hiss; dedicated shutter Foley missing |
+| `thermal_close` | 1.15 s in the separate vent action | Hiss stops; dedicated shutter closure missing |
 
-`advancePlasmaAction` exposes typed contact callbacks on the authoritative clock. The second callback argument is the class duration multiplier; the third is elapsed simulation time after that event within a late frame. Completed events occur once per action and cancellation discards unperformed contacts. No placeholder or unrelated recording is substituted. Railgun mechanical Foley remains outside W03.
+The thermal switch remains .30 s before shutter opening, with no cartridge-door movement or resource transfer. No thermal hiss is layered over cartridge replacement.
+
+`advancePlasmaAction` emits each typed event once from the authoritative clock. Listener arguments are event, whole-action class duration multiplier, and late simulation time after the event within a multi-boundary frame. Rendering has no sound timers. Playback cursor/rate follow this same clock and stop on pause/cancellation/death/switch. Existing automated audio coverage checks class scaling, no doubling, skipped late cues and pause/cancellation.

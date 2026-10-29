@@ -1,54 +1,58 @@
-W03 PR-100 verification
+PR-100 internal split chamber refinement — verified 29 October 2026
+Base: PR #26 head 06f6d22c88ec1b6295d1936b9e22158692e5c5a2
+Branch: feat/plasma-repeater-fidelity; existing draft PR retained.
 
-PASS TypeScript: npm run lint
-PASS Vite production build: npm run build (existing large-bundle warning)
-PASS npm run test:plasma
-  8 Hz maximum at 30/60/144 FPS, one charge per successful launch, bounded stall
-  catch-up, rejected pool acquisition, 60-shot depletion with cooling permitted,
-  heat/overheat near 5 s, independent vent and exact R-key precedence.
-  Sealed 60-charge replacements, 180 initial spare charges, phase cancellation,
-  exactly-once seating, guide ownership and negative-X carriage travel, separate
-  upward-opening cooling flaps, fresh/loaded cylinder continuity, grip stability.
-  Swept thin barriers, earliest world/actor hit, moving actor crossings, friendly
-  protection, bot-to-player attribution, expiry, cached allocations and teardown.
-  Silent contact marker ordering and class-scaled event times.
-PASS npm run test:weapons (all 12; plasma remains under 24 bare meshes)
-PASS npm run test:viewmodel (all 12; visible mesh/hand near-plane bounds, teardown)
-PASS npm run test:audio (discrete plasma reports; no beam loop/composite; seat/hiss)
-PASS npm run test:railgun (including mechanical rebuild)
-PASS npm run test:lmg (mechanics and sustained-fire audio)
-PASS npm run test:runtime (including plasma pool reset)
-PASS npm run test:tactical (including actual plasma AI dispatch at 30/60/144 Hz)
-PASS npm run test:controls
-PASS npm run test:br
-PASS npm run test:sniper
-PASS npm run test:shotgun
-PASS npm run test:pistol
-PASS npm run test:smg
-PASS npm run test:area51
-PASS npm run test:preparation
-PASS npm run test:performance
+PASS npm run lint (TypeScript)
+PASS npm run build (existing Vite >500 kB bundle warning)
+PASS test:plasma, test:weapons, test:viewmodel, test:audio, test:runtime,
+     test:controls, test:scenes, test:tactical, test:railgun, test:lmg, test:br,
+     test:smg, test:pistol, test:pistol:sprint, test:shotgun, test:sniper,
+     test:batch1, test:batch2, test:area51, test:bosses, test:preparation,
+     test:performance. Actual output: refinement-evidence/checks/.
 
-PASS actual App browser simulation at 30/60/144 fixed update frequencies:
-  Each one-second run fires exactly 8 bolts, consumes 8 charges (60 -> 52), and
-  accumulates 20 heat. These are simulated update rates, not measured GPU FPS.
-PASS live browser controls: LMB firing, automatic overheat recovery, low-heat R
-  cartridge swap, high-heat R vent, repeat-R guard, pause, switch/cancellation,
-  ADS/sprint/local third person and death. Existing beam-loop audio never plays.
-  No page errors. See evidence/live/live-validation.json.
-PASS Armory production-model captures: closed exterior, connected extended tray,
-  removed cylinder, fresh cylinder and separate thermal shutters.
+Focused checks cover:
+- 2.20 s duration and once-only class scaling; every cancellation boundary at
+  30/60/144 Hz; no extra cooldown after valid completed recovery.
+- .58 s ejection discards remaining old charges once; 1.58 s seating consumes
+  one 60-charge spare once; pre-ejection/post-ejection/post-seat recovery.
+- Hollow receiver, contained cylinder, no obsolete tray parts, opposite door
+  rotations, cylinder clearances, exact closed transforms, unchanged muzzle.
+- Continuous fresh/ejected cylinder endpoints, fixed geometric ownership,
+  bounded cosmetic lifetime, no model/geometry/material construction in updates.
+- Actual glove thumb-to-release contact and palm/cylinder following; actual palm
+  and instanced phalange vertices clear both door interiors through the action.
+- Independent ammo/heat displays, thermal doors closed, no vent ammo transaction.
+- 8 Hz at 30/60/144 Hz, unchanged heat/cooling, swept thin walls/moving actors,
+  friendly blocking, attribution, projectile expiry/pooling/disposal.
+- Every owned model geometry/material released exactly once; 21 bare meshes.
 
-Video provenance:
-  Normal-speed MP4 is a 30 FPS offline export of actual App rendering and production
-  action/projectile/hand code with Area 51 lighting and a stationary world. Each
-  action is continuous; cuts separate swap, vent and firing. It is not measured
-  real-time GPU performance. The separate live-input raw reload was unretimed:
-  152.33 wall-clock seconds for the 2.8 s simulation in full-scene software WebGL.
-  The raw input run precedes final shutter-direction/hand-contact visual polish;
-  regenerated model screenshots and the normal-speed video show that final polish.
+PASS actual App fixed-step 30/60/144 Hz scene runs:
+  1 simulated second = exactly 8 bolts, ammo 60 -> 52, heat 0 -> 20.
+  These are simulation update frequencies, not measured GPU FPS.
+PASS real Armory TEST CARTRIDGE, TEST THERMAL VENT, TEST MUZZLE EFFECT and
+  INSPECT CHAMBER buttons. Its local preview state does not access gameplay slots.
+PASS six rendered model replacement/disposal cycles: stable full Armory scene
+  counts of 24 geometries and 4 textures. No page/shader errors.
+PASS live App LMB/R controls, automatic overheat recovery, repeat-R guard, pause,
+  switch/cancellation, ADS, sprint, third-person weapon and death cancellation.
+  Final unretimed reload: 29.5076 wall seconds for 2.20 s simulation, software
+  WebGL at 640x360. This is not native hardware performance evidence.
+  See refinement-evidence/live/live-validation.json and raw .webm.
+PASS offline export: uninterrupted production-clock 2.20 s reload, .5 s ready
+  bookends, separate 1.25 s vent with ready bookends, and discrete firing. Actual
+  App renderer, production hands/mechanism/projectiles, Area 51 lighting; held
+  world. MP4 is 30 FPS simulation playback, not native real-time footage.
 
-Native-laptop visual/performance acceptance remains outstanding. The legacy
-third-person body-arm pose is retained, while the shared weapon mechanism and
-white ceramic emitter are updated. W07 mechanical Foley gaps are documented.
-No merge and no production deployment.
+All failures found during implementation were corrected, including stock
+near-plane ownership and glove/door clearance. No outstanding automated failure.
+
+Limits / developer acceptance:
+- Native laptop visuals, feel and GPU performance remain unapproved.
+- Browser gameplay recording uses Area 51 USMC; both faction/map constructors,
+  actor propagation and performance/preparation paths have automated coverage,
+  but this pass does not supply gameplay video for every faction/map combination.
+- Third-person weapon shares the mechanism; legacy third-person body-arm pose
+  has not been replaced by the first-person hand animation.
+- Missing dedicated chamber/button/door/ejection Foley is intentionally silent
+  and documented for W07. Existing WAV bytes are unchanged.
+- No merge, production deployment or W04 work.

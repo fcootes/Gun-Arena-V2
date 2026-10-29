@@ -1,74 +1,84 @@
-# W03 — PR-100 Tactical Plasma Repeater
+# PR-100 internal chamber refinement (PR #26)
 
-The approved PR-100 panels **1–2** define the exterior: an asymmetric white ceramic emitter, dark graphite receiver, compact sight rail, skeleton stock, tactical grips and cyan side gas cylinder. Panels **3–4** are mechanism references only. Their older rifle silhouette is not used. Panel **5** becomes a separate upper-shutter thermal action with the cartridge tray closed. Panel **6** becomes discrete projectiles, with no continuous beam.
+Continues `feat/plasma-repeater-fidelity` from verified head `06f6d22c88ec1b6295d1936b9e22158692e5c5a2`. The former external tray and white muzzle blocks are replaced. PR #26 remains draft for native-laptop acceptance; no merge or production deployment is authorized by this work.
 
-Internal ID remains `laser` for saved loadouts and AI compatibility; player-facing name is **PLASMA REPEATER**. Based on main `6dd3b2d`, including merged Railgun PR #24. W03 remains a draft until laptop approval; no merge or production promotion.
+## Exterior and chamber
 
-## Model and mechanism
+The forward receiver is a continuous tapered octagonal shell spanning local Z −0.385 to −0.574 m. Its compact nose is 82 mm wide, compared with the former 147 mm ceramic blocks. Off-white ceramic occupies flush upper/lower material regions of that same shell; graphite side webs and a dark annular aperture frame remain structural. The recessed cyan core is concentric at X 0 / Y .023. The authoritative muzzle is **unchanged at `(0, .023, −.574)`**, preserving FPS/actor origins, cover checks, convergence, muzzle effects and Armory alignment.
 
-```mermaid
-flowchart TD
-  chassis[Connected graphite chassis] --> emitter[White ceramic emitter and recessed cyan core]
-  chassis --> stock[Integrated stock and tactical grips]
-  chassis --> fixed[Fixed receiver guide sockets]
-  fixed --> tray[Captive left-side carriage: local X 0 to -0.140 m]
-  tray --> rods[Telescoping guide rods remain engaged]
-  tray --> cradle[Keyed cradle and spring retention clips]
-  cradle --> cylinder[Independent removable gas cylinder]
-  chassis --> shutters[Three separate hinged upper cooling shutters]
-  chassis --> control[Dedicated thermal-release switch]
-```
+The central receiver is constructed from separate roof, floor, right wall, fore/aft bulkheads and lower power housing. It contains an actual empty cavity. There is no solid receiver mesh intersecting the cartridge, no sliding guide/tray/cradle allocation and no externally visible cylinder when closed.
 
-The fixed guide sockets overlap the moving rods at full extension. The cylinder is longitudinally aligned in the cradle, independently lifted and carried away by the support hand. A separate fresh cylinder enters the same seat; visibility transfers to the cradle-owned cylinder at the seating transaction. No cylinder or carriage is reparented per frame. The same factory supplies Armory, first person, bots and local third person, preserving the white emitter in all views. Static details are batched; the bare weapon remains below the existing 24-mesh budget.
+Hierarchy, all in weapon-local metres:
 
-The firing hand stays at the grip while the left hand targets the latch, moving handle, cylinder and separate thermal switch using full part-to-weapon transforms. Reload presentation rolls inward 12.6° without an exaggerated forward thrust. The pre-existing full-body third-person arm pose is retained; articulated weapon parts share the actual action state.
+- `receiver`: fixed chassis, internal seat surfaces, pressure contacts and ejector pad.
+- `cartridgeSeat`: fixed semantic attachment at **(−.008, .024, −.066)**; its static meshes join receiver batches.
+- `gasCylinder`: installed longitudinal cartridge, parented directly to receiver at **(−.008, .024, −.066)**. Radius ≤.024 m, total length .206 m.
+- `chamberUpperDoor`: pivot **(−.053, .080, −.066)**; rotation about longitudinal **Z = −86°** when open.
+- `chamberLowerDoor`: pivot **(−.053, −.045, −.066)**; rotation about **Z = +86°** when open.
+- Each 6 mm-thick panel is 61.5 mm high and 222 mm long, with its centre 31.25 mm toward the receiver centre from its hinge. Four fixed hinge barrels remain mechanically attached to the receiver.
+- `chamberRelease`: thumb button at **(−.056, .041, .079)**, with a 3 mm inward press.
+- `cartridgeRetention`: two internal retaining fingers withdraw 9 mm during opening and engage at the seating beat.
+- `oldGasCylinder`, `freshGasCylinder`: preallocated cosmetic representations with the installed cylinder's baked geometry/material shared by reference.
+- `coolingShutter0..2`, `thermalSwitch`: independent top cooling assembly.
+- `ammoIndicator`, `heatIndicator`: separate diagnostics with independent authoritative inputs.
 
-## Firing, damage and resources
+**Why 86° rather than the preliminary 55–75° suggestion:** 75° cleared the cylinder but did not clear the actual articulated glove. Full production palm/phalange geometry was sampled throughout the reload; the final hinge heights, 86° stroke and outside-first hand path clear both doors. The upper panel stays below the optic/cooling hardware; the lower panel stays forward of the firing grip. No acceptance is inferred for the user's laptop.
 
-- Maximum **8 individual bolts/sec**, authoritative **0.125 s** simulation interval. At most two due shots after a stall; excess backlog is discarded. AI difficulty may slow cadence, never increase it above 8 Hz.
-- **60 charges installed + 180 reserve** (three complete spare cylinders). One successfully acquired projectile consumes one charge. A rejected pool acquisition consumes nothing. No hitscan damage occurs at trigger time.
-- Projectile speed **200 units/sec**, maximum travel **130 units**, lifetime at most **0.70 s**. Base player damage **12** with the retained **1.7×** headshot multiplier. Close-range theoretical DPS is 96, close to the old 5-damage/.055 s beam's 91 DPS. Existing plasma range falloff remains full through 60 units, falling to 40% at 120 units. Shields, armour, hitmarkers, attribution and kills use existing handlers.
-- Each shot adds **2.5 heat**. Uninterrupted full-rate fire overheats on shot 40, at approximately **5.0 s**, leaving 20 charges. Idle cooling begins after a .15 s grace period at **16 heat/sec**. Heat and cartridge supply are independent.
-- Overheat blocks firing and automatically starts the thermal action. Full recovery clears heat and the overheat latch; it never refills ammunition. Cartridge replacement receives ordinary passive cooling, not an automatic heat reset.
+## Authoritative reload clock
 
-A sealed tactical replacement discards remaining old charges at removal (1.42 s), consumes exactly **60 reserve** at seating (1.86 s), and installs 60 new charges. It is not a top-up. Existing arbitrary pickup packets are explicitly reconciled: a positive 1–60 charge packet grants one full sealed cylinder; larger packets round up to complete cylinders. Existing partial reserve values are rounded down to complete spares when a cartridge replacement begins; thermal venting preserves even legacy partial reserve counters. Area 51, Shattered Wall, legacy world pickups, support packs, AI support resupply and facility refills all use complete-cylinder resources. Support packs are removed after collection to prevent repeated grants.
+| Baseline time | Phase | Contact / resource state |
+|---|---|---|
+| 0.00–0.38 s | `present` | Reach outside the closed receiver, sweep back to the real thumb release, press before opening |
+| 0.38–0.58 s | `open` | Upper/lower doors rotate oppositely; support hand withdraws outside their sweep |
+| 0.58–0.78 s | `eject` | At **.58**, old charges are discarded once and the old cylinder begins its continuous outward trajectory |
+| 0.78–1.35 s | `insert` | Fresh cylinder comes from below, aligns and enters directly sideways |
+| 1.35–1.58 s | `slap` | Firm palm push to the actual cylinder/seat; at **1.58**, exactly **60 reserve** is consumed and **60 installed** is awarded once |
+| 1.58–1.88 s | `close` | Hand clears during the first .06 s; doors then close in .24 s into their exact flush transforms |
+| 1.88–2.20 s | `recover` | Support hand returns beneath the fore-end and the weapon settles |
 
-## Actions and R precedence
+Total: **2.20 s**. Class duration multipliers apply exactly once to the whole sequence. Model and hands read its current phase/fraction; there is no independent reload animation timer. Firing remains blocked during the entire action, including recovery, and no additional cooldown is appended at completion.
 
-| Cartridge replacement | Base seconds |
-|---|---:|
-| Present | 0.00–0.22 |
-| Unlock latch | 0.22–0.45 |
-| Slide carriage left | 0.45–0.87 |
-| Restrained exposed-chamber cooling pulse | 0.87–1.07 |
-| Lift and remove old cylinder | 1.07–1.42 |
-| Retrieve, align and seat fresh cylinder | 1.42–1.86 |
-| Push carriage back on the same rails | 1.86–2.32 |
-| Lock and activate | 2.32–2.54 |
-| Return support hand and weapon to ready | 2.54–2.80 |
+The right hand remains attached to its firing grip. The rifle cants around that grip rather than lunging forward. The release contact uses forward kinematics matching the actual left thumb; insertion and palm push follow the fresh cartridge transform. Door clearance is checked against actual glove palm and instanced phalange vertices at 120 Hz, in addition to the all-weapon near-plane suite.
 
-Thermal recovery is a separate **1.25 s** action: present .15, switch .15, shutters open .20, controlled vent .50, shutters close .15, recover .10. The tray, latch and installed cartridge stay closed and retain their ammunition throughout. Class duration modifiers apply once to either action.
+## Ejection and insertion
 
-R ignores an existing action; otherwise overheat recovery has priority, then empty cylinder replacement if a spare exists, then vent at heat ≥65%, then partial-cylinder replacement, then venting a full cylinder at meaningful heat ≥10%. Otherwise it does nothing. No new keybind is added.
+At .58 s the installed object hides and the preallocated spent object appears at the **same seated transform**. For baseline ejection age `t`, its local position is:
 
-Cancellation restores a valid closed mechanical state. Before removal, the original supply is retained; after removal and before seating, the weapon remains empty; after seating, the committed new cylinder and consumed spare remain. No refund or duplicate transfer occurs. Overheated weapons resume recovery when selected. Pause freezes the action and pauses audio; death, weapon switching and teardown cancel effects through existing lifecycle paths.
+- X = −.008 − .12 × smoothstep(clamp(t/.20)) − .16 × max(t−.20, 0)
+- Y = .024 + .34 × u − 3 × u², where u = max(t−.20, 0)
+- Z = −.066 + .035 × u
+- Rotation XYZ = (.45u, −.70u, 1.40u) radians.
 
-## Projectile collision and performance
+The first .20 s is strictly transverse to clear the door envelope; the short upward/falling arc and rotation follow after clearance. It hides at **.66 baseline seconds of age**, below the first-person frame. Age comes from the authoritative scaled action clock and freezes on pause. Cancellation hides the cosmetic immediately; teardown disposes shared buffers/materials once. It never enters the projectile pool or pickup system.
 
-`plasmaProjectiles.ts` owns a session pool of **192** bolt slots and **32** contact-flash slots. Two instanced bolt meshes and one instanced impact mesh reuse static geometry/materials. No mesh, geometry, material or light is constructed per shot. A bolt has a compact bright core, a short translucent halo and a fading contact effect; there are no per-bolt shadow lights or a persistent cylinder.
+The fresh cylinder starts at **(−.240, −.220, −.066)**. It aligns at **(−.160, .024, −.066)** during the first 72% of insertion, then approaches **(−.080, .024, −.066)**. The slap pushes it to **(−.008, .024, −.066)**. At 1.58 s the fresh object is replaced by the installed object at exactly the same transform. The palm remains at a calibrated cartridge-relative contact, with fingers flattening during seating.
 
-Every step compares the segment against active solid world bounds, real world/bot hit meshes and terrain. The nearest collision wins; solids win equal-distance ties. Moving actors additionally use relative swept body/head bounds between their sampled positions, catching crossings between frame endpoints. Allies physically stop a bolt without taking damage, and the owner is excluded. Muzzle placement converges on the crosshair; an eye-to-muzzle solid check prevents firing through nearby cover when the muzzle protrudes beyond it.
+Cancellation before .58 s preserves the original charges; after .58 and before 1.58 it leaves zero installed charges; after 1.58 it preserves the new cartridge and consumed spare. Recovery closes the receiver and engages retention only when a cartridge is installed. Switching/death stop audio and close the mechanism; respawn recreates valid slot state. Repeated advancement cannot repeat the transaction.
 
-The same pool and collision resolution serve player and bots. Bot accuracy perturbs aim; difficulty scales damage and may slow firing, replacing probabilistic instant damage for this weapon. A bolt deactivates immediately on one impact or expiration and releases its owner reference. Reset clears every bolt, impact and sampled actor reference. Unmount disposes instanced buffers, geometry and materials once.
+## Independent ammunition and heat feedback
 
-## Audio
+Six small recessed cyan segments sit beside the cartridge bay, using one shader/draw. Segment `i` intensity is `clamp(ammo / 10 − i, 0, 1)`. Thus 60 shows six, 50 five, 35 three plus one half-intensity segment, and zero all dark. Only the actual ammo counter drives these segments, so they extinguish at ejection and refill at seating. Heat never colours them red.
 
-Existing WAVs are unchanged. Eight-Hz firing uses `plasma_fire_single.wav` (.165 s) with bounded overlap; the old automatic beam loop is neither played nor preloaded for this weapon. The existing cylinder-insert recording plays at the real 1.86 s seating contact. A native-rate segment of the existing cooling hiss follows the thermal opening/closure window, with class scaling, late-cue handling, pause and cancellation. The old composite reload is not reused for unidentified mechanical contacts.
+A separate narrow status line on the **outside face of the upper cooling rail**, at `(−.052, .096, −.100)`, uses the actual heat value. It remains subdued through 30%, warms continuously toward amber through 60%, becomes orange through 85%, and reaches red at 100%. Cooling reverses the same progression. There is no visual heat reset ahead of the authoritative value.
 
-Typed silent contacts are exposed through `PlasmaListener`: tray unlock, tray open, cooling pulse, cylinder removal, cylinder seating, tray closure, tray lock, thermal open and thermal close. [W07 audio follow-up](audio-follow-up.md) lists missing dedicated recordings. No sound scouting or new audio acquisition occurred.
+Thermal venting remains **1.25 s**: present .15, switch .15, shutters open .20, vent .50, shutters close .15, recover .10. Cartridge doors stay closed, the cartridge stays installed, and ammo/reserve remain unchanged. Passive cooling and automatic overheat recovery are preserved.
 
-## Evidence and review
+R precedence remains: active action → ignore; overheated → thermal recovery; empty with spare → replacement; heat ≥65 → vent; partial cartridge with spare → replacement; full cartridge with heat ≥10 → vent; otherwise no action.
 
-See [screenshots and recordings](evidence/) and [verification](verification.txt). Armory includes **TEST CARTRIDGE**, **TEST THERMAL VENT** and discrete muzzle-fire preview controls.
+## Preserved gameplay and performance
 
-The normal-speed MP4 is an offline 30 FPS export of the actual App renderer, production action clocks, hand rig and projectile pool using Area 51 lighting and a stationary world. Each action is continuous; the video cuts between reload, vent and firing demonstrations. It establishes animation/simulation behaviour, **not real-time GPU performance**. Separate unretimed live-input footage and measured wall duration make that distinction explicit. Laptop visual acceptance, full-scene native performance and final weapon feel remain for the user to approve.
+Eight physical bolts/second, .125 s cadence, 200 units/s velocity, 130-unit range, swept moving/static collisions, cover obstruction and damage attribution are unchanged. The 60/180 sealed-cartridge supply, damage 12, headshot 1.7×, 2.5 heat/shot, 16 heat/s passive cooling and .15 s cooling grace remain intact. Projectile and impact pool code is unchanged.
+
+The bare model uses **21 meshes**, below the existing 24-mesh budget. Three cartridges share one baked vertex-coloured buffer and material. No reload creates meshes, geometry or materials. Disposal assertions release every owned resource once; six rendered Armory replacement cycles stabilize at **24 geometries / 4 textures** for the complete inspection scene. There are no new dynamic lights or changes to map/APEX preparation.
+
+Armory's real TEST CARTRIDGE / TEST THERMAL VENT / TEST MUZZLE EFFECT controls are exercised in the browser. INSPECT CHAMBER, PAUSE/RESUME and a 0–2.20 s pose slider allow intermediate review without changing any gameplay slot. Orbit/zoom supports either side, front and rear.
+
+## Audio, validation and evidence
+
+Existing WAVs are unchanged. Cylinder seating now plays at **1.58 s**. The thermal hiss stays bounded to its independent vent window; cartridge reload has no thermal hiss or old sliding/composite sound. [The typed silent contact contract](audio-follow-up.md) lists missing W07 Foley.
+
+- [Validation and limitations](verification.txt)
+- [Actual screenshots, videos and frame/state provenance](refinement-evidence/README.md)
+- [Exact changed-file manifest](refinement-evidence/changed-files.txt)
+
+The previous [evidence directory](evidence/README.md) and [audit](audit.md) are historical baseline records of the superseded tray mechanism. Use `refinement-evidence` to review the current implementation.

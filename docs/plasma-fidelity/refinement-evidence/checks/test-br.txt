@@ -1,0 +1,7 @@
+
+> gun-arena-v2@0.0.0 test:br
+> node --import tsx tests/battleRifle.test.ts
+
+PASS: BR 2.25/2.85 s state clock at 30/60/144 Hz, exact cue/seat boundaries, burst clearing, reserve conservation and interrupted chamber recovery
+PASS: true >75 degree upright muzzle, rear magwell axis, physical fresh magazine, anchored hands, bounded charge and repeated restoration/disposal
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

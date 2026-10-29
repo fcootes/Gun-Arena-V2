@@ -311,7 +311,7 @@ export function createFirstPersonHands() {
           if (state?.shotgunCycle?.kind === 'chamber') left.target.lerpVectors(left.phaseStart, supportGrip, shotgunEase(state.shotgunCycle.elapsed / (state.shotgunCycle.duration * SHOTGUN.recovery / SHOTGUN.cycle)));
         }
       }
-      if(id==='laser'){plasmaHand(assembly,state,supportGrip,config.left.rotation,left.target,left.orientation);curl=stage&&['eject','insert'].includes(stage.phase)?1:config.left.curl;}
+      if(id==='laser'){curl=plasmaHand(assembly,state,supportGrip,config.left.rotation,left.target,left.orientation);}
       if(id==='railgun'){railgunHand(assembly,state,supportGrip,config.left.rotation,left.target,left.orientation);curl=stage&&['insert','pickup','lowerCradle'].includes(stage.phase)?1.05:config.left.curl;}
       if (id === 'lmg') {
         lmgSupportRotation.setFromEuler(euler.set(...config.left.rotation));
@@ -408,7 +408,7 @@ export function createFirstPersonHands() {
       for (const [side, hand] of sides) {
         const attachment = config[side];
         const targetCurl = side === 'left' ? curl : attachment.curl;
-        if(id==='lmg'||id==='railgun')hand.curl=targetCurl;
+        if(id==='lmg'||id==='railgun'||id==='laser')hand.curl=targetCurl;
         else hand.curl += (targetCurl - hand.curl) * alpha;
         end.set(0, -.047, 0).applyQuaternion(hand.wrist.quaternion).add(hand.wrist.position);
         // Bend toward a local torso target rather than reaching across the screen.

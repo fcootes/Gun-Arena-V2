@@ -1420,7 +1420,20 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     }
     parent.userData.features = featureNames;
   }
+  if(id==='laser'){
+    // Fixed seat/switch surfaces join receiver batches; their semantic attachment
+    // locators remain available without paying separate material draws.
+    for(const name of ['cartridgeSeat','thermalSwitch']){
+      const fixed=parts[name];fixed.updateMatrix();
+      for(const child of fixed.children.slice()){child.applyMatrix4(fixed.matrix);body.add(child);}
+    }
+  }
   bake(body);
+  if(id==='laser'){
+    for(const name of ['oldGasCylinder','freshGasCylinder']){
+      parts[name].children.forEach((child,index)=>{const mesh=child as THREE.Mesh;mesh.geometry.dispose();mesh.geometry=(parts.gasCylinder.children[index] as THREE.Mesh).geometry;});
+    }
+  }
   if(id==='railgun'){
     const fresh=parts.freshSlug.children[0] as THREE.Mesh,seated=parts.chamberedSlug.children[0] as THREE.Mesh;
     seated.geometry.dispose();seated.geometry=fresh.geometry;
@@ -1466,7 +1479,7 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       railgunUpdate?.(charge,time);
       if(state)railgunParts?.(state);
       if(plasmaParts)plasmaParts(state);
-      if(plasmaVisual){const q=state?.reloadSequence,stage=q?.phases[q.index],thermal=q?.kind==='plasmaVent',p=stage?q!.elapsed/stage.duration:0;const pulse=stage?.phase==='vent'?Math.sin(Math.PI*p):thermal&&stage?.phase==='open'?p:0;plasmaVisual.update(state?.heat??0,time,thermal,pulse);}
+      if(plasmaVisual){const q=state?.reloadSequence,stage=q?.phases[q.index],thermal=q?.kind==='plasmaVent',p=stage?q!.elapsed/stage.duration:0;const pulse=stage?.phase==='vent'?Math.sin(Math.PI*p):thermal&&stage?.phase==='open'?p:0;plasmaVisual.update(state?.heat??0,time,thermal,pulse,state?.ammo??60);}
     },
   };
   const plasmaParts=id==='laser'?createPlasmaAnimator(assembly,false):undefined;

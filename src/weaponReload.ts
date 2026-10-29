@@ -17,7 +17,7 @@ export interface ReloadSequence {
   empty: boolean;
   shellsRemaining: number;
   inserted: number;
-  plasmaHadCylinder?:boolean;plasmaStartHeat?:number;plasmaSpeed?:number;plasmaEvents?:number;
+  plasmaHadCylinder?:boolean;plasmaStartHeat?:number;plasmaSpeed?:number;
   shellSeated?: boolean;
   brCuePlayed?: boolean;
   lmgCuePlayed?: boolean;

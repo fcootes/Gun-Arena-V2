@@ -1,3 +1,5 @@
+> Historical baseline: this directory shows the superseded external tray. Review the current [internal chamber evidence](../refinement-evidence/README.md).
+
 # PR-100 model and gameplay evidence
 
 ![Reload, independent thermal vent and discrete firing](mechanism-sequence.jpg)

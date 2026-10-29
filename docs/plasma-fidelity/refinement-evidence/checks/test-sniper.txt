@@ -1,0 +1,8 @@
+
+> gun-arena-v2@0.0.0 test:sniper
+> node --import tsx tests/sniper.test.ts
+
+PASS: manual-only bolt, spam lockout, 30/60/144 Hz event boundaries, conserved tactical/empty reloads, interrupts and unchanged bot reload
+PASS: actual trigger/launcher/heavy-fire functions block all twelve weapons while sprinting
+PASS: bounded receiver slide/pivot, exact articulated hand attachment, short sleeve and five cycles without transform accumulation
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
