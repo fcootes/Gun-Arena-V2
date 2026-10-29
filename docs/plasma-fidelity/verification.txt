@@ -1,58 +1,68 @@
-PR-100 internal split chamber refinement — verified 29 October 2026
-Base: PR #26 head 06f6d22c88ec1b6295d1936b9e22158692e5c5a2
-Branch: feat/plasma-repeater-fidelity; existing draft PR retained.
+W03 PR-100 final tactile pass
+Base: 8aaf082121df8f9da95bdfb90c8b0bcdfcc26153
+Existing branch: feat/plasma-repeater-fidelity / existing draft PR #26
 
-PASS npm run lint (TypeScript)
-PASS npm run build (existing Vite >500 kB bundle warning)
-PASS test:plasma, test:weapons, test:viewmodel, test:audio, test:runtime,
-     test:controls, test:scenes, test:tactical, test:railgun, test:lmg, test:br,
-     test:smg, test:pistol, test:pistol:sprint, test:shotgun, test:sniper,
-     test:batch1, test:batch2, test:area51, test:bosses, test:preparation,
-     test:performance. Actual output: refinement-evidence/checks/.
+PASS TypeScript: npm run lint
+PASS production build: npm run build (existing >500 kB Vite bundle warning)
+PASS all 24 exercised repository test commands:
+  test:plasma, test:plasma:polish, test:plasma:tactile,
+  test:weapons, test:viewmodel, test:audio, test:runtime,
+  test:controls, test:scenes, test:tactical, test:railgun, test:lmg,
+  test:br, test:smg, test:pistol, test:pistol:sprint, test:shotgun,
+  test:sniper, test:batch1, test:batch2, test:area51, test:bosses,
+  test:preparation, test:performance.
+  Final transcripts: tactile-evidence/checks/.
 
-Focused checks cover:
-- 2.20 s duration and once-only class scaling; every cancellation boundary at
-  30/60/144 Hz; no extra cooldown after valid completed recovery.
-- .58 s ejection discards remaining old charges once; 1.58 s seating consumes
-  one 60-charge spare once; pre-ejection/post-ejection/post-seat recovery.
-- Hollow receiver, contained cylinder, no obsolete tray parts, opposite door
-  rotations, cylinder clearances, exact closed transforms, unchanged muzzle.
-- Continuous fresh/ejected cylinder endpoints, fixed geometric ownership,
-  bounded cosmetic lifetime, no model/geometry/material construction in updates.
-- Actual glove thumb-to-release contact and palm/cylinder following; actual palm
-  and instanced phalange vertices clear both door interiors through the action.
-- Independent ammo/heat displays, thermal doors closed, no vent ammo transaction.
-- 8 Hz at 30/60/144 Hz, unchanged heat/cooling, swept thin walls/moving actors,
-  friendly blocking, attribution, projectile expiry/pooling/disposal.
-- Every owned model geometry/material released exactly once; 21 bare meshes.
+Focused coverage:
+- Exact 2.70 s reload / 2.25 s vent and whole-action class multipliers once.
+- 75% insertion stop, resistance/rebrace, final-quarter drive and once-only
+  2.01 s seat; no early ammo, no double deduction, preserved cancellation.
+- Both doors clear before the stronger .64 s ejection; retention releases first;
+  actual spent cylinder, hand and door clearances at 240 Hz.
+- Actual thumb contact; actual glove palm/phalange vertices clear both doors in
+  reload and vent and do not penetrate the fresh pressure vessel during pushing.
+- Independent thermal shutters, graduated heat/indicators, forced vs preventative
+  hand reaction, ammo preservation and firing lockout through full recovery.
+- Exact analytical recoil integrated across identical 30/60/144 Hz shot events,
+  real viewmodel trigger response, pause, switch/death/reset and no per-shot
+  geometry/material/Object3D allocation.
+- Existing App camera recoil baseline retained; spread and physics unchanged.
+- 8 Hz and 60/180 charges, passive cooling, R precedence, actual App shield/armour,
+  headshot/damage attribution, solid/ally blocking and swept moving-actor hits.
+- Existing fixed scorch/impact capacities, support validation, recycling/fade,
+  environment damage interface, reset/disposal and stable GPU-object ownership.
+- Audio seat/hiss on the new clock, class playback rate/cursor, no old composite,
+  no double playback/events, pause/cancellation and skipped late cues.
 
-PASS actual App fixed-step 30/60/144 Hz scene runs:
-  1 simulated second = exactly 8 bolts, ammo 60 -> 52, heat 0 -> 20.
-  These are simulation update frequencies, not measured GPU FPS.
-PASS real Armory TEST CARTRIDGE, TEST THERMAL VENT, TEST MUZZLE EFFECT and
-  INSPECT CHAMBER buttons. Its local preview state does not access gameplay slots.
-PASS six rendered model replacement/disposal cycles: stable full Armory scene
-  counts of 24 geometries and 4 textures. No page/shader errors.
-PASS live App LMB/R controls, automatic overheat recovery, repeat-R guard, pause,
-  switch/cancellation, ADS, sprint, third-person weapon and death cancellation.
-  Final unretimed reload: 29.5076 wall seconds for 2.20 s simulation, software
-  WebGL at 640x360. This is not native hardware performance evidence.
-  See refinement-evidence/live/live-validation.json and raw .webm.
-PASS offline export: uninterrupted production-clock 2.20 s reload, .5 s ready
-  bookends, separate 1.25 s vent with ready bookends, and discrete firing. Actual
-  App renderer, production hands/mechanism/projectiles, Area 51 lighting; held
-  world. MP4 is 30 FPS simulation playback, not native real-time footage.
+PASS actual Armory cartridge/vent/muzzle controls and pose inspection.
+PASS six rendered model replacement cycles: stable 24 geometries / 4 textures in
+  the inspected scene, no page/shader errors. See armory-controls-memory.json.
+PASS local live input checks: actual LMB/R, automatic overheat recovery, repeat-R
+  guard, pause, switch/cancellation, ADS/sprint, third-person weapon and death.
+  The unretimed software-WebGL reload took 42.5786 wall seconds for the 2.70 s
+  simulation at 640x360; this is not native hardware performance evidence.
+PASS continuous actual App/Three.js export: 81 reload frames at 30 FPS, full
+  automatic overheat after sustained firing, 2.25 s thermal action including hand
+  reaction, distinct world impacts and recoil. See video-provenance.json.
+PASS approved projectile/collision/map/hand-rig/type source files and all WAV
+  assets are unchanged: see tactile-evidence/preserved-systems.json.
 
-All failures found during implementation were corrected, including stock
-near-plane ownership and glove/door clearance. No outstanding automated failure.
+Footage provenance:
+  Silent, offline 30 FPS normal-speed simulation playback of the production App
+  renderer, using 120 Hz production updates, held Area 51 world and diagnostic
+  material targets. Independent demonstrations reset their starting inventory
+  between cuts; transactions within each action follow actual gameplay state.
+  Before clip is the existing 8aaf082 recording. No time stretching and no claim
+  that a software renderer demonstrates native laptop GPU performance.
 
-Limits / developer acceptance:
-- Native laptop visuals, feel and GPU performance remain unapproved.
-- Browser gameplay recording uses Area 51 USMC; both faction/map constructors,
-  actor propagation and performance/preparation paths have automated coverage,
-  but this pass does not supply gameplay video for every faction/map combination.
-- Third-person weapon shares the mechanism; legacy third-person body-arm pose
-  has not been replaced by the first-person hand animation.
-- Missing dedicated chamber/button/door/ejection Foley is intentionally silent
-  and documented for W07. Existing WAV bytes are unchanged.
-- No merge, production deployment or W04 work.
+Acceptance / limits:
+- Native-laptop feel, appearance, input latency and GPU performance remain pending.
+- Browser footage covers Area 51 USMC. Both map/faction and preparation paths have
+  automated regression coverage; this pass does not record every combination.
+- The existing third-person body-arm pose remains its legacy rig; weapon mechanism
+  and reduced shot response are shared through the model/effects factory.
+- Missing dedicated W07 release/door/ejection/slap/glove Foley remains silent and
+  documented. Approved firing/seating/hiss WAVs are unchanged.
+- All final automated checks pass. A former one-mesh muzzle assertion was updated
+  to verify the requested two cached directional/pressure meshes and origin.
+- No merge, production promotion or W04 work.

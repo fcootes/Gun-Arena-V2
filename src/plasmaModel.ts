@@ -122,9 +122,9 @@ export function buildPlasmaModel(body:THREE.Group,parts:Record<string,THREE.Obje
  const heatMaterial=new THREE.MeshStandardMaterial({color:0x24383a,emissive:0x24383a,emissiveIntensity:.35,roughness:.6});
  const heatIndicator=group('heatIndicator',-.052,.096,-.100);
  box('Independent thermal status line',.003,.003,.095,0,0,0,heatMaterial,heatIndicator);
- const gas=new Float32Array(24*3),geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(gas,3).setUsage(THREE.DynamicDrawUsage));
+ const gas=new Float32Array(48*3),geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(gas,3).setUsage(THREE.DynamicDrawUsage));
  const material=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{density:{value:0}},
-  vertexShader:'void main(){vec4 p=modelViewMatrix*vec4(position,1.);gl_PointSize=clamp(9./max(.2,-p.z),2.,18.);gl_Position=projectionMatrix*p;}',
+  vertexShader:'void main(){vec4 p=modelViewMatrix*vec4(position,1.);gl_PointSize=clamp(12./max(.2,-p.z),2.,22.);gl_Position=projectionMatrix*p;}',
   fragmentShader:'uniform float density;void main(){float r=length(gl_PointCoord-.5)*2.;float a=pow(max(0.,1.-r*r),2.)*density;gl_FragColor=vec4(.65,.78,.82,a);}'
  });
  const vapour=new THREE.Points(geometry,material);vapour.name='plasmaVapour';vapour.frustumCulled=false;body.add(vapour);parts.plasmaVapour=vapour;
@@ -132,8 +132,9 @@ export function buildPlasmaModel(body:THREE.Group,parts:Record<string,THREE.Obje
   indicatorMaterial.uniforms.ammo.value=ammo;
   indicator.userData.ammo=ammo;
   plasmaHeatColour(heat,heatMaterial.emissive);heatMaterial.color.copy(heatMaterial.emissive);heatMaterial.emissiveIntensity=.20+.70*Math.max(0,Math.min(1,heat/100));heatIndicator.userData.heat=heat;
-  glow.emissiveIntensity=.35;vapour.visible=pulse>0;material.uniforms.density.value=.18*pulse;
-  for(let n=0;n<24;n++){const f=((n/24+phaseTime*1.6)%1);gas[n*3]=Math.sin(n*2.4+f*3)*.025*f;gas[n*3+1]=.10+f*.13;gas[n*3+2]=-.10+Math.cos(n*1.7)*.045;}
+  glow.emissiveIntensity=.35;vapour.visible=pulse>0;material.uniforms.density.value=.30*pulse;
+  for(let n=0;n<48;n++){const f=((n/48+phaseTime*1.8)%1);gas[n*3]=(n%2?1:-1)*.025+Math.sin(n*2.4+f*3)*.018*f;gas[n*3+1]=.11+f*.19;gas[n*3+2]=-.18+(n%3)*.055+Math.cos(n*1.7+f*4)*.012*f;}
+  vapour.userData.pressure=pulse;
   geometry.attributes.position.needsUpdate=vapour.visible;
  }};
 }

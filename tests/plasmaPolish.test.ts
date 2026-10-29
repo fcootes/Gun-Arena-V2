@@ -46,7 +46,7 @@ scene.add(wall);scene.updateMatrixWorld(true);context.world.worldColliders=[coll
 context.player.pos.set(0,1.65,-10);context.player.applyDamage=(amount,ignore,flash,attacker)=>{assert.equal(ignore,false);assert.equal(attacker,bot);damagePlayer(amount,ignore,flash,attacker);};Object.defineProperty(context.player,'shield',{get:()=>player.shield});
 for(let n=0;n<2;n++){pool.spawn(new THREE.Vector3(0,.9,0),new THREE.Vector3(0,.9,-20),'red',bot);pool.update(.05,context);}near(player.shield,0);near(player.health,91);
 // Enlarged canister, shared representations and exact seated handoff remain valid.
-const model=createWeaponAssembly('laser'),parts=model.parts,state:WeaponSlotState={ammo:20,reserve:180};beginPlasmaAction(state);near(state.totalReloadT!,2.2);advancePlasmaAction(state,.58);model.update(0,0,0,state);model.root.updateMatrixWorld(true);
+const model=createWeaponAssembly('laser'),parts=model.parts,state:WeaponSlotState={ammo:20,reserve:180};beginPlasmaAction(state);near(state.totalReloadT!,2.7);advancePlasmaAction(state,.64);model.update(0,0,0,state);model.root.updateMatrixWorld(true);
 const bounds=new THREE.Box3().setFromObject(parts.gasCylinder),extent=bounds.getSize(new THREE.Vector3());assert.ok(extent.x>.054&&extent.x<.057);assert.ok(extent.z<=.2061);assert.equal(PLASMA.cylinderRadius,.028);
 const pos=new THREE.Vector3(),rot=new THREE.Euler();plasmaEjectedPose(0,pos,rot);near(pos.distanceTo(new THREE.Vector3(...PLASMA.cylinder)),0);plasmaEjectedPose(1/30,pos,rot);assert.ok(PLASMA.cylinder[0]-pos.x>.12,'Large visible outward pop in the first 33 ms');near(pos.y,PLASMA.cylinder[1]);plasmaEjectedPose(.20,pos,rot);assert.ok(PLASMA.cylinder[0]-pos.x>.30);
 const v=new THREE.Vector3(),inverse=new THREE.Matrix4();

@@ -1,19 +1,21 @@
-# W07 audio follow-up — internal split chamber
+# W07 audio follow-up — final tactile contacts
 
-No new recordings or sound scouting. Existing discrete reports, cylinder seating and the bounded thermal hiss remain in use; all source WAVs and other weapons' audio are unchanged. The obsolete beam loop/reload composite are not used.
+No recordings were acquired or fabricated. Existing firing WAVs and every other weapon's audio remain unchanged. `plasma_chamber_insert.wav` plays once at the authoritative final seat, now **2.01 s**. Existing cooling hiss plays only within **.72–1.87 s** of the independent vent action, at .55 forced / .45 preventative volume and the existing once-scaled class playback rate. Cartridge replacement has no thermal hiss, beam loop or full-reload composite.
 
-| Typed contact | Baseline time | Audio status |
+| Typed contact | Baseline time | Existing audio / W07 gap |
 |---|---:|---|
-| `chamber_release` | .38 s | Silent: thumb-operated loaded detent click needed |
-| `doors_open` | .58 s | Silent: two compact hinged armour panels reaching open stops |
-| `cylinder_eject` | .58 s | Silent: retention release / short forceful canister expulsion |
-| `cylinder_align` | 1.35 s | Silent: fresh cylinder first insertion/seat approach |
-| `cylinder_seat` | 1.58 s | Existing `plasma_chamber_insert.wav`; firm final seating/locking contact |
-| `doors_close` | 1.88 s | Silent: receiver panel closure and detent |
-| `ready` | 2.20 s | Silent: subtle grip/settling Foley if needed |
-| `thermal_open` + `cooling_pulse` | .50 s in the separate vent action | Existing cooling hiss; dedicated shutter Foley missing |
-| `thermal_close` | 1.15 s in the separate vent action | Hiss stops; dedicated shutter closure missing |
+| `chamber_release` | .42 s | Missing thumb detent click |
+| `doors_open` | .64 s | Missing two hinged-panel open stops |
+| `cylinder_eject` | .64 s | Missing forceful retention release / cylinder pop |
+| `cylinder_align` | 1.3496 s | Missing alignment/guide contact |
+| `cylinder_partial` | 1.54 s | Missing 75%-insertion resistance contact |
+| `cylinder_seat` | 2.01 s | Approved `plasma_chamber_insert.wav` |
+| `doors_close` | 2.36 s | Missing panel closure and detent |
+| `ready` | 2.70 s | Optional grip/settling Foley missing |
+| `thermal_release` | .44 s (vent) | Missing thermal-control click |
+| `thermal_open` + `cooling_pulse` | .72 s (vent) | Existing bounded cooling hiss; shutter/pressure contact Foley missing |
+| `heat_react` | 1.50 s (vent) | Missing restrained glove withdrawal/shake Foley |
+| `thermal_close` | 2.05 s (vent) | Missing shutter closure; hiss already ends at 1.87 s |
+| `ready` | 2.25 s (vent) | Optional support-grip return Foley missing |
 
-The thermal switch remains .30 s before shutter opening, with no cartridge-door movement or resource transfer. No thermal hiss is layered over cartridge replacement.
-
-`advancePlasmaAction` emits each typed event once from the authoritative clock. Listener arguments are event, whole-action class duration multiplier, and late simulation time after the event within a multi-boundary frame. Rendering has no sound timers. Playback cursor/rate follow this same clock and stop on pause/cancellation/death/switch. Existing automated audio coverage checks class scaling, no doubling, skipped late cues and pause/cancellation.
+All contacts belong to the existing `advancePlasmaAction` sequence. The alignment marker splits advancement at its actual phase boundary; stalls can cross several events without repeating one. Listener arguments are event, whole-action class duration multiplier and simulation time after the contact inside a late frame. Audio polling follows the same authoritative clock, with cursor/rate correction, late-cue skip and pause/switch/death cleanup. Missing contacts remain silent for W07.

@@ -2533,7 +2533,7 @@ export default function App() {
       plasmaTarget.copy(hit?.point??plasmaAim.ray.at(PLASMA.range,plasmaTarget));camera.getWorldPosition(plasmaEye);
       if(thirdPerson&&thirdPersonActor?.weaponAssembly)thirdPersonActor.weaponAssembly.muzzle.getWorldPosition(plasmaOrigin);else vmManager.getMuzzlePosition(plasmaOrigin);
       if(!plasmaPool.spawn(plasmaOrigin,plasmaTarget,player.team,'player',w.damage??12,w.headshotMult??1.7,plasmaEye,getCombatContext()))return false;
-      player.shotsFired++;player.continuousShots++;vmManager.addRecoil(.016,.022);recoilKick+=.009;recoilPitch+=.006;triggerPlayerFlash();
+      player.shotsFired++;player.continuousShots++;recoilKick+=.009;recoilPitch+=.006;triggerPlayerFlash();
       playAutomaticWeaponFire('laser',player.continuousShots);return true;
     }
 

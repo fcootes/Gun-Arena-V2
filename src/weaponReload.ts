@@ -7,7 +7,7 @@ import { SHOTGUN, advanceShotgunCycle, beginShotgunCycle, type ShotgunEventListe
 import { SNIPER, advanceSniperAction, type SniperBoltListener } from './sniperMechanics';
 import { BATTLE_RIFLE, brCueTime, type BattleRifleListener } from './battleRifleMechanics';
 
-export type ReloadPhase = 'open' | 'eject' | 'pickup' | 'insert' | 'chamber' | 'close' | 'vent' | 'lift' | 'feed' | 'slap' | 'present' | 'unlock' | 'retract' | 'slideForward' | 'raiseCradle' | 'lowerCradle' | 'lock' | 'recover';
+export type ReloadPhase = 'open' | 'eject' | 'pickup' | 'insert' | 'chamber' | 'close' | 'vent' | 'lift' | 'feed' | 'slap' | 'present' | 'unlock' | 'retract' | 'slideForward' | 'raiseCradle' | 'lowerCradle' | 'lock' | 'recover' | 'react';
 export type ReloadPhaseListener = (phase: ReloadPhase, duration: number, empty: boolean) => void;
 export interface ReloadSequence {
   kind: 'magazine' | 'shell' | 'battery' | 'tube' | 'cylinder' | 'vent' | 'railgun' | 'plasmaSwap' | 'plasmaVent';
@@ -17,7 +17,7 @@ export interface ReloadSequence {
   empty: boolean;
   shellsRemaining: number;
   inserted: number;
-  plasmaHadCylinder?:boolean;plasmaStartHeat?:number;plasmaSpeed?:number;
+  plasmaHadCylinder?:boolean;plasmaStartHeat?:number;plasmaForcedVent?:boolean;plasmaSpeed?:number;plasmaAligned?:boolean;
   shellSeated?: boolean;
   brCuePlayed?: boolean;
   lmgCuePlayed?: boolean;

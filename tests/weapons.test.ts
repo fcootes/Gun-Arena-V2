@@ -111,7 +111,7 @@ for (const id of WEAPON_MODEL_IDS) {
     const buffer=flash.geometry.attributes.position.array;
     for(let shot=0;shot<150;shot++){fx.trigger();fx.update(.016);assert.equal(flash.geometry.attributes.position.array,buffer);}
     fx.update(1);assert.equal(flash.visible,false);assert.equal((flash.material as THREE.MeshBasicMaterial).opacity,0);
-    assert.equal(fx.root.children.filter(o=>o instanceof THREE.Mesh).length,1,'Compact emitter pulse has no cone or ring');
+    assert.equal(fx.root.children.filter(o=>o instanceof THREE.Mesh).length,2,'Bounded directional discharge and pressure ring use two cached meshes');assert.equal(fx.root.parent,assembly.muzzle,'Flash follows the actual moving emitter');
   }else{
   const points = fx.root.children.find(
     (o) => o instanceof THREE.Points,

@@ -174,8 +174,8 @@ export function WeaponStudio({ weaponId }: { weaponId: string }) {
       fireTime = Math.max(0, fireTime - dt);
       if(railPreviewCharging&&fireTime<=.04){railPreviewCharging=false;effects.trigger();}
       effects.update(dt);
-      if(currentWeaponId==='laser'&&!plasmaPausedRef.current){advancePlasmaCooling(plasmaState,dt);advancePlasmaAction(plasmaState,dt);advancePlasmaFire(plasmaState,dt,plasmaFiring>0,()=>{effects.trigger();return true;});plasmaFiring=Math.max(0,plasmaFiring-dt);}
-      if(currentWeaponId==='laser'&&plasmaState.reloadSequence?.kind==='plasmaSwap'&&!plasmaPausedRef.current&&plasmaTimelineRef.current)plasmaTimelineRef.current.value=String(2.2-(plasmaState.reloadT??0));
+      if(currentWeaponId==='laser'&&!plasmaPausedRef.current){advancePlasmaCooling(plasmaState,dt);if(plasmaState.overheated&&!plasmaState.reloading)beginPlasmaAction(plasmaState,1,'vent');advancePlasmaAction(plasmaState,dt);advancePlasmaFire(plasmaState,dt,plasmaFiring>0,()=>{effects.trigger();return true;});plasmaFiring=Math.max(0,plasmaFiring-dt);}
+      if(currentWeaponId==='laser'&&plasmaState.reloadSequence?.kind==='plasmaSwap'&&!plasmaPausedRef.current&&plasmaTimelineRef.current)plasmaTimelineRef.current.value=String(2.7-(plasmaState.reloadT??0));
       if(railReload)advanceRailgunReload(railReload,dt);
       weapon.userData.weaponAssembly.update(
         dt,
@@ -217,9 +217,9 @@ export function WeaponStudio({ weaponId }: { weaponId: string }) {
       </div>
       {weaponId==='laser' && <div className="absolute top-3 left-3 flex gap-2">{(['swap','vent'] as const).map(action=><button key={action} type="button" onClick={()=>plasmaPreviewRef.current(action)} className="px-3 py-2 text-[9px] tracking-widest text-slate-100 border border-white/25 bg-black/60">{action==='swap'?'TEST CARTRIDGE':'TEST THERMAL VENT'}</button>)}</div>}
       {weaponId==='laser' && <div className="absolute right-3 bottom-3 flex items-center gap-2 bg-black/70 p-2 text-[9px] text-cyan-100">
-        <button type="button" onClick={()=>plasmaPoseRef.current(.579)} className="border border-white/25 px-2 py-1">INSPECT CHAMBER</button>
+        <button type="button" onClick={()=>plasmaPoseRef.current(.639)} className="border border-white/25 px-2 py-1">INSPECT CHAMBER</button>
         <button type="button" onClick={()=>{plasmaPausedRef.current=!plasmaPausedRef.current;setPlasmaPaused(plasmaPausedRef.current);}} className="border border-white/25 px-2 py-1">{plasmaPaused?'RESUME':'PAUSE'}</button>
-        <input ref={plasmaTimelineRef} type="range" min="0" max="2.2" step="0.001" defaultValue="0" aria-label="Cartridge reload pose, seconds" onChange={event=>plasmaPoseRef.current(Number(event.currentTarget.value))} className="w-28 accent-cyan-300" />
+        <input ref={plasmaTimelineRef} type="range" min="0" max="2.7" step="0.001" defaultValue="0" aria-label="Cartridge reload pose, seconds" onChange={event=>plasmaPoseRef.current(Number(event.currentTarget.value))} className="w-28 accent-cyan-300" />
       </div>}
       {weaponId==='railgun' && <button type="button" onClick={()=>reloadPreviewRef.current()}
         className="absolute top-3 left-3 px-3 py-2 text-[9px] tracking-widest text-slate-100 border border-white/25 bg-black/60">

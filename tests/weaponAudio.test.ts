@@ -243,7 +243,7 @@ for(const multiplier of [1,.75,.9])for(const mode of ['swap','vent'] as const){
  const hiss=plays(AUDIO.laserVent),insert=plays(AUDIO.plasmaInsert),composite=plays(AUDIO.plasmaReloadEmpty);
  assert.ok(beginWeaponReload(w,ws,multiplier));assert.ok(playWeaponReloadAudio(w,ws));
  assert.equal(plays(AUDIO.laserVent),hiss);assert.equal(plays(AUDIO.plasmaReloadEmpty),composite);
- advanceWeaponReload(w,ws,(mode==='swap'?1.57:.49)*multiplier);updatePlasmaReloadAudio(ws);
+ advanceWeaponReload(w,ws,(mode==='swap'?2.00:.71)*multiplier);updatePlasmaReloadAudio(ws);
  assert.equal(plays(AUDIO.plasmaInsert),insert);assert.equal(plays(AUDIO.laserVent),hiss);
  const before=ws.reloadT;pauseWeaponAudio();resumeWeaponAudio();assert.equal(ws.reloadT,before);
  advanceWeaponReload(w,ws,.02*multiplier);updatePlasmaReloadAudio(ws);updatePlasmaReloadAudio(ws);
@@ -254,7 +254,7 @@ for(const multiplier of [1,.75,.9])for(const mode of ['swap','vent'] as const){
 for(const cancellation of ['switch','replace-sequence','skip-cue']){
  const ws:WeaponSlotState={ammo:20,reserve:180,heat:0};beginWeaponReload(weapon('laser'),ws);playWeaponReloadAudio(weapon('laser'),ws);const before=plays(AUDIO.plasmaInsert);
  if(cancellation==='switch')stopWeaponAudio();if(cancellation==='replace-sequence')ws.reloadSequence={...ws.reloadSequence!};
- advanceWeaponReload(weapon('laser'),ws,cancellation==='skip-cue'?2.0:1.59);updatePlasmaReloadAudio(ws);assert.equal(plays(AUDIO.plasmaInsert),before);stopWeaponAudio();
+ advanceWeaponReload(weapon('laser'),ws,cancellation==='skip-cue'?2.4:2.02);updatePlasmaReloadAudio(ws);assert.equal(plays(AUDIO.plasmaInsert),before);stopWeaponAudio();
 }
 console.log('PASS: eight discrete plasma reports, no beam/composite, class-scaled seat/hiss contacts, pause and cancellation');
 

@@ -1,3 +1,4 @@
+import {PLASMA_RECOIL} from './plasmaRecoil';
 import {createPlasmaAnimator} from './plasmaAnimation';
 import {createRailgunAnimator,railgunBreechReady} from './railgunMechanics';
 import { createLmgAnimator } from './lmgMechanics';
@@ -169,7 +170,7 @@ export const WEAPONS: WeaponDef[] = [
     isLaser: true,
     mag: 60,
     reserve: 180,
-    reloadTime: 2.2, // Separate 1.25 s thermal action
+    reloadTime: 2.7, // Separate 2.25 s thermal action
     range: 130,
     auto: true,
     adsFov: 58,
@@ -466,7 +467,7 @@ export function createViewmodelManager(): ViewmodelManager {
     horizontalSpeed: number = PISTOL_SPRINT.referenceSpeed,
   ) {
     if (disposed) return;
-    if (!alive) { root.visible = false; resetPistolMotion(); return; }
+    if (!alive) { models.get('laser')?.effects.reset();root.visible = false; resetPistolMotion(); return; }
     if (!playing) return; // Pausing freezes pose, joints, timers and recoil.
     dt = Number.isFinite(dt) ? THREE.MathUtils.clamp(dt, 0, .1) : 0;
     const w =
@@ -539,7 +540,7 @@ export function createViewmodelManager(): ViewmodelManager {
     targetRotation.setFromEuler(targetEuler);
     if (!poseInitialized) { viewPosition.copy(targetPosition); viewRotation.copy(targetRotation); poseInitialized = true; }
     else { viewPosition.lerp(targetPosition, alpha); viewRotation.slerp(targetRotation, alpha); }
-    if (previousId !== w.id) { equip = previousId ? 1 : 0; resetPistolMotion(); }
+    if (previousId !== w.id) { if(previousId==='laser')models.get('laser')?.effects.reset();equip = previousId ? 1 : 0; resetPistolMotion(); }
     previousId = w.id; equip *= Math.exp(-18 * dt);
     const pistolRunning = pistol && sprinting && moving && onGround && !aiming && !ws?.reloading && !melee && radioTimer === 0;
     pistolSprint.update(dt, pistolRunning, horizontalSpeed);
@@ -656,6 +657,7 @@ export function createViewmodelManager(): ViewmodelManager {
       assembly.root.position.z += mass * .035; assembly.root.rotation.x += mass * .065;
     }
     assembly.update(dt, charge, spin,w.id==='laser'?ws:undefined);
+    assembly.plasmaRecoil?.apply(assembly.root,aiming?PLASMA_RECOIL.adsScale:1);
     spin = 0;
     if (venting) assembly.root.rotation.z += Math.sin(time * 16) * 0.014;
     hands.update(w.id as WeaponModelId, dt, assembly, ws, aiming, gait);

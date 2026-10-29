@@ -1,0 +1,9 @@
+
+> gun-arena-v2@0.0.0 test:batch1
+> node --import tsx tests/batch1.test.ts
+
+PASS: resource ownership, cache lifetime, helper signatures and repeated offshore atmosphere transitions
+PASS: four-slot HUD, field kit counts, ammo placement and visor styling
+PASS: keyboard slots 1–4, wheel wrap in both directions and paused input guard
+PASS: depleted/full-health kit guards and uninterrupted finite-kit application
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

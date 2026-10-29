@@ -27,11 +27,11 @@ const stall:WeaponSlotState={ammo:60};assert.ok(advancePlasmaFire(stall,10,true,
 for(const [ammo,heat,overheated,kind] of [[20,10,false,'plasmaSwap'],[45,80,false,'plasmaVent'],[60,80,false,'plasmaVent'],[0,80,false,'plasmaSwap'],[0,100,true,'plasmaVent'],[60,0,false,undefined]] as const){
  const ws:WeaponSlotState={ammo,reserve:180,heat,overheated};assert.equal(beginPlasmaAction(ws),!!kind);if(kind){assert.equal(ws.reloadSequence!.kind,kind);assert.equal(beginPlasmaAction(ws),false);advancePlasmaAction(ws,100);assert.equal(ws.ammo,kind==='plasmaSwap'?60:ammo);assert.equal(ws.reserve,kind==='plasmaSwap'?120:180);}
 }
-for(const hz of [30,60,144])for(const speed of [.75,.9,1,1.2])for(const cut of [.1,.379,.40,.579,.581,.779,.9,1.349,1.579,1.581,1.87,2.19,2.20]){
- const ws:WeaponSlotState={ammo:20,reserve:180,heat:5};assert.ok(beginWeaponReload(gun,ws,speed));near(ws.totalReloadT!,2.2*speed);
+for(const hz of [30,60,144])for(const speed of [.75,.9,1,1.2])for(const cut of [.1,.419,.43,.639,.641,.859,.9,1.3496,1.539,1.541,1.878,2.009,2.011,2.359,2.699,2.70]){
+ const ws:WeaponSlotState={ammo:20,reserve:180,heat:5};assert.ok(beginWeaponReload(gun,ws,speed));near(ws.totalReloadT!,2.7*speed);
  let time=0;while(time+1/hz<cut*speed){advanceWeaponReload(gun,ws,1/hz);time+=1/hz;}advanceWeaponReload(gun,ws,cut*speed-time);
- if(cut<2.2)assert.equal(plasmaReady(ws),false,'No firing before full closure AND recovery');
- const expected=cut<.58?[20,180]:cut<1.58?[0,180]:[60,120];assert.deepEqual([ws.ammo,ws.reserve],expected);
+ if(cut<2.7)assert.equal(plasmaReady(ws),false,'No firing before full closure AND recovery');
+ const expected=cut<.64?[20,180]:cut<2.01?[0,180]:[60,120];assert.deepEqual([ws.ammo,ws.reserve],expected);
  cancelWeaponReload(ws);assert.deepEqual([ws.ammo,ws.reserve],expected,'Cancel preserves the actual transaction');
  assert.equal(ws.plasma!.upperDoor,0);assert.equal(ws.plasma!.lowerDoor,0);assert.equal(ws.plasma!.release,0);assert.equal(ws.plasma!.shutters,0);assert.equal(ws.plasma!.ejectionAge,-1);
  const saved=[ws.ammo,ws.reserve];advanceWeaponReload(gun,ws,100);assert.deepEqual([ws.ammo,ws.reserve],saved);
@@ -40,15 +40,15 @@ for(const hz of [30,60,144])for(const speed of [.75,.9,1,1.2])for(const cut of [
 }
 for(const hz of [30,60,144]){
  const held:WeaponSlotState={ammo:20,reserve:180};beginPlasmaAction(held);let restored=false;
- for(let n=0;n<Math.ceil(2.2*hz)+1;n++){
+ for(let n=0;n<Math.ceil(2.7*hz)+1;n++){
   advancePlasmaAction(held,1/hz);const shots=advancePlasmaFire(held,1/hz,true,()=>{assert.equal(held.reloading,false);return true;});
-  if(!held.reloading){assert.ok(shots>0,'No extra cooldown is appended to the completed 2.20 s action');restored=true;break;}
+  if(!held.reloading){assert.ok(shots>0,'No extra cooldown is appended to the completed 2.70 s action');restored=true;break;}
  }
  assert.ok(restored);
 }
 const legacyVent:WeaponSlotState={ammo:45,reserve:100,heat:80};beginPlasmaAction(legacyVent);advancePlasmaAction(legacyVent,100);assert.deepEqual([legacyVent.ammo,legacyVent.reserve],[45,100]);
 const contacts: {event:string;time:number}[]=[],contactState:WeaponSlotState={ammo:20,reserve:180};beginPlasmaAction(contactState);advancePlasmaAction(contactState,3,(event,_speed,late)=>contacts.push({event,time:3-late}));
-assert.deepEqual(contacts.map(c=>c.event),['chamber_release','doors_open','cylinder_eject','cylinder_align','cylinder_seat','doors_close','ready']);contacts.forEach((c,n)=>near(c.time,[.38,.58,.58,1.35,1.58,1.88,2.20][n]));
+assert.deepEqual(contacts.map(c=>c.event),['chamber_release','doors_open','cylinder_eject','cylinder_align','cylinder_partial','cylinder_seat','doors_close','ready']);contacts.forEach((c,n)=>near(c.time,[.42,.64,.64,1.3496,1.54,2.01,2.36,2.70][n]));
 advancePlasmaAction(contactState,100,()=>assert.fail('No repeated contact after completion'));assert.deepEqual([contactState.ammo,contactState.reserve],[60,120]);
 const supply:WeaponSlotState={reserve:180};addPlasmaSupply(supply,45);assert.equal(supply.reserve,240);
 const model=createWeaponAssembly('laser'),a=model.parts;
@@ -59,8 +59,8 @@ const installedBounds=new THREE.Box3().setFromObject(a.gasCylinder);
 assert.ok(installedBounds.min.x>-.047&&installedBounds.max.x<.035&&installedBounds.min.y>-.020&&installedBounds.max.y<.062&&installedBounds.min.z>-.178&&installedBounds.max.z<.046,'Cylinder fully contained in the receiver envelope');
 near(model.muzzle.position.distanceTo(new THREE.Vector3(0,.023,-.574)),0);
 const readyDoor=a.chamberUpperDoor.position.clone(),lowerDoor=a.chamberLowerDoor.position.clone();
-pose(.579);assert.equal(a.gasCylinder.visible,true);assert.equal(a.oldGasCylinder.visible,false);
-pose(.58);assert.equal(a.gasCylinder.visible,false);assert.equal(a.oldGasCylinder.visible,true);near(a.oldGasCylinder.position.distanceTo(new THREE.Vector3(...PLASMA.cylinder)),0);
+pose(.639);assert.equal(a.gasCylinder.visible,true);assert.equal(a.oldGasCylinder.visible,false);
+pose(.64);assert.equal(a.gasCylinder.visible,false);assert.equal(a.oldGasCylinder.visible,true);near(a.oldGasCylinder.position.distanceTo(new THREE.Vector3(...PLASMA.cylinder)),0);
 near(a.chamberUpperDoor.rotation.z,-PLASMA.doorAngle);near(a.chamberLowerDoor.rotation.z,PLASMA.doorAngle);
 const upperBounds=new THREE.Box3().setFromObject(a.chamberUpperDoor),lowerBounds=new THREE.Box3().setFromObject(a.chamberLowerDoor);
 assert.ok(upperBounds.min.y>installedBounds.max.y&&lowerBounds.max.y<installedBounds.min.y,'Both fully open doors clear the cylinder');
@@ -74,12 +74,12 @@ for(const z of [-.14,-.10,-.06,-.02,.015])for(const direction of [new THREE.Vect
 }
 const pathPoint=new THREE.Vector3(),pathRotation=new THREE.Euler();plasmaEjectedPose(0,pathPoint,pathRotation);near(pathPoint.distanceTo(new THREE.Vector3(...PLASMA.cylinder)),0);
 plasmaFreshPose('insert',0,pathPoint);near(pathPoint.distanceTo(new THREE.Vector3(...PLASMA.freshStart)),0);plasmaFreshPose('insert',1,pathPoint);near(pathPoint.distanceTo(new THREE.Vector3(...PLASMA.freshContact)),0);plasmaFreshPose('slap',1,pathPoint);near(pathPoint.distanceTo(new THREE.Vector3(...PLASMA.cylinder)),0);
-pose(.78);assert.ok(new THREE.Box3().setFromObject(a.oldGasCylinder).max.x<-.055,'Old cartridge completely clears receiver');
-pose(1.26);assert.equal(a.oldGasCylinder.visible,false,'Bounded cosmetic lifetime');assert.equal(a.gasCylinder.visible,false,'Empty chamber after ejection');
-pose(1.58-1e-6);const fresh=a.freshGasCylinder.getWorldPosition(new THREE.Vector3());pose(1.58+1e-6);near(a.gasCylinder.getWorldPosition(new THREE.Vector3()).distanceTo(fresh),0,1e-6);assert.equal(a.freshGasCylinder.visible,false);
-pose(1.58);assert.equal(a.chamberUpperDoor.rotation.z,-PLASMA.doorAngle,'Doors remain fully open until seating');
-pose(2.20);near(a.chamberUpperDoor.rotation.z,0);near(a.chamberLowerDoor.rotation.z,0);near(a.chamberUpperDoor.position.distanceTo(readyDoor),0);near(a.chamberLowerDoor.position.distanceTo(lowerDoor),0);
-for(const t of [.2,.4,.6,.9,1.1,1.25]){const ws=pose(t,true);if(t===.6||t===.9){const shutter=a.coolingShutter0;const end=new THREE.Vector3(0,0,-.035).applyMatrix4(shutter.matrixWorld);assert.ok(end.y>shutter.position.y+.02);}near(a.chamberUpperDoor.rotation.z,0);near(a.chamberLowerDoor.rotation.z,0);assert.equal(a.oldGasCylinder.visible,false);assert.equal(ws.ammo,20);assert.equal(ws.reserve,180);}
+pose(.86);assert.ok(new THREE.Box3().setFromObject(a.oldGasCylinder).max.x<-.055,'Old cartridge completely clears receiver');
+pose(1.31);assert.equal(a.oldGasCylinder.visible,false,'Bounded cosmetic lifetime');assert.equal(a.gasCylinder.visible,false,'Empty chamber after ejection');
+pose(2.01-1e-6);const fresh=a.freshGasCylinder.getWorldPosition(new THREE.Vector3());pose(2.01+1e-6);near(a.gasCylinder.getWorldPosition(new THREE.Vector3()).distanceTo(fresh),0,1e-6);assert.equal(a.freshGasCylinder.visible,false);
+pose(2.01);assert.equal(a.chamberUpperDoor.rotation.z,-PLASMA.doorAngle,'Doors remain fully open until seating');
+pose(2.70);near(a.chamberUpperDoor.rotation.z,0);near(a.chamberLowerDoor.rotation.z,0);near(a.chamberUpperDoor.position.distanceTo(readyDoor),0);near(a.chamberLowerDoor.position.distanceTo(lowerDoor),0);
+for(const t of [.2,.44,.72,1.2,1.7,2.0,2.25]){const ws=pose(t,true);if(t===.72||t===1.2){const shutter=a.coolingShutter0;const end=new THREE.Vector3(0,0,-.035).applyMatrix4(shutter.matrixWorld);assert.ok(end.y>shutter.position.y+.02);}near(a.chamberUpperDoor.rotation.z,0);near(a.chamberLowerDoor.rotation.z,0);assert.equal(a.oldGasCylinder.visible,false);assert.equal(ws.ammo,20);assert.equal(ws.reserve,180);}
 for(const ammo of [0,5,10,20,30,40,50,55,60])for(const heat of [0,30,60,85,100]){
  pose(0,false,ammo,heat);assert.equal(a.ammoIndicator.userData.ammo,ammo);assert.equal(a.heatIndicator.userData.heat,heat);
  near(Array.from({length:6},(_,i)=>plasmaAmmoSegment(ammo,i)).reduce((n,x)=>n+x,0),ammo/10);
@@ -111,8 +111,8 @@ function assertGloveClearsDoors(){
 let checkedThumb=false,checkedPalm=false;
 while(state.reloading){advanceWeaponReload(gun,state,1/120);vm.update(1/120,gun,state,false,false,true,false,false,false,0,true,true);root.updateMatrixWorld(true);assertGloveClearsDoors();near(root.getObjectByName('rightHand')!.position.distanceTo(right),0);
  const stage=state.reloadSequence?.phases[state.reloadSequence.index];
- if(stage?.phase==='present'&&state.reloadSequence!.elapsed>.31){const tip=root.getObjectByName('left_thumb_2')!;thumbPoint.copy(thumbTip).applyMatrix4(tip.matrixWorld);buttonPoint.set(-.0045,0,0).applyMatrix4(root.getObjectByName('chamberRelease')!.matrixWorld);assert.ok(thumbPoint.distanceTo(buttonPoint)<.001,'Production thumb contacts release before opening');checkedThumb=true;}
- if(stage?.phase==='slap'){const wrist=root.getObjectByName('leftHand')!,fresh=root.getObjectByName('freshGasCylinder')!;thumbPoint.set(.0225,0,0).applyMatrix4(fresh.matrixWorld);assert.ok(wrist.getWorldPosition(buttonPoint).distanceTo(fresh.getWorldPosition(thumbPoint))<.065,'Palm follows actual insertion cylinder');checkedPalm=true;}
+ if(stage?.phase==='present'&&state.reloadSequence!.elapsed>.34){const tip=root.getObjectByName('left_thumb_2')!;thumbPoint.copy(thumbTip).applyMatrix4(tip.matrixWorld);buttonPoint.set(-.0045,0,0).applyMatrix4(root.getObjectByName('chamberRelease')!.matrixWorld);assert.ok(thumbPoint.distanceTo(buttonPoint)<.001,'Production thumb contacts release before opening');checkedThumb=true;}
+ if(stage?.phase==='slap'){const wrist=root.getObjectByName('leftHand')!,fresh=root.getObjectByName('freshGasCylinder')!;thumbPoint.set(.0225,0,0).applyMatrix4(fresh.matrixWorld);assert.ok(wrist.getWorldPosition(buttonPoint).distanceTo(fresh.getWorldPosition(thumbPoint))<(state.reloadSequence!.elapsed/state.reloadSequence!.phases[state.reloadSequence!.index].duration<.72?.084:.065),'Palm follows actual insertion cylinder');checkedPalm=true;}
 }
 assert.ok(checkedThumb&&checkedPalm);vm.dispose();
 // Sweeps use real mesh hits plus active wall bounds. Bot damage is deferred.

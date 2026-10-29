@@ -1,3 +1,4 @@
+import {createPlasmaRecoil,type PlasmaRecoil} from './plasmaRecoil';
 import {buildPlasmaModel} from './plasmaModel';
 import {createPlasmaAnimator} from './plasmaAnimation';
 import {createRailgunAnimator} from './railgunMechanics';
@@ -24,6 +25,7 @@ export const WEAPON_MODEL_IDS = [
 export type WeaponModelId = (typeof WEAPON_MODEL_IDS)[number];
 export interface WeaponAssembly {
   root: THREE.Group;
+  plasmaRecoil?: PlasmaRecoil;
   muzzle: THREE.Object3D;
   backblast: THREE.Object3D;
   parts: Record<string, THREE.Object3D>;
@@ -1463,13 +1465,16 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
   else metalTexture.dispose();
   if (!used.has(polymer)) gripTexture.dispose();
   let time = 0;
+  const plasmaRecoil=id==='laser'?createPlasmaRecoil():undefined;
   const assembly:WeaponAssembly={
     root,
+    plasmaRecoil,
     muzzle,
     backblast,
     parts,
     update(dt, charge = 0, spin = 0, state) {
       time += dt;
+      if(plasmaRecoil){plasmaRecoil.advance(dt);body.position.set(0,0,0);body.quaternion.identity();if(!options.firstPerson)plasmaRecoil.apply(body,.65);}
       if (parts.rotor) parts.rotor.rotation.z += spin;
       if (parts.arc) {
         const m = (parts.arc as THREE.Mesh).material as THREE.ShaderMaterial;
@@ -1479,7 +1484,12 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       railgunUpdate?.(charge,time);
       if(state)railgunParts?.(state);
       if(plasmaParts)plasmaParts(state);
-      if(plasmaVisual){const q=state?.reloadSequence,stage=q?.phases[q.index],thermal=q?.kind==='plasmaVent',p=stage?q!.elapsed/stage.duration:0;const pulse=stage?.phase==='vent'?Math.sin(Math.PI*p):thermal&&stage?.phase==='open'?p:0;plasmaVisual.update(state?.heat??0,time,thermal,pulse,state?.ammo??60);}
+      if(plasmaVisual){
+        const q=state?.reloadSequence,stage=q?.phases[q.index],thermal=q?.kind==='plasmaVent',p=stage?q!.elapsed/stage.duration:0;
+        const elapsed=q?((state?.totalReloadT??0)-(state?.reloadT??0))/(q.plasmaSpeed??1):0;
+        const pulse=!thermal?0:stage?.phase==='open'?p*.20:stage?.phase==='vent'?.78+.52*Math.exp(-q!.elapsed/(q!.plasmaSpeed??1)*14):stage?.phase==='react'?.35*(1-p):0;
+        plasmaVisual.update(state?.heat??0,elapsed,thermal,pulse,state?.ammo??60);
+      }
     },
   };
   const plasmaParts=id==='laser'?createPlasmaAnimator(assembly,false):undefined;

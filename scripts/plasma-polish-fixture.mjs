@@ -34,12 +34,12 @@ export async function capturePolish(page,output){
  states.push({name:'marks-fading',...await page.evaluate(()=>window.__plasma.age(13))});await save('marks-fading');
  assert.equal((await page.evaluate(()=>window.__plasma.age(3.1))).marks,0);await save('marks-expired');
  if(process.env.PLASMA_MAP!=='bright'){
-  for(const [name,time]of [['inside',.579],['initial-pop',.6133333333],['cleared-doors',.68],['fresh-seat',1.58],['closed-ready',2.2]]){states.push({name,...await page.evaluate(time=>window.__plasma.pose('swap',time),time)});await save(name);}
+  for(const [name,time]of [['inside',.639],['initial-pop',.6733333333],['cleared-doors',.74],['fresh-seat',2.01],['closed-ready',2.7]]){states.push({name,...await page.evaluate(time=>window.__plasma.pose('swap',time),time)});await save(name);}
   if(process.env.PLASMA_RENDER_VIDEO==='1'){
    const frames=resolve(output,'frames');mkdirSync(frames,{recursive:true});
    await page.evaluate(()=>{window.__plasma.pose();window.__plasma.renderer.setPixelRatio(1);window.__plasma.renderer.setSize(640,360,false);window.__plasma.aim(0);});
    const video=[];let count=0;
-   for(const [mode,nframes]of [['ready',15],['fire',30],['swap',66],['settled',15],['vent',38],['end',15]]){
+   for(const [mode,nframes]of [['ready',15],['fire',30],['swap',81],['settled',15],['vent',68],['end',15]]){
     if(mode==='swap')assert.equal(await page.evaluate(()=>window.__plasma.beginSwap()),true);
     for(let n=0;n<nframes;n++){
      if(mode==='fire'&&n===15)await page.evaluate(()=>window.__plasma.aim(1));
@@ -54,7 +54,7 @@ export async function capturePolish(page,output){
    const vents=video.filter(s=>s.mode==='vent');assert.deepEqual([vents[0].ammo,vents[0].reserve],[vents.at(-1).ammo,vents.at(-1).reserve]);
    for(const sample of video){assert.ok(sample.marks<=80);if(['ready','fire','swap','settled'].includes(sample.mode))assert.deepEqual(sample.memory,video[0].memory);else{assert.equal(sample.memory.textures,video[0].memory.textures);assert.ok(sample.memory.geometries<=video[0].memory.geometries+1);}} // Existing preallocated thermal vapour geometry uploads on its first visible frame.
    execFileSync('ffmpeg',['-y','-loglevel','error','-framerate','30','-i',resolve(frames,'%03d.png'),'-c:v','libx264','-pix_fmt','yuv420p','-crf','18','-movflags','+faststart',resolve(output,'fire-impacts-reload-vent-normal-speed.mp4')]);
-   writeFileSync(resolve(output,'video-provenance.json'),JSON.stringify({fps:30,frames:count,description:'Actual production App renderer, Area 51 lighting, two added material diagnostic targets; world held still. Offline 30 FPS normal-speed simulation playback, NOT real-time/native GPU performance evidence. Full uninterrupted 2.20 s swap; independent 1.25 s vent. Silent export.',states:video},null,2));
+   writeFileSync(resolve(output,'video-provenance.json'),JSON.stringify({fps:30,frames:count,description:'Actual production App renderer, Area 51 lighting, two added material diagnostic targets; world held still. Offline 30 FPS normal-speed simulation playback, NOT real-time/native GPU performance evidence. Full uninterrupted 2.70 s swap; independent 2.25 s vent. Silent export.',states:video},null,2));
   }
  }
  writeFileSync(resolve(output,prefix+'-states.json'),JSON.stringify(states,null,2));

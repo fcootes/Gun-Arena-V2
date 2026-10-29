@@ -223,10 +223,10 @@ export function updatePlasmaReloadAudio(state: WeaponSlotState): void {
   const q=state.reloadSequence;if(!state.reloading||q!==pending.sequence){AUDIO.laserVent.stop();plasmaReloads.delete(state);return;}
   const speed=q.plasmaSpeed??1,t=((state.totalReloadT??0)-(state.reloadT??0))/speed;
   if(q.kind==='plasmaVent'){
-    if(!pending.hiss&&t>=.50){pending.hiss=true;if(t<1.15)AUDIO.laserVent.play(.45,true,1/speed,t-.50);}
-    if(t>=1.15)AUDIO.laserVent.stop();
-  }else if(q.kind==='plasmaSwap'&&!pending.inserted&&t>=1.58){
-    pending.inserted=true;const late=t-1.58,duration=AUDIO.plasmaInsert.duration||.16;
+    if(!pending.hiss&&t>=.72){pending.hiss=true;if(t<1.87)AUDIO.laserVent.play(q.plasmaForcedVent?.55:.45,true,1/speed,t-.72);}
+    if(t>=1.87)AUDIO.laserVent.stop();
+  }else if(q.kind==='plasmaSwap'&&!pending.inserted&&t>=2.01){
+    pending.inserted=true;const late=t-2.01,duration=AUDIO.plasmaInsert.duration||.16;
     if(late<duration)AUDIO.plasmaInsert.play(.85,true,1/speed,late);
   }
 }
