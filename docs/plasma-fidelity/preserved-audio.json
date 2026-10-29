@@ -1,0 +1,27 @@
+[
+  {
+    "path": "src/assets/audio/weapons/batch3/plasma_chamber_insert.wav",
+    "sha256": "46c137dedaa13263ecbd7c8d1f824d51a5f4ffb1efe49287c92ded613966be25",
+    "unchanged": true
+  },
+  {
+    "path": "src/assets/audio/weapons/batch3/plasma_cooling_hiss.wav",
+    "sha256": "570a0c1c9fdcbc98085b4a404142614bdb76d33f05a353bd0b648dc0290ef4b2",
+    "unchanged": true
+  },
+  {
+    "path": "src/assets/audio/weapons/batch3/plasma_fire_auto_loop.wav",
+    "sha256": "21870c24003bd06cbc1a59082665c6a866b57b2258e8db44138ae3583179bc15",
+    "unchanged": true
+  },
+  {
+    "path": "src/assets/audio/weapons/batch3/plasma_fire_single.wav",
+    "sha256": "8bc9031653fff9d6c1a646465fb2278ba63f25e8d555e36b1dc4f1c52fb06415",
+    "unchanged": true
+  },
+  {
+    "path": "src/assets/audio/weapons/batch3/plasma_reload_empty.wav",
+    "sha256": "ce4487a364492838caa20e5597dbaee5c3549994fff677074ba40cf3aaaadfc6",
+    "unchanged": true
+  }
+]

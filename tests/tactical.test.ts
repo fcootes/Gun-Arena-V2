@@ -76,6 +76,13 @@ const support=bot(4,'support'),vip=bot(5,'assault','blue',4,0);vip.isVIP=true;co
 const recon=bot(6,'recon');const over=harness([recon,foe]);updateClassCombatBot(recon,.05,over.ctx,tuning);assert.equal(recon.classAI!.mode,'overwatch');assert.equal(recon.classAI!.destination!.y,8);
 const assault=bot(7,'assault'),enemy=bot(8,'assault','red',0,20);const push=harness([assault,enemy]);updateClassCombatBot(assault,.05,push.ctx,tuning);assert.equal(assault.classAI!.mode,'push');assert.equal(assault.classAI!.grenades,1);assert.ok(assault.vel.z>0);clearCombatSystems(push.ctx.scene,push.ctx.world);
 const engineer=bot(9,'engineer');const defense=harness([engineer,enemy]);updateClassCombatBot(engineer,.05,defense.ctx,tuning);assert.equal(engineer.classAI!.mode,'defend');assert.ok(engineer.tripodBuildCooldown!>0);const before=defense.hits;for(let i=0;i<20;i++)updateTripods(.1,defense.ctx);assert.ok(defense.hits>before,'Unmanned engineer turret automatically engages');clearCombatSystems(defense.ctx.scene,defense.ctx.world);assert.equal(defense.ctx.scene.children.length,0);disposeBotTextureCache();
+for(const hz of [30,60,144]){
+ const plasmaBot=bot(100+hz,'assault','red',0,15);plasmaBot.weaponType='laser';plasmaBot.weaponTypeIndex=WEAPONS.findIndex(w=>w.id==='laser');plasmaBot.classAI!.grenades=0;
+ const arena=harness([plasmaBot]);let emitted=0;arena.ctx.firePlasmaBot=()=>{emitted++;return true;};
+ for(let n=0;n<hz;n++)updateClassCombatBot(plasmaBot,1/hz,arena.ctx,{accuracy:1,damageMultiplier:1,fireRateMultiplier:.5});
+ assert.equal(emitted,8);assert.equal(plasmaBot.classAI!.weaponState!.ammo,52);assert.equal(arena.hits,0,'Plasma bot dispatch never applies instant hitscan damage');
+}
+console.log('PASS: plasma AI shares the eight-Hz cadence, consumes charges and delegates damage to travelling projectiles');
 console.log('PASS: revive priority, healing, suppression/ammo packs, reachable high ground, assault grenades and automatic engineer turret cleanup');
 const markup=renderToStaticMarkup(React.createElement(PostDeathMenu,{title:'MISSION FAILED',subtitle:'Operator eliminated',kills:4,onPlayAgain(){},onLobby(){}}));assert.match(markup,/role="dialog"/);assert.match(markup,/\[ PLAY AGAIN \]/);assert.match(markup,/\[ RETURN TO LOBBY \]/);assert.equal((markup.match(/<button/g)??[]).length,2);
 console.log('PASS: accessible centered post-death dialog exposes exactly two match actions');

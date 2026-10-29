@@ -1,3 +1,5 @@
+import {PLASMA_RECOIL} from './plasmaRecoil';
+import {createPlasmaAnimator} from './plasmaAnimation';
 import {createRailgunAnimator,railgunBreechReady} from './railgunMechanics';
 import { createLmgAnimator } from './lmgMechanics';
 import { createSmgAnimator } from './smgMechanics';
@@ -157,18 +159,18 @@ export const WEAPONS: WeaponDef[] = [
   },
   {
     id: 'laser',
-    name: 'PLASMA RIFLE',
+    name: 'PLASMA REPEATER',
     type: 'weapon',
-    damage: 5,
+    damage: 12,
     headshotMult: 1.7,
     pellets: 1,
     spread: 0.008,
     adsSpread: 0.003,
-    fireRate: 0.055, // Continuous high-frequency plasma beam
+    fireRate: 0.125, // Eight discrete colliding bolts per second
     isLaser: true,
-    mag: 100,
-    reserve: 100,
-    reloadTime: 2.0, // Venting duration
+    mag: 60,
+    reserve: 180,
+    reloadTime: 2.7, // Separate 2.25 s thermal action
     range: 130,
     auto: true,
     adsFov: 58,
@@ -319,6 +321,7 @@ export function createViewmodelManager(): ViewmodelManager {
       pistolAnimation?: ReturnType<typeof createPistolAnimator>;
       smgAnimation?: ReturnType<typeof createSmgAnimator>;
       lmgAnimation?: ReturnType<typeof createLmgAnimator>;
+      plasmaAnimation?:ReturnType<typeof createPlasmaAnimator>;
       railgunAnimation?:ReturnType<typeof createRailgunAnimator>;
       pose: Map<
         THREE.Object3D,
@@ -444,7 +447,7 @@ export function createViewmodelManager(): ViewmodelManager {
         quaternion: part.quaternion.clone(),
       }),
     );
-    model = { assembly, effects, pose, railgunAnimation:id==='railgun'?createRailgunAnimator(assembly):undefined, lmgAnimation:id === 'lmg' ? createLmgAnimator(assembly) : undefined, smgAnimation:id === 'smg' ? createSmgAnimator(assembly) : undefined, brReload:id === 'br' ? createBattleRifleAnimator(assembly) : undefined, pistolAnimation:id === 'pistol' ? createPistolAnimator(assembly) : undefined };
+    model = { assembly, effects, pose, plasmaAnimation:id==='laser'?createPlasmaAnimator(assembly):undefined, railgunAnimation:id==='railgun'?createRailgunAnimator(assembly):undefined, lmgAnimation:id === 'lmg' ? createLmgAnimator(assembly) : undefined, smgAnimation:id === 'smg' ? createSmgAnimator(assembly) : undefined, brReload:id === 'br' ? createBattleRifleAnimator(assembly) : undefined, pistolAnimation:id === 'pistol' ? createPistolAnimator(assembly) : undefined };
     models.set(id, model);
     return model;
   }
@@ -464,7 +467,7 @@ export function createViewmodelManager(): ViewmodelManager {
     horizontalSpeed: number = PISTOL_SPRINT.referenceSpeed,
   ) {
     if (disposed) return;
-    if (!alive) { root.visible = false; resetPistolMotion(); return; }
+    if (!alive) { models.get('laser')?.effects.reset();root.visible = false; resetPistolMotion(); return; }
     if (!playing) return; // Pausing freezes pose, joints, timers and recoil.
     dt = Number.isFinite(dt) ? THREE.MathUtils.clamp(dt, 0, .1) : 0;
     const w =
@@ -537,7 +540,7 @@ export function createViewmodelManager(): ViewmodelManager {
     targetRotation.setFromEuler(targetEuler);
     if (!poseInitialized) { viewPosition.copy(targetPosition); viewRotation.copy(targetRotation); poseInitialized = true; }
     else { viewPosition.lerp(targetPosition, alpha); viewRotation.slerp(targetRotation, alpha); }
-    if (previousId !== w.id) { equip = previousId ? 1 : 0; resetPistolMotion(); }
+    if (previousId !== w.id) { if(previousId==='laser')models.get('laser')?.effects.reset();equip = previousId ? 1 : 0; resetPistolMotion(); }
     previousId = w.id; equip *= Math.exp(-18 * dt);
     const pistolRunning = pistol && sprinting && moving && onGround && !aiming && !ws?.reloading && !melee && radioTimer === 0;
     pistolSprint.update(dt, pistolRunning, horizontalSpeed);
@@ -568,7 +571,8 @@ export function createViewmodelManager(): ViewmodelManager {
       assembly.root.rotation.x += recoilRotation * blend;
     }
     const sequence = ws?.reloadSequence;
-    if(selected.railgunAnimation)selected.railgunAnimation(ws);
+    if(selected.plasmaAnimation)selected.plasmaAnimation(ws);
+    else if(selected.railgunAnimation)selected.railgunAnimation(ws);
     else if (selected.lmgAnimation) selected.lmgAnimation(ws);
     else if (selected.smgAnimation) selected.smgAnimation(ws, Math.sin((boltTimer / .07) * Math.PI));
     else if (selected.pistolAnimation) selected.pistolAnimation(ws, Math.sin((slideTimer / .12) * Math.PI));
@@ -652,7 +656,8 @@ export function createViewmodelManager(): ViewmodelManager {
       const mass = t < .035 ? sniperEase(t / .035) : 1 - sniperEase((t - .035) / .305);
       assembly.root.position.z += mass * .035; assembly.root.rotation.x += mass * .065;
     }
-    assembly.update(dt, charge, spin);
+    assembly.update(dt, charge, spin,w.id==='laser'?ws:undefined);
+    assembly.plasmaRecoil?.apply(assembly.root,aiming?PLASMA_RECOIL.adsScale:1);
     spin = 0;
     if (venting) assembly.root.rotation.z += Math.sin(time * 16) * 0.014;
     hands.update(w.id as WeaponModelId, dt, assembly, ws, aiming, gait);

@@ -1,0 +1,251 @@
+{
+  "base": "8aaf082121df8f9da95bdfb90c8b0bcdfcc26153",
+  "sources": [
+    {
+      "path": "src/plasmaProjectiles.ts",
+      "baseBlob": "dddb27d67073c29ad18b895ff562c0b5bd7cb886",
+      "currentBlob": "dddb27d67073c29ad18b895ff562c0b5bd7cb886",
+      "unchanged": true
+    },
+    {
+      "path": "src/gameLoop.ts",
+      "baseBlob": "7098a6db665d860d019bdce1064be636248d372c",
+      "currentBlob": "7098a6db665d860d019bdce1064be636248d372c",
+      "unchanged": true
+    },
+    {
+      "path": "src/world.ts",
+      "baseBlob": "5de9bfb8bab0570bc895681d7dc55c2ddc71d35a",
+      "currentBlob": "5de9bfb8bab0570bc895681d7dc55c2ddc71d35a",
+      "unchanged": true
+    },
+    {
+      "path": "src/area51World.ts",
+      "baseBlob": "7bfeef17ce9df2eb6524e2b5a17e2b73082de2c6",
+      "currentBlob": "7bfeef17ce9df2eb6524e2b5a17e2b73082de2c6",
+      "unchanged": true
+    },
+    {
+      "path": "src/botBuilder.ts",
+      "baseBlob": "d1b61c17d4ef5221266807635da9c8d24dac96f5",
+      "currentBlob": "d1b61c17d4ef5221266807635da9c8d24dac96f5",
+      "unchanged": true
+    },
+    {
+      "path": "src/viewmodelGrips.ts",
+      "baseBlob": "7fbac67df9b3df8723a73eec57307d77e758bf4d",
+      "currentBlob": "7fbac67df9b3df8723a73eec57307d77e758bf4d",
+      "unchanged": true
+    },
+    {
+      "path": "src/viewmodelHands.ts",
+      "baseBlob": "613647bfdcbebea8eb0e5a1c902dec4df557daf0",
+      "currentBlob": "613647bfdcbebea8eb0e5a1c902dec4df557daf0",
+      "unchanged": true
+    },
+    {
+      "path": "src/types.ts",
+      "baseBlob": "31de7c9df49b026acf64a171cb865517b965c3a4",
+      "currentBlob": "31de7c9df49b026acf64a171cb865517b965c3a4",
+      "unchanged": true
+    }
+  ],
+  "audioWavs": [
+    {
+      "path": "src/assets/audio/weapons/batch2/lmg_fire_single.wav",
+      "sha256": "4a4387019937b836e29f172e6f5470fc48586fcf45306424a9b8eb05586466f8"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch2/smg_reload_empty.wav",
+      "sha256": "c77b57c1e7849ec19c18d93d97cc3b37a907341ca4a597485b54470dd8b95bc0"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch2/br_fire_single.wav",
+      "sha256": "d322e4d46cf1d52e0c8a9c9cb201bf2586f38608de53e4261dbb5a428dcd65b5"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch2/smg_reload_tactical.wav",
+      "sha256": "52d967b303ac2fa20285e4dcc0febe25866545bb31641b8de61ecf1eb680fd14"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch2/minigun_overheat.wav",
+      "sha256": "334af6bcf9b90d5457f82765f601b7868e3f8835cd46aad0c93105556c3292b2"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch2/minigun_fire_auto_loop.wav",
+      "sha256": "3f0491aafdebcd94e353643e41f94307b121f11cd5543e24c19058ddf59c787e"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch2/br_reload_tactical.wav",
+      "sha256": "05afc812a9dcdf036525412f7c2c638e6da0d9c65663a1cf57659733e2e7b878"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch2/minigun_spin_down.wav",
+      "sha256": "5e66e987308b36a2b49713fd7d3838fbe877fe351c94d3dabcc9fcf4c16c9ff5"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch2/minigun_warmup.wav",
+      "sha256": "640f562631451692954400d45648acf2672bf8848163367c35b8243397ad1ed4"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch2/br_fire_burst_3.wav",
+      "sha256": "d3fc1001a361eaa2aeac0c4eabaefab711e720b98f2e7c1ac4df5fa94b5af663"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch2/br_reload_empty.wav",
+      "sha256": "3e6ae1045dd8d50273f599aaed3a42f7996679aca13e39882d40603c434211a0"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch2/lmg_reload_tactical.wav",
+      "sha256": "166c653f1a53a7a46db371b35144dfe171e483288c7dc37b613aa3fff79eb00b"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch2/lmg_reload_empty.wav",
+      "sha256": "d88e28b26adcd1b7f28c53b9d20060cd51a417b0356ec539a392c202ad69fde7"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch2/lmg_fire_auto_loop.wav",
+      "sha256": "e70aa9995e857ad4648dc703f0120c78dc8cb1d5af09a509aa781f6499d5e513"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch2/minigun_cooling_hiss.wav",
+      "sha256": "ec08be9a63fa8594268ec86d5f9342d784fc460984d9da7dd232dd27c74ed76a"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch1/shotgun_fire_single.wav",
+      "sha256": "1a7fec9a618a72fa9815ba6f7b621dcac06dc64407be5a40293d59f92c8d7b74"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch1/sniper_fire_with_bolt.wav",
+      "sha256": "d9ebd8514fb33eb3c77398c51bb9168565dc874a4926e5a141f7d387bd7312ec"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch1/ar_fire_single.wav",
+      "sha256": "13a2a2ede69d4734b2c209f6d05d2c1e563d3922ae1c034b97e71f78f911140a"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch1/sniper_bolt_cycle.wav",
+      "sha256": "363c79fc8b0233429b11c04c8bb6d1826a93179bae34107f00df6d3c45430a1a"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch1/pistol_fire_single.wav",
+      "sha256": "9c23a15bffd41ca8728cbd2397f2a13381664185e175e8818a8c70b6c3a4a01c"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch1/shotgun_pump.wav",
+      "sha256": "9b8187a7c1f54e8a2e117c09f89593b1c61835640b2574ef2a854f440103bada"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch1/ar_reload_tactical.wav",
+      "sha256": "ca5caed0ee03940fa3b4fa97571e829daaf27d716609844286104b8f2a62ed20"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch1/pistol_reload_empty.wav",
+      "sha256": "7b96a889b1897e327992e124055de33befb6309796cd7fb9fb606311a5425807"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch1/sniper_fire_single.wav",
+      "sha256": "fa394716f3564e19adaff208031e0aa6dc944e76fd6169e2b1f0af73be7a697a"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch1/ar_fire_auto_loop.wav",
+      "sha256": "ac5f89e9140d0642376e5195c072ba584b309510b923ecb3ff718695b2a6a6c1"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch1/shotgun_reload_shell_insert_empty.wav",
+      "sha256": "69b3a645caeec7bd656fa6049785fcf7320ef67e0fc90c93094e8f8677327c10"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch1/sniper_reload_empty.wav",
+      "sha256": "558e587d0590e349c8d38cf0191845fb1c9454c6969a2fe5a735319b811607d3"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch1/sniper_reload_tactical.wav",
+      "sha256": "cd03a4f3e582778ea7ae2d797587d0c73dbd6197073161d50460313fd4878593"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch1/shotgun_reload_shell_insert.wav",
+      "sha256": "24fe7a49edad2b1b3c2dbc500bbc4a4a5ed6f06ac1927ef099c173f20250210e"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch1/ar_reload_empty.wav",
+      "sha256": "20eba979f967b583c5693d1279b1917bfa9525ae2a5c25010aa24d6fb3e2b136"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch1/pistol_reload_tactical.wav",
+      "sha256": "430c8263a5422ca4e5e15fb2c555a4af65fdacc0c6bfc791e604926df7de35b0"
+    },
+    {
+      "path": "src/assets/audio/weapons/lmg-fidelity/lmg_fire_lead.wav",
+      "sha256": "a71c671b1cdf73b2fdb868789bc094b570d666445a3e76f27bb6457761b5bae0"
+    },
+    {
+      "path": "src/assets/audio/weapons/lmg-fidelity/lmg_box_release.wav",
+      "sha256": "b2ece5db07ae4d841670c8ed9a4d7d66b4cbf1a9ac50b24cbc0f70c7b6e4ee29"
+    },
+    {
+      "path": "src/assets/audio/weapons/lmg-fidelity/lmg_fire_sustain.wav",
+      "sha256": "dbf5dc535f6749c589e8c4c9a63c4c37d420775ecd6f2a706a7ea8e6b1766bd2"
+    },
+    {
+      "path": "src/assets/audio/weapons/lmg-fidelity/lmg_feed_cover_close.wav",
+      "sha256": "1f7fa50e73b37a7a15319cfa10d221a3c5738c7bc66454a6c71400b8f3b1b616"
+    },
+    {
+      "path": "src/assets/audio/weapons/lmg-fidelity/lmg_charge.wav",
+      "sha256": "3ff6cc690827dfd4c3c50e18872dd8f997c15249f2fa360c03e80845352f78fe"
+    },
+    {
+      "path": "src/assets/audio/weapons/lmg-fidelity/lmg_box_seat.wav",
+      "sha256": "d3a29622cf07d3dc3a892e973dfa596ca5c7d044f1a7410f35bdd8d1dc7ea21e"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch3/smg_fire_single.wav",
+      "sha256": "b8e81c7dd2137c2cc19cf8b3ca239f1139bd2c2f3285b79f7e25192339009a38"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch3/smg_fire_auto_loop.wav",
+      "sha256": "18b5506773a7912aa571e325e120656e7bce8b8da3353e5e845aff38dc2c0729"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch3/plasma_reload_empty.wav",
+      "sha256": "ce4487a364492838caa20e5597dbaee5c3549994fff677074ba40cf3aaaadfc6"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch3/plasma_fire_auto_loop.wav",
+      "sha256": "21870c24003bd06cbc1a59082665c6a866b57b2258e8db44138ae3583179bc15"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch3/railgun_fire_single.wav",
+      "sha256": "0ad7f12b3e72056240e6bd42a4d5e5f7c6cd3c8c5ae2e0bf690d635cd42ac7c8"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch3/plasma_chamber_insert.wav",
+      "sha256": "46c137dedaa13263ecbd7c8d1f824d51a5f4ffb1efe49287c92ded613966be25"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch3/plasma_cooling_hiss.wav",
+      "sha256": "570a0c1c9fdcbc98085b4a404142614bdb76d33f05a353bd0b648dc0290ef4b2"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch3/plasma_fire_single.wav",
+      "sha256": "8bc9031653fff9d6c1a646465fb2278ba63f25e8d555e36b1dc4f1c52fb06415"
+    },
+    {
+      "path": "src/assets/audio/weapons/batch3/railgun_charge.wav",
+      "sha256": "ef796bfcbd5d1d7ef0268e9732052e4ac0d95c5b948f436bed1f46690c54fa93"
+    },
+    {
+      "path": "src/assets/audio/weapons/br-fidelity/br_mag_remove.wav",
+      "sha256": "ca5bc99172893d4efed0f99c7752eae698e768bdb43c0429bfbb9152d0284db3"
+    },
+    {
+      "path": "src/assets/audio/weapons/br-fidelity/br_charge.wav",
+      "sha256": "c19b2aab08abb0aca39a2dc9952f1140fc030196217fd91955a0201fab1af6a3"
+    },
+    {
+      "path": "src/assets/audio/weapons/br-fidelity/br_mag_insert.wav",
+      "sha256": "83c3ebf73b994e3c455f729fcc1bc583d4d622fade3f672cdf94d7f8b996a819"
+    }
+  ]
+}

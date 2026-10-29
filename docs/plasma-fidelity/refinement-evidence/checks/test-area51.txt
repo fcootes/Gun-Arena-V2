@@ -1,0 +1,6 @@
+
+> gun-arena-v2@0.0.0 test:area51
+> node --import tsx tests/area51.test.ts
+
+PASS: Area 51 vehicles, all-mode spawns, connected routes, lift gates, resource disposal, both faction campaigns, complete boss gate and helicopter departure
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

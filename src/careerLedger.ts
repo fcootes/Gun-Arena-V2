@@ -257,12 +257,12 @@ export const UNLOCK_CATALOG: Record<string, UnlockRequirement> = {
   },
   laser: {
     id: 'laser',
-    name: 'PLASMA BEAM RIFLE',
+    name: 'PLASMA REPEATER',
     category: 'weapon',
     reqType: 'rank',
     minRank: 9,
     fundsPrice: 3000,
-    description: 'Continuous energy ion emitter weapon.'
+    description: 'PR-100 automatic plasma bolts with sealed 60-charge gas cartridges.'
   },
   minigun: {
     id: 'minigun',

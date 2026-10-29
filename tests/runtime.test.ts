@@ -101,8 +101,10 @@ const ownedGeometries = [grenade, spark, limb, projectile, flash, prepared, acti
 let disposed = 0, sharedDisposed = 0;
 ownedGeometries.forEach(g => g.addEventListener('dispose', () => disposed++));
 smokeGeometry.addEventListener('dispose', () => sharedDisposed++);
-const pools = { runtimeTimeouts: new Set(), clearTimeout() {}, scene, world: { groundPickups: [], clearDeployableCover() {} }, audioManager: sound, clearCombatSystems, disposeBotVisuals, THREE, vmManager: { resetEffects() {} }, thirdPersonActor: null, carriedWeapon: null, carriedId: '', extractionDirector: null, extractionPhase: false, extractionState: 'none', extractionTimer: 0, extractionTargetObj: null, extractionTankBossSpawned: false, bots: [], preparedMissionVisuals: [{ rootGroup: prepared }], removeBot() {}, activeGrenades: [{ group: grenade }], explosionEffects: [{ mesh: flash }], sparkPool: [{ mesh: spark }], smokePool: [{ mesh: smoke }], limbPool: [{ mesh: limb }], railgunProjectiles: [{ group: projectile }], containerRef: { current: null } };
+let plasmaClears=0;
+const pools = { plasmaPool:{clear(){plasmaClears++;}},runtimeTimeouts: new Set(), clearTimeout() {}, scene, world: { groundPickups: [], clearDeployableCover() {} }, audioManager: sound, clearCombatSystems, disposeBotVisuals, THREE, vmManager: { resetEffects() {} }, thirdPersonActor: null, carriedWeapon: null, carriedId: '', extractionDirector: null, extractionPhase: false, extractionState: 'none', extractionTimer: 0, extractionTargetObj: null, extractionTankBossSpawned: false, bots: [], preparedMissionVisuals: [{ rootGroup: prepared }], removeBot() {}, activeGrenades: [{ group: grenade }], explosionEffects: [{ mesh: flash }], sparkPool: [{ mesh: spark }], smokePool: [{ mesh: smoke }], limbPool: [{ mesh: limb }], railgunProjectiles: [{ group: projectile }], containerRef: { current: null } };
 const clear = handler('clearMatchEntities', pools); clear(); clear();
+assert.equal(plasmaClears,2,'Replay recycles plasma projectiles on each reset');
 assert.equal(disposed, ownedGeometries.length, 'Every transient owned geometry disposed exactly once');
 assert.equal(sharedDisposed, 0, 'Session smoke geometry survives replay');
 assert.equal(pools.preparedMissionVisuals.length, 0, 'Replay releases and removes preparation-only actors');

@@ -268,9 +268,9 @@ export const HelmetHUD: React.FC<HelmetHUDProps> = ({
 
   if (currentWeapon.id === 'laser') {
     const heat = Math.round(weaponSlotState.heat ?? 0);
-    ammoDisplay = `${100 - heat}%`;
-    reserveDisplay = `HEAT ${heat}%`;
-    fireModeLabel = 'CONTINUOUS BEAM';
+    ammoDisplay = `${weaponSlotState.ammo??0}`;
+    reserveDisplay = `${Math.floor((weaponSlotState.reserve??0)/60)} SPARES · HEAT ${heat}%`;
+    fireModeLabel = '8 BOLTS/SEC';
   } else if (currentWeapon.id === 'minigun') {
     const heat = Math.round(weaponSlotState.heat ?? 0);
     ammoDisplay = `${heat}%`;

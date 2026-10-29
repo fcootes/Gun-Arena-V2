@@ -1,0 +1,6 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> gun-arena-v2@0.0.0 test:plasma:tactile
+> node --import tsx tests/plasmaTactile.test.ts
+
+PASS: authoritative 2.70/2.25 actions, 75% resistance then final slap, forced/manual hand reaction, exact per-shot spring at 30/60/144 Hz, pause/switch/reset, stable muzzle/spring resources and unchanged camera aiming baseline

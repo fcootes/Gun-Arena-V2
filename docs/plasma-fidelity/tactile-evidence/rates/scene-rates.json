@@ -1,0 +1,38 @@
+[
+  {
+    "hz": 30,
+    "ammo": 52,
+    "reserve": 180,
+    "heat": 20,
+    "reloading": false,
+    "shots": 8,
+    "bolts": 2,
+    "aiming": false,
+    "thirdPerson": false,
+    "state": "playing"
+  },
+  {
+    "hz": 60,
+    "ammo": 52,
+    "reserve": 180,
+    "heat": 20,
+    "reloading": false,
+    "shots": 8,
+    "bolts": 2,
+    "aiming": false,
+    "thirdPerson": false,
+    "state": "playing"
+  },
+  {
+    "hz": 144,
+    "ammo": 52,
+    "reserve": 180,
+    "heat": 20,
+    "reloading": false,
+    "shots": 8,
+    "bolts": 2,
+    "aiming": false,
+    "thirdPerson": false,
+    "state": "playing"
+  }
+]

@@ -1,0 +1,28 @@
+[
+  {
+    "name": "marks-new",
+    "marks": 6,
+    "ammo": 52,
+    "reserve": 180,
+    "heat": 20,
+    "reloading": false,
+    "shots": 8,
+    "bolts": 0,
+    "aiming": false,
+    "thirdPerson": false,
+    "state": "playing"
+  },
+  {
+    "name": "marks-fading",
+    "marks": 6,
+    "ammo": 52,
+    "reserve": 180,
+    "heat": 20,
+    "reloading": false,
+    "shots": 8,
+    "bolts": 0,
+    "aiming": false,
+    "thirdPerson": false,
+    "state": "playing"
+  }
+]

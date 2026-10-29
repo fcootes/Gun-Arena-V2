@@ -1,0 +1,8 @@
+
+> gun-arena-v2@0.0.0 test:lmg
+> node --import tsx tests/lmg.test.ts && node --import tsx tests/lmgFireAudio.test.ts
+
+PASS: LMG phases/hinge, palm-driven slap, box/feed contacts, empty-only charge, ammo gates/conservation, interruptions, resets, resource reuse and 30/60/144 Hz
+PASS: real M60 buffers, tap/2/3/sustained reports, native-rate variation and shared release, no release/last-round extra shot, 30/60/144 Hz, bounded voices, pause/switch/death/reset/download-race cleanup
+PASS: 100-round frame-gated runs at 30/60/144 Hz, exact 60→40 ammo audio mapping, all eight wrap transitions, one context resume, natural final round and rapid retrigger
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

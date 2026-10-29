@@ -39,7 +39,7 @@ export function prepareWeaponAudio(ids: readonly string[]): void {
   for (const key of Object.keys(weaponUrls)) {
     // The sustain file is decoded by LmgFireAudio; its legacy HTML loop
     // voice is never played. Avoid fetching/preloading a second unused copy.
-    if (key === 'lmgAuto') continue;
+    if (key === 'lmgAuto'||key==='laserBeam'||key==='plasmaReloadEmpty') continue;
     const family = key.startsWith('laser') ? 'plasma' : key.match(/^[a-z]+(?=[A-Z])/)?.[0];
     if (family && wanted.has(family)) AUDIO[key as keyof typeof weaponUrls].prepare();
   }
@@ -50,7 +50,7 @@ export function releaseWeaponAudio(): void {
 }
 
 let smgReloads = new WeakMap<WeaponSlotState, { sequence: NonNullable<WeaponSlotState['reloadSequence']>; started: boolean; speed: number; chamberOnly: boolean }>();
-let plasmaReloads = new WeakMap<WeaponSlotState, { sequence: NonNullable<WeaponSlotState['reloadSequence']>; inserted: boolean }>();
+let plasmaReloads = new WeakMap<WeaponSlotState, { sequence: NonNullable<WeaponSlotState['reloadSequence']>; inserted: boolean;hiss?:boolean }>();
 let sniperReloads = new WeakMap<WeaponSlotState, { sequence: NonNullable<WeaponSlotState['reloadSequence']>; started: boolean }>();
 
 function playFitted(track: SoundTrack, clipDuration: number, duration: number, volume = 1, offset = 0): void {
@@ -144,14 +144,8 @@ export function playWeaponReloadAudio(weapon: WeaponDef, state: WeaponSlotState)
     return true;
   }
   if (weapon.id === 'laser') {
-    stopWeaponReloadAudio();
-    AUDIO.laserBeam.stop();
-    const empty = !!state.overheated || (state.heat ?? 0) >= 100;
-    const track = empty ? AUDIO.plasmaReloadEmpty : AUDIO.laserVent;
-    playFitted(track, track.duration || 2.2, state.totalReloadT ?? 0);
-    // Manual cooling still uses the game's existing battery insert animation.
-    if (!empty) plasmaReloads.set(state, { sequence: state.reloadSequence, inserted: false });
-    return true;
+    stopWeaponReloadAudio();AUDIO.laserBeam.stop();
+    plasmaReloads.set(state,{sequence:state.reloadSequence,inserted:false,hiss:false});return true;
   }
   if (weapon.id === 'shotgun') {
     stopWeaponReloadAudio();
@@ -216,6 +210,7 @@ export function playLmgFire(shotNumber: number, _lastShot = false): void {
 }
 
 export function playAutomaticWeaponFire(id: 'smg' | 'laser', shotNumber: number, lastShot = false): void {
+  if(id==='laser'){AUDIO.laserBeam.stop();AUDIO.plasmaSingle.play(.85);return;}
   const single = id === 'smg' ? AUDIO.smgFire : AUDIO.plasmaSingle;
   const loop = id === 'smg' ? AUDIO.smgAuto : AUDIO.laserBeam;
   if (shotNumber <= 1 || lastShot) { loop.stop(); single.play(); }
@@ -224,22 +219,16 @@ export function playAutomaticWeaponFire(id: 'smg' | 'laser', shotNumber: number,
 
 /** Follow simulation time so pause/cancellation cannot leave a delayed insert timer. */
 export function updatePlasmaReloadAudio(state: WeaponSlotState): void {
-  const pending = plasmaReloads.get(state);
-  if (!pending || pending.inserted) return;
-  const sequence = state.reloadSequence;
-  if (!state.reloading || sequence !== pending.sequence) { plasmaReloads.delete(state); return; }
-  const insertIndex = sequence.phases.findIndex(phase => phase.phase === 'insert');
-  if (insertIndex < 0) return;
-  const scale = (state.totalReloadT ?? 2.2) / 2.2;
-  const insertEnd = sequence.phases.slice(0, insertIndex + 1).reduce((sum, phase) => sum + phase.duration, 0);
-  const cue = insertEnd - .175 * scale;
-  const elapsed = (state.totalReloadT ?? 0) - (state.reloadT ?? 0);
-  if (elapsed < cue) return;
-  pending.inserted = true;
-  const offset = (elapsed - cue) / scale;
-  const clipDuration = AUDIO.plasmaInsert.duration || .16;
-  // A slow frame which skips the whole cue must not replay a stale mechanic.
-  if (offset < clipDuration) playFitted(AUDIO.plasmaInsert, clipDuration, clipDuration * scale, 1, offset);
+  const pending=plasmaReloads.get(state);if(!pending)return;
+  const q=state.reloadSequence;if(!state.reloading||q!==pending.sequence){AUDIO.laserVent.stop();plasmaReloads.delete(state);return;}
+  const speed=q.plasmaSpeed??1,t=((state.totalReloadT??0)-(state.reloadT??0))/speed;
+  if(q.kind==='plasmaVent'){
+    if(!pending.hiss&&t>=.72){pending.hiss=true;if(t<1.87)AUDIO.laserVent.play(q.plasmaForcedVent?.55:.45,true,1/speed,t-.72);}
+    if(t>=1.87)AUDIO.laserVent.stop();
+  }else if(q.kind==='plasmaSwap'&&!pending.inserted&&t>=2.01){
+    pending.inserted=true;const late=t-2.01,duration=AUDIO.plasmaInsert.duration||.16;
+    if(late<duration)AUDIO.plasmaInsert.play(.85,true,1/speed,late);
+  }
 }
 
 let railgunCharging = false;

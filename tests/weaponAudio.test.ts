@@ -220,7 +220,7 @@ console.log('PASS: minigun transitions, shortened warmup, fitted spin/vent, no d
 
 
 for (const [id, single, loop] of [
-  ['smg', AUDIO.smgFire, AUDIO.smgAuto], ['laser', AUDIO.plasmaSingle, AUDIO.laserBeam],
+  ['smg', AUDIO.smgFire, AUDIO.smgAuto],
 ] as const) {
   const singleBefore = plays(single), loopBefore = plays(loop);
   playAutomaticWeaponFire(id, 1);
@@ -233,44 +233,30 @@ for (const [id, single, loop] of [
   assert.equal(plays(single), singleBefore + 2); assert.ok(cursor.paused);
   stopWeaponAudio();
 }
-console.log('PASS: SMG/plasma taps, sustained loops without restarting/layering, and final reports');
+console.log('PASS: SMG taps, sustained loop without restarting/layering, and final reports');
 
-for (const multiplier of [1, .75, .9]) for (const empty of [false, true]) {
-  const w = weapon('laser'), ws: WeaponSlotState = { ammo: 100, reserve: 100, heat: empty ? 100 : 40, overheated: empty };
-  const hissBefore = plays(AUDIO.laserVent), compositeBefore = plays(AUDIO.plasmaReloadEmpty), insertBefore = plays(AUDIO.plasmaInsert);
-  assert.ok(beginWeaponReload(w, ws, multiplier)); assert.ok(playWeaponReloadAudio(w, ws));
-  assert.equal(plays(AUDIO.laserVent) - hissBefore, empty ? 0 : 1);
-  assert.equal(plays(AUDIO.plasmaReloadEmpty) - compositeBefore, empty ? 1 : 0);
-  const selected = empty ? AUDIO.plasmaReloadEmpty : AUDIO.laserVent;
-  assert.ok(Math.abs(selected.duration / latest(selected).playbackRate - ws.totalReloadT!) < 1e-9);
-  // Sample 10 ms before and 10 ms after the authored insert cue, scaled by class.
-  advanceWeaponReload(w, ws, 1.575 * multiplier); updatePlasmaReloadAudio(ws);
-  assert.equal(plays(AUDIO.plasmaInsert), insertBefore);
-  const elapsedBeforePause = ws.reloadT;
-  pauseWeaponAudio(); assert.ok(selected.pool.every(a => a.paused));
-  resumeWeaponAudio(); assert.equal(ws.reloadT, elapsedBeforePause);
-  advanceWeaponReload(w, ws, .02 * multiplier); updatePlasmaReloadAudio(ws); updatePlasmaReloadAudio(ws);
-  assert.equal(plays(AUDIO.plasmaInsert) - insertBefore, empty ? 0 : 1, 'Composite has its own insert; manual cue plays once');
-  if (!empty) {
-    assert.ok(Math.abs(latest(AUDIO.plasmaInsert).currentTime - .01) < 1e-9);
-    assert.ok(Math.abs(latest(AUDIO.plasmaInsert).playbackRate - 1 / multiplier) < 1e-9);
-  }
-  advanceWeaponReload(w, ws, 10); updatePlasmaReloadAudio(ws); stopWeaponReloadAudio();
-  assert.equal(ws.heat, 0); assert.equal(ws.ammo, w.mag);
-  assert.ok(selected.pool.every(a => a.paused)); stopWeaponAudio();
+const plasmaSingleBefore=plays(AUDIO.plasmaSingle),beamBefore=plays(AUDIO.laserBeam);
+for(let n=1;n<=8;n++)playAutomaticWeaponFire('laser',n);
+assert.equal(plays(AUDIO.plasmaSingle)-plasmaSingleBefore,8);assert.equal(plays(AUDIO.laserBeam),beamBefore);stopWeaponAudio();
+for(const multiplier of [1,.75,.9])for(const mode of ['swap','vent'] as const){
+ const w=weapon('laser'),ws:WeaponSlotState={ammo:mode==='swap'?20:45,reserve:180,heat:mode==='vent'?80:0};
+ const hiss=plays(AUDIO.laserVent),insert=plays(AUDIO.plasmaInsert),composite=plays(AUDIO.plasmaReloadEmpty);
+ assert.ok(beginWeaponReload(w,ws,multiplier));assert.ok(playWeaponReloadAudio(w,ws));
+ assert.equal(plays(AUDIO.laserVent),hiss);assert.equal(plays(AUDIO.plasmaReloadEmpty),composite);
+ advanceWeaponReload(w,ws,(mode==='swap'?2.00:.71)*multiplier);updatePlasmaReloadAudio(ws);
+ assert.equal(plays(AUDIO.plasmaInsert),insert);assert.equal(plays(AUDIO.laserVent),hiss);
+ const before=ws.reloadT;pauseWeaponAudio();resumeWeaponAudio();assert.equal(ws.reloadT,before);
+ advanceWeaponReload(w,ws,.02*multiplier);updatePlasmaReloadAudio(ws);updatePlasmaReloadAudio(ws);
+ assert.equal(plays(AUDIO.plasmaInsert)-insert,mode==='swap'?1:0);assert.equal(plays(AUDIO.laserVent)-hiss,mode==='vent'?1:0);
+ const track=mode==='swap'?AUDIO.plasmaInsert:AUDIO.laserVent;assert.ok(Math.abs(latest(track).playbackRate-1/multiplier)<1e-8);assert.ok(Math.abs(latest(track).currentTime-.01)<1e-8);
+ advanceWeaponReload(w,ws,100);updatePlasmaReloadAudio(ws);stopWeaponReloadAudio();assert.equal(ws.ammo,mode==='swap'?60:45);assert.equal(ws.reserve,mode==='swap'?120:180);assert.ok(AUDIO.laserVent.pool.every(a=>a.paused));
 }
-for (const cancellation of ['switch', 'replace-sequence', 'skip-cue']) {
-  const ws: WeaponSlotState = { ammo: 100, reserve: 100, heat: 20 };
-  beginWeaponReload(weapon('laser'), ws); playWeaponReloadAudio(weapon('laser'), ws);
-  const before = plays(AUDIO.plasmaInsert);
-  if (cancellation === 'switch') stopWeaponAudio();
-  if (cancellation === 'replace-sequence') ws.reloadSequence = { ...ws.reloadSequence! };
-  advanceWeaponReload(weapon('laser'), ws, cancellation === 'skip-cue' ? 2 : 1.595);
-  updatePlasmaReloadAudio(ws);
-  assert.equal(plays(AUDIO.plasmaInsert), before, 'Cancelled/replaced/fully missed insert cue stays silent');
-  stopWeaponAudio();
+for(const cancellation of ['switch','replace-sequence','skip-cue']){
+ const ws:WeaponSlotState={ammo:20,reserve:180,heat:0};beginWeaponReload(weapon('laser'),ws);playWeaponReloadAudio(weapon('laser'),ws);const before=plays(AUDIO.plasmaInsert);
+ if(cancellation==='switch')stopWeaponAudio();if(cancellation==='replace-sequence')ws.reloadSequence={...ws.reloadSequence!};
+ advanceWeaponReload(weapon('laser'),ws,cancellation==='skip-cue'?2.4:2.02);updatePlasmaReloadAudio(ws);assert.equal(plays(AUDIO.plasmaInsert),before);stopWeaponAudio();
 }
-console.log('PASS: class-fitted plasma cooling/composite selection, insert cue, no duplicate hiss, pause/cancellation');
+console.log('PASS: eight discrete plasma reports, no beam/composite, class-scaled seat/hiss contacts, pause and cancellation');
 
 const chargeBefore = plays(AUDIO.railgunCharge), shotBefore = plays(AUDIO.railgunFire);
 updateRailgunWeaponAudio(true, .1); const charge = latest(AUDIO.railgunCharge);
