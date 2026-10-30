@@ -273,6 +273,31 @@ The target is **coherent Halo: Reach-inspired grounded science-fiction presentat
 
 **Gate:** an end-to-end playable and narratively coherent campaign experience with representative mission depth, reliable checkpoints/retries, and cinematics that fit the real game assets and performance.
 
+## Deferred weapon-aim recoil pass — REC01 / REC02 (new request, 30 Oct 2026)
+
+**Status:** User-requested **future roadmap addition**, not an active implementation request and not a change to the W04–W07 weapon order. The current W03 Plasma correction may prototype controlled recoil locally; do not generalise it across all weapons until a separate reviewable PR has been authorised.
+
+**Problem observed in native gameplay:** Most weapons are currently too easy to aim in sustained fire. The present HUD largely **scales** the crosshair while firing, and the model's visual kick is not a fully tuned, coherent per-weapon **aim-direction recoil** system. The Plasma's first prototype can rock/oscillate like a ship instead of delivering distinct shot-driven muzzle climb.
+
+### REC01 — Shared authoritative aim recoil contract (deferred)
+
+- Inspect live camera/player pitch-yaw ownership, pointer lock, viewmodel recoil, ADS and crosshair, first-person raycast/projectile direction, existing `recoilPitch`/`recoilKick` and input updates before changes.
+- Build **shot-triggered view/aim angular impulses** (not just cosmetic mesh transforms or crosshair scale) with separate, tunable per-weapon vertical climb, small lateral variation, recovery, shot cadence and sustained-fire accumulation. Preserve mouse compensation, camera comfort, aim consistency and deterministic frame-rate-independent updates.
+- Ensure the actual crosshair **continues to represent projectile trajectory**; do not animate a screen reticle away from the firing ray without updating aim authority. Avoid stacking recoil impulses multiple times in one shot; do not use random walk without bounded recovery.
+- Provisional tuning goals: sniper = pronounced single recoil and recovery; shotgun = heavy but short kick; AR/BR = measured impulse and burst climb; SMG = light initial shot with cumulative climb; LMG = sustained vibration and climb with heavier inertia; pistol = crisp single kick; Plasma = clean upward impulse without oscillatory ship-rock; Minigun/other heavy or energy weapons get distinct profiles. Final numeric settings **require native playtest**, not assumptions about real firearms.
+- Use the existing firing event and one authoritative simulation clock, preserve damage/spread/fire rate and player control, support both ADS/hipfire and differing FPS; test 30/60/144 Hz, frame stalls, trigger release, movement and pause.
+
+### REC02 — Weapon profiles, tuning and possible attachment modifiers (deferred)
+
+- Profile the entire arsenal in Training Grounds with controlled target groupings and predictable patterns. Add per-weapon balance profiles, developer-friendly calibration values and acceptance tests.
+- Future attachments (e.g. stock or stability upgrade) **may modify** recoil/recovery through explicit, bounded stats **only when an attachments system is separately approved**. Do not build a new attachments system during REC01.
+- Keep developer instrumentation optional and the normal HUD minimal; do not sacrifice accessibility, gamepad/pointer-lock semantics or precision aim.
+- Schedule this as a **separate post-weapon gameplay-feel module**, ideally tested in the Training Grounds and before full campaign combat balancing. Exact ordering versus MOV/HIT/MELEE and equipment improvements remains subject to developer sign-off.
+
+**W03 immediate exception:** A small, weapon-local fix may remove Plasma viewmodel oscillation and establish a restrained, coherent upward **shot-synchronous** recoil for native testing; this is not the full REC01 migration.
+
+---
+
 ## Project order, parallel work, and scope discipline
 
 `Phase A (finish original weapon backlog) → Phase B (combat feel + two-hand movement; early encounter AI in parallel) → Phase C (deep enemy behavior/animation/visual overhaul) → Phase D (graphics/audio/UI presentation) → Phase E (campaign maps, lore integration and cutscenes)`.
