@@ -1,0 +1,6 @@
+
+> gun-arena-v2@0.0.0 test:smg
+> node --import tsx tests/smg.test.ts
+
+PASS: SMG stats, native-audio clocks, contacts/travel, ammo gate, interrupts/reset, repeated reload, small firing stroke, two-hand sprint/ADS, 30/60/144 Hz and resource reuse
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

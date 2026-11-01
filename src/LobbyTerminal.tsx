@@ -88,7 +88,7 @@ export const ARMORY_CATEGORIES = {
     { id: 'grenade_launcher', label: 'M32 Grenade Launcher', category: 'LAUNCHERS' },
     { id: 'railgun', label: 'Kinetic AP Railgun', category: 'SPECIAL HEAVIES' },
     { id: 'sniper', label: 'Bolt-Action Heavy Sniper', category: 'PRECISION' },
-    { id: 'laser', label: 'Covenant Plasma Rifle', category: 'ENERGY' }
+    { id: 'laser', label: 'Plasma Repeater', category: 'ENERGY' }
   ],
   secondary: [
     { id: 'pistol', label: 'Combat 9mm Pistol', category: 'SIDEARMS' },
@@ -96,7 +96,7 @@ export const ARMORY_CATEGORIES = {
     { id: 'grenade_launcher', label: 'M32 Grenade Launcher', category: 'LAUNCHERS' },
     { id: 'smg', label: 'Submachine Gun (SMG)', category: 'COMPACT FIREARMS' },
     { id: 'shotgun', label: 'Pump-Action 12-Gauge', category: 'SHOTGUNS' },
-    { id: 'laser', label: 'Covenant Plasma Rifle', category: 'ENERGY' }
+    { id: 'laser', label: 'Plasma Repeater', category: 'ENERGY' }
   ]
 };
 

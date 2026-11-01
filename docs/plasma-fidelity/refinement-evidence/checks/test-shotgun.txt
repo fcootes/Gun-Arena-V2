@@ -1,0 +1,11 @@
+
+> gun-arena-v2@0.0.0 test:shotgun
+> node --import tsx tests/shotgun.test.ts
+
+PASS: delayed single pump event, real endpoints and locked action at 30/60/144 Hz inside unchanged fire interval
+PASS: exact seating boundary, class speed, reserve exhaustion, repeated R, long/invalid frames and conserved ammo
+PASS: before/after-seat, later/last shell and final-chamber interruptions preserve transfers and emit one pump; switch clears queued shot
+PASS: shell and guiding hand share exact contact path, bore orientation and an actual open loading aperture
+PASS: actual HUD markup distinguishes 4/10 unchambered shells, closed-action finish and ready
+PASS: repeated shell reloads restore original pump grip, thumb and framing without accumulated transforms
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

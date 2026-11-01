@@ -1,0 +1,66 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> gun-arena-v2@0.0.0 build
+> vite build
+
+vite v6.4.4 building for production...
+transforming...
+✓ 106 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                                 3.37 kB │ gzip:   1.21 kB
+dist/assets/plasma_chamber_insert-CNDNZEqU.wav                 30.76 kB
+dist/assets/plasma_fire_single-D0IjigXU.wav                    31.72 kB
+dist/assets/lmg_box_release-DSHqYSt2.wav                       41.32 kB
+dist/assets/br_mag_remove-DTUfROVh.wav                         47.85 kB
+dist/assets/br_charge-CC-SeEgi.wav                             47.85 kB
+dist/assets/lmg_feed_cover_close-_r9lrVNr.wav                  61.20 kB
+dist/assets/lmg_box_seat-CbqpauaZ.wav                          63.40 kB
+dist/assets/lmg_charge-3zIaaHqY.wav                            63.40 kB
+dist/assets/shotgun_reload_shell_insert-BU_IxnJE.wav           75.52 kB
+dist/assets/shotgun_pump-D4I_3IIO.wav                          80.68 kB
+dist/assets/smg_fire_single-D_p1kfL5.wav                       84.52 kB
+dist/assets/minigun_warmup-CRzokXtF.wav                        96.04 kB
+dist/assets/br_mag_insert-CnNswe00.wav                        105.64 kB
+dist/assets/shotgun_reload_shell_insert_empty-DmFCATmS.wav    106.49 kB
+dist/assets/br_reload_tactical-44u6Ge6E.wav                   143.81 kB
+dist/assets/sniper_fire_single-CREar2y0.wav                   149.80 kB
+dist/assets/br_fire_single-CXmXP82y.wav                       157.48 kB
+dist/assets/sniper_fire_with_bolt-ExwP6_gZ.wav                163.24 kB
+dist/assets/sniper_bolt_cycle-Cb9Mzjid.wav                    163.24 kB
+dist/assets/ar_fire_single-C5vmyHtD.wav                       170.92 kB
+dist/assets/lmg_fire_sustain-DC9HbZVy.wav                     176.68 kB
+dist/assets/br_fire_burst_3-CF-Jy6zQ.wav                      186.28 kB
+dist/assets/plasma_fire_auto_loop-iYQ2ci9P.wav                211.24 kB
+dist/assets/pistol_fire_single-DaCkoGDJ.wav                   215.08 kB
+dist/assets/smg_reload_tactical-vTAW0HJh.wav                  215.70 kB
+dist/assets/pistol_reload_tactical-C7ScYSDJ.wav               227.68 kB
+dist/assets/lmg_fire_lead-3Gb-sBfb.wav                        230.44 kB
+dist/assets/railgun_charge-D9SiYAfb.wav                       230.44 kB
+dist/assets/br_reload_empty-BMe_5_4j.wav                      253.48 kB
+dist/assets/minigun_spin_down-DM-a2uzf.wav                    268.84 kB
+dist/assets/sniper_reload_tactical-BJDnpCP6.wav               323.52 kB
+dist/assets/smg_fire_auto_loop-BtYYMCHK.wav                   331.82 kB
+dist/assets/minigun_fire_auto_loop-C0umsVzs.wav               345.64 kB
+dist/assets/shotgun_fire_single-Cl_R7u2_.wav                  361.00 kB
+dist/assets/ar_reload_tactical-DiSwx-iM.wav                   371.45 kB
+dist/assets/smg_reload_empty-BTXvlvx5.wav                     380.20 kB
+dist/assets/minigun_cooling_hiss-CJoccMz4.wav                 384.04 kB
+dist/assets/minigun_overheat-DE6yWt_v.wav                     384.04 kB
+dist/assets/pistol_reload_empty-BsASj1C1.wav                  401.32 kB
+dist/assets/plasma_cooling_hiss-BcIyrCT4.wav                  422.44 kB
+dist/assets/plasma_reload_empty-CeXiGbBC.wav                  422.44 kB
+dist/assets/railgun_fire_single-CFg_3Wgg.wav                  460.84 kB
+dist/assets/ar_fire_auto_loop-CM1uqqsX.wav                    506.92 kB
+dist/assets/sniper_reload_empty-Kue3AdrL.wav                  570.28 kB
+dist/assets/lmg_reload_tactical-vD9wVL--.wav                  629.04 kB
+dist/assets/ar_reload_empty-DSLjvbdg.wav                      654.76 kB
+dist/assets/lmg_reload_empty-OaGZp1-n.wav                   1,064.49 kB
+dist/assets/index-p8g6ciLn.css                                 85.45 kB │ gzip:  15.02 kB
+dist/assets/index-Bpp_X0c7.js                               1,496.65 kB │ gzip: 436.90 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.10s

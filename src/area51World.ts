@@ -1,3 +1,4 @@
+import {addPlasmaSupply} from './plasmaMechanics';
 import type { DeploymentPipeline } from './deployment';
 import { ColliderIndex } from './colliderIndex';
 import { measureInitialization } from './performance';
@@ -1405,8 +1406,9 @@ function* buildArea51World(scene: THREE.Scene): Generator<string, WorldManager> 
   ) {
     const state = states[item.typeIndex];
     if (!state) return;
-    if (WEAPONS[item.typeIndex]?.type === "weapon")
-      state.reserve = (state.reserve ?? 0) + item.ammo;
+    if (WEAPONS[item.typeIndex]?.type === "weapon") {
+      if(WEAPONS[item.typeIndex].id==='laser')addPlasmaSupply(state,item.ammo);else state.reserve = (state.reserve ?? 0) + item.ammo;
+    }
     else state.count = (state.count ?? 0) + item.ammo;
     announce(item.label);
     removeGroundPickup(item);

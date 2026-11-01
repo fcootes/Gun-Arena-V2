@@ -1,0 +1,37 @@
+{
+  "buttonState": {
+    "ammo": 20,
+    "reserve": 180,
+    "kind": "plasmaSwap",
+    "firing": 0,
+    "upperDoor": 0.999952128,
+    "lowerDoor": 0.9999434536040108
+  },
+  "memory": [
+    {
+      "geometries": 24,
+      "textures": 4
+    },
+    {
+      "geometries": 24,
+      "textures": 4
+    },
+    {
+      "geometries": 24,
+      "textures": 4
+    },
+    {
+      "geometries": 24,
+      "textures": 4
+    },
+    {
+      "geometries": 24,
+      "textures": 4
+    },
+    {
+      "geometries": 24,
+      "textures": 4
+    }
+  ],
+  "errors": []
+}

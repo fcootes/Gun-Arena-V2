@@ -1,0 +1,25 @@
+{
+  "videoFrames": 179,
+  "fps": 30,
+  "duration": 5.966666666666667,
+  "reloadFrames": 66,
+  "reloadSeconds": 2.2,
+  "fireIntervals": 8,
+  "fireAmmo": [
+    60,
+    51
+  ],
+  "note": "Immediate ready shot and inclusive endpoint shot span eight .125-second intervals. Thermal geometry is existing preallocated vapour, first GPU upload +1 then stable.",
+  "boltsVisibleFrames": 2,
+  "memoryBeforeVent": {
+    "geometries": 464,
+    "textures": 52
+  },
+  "memoryAfterVent": {
+    "geometries": 465,
+    "textures": 52
+  },
+  "attributeBufferBytes": 58242,
+  "effectDraws": 6,
+  "errors": []
+}

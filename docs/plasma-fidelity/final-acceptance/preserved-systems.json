@@ -1,0 +1,90 @@
+{
+  "base": "36da49e2e8f6a839b57ea290428c21fd3072623b",
+  "files": [
+    {
+      "file": "src/plasmaModel.ts",
+      "sha256": "553d566f96f110c943e5edf975c8ceb39acccd9650827be0bc7974e18e8cce6c",
+      "unchanged": true
+    },
+    {
+      "file": "src/plasmaEffects.ts",
+      "sha256": "ac4cdeaa60bfdd55cdc7e19dfe04f2837d3803d3cc069fe442c6e1547a0cdc54",
+      "unchanged": true
+    },
+    {
+      "file": "src/plasmaBoltVisuals.ts",
+      "sha256": "3c65a5ccf663d686413f54e1ac5324268ee57a328d7f86cdd3b3a1543909930e",
+      "unchanged": true
+    },
+    {
+      "file": "src/plasmaImpactEffects.ts",
+      "sha256": "b4bc32cfb19e8f1d35b86b3696ddaaafdc1ae8c61eccceab11bde8e45ef9bf5c",
+      "unchanged": true
+    },
+    {
+      "file": "src/plasmaProjectiles.ts",
+      "sha256": "20155b6744ef7008661c96395b015767e010a2d6d29a28acb7375a5f6ec5233e",
+      "unchanged": true
+    },
+    {
+      "file": "src/weaponModels.ts",
+      "sha256": "faa0797780b2d932b9448e741d450e4d3c44523f674ed1f0e909796831440960",
+      "unchanged": true
+    },
+    {
+      "file": "src/viewmodelHands.ts",
+      "sha256": "ce73fe781c10314216431fffd2ee1b2934132d2e4ad1803f2e7812fb3964f478",
+      "unchanged": true
+    },
+    {
+      "file": "src/viewmodelGrips.ts",
+      "sha256": "fe827b78092307c75bf20198a8e9ab23658a78d14a33fac84a36fcc98033a809",
+      "unchanged": true
+    },
+    {
+      "file": "src/types.ts",
+      "sha256": "2f50e32a4aebc0b8f3667aeeba37c064617c7e1333d304f34b62b31b7486f80a",
+      "unchanged": true
+    },
+    {
+      "file": "src/world.ts",
+      "sha256": "2807ef08a831f05da2446696ff5591344337dff96619327cf4f16901ac5b28ee",
+      "unchanged": true
+    },
+    {
+      "file": "src/botBuilder.ts",
+      "sha256": "6e1aec1b3f89136d641c0c5fcdc2bc605f88682c5a0337f0819aa827ccbc2362",
+      "unchanged": true
+    },
+    {
+      "file": "src/gameplayInput.ts",
+      "sha256": "5d5d8d0adc012bb7268c069bbdb7c83290f97dc8da1e4528362b6cce6ec62abd",
+      "unchanged": true
+    },
+    {
+      "file": "src/assets/audio/weapons/batch3/plasma_chamber_insert.wav",
+      "sha256": "46c137dedaa13263ecbd7c8d1f824d51a5f4ffb1efe49287c92ded613966be25",
+      "unchanged": true
+    },
+    {
+      "file": "src/assets/audio/weapons/batch3/plasma_cooling_hiss.wav",
+      "sha256": "570a0c1c9fdcbc98085b4a404142614bdb76d33f05a353bd0b648dc0290ef4b2",
+      "unchanged": true
+    },
+    {
+      "file": "src/assets/audio/weapons/batch3/plasma_fire_auto_loop.wav",
+      "sha256": "21870c24003bd06cbc1a59082665c6a866b57b2258e8db44138ae3583179bc15",
+      "unchanged": true
+    },
+    {
+      "file": "src/assets/audio/weapons/batch3/plasma_fire_single.wav",
+      "sha256": "8bc9031653fff9d6c1a646465fb2278ba63f25e8d555e36b1dc4f1c52fb06415",
+      "unchanged": true
+    },
+    {
+      "file": "src/assets/audio/weapons/batch3/plasma_reload_empty.wav",
+      "sha256": "ce4487a364492838caa20e5597dbaee5c3549994fff677074ba40cf3aaaadfc6",
+      "unchanged": true
+    }
+  ]
+}

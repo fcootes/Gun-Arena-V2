@@ -1,0 +1,10 @@
+Final polish verified 2026-10-29 from base 43e87369dadc2f2bf3c5394628178fe71a17dd82
+PASS npm run lint
+PASS npm run build (existing bundle-size warning)
+PASS test:plasma, test:plasma:polish, test:weapons, test:viewmodel, test:runtime, test:tactical, test:audio, test:area51
+PASS node --check scripts/test-plasma-browser.mjs and scripts/plasma-polish-fixture.mjs
+PASS actual Armory controls and six model/disposal cycles (24 geometries / 4 textures)
+PASS actual Area 51 and Training Field renderer captures (no page/shader errors)
+PASS video audit: 66 frames = 2.20s uninterrupted reload, correct 60/120 resource result, separate vent preserves supply, 80-mark bound, per-shot memory stable
+PASS git diff --check
+No failing final checks. Native-laptop acceptance remains pending; offline playback does not establish native frame rate.

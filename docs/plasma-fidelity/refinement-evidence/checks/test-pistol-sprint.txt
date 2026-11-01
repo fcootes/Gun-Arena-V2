@@ -1,0 +1,7 @@
+
+> gun-arena-v2@0.0.0 test:pistol:sprint
+> node --import tsx tests/pistolSprint.test.ts
+
+PASS: C2 loop and key smoothness, arm opposition, curved FK paths, anatomical lengths, articulated elbows, cropping and constrained weapon
+PASS: 30/60/144 Hz, speed-scaled cadence, pause, stop/ADS/air/reload/switch/death/reset; peak left wrist acceleration 131.8 m/s²
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

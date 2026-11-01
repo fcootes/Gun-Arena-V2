@@ -1,0 +1,6 @@
+
+> gun-arena-v2@0.0.0 test:plasma
+> node --import tsx tests/plasma.test.ts
+
+PASS: 8 Hz at 30/60/144 FPS, 60/180 charges, overheat/independent vent, R precedence, sealed swaps, all-phase cancellation, internal void/split doors/integrated emitter, independent indicators, ejection/seat contacts, actual glove contact, swept walls/moving actors/team checks and pool teardown
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

@@ -1,3 +1,4 @@
+import {addPlasmaSupply} from './plasmaMechanics';
 import type { DeploymentPipeline } from './deployment';
 import { measureInitialization } from './performance';
 import { resolveMapId } from './mapRegistry';
@@ -725,8 +726,8 @@ function createTrainingWorld(scene: THREE.Scene, mapId: 'training'): WorldManage
       weaponStates[idx].count = Math.min(6, (weaponStates[idx].count ?? 0) + item.ammo);
       onAcquire(`+${item.ammo} TACTICAL GRENADES`);
     } else {
-      weaponStates[idx].reserve = (weaponStates[idx].reserve ?? 0) + item.ammo;
-      onAcquire(`+${item.ammo} ${w.name} AMMO`);
+      if(w.id==='laser')addPlasmaSupply(weaponStates[idx],item.ammo);else weaponStates[idx].reserve = (weaponStates[idx].reserve ?? 0) + item.ammo;
+      onAcquire(w.id==='laser'?`+${Math.ceil(item.ammo/60)} PLASMA CARTRIDGE(S)`:`+${item.ammo} ${w.name} AMMO`);
     }
     removeGroundPickup(item);
   }
@@ -1724,8 +1725,8 @@ function* buildOffshoreWorld(scene: THREE.Scene, camera?: THREE.Camera): Generat
   function collectPickup(item: GroundPickup, onAcquire: (message: string) => void, states: { count?: number; reserve?: number }[]): void {
     const state = states[item.typeIndex]; const weapon = WEAPONS[item.typeIndex]; if (!state || !weapon) return;
     if (weapon.type === 'grenade' || weapon.type === 'consumable') state.count = Math.min(6, (state.count ?? 0) + item.ammo);
-    else state.reserve = (state.reserve ?? 0) + item.ammo;
-    onAcquire(`+${item.ammo} ${weapon.name.toUpperCase()}`); removeGroundPickup(item);
+    else if(weapon.id==='laser')addPlasmaSupply(state,item.ammo);else state.reserve = (state.reserve ?? 0) + item.ammo;
+    onAcquire(weapon.id==='laser'?`+${Math.ceil(item.ammo/60)} PLASMA CARTRIDGE(S)`:`+${item.ammo} ${weapon.name.toUpperCase()}`); removeGroundPickup(item);
   }
   function damageEnvironmentalBlock(object: THREE.Object3D, amount: number, hitPoint?: THREE.Vector3): boolean {
     if (disposed || !(object instanceof THREE.Mesh) || !object.userData.destructible || object.userData.destroyed) return false;

@@ -1,3 +1,4 @@
+import {createPlasmaMuzzleEffect} from './plasmaEffects';
 import {createRailgunMuzzleEffect} from './railgunEffects';
 import * as THREE from 'three';
 import type { WeaponModelId, WeaponAssembly } from './weaponModels';
@@ -99,18 +100,7 @@ export const MUZZLE_PROFILES: Record<WeaponModelId, MuzzleProfile> = {
     energy: false,
     rear: false,
   },
-  laser: {
-    life: 0.1,
-    width: 0.28,
-    length: 0.18,
-    light: 5,
-    radius: 5,
-    smoke: 0,
-    sparks: 14,
-    star: 8,
-    energy: true,
-    rear: false,
-  },
+  laser: {life:.035,width:.048,length:.050,light:.6,radius:.5,smoke:0,sparks:0,star:0,energy:true,rear:false},
   minigun: {
     life: 0.045,
     width: 0.2,
@@ -160,6 +150,7 @@ export interface WeaponMuzzleEffect {
 export function createWeaponMuzzleEffect(
   assembly: WeaponAssembly,
 ): WeaponMuzzleEffect {
+  if(assembly.root.userData.weaponId==='laser')return createPlasmaMuzzleEffect(assembly);
   if(assembly.root.userData.weaponId==='railgun')return createRailgunMuzzleEffect(assembly);
   const id = assembly.root.userData.weaponId as WeaponModelId,
     p = MUZZLE_PROFILES[id];

@@ -1,0 +1,68 @@
+W03 PR-100 final tactile pass
+Base: 8aaf082121df8f9da95bdfb90c8b0bcdfcc26153
+Existing branch: feat/plasma-repeater-fidelity / existing draft PR #26
+
+PASS TypeScript: npm run lint
+PASS production build: npm run build (existing >500 kB Vite bundle warning)
+PASS all 24 exercised repository test commands:
+  test:plasma, test:plasma:polish, test:plasma:tactile,
+  test:weapons, test:viewmodel, test:audio, test:runtime,
+  test:controls, test:scenes, test:tactical, test:railgun, test:lmg,
+  test:br, test:smg, test:pistol, test:pistol:sprint, test:shotgun,
+  test:sniper, test:batch1, test:batch2, test:area51, test:bosses,
+  test:preparation, test:performance.
+  Final transcripts: tactile-evidence/checks/.
+
+Focused coverage:
+- Exact 2.70 s reload / 2.25 s vent and whole-action class multipliers once.
+- 75% insertion stop, resistance/rebrace, final-quarter drive and once-only
+  2.01 s seat; no early ammo, no double deduction, preserved cancellation.
+- Both doors clear before the stronger .64 s ejection; retention releases first;
+  actual spent cylinder, hand and door clearances at 240 Hz.
+- Actual thumb contact; actual glove palm/phalange vertices clear both doors in
+  reload and vent and do not penetrate the fresh pressure vessel during pushing.
+- Independent thermal shutters, graduated heat/indicators, forced vs preventative
+  hand reaction, ammo preservation and firing lockout through full recovery.
+- Exact analytical recoil integrated across identical 30/60/144 Hz shot events,
+  real viewmodel trigger response, pause, switch/death/reset and no per-shot
+  geometry/material/Object3D allocation.
+- Existing App camera recoil baseline retained; spread and physics unchanged.
+- 8 Hz and 60/180 charges, passive cooling, R precedence, actual App shield/armour,
+  headshot/damage attribution, solid/ally blocking and swept moving-actor hits.
+- Existing fixed scorch/impact capacities, support validation, recycling/fade,
+  environment damage interface, reset/disposal and stable GPU-object ownership.
+- Audio seat/hiss on the new clock, class playback rate/cursor, no old composite,
+  no double playback/events, pause/cancellation and skipped late cues.
+
+PASS actual Armory cartridge/vent/muzzle controls and pose inspection.
+PASS six rendered model replacement cycles: stable 24 geometries / 4 textures in
+  the inspected scene, no page/shader errors. See armory-controls-memory.json.
+PASS local live input checks: actual LMB/R, automatic overheat recovery, repeat-R
+  guard, pause, switch/cancellation, ADS/sprint, third-person weapon and death.
+  The unretimed software-WebGL reload took 42.5786 wall seconds for the 2.70 s
+  simulation at 640x360; this is not native hardware performance evidence.
+PASS continuous actual App/Three.js export: 81 reload frames at 30 FPS, full
+  automatic overheat after sustained firing, 2.25 s thermal action including hand
+  reaction, distinct world impacts and recoil. See video-provenance.json.
+PASS approved projectile/collision/map/hand-rig/type source files and all WAV
+  assets are unchanged: see tactile-evidence/preserved-systems.json.
+
+Footage provenance:
+  Silent, offline 30 FPS normal-speed simulation playback of the production App
+  renderer, using 120 Hz production updates, held Area 51 world and diagnostic
+  material targets. Independent demonstrations reset their starting inventory
+  between cuts; transactions within each action follow actual gameplay state.
+  Before clip is the existing 8aaf082 recording. No time stretching and no claim
+  that a software renderer demonstrates native laptop GPU performance.
+
+Acceptance / limits:
+- Native-laptop feel, appearance, input latency and GPU performance remain pending.
+- Browser footage covers Area 51 USMC. Both map/faction and preparation paths have
+  automated regression coverage; this pass does not record every combination.
+- The existing third-person body-arm pose remains its legacy rig; weapon mechanism
+  and reduced shot response are shared through the model/effects factory.
+- Missing dedicated W07 release/door/ejection/slap/glove Foley remains silent and
+  documented. Approved firing/seating/hiss WAVs are unchanged.
+- All final automated checks pass. A former one-mesh muzzle assertion was updated
+  to verify the requested two cached directional/pressure meshes and origin.
+- No merge, production promotion or W04 work.

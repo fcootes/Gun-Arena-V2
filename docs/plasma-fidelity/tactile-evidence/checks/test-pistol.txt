@@ -1,0 +1,7 @@
+
+> gun-arena-v2@0.0.0 test:pistol
+> node --import tsx tests/pistol.test.ts
+
+PASS: pistol stats, tactical/empty clocks and contacts at 30/60/144 Hz, class speed, slide lock/release order, interruption and ammo conservation
+PASS: independent free arm, anchored right grip, continuous swing, variable-rate agreement, pause, ADS/stop, switch and death/reset
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
