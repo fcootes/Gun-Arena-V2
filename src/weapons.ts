@@ -1,3 +1,4 @@
+import {createMinigunCarry, MINIGUN_CARRY} from './minigunCarry';
 import {PLASMA_RECOIL} from './plasmaRecoil';
 import {createPlasmaAnimator} from './plasmaAnimation';
 import {createRailgunAnimator,railgunBreechReady} from './railgunMechanics';
@@ -293,6 +294,8 @@ export interface ViewmodelManager {
     isAlive: boolean,
     isPlaying: boolean,
     horizontalSpeed?: number,
+    lateralSpeed?: number,
+    forwardSpeed?: number,
   ) => void;
   triggerPistolSlideFire: () => void;
   triggerSmgBoltFire: () => void;
@@ -349,6 +352,7 @@ export function createViewmodelManager(): ViewmodelManager {
   const viewRotation = new THREE.Quaternion(), targetRotation = new THREE.Quaternion(), targetEuler = new THREE.Euler();
   let poseInitialized = false, previousId = '', walkBlend = 0, runBlend = 0, equip = 0, disposed = false;
   const pistolSprint = createPistolSprintController();
+  const minigunCarry = createMinigunCarry();
   function resetPistolMotion() { pistolSprint.reset(); hands.reset(); }
   root.userData.cleanupWeaponEffect = () => { disposed = true; hands.releaseInstances(); models.clear(); selected = null; };
   const gloveMaterial = new THREE.MeshStandardMaterial({
@@ -465,9 +469,11 @@ export function createViewmodelManager(): ViewmodelManager {
     alive: boolean,
     playing: boolean,
     horizontalSpeed: number = PISTOL_SPRINT.referenceSpeed,
+    lateralSpeed = 0,
+    forwardSpeed?: number,
   ) {
     if (disposed) return;
-    if (!alive) { models.get('laser')?.effects.reset();root.visible = false; resetPistolMotion(); return; }
+    if (!alive) { minigunCarry.reset();models.get('laser')?.effects.reset();root.visible = false; resetPistolMotion(); return; }
     if (!playing) return; // Pausing freezes pose, joints, timers and recoil.
     dt = Number.isFinite(dt) ? THREE.MathUtils.clamp(dt, 0, .1) : 0;
     const w =
@@ -487,7 +493,7 @@ export function createViewmodelManager(): ViewmodelManager {
     recoil = Math.max(0, recoil - dt * 0.55);
     recoilRotation = Math.max(0, recoilRotation - dt * 3.8);
     currentId = w.id;
-    if (w.id !== 'minigun') venting = false;
+    if (w.id !== 'minigun') { venting = false; minigunCarry.reset(); }
     selected = w.type === 'weapon' ? getModel(w.id) : null;
     for (const [id, model] of models) {
       model.assembly.root.visible = id === w.id && !melee && radioTimer === 0;
@@ -532,7 +538,7 @@ export function createViewmodelManager(): ViewmodelManager {
     if (parts.stock) parts.stock.visible = false;
     hands.root.visible = !scoped;
     const grip = VIEWMODEL_GRIPS[w.id as WeaponModelId], pistol = w.id === 'pistol';
-    const alpha = 1 - Math.exp(-14 * dt);
+    const alpha = 1 - Math.exp(-(w.id === 'minigun' ? MINIGUN_CARRY.poseResponse : 14) * dt);
     targetPosition.fromArray(aiming ? grip.aim : sprinting && !pistol ? grip.sprint : grip.hip);
     if (aiming) targetEuler.set(...grip.aimRotation);
     else if (sprinting && !pistol) targetEuler.set(...grip.sprintRotation);
@@ -548,15 +554,16 @@ export function createViewmodelManager(): ViewmodelManager {
     const gait = pistolSprint.pose;
     walkBlend += ((moving && onGround ? 1 : 0) - walkBlend) * (1 - Math.exp(-12 * dt));
     runBlend += ((sprinting && !aiming && moving && onGround ? 1 : 0) - runBlend) * (1 - Math.exp(-12 * dt));
-    const walk = walkBlend * (aiming ? .18 : 1) * (1 - runBlend);
+    const carryWeight = w.id === 'minigun' ? MINIGUN_CARRY.gaitScale : 1;
+    const walk = walkBlend * (aiming ? .18 : 1) * (1 - runBlend) * carryWeight;
     assembly.root.position.copy(viewPosition);
     assembly.root.position.z += recoil + equip * .025;
     assembly.root.position.y -= equip * .06;
-    assembly.root.position.x += Math.cos(bob * 0.5) * 0.008 * walk + Math.sin(bob * .5) * .0045 * runBlend * (pistol ? 0 : 1);
+    assembly.root.position.x += Math.cos(bob * 0.5) * 0.008 * walk + Math.sin(bob * .5) * .0045 * runBlend * (pistol ? 0 : 1) * carryWeight;
     assembly.root.position.y +=
-      Math.abs(Math.sin(bob)) * 0.012 * walk + Math.cos(bob) * .003 * runBlend * (pistol ? 0 : 1) + Math.sin(time * 1.5) * 0.002 * (pistol ? 1 - gait.blend : 1);
+      Math.abs(Math.sin(bob)) * 0.012 * walk + Math.cos(bob) * .003 * runBlend * (pistol ? 0 : 1) * carryWeight + Math.sin(time * 1.5) * 0.002 * (pistol ? 1 - gait.blend : 1) * carryWeight;
     assembly.root.quaternion.copy(viewRotation); assembly.root.rotation.x += recoilRotation;
-    assembly.root.rotation.z += Math.sin(bob * .5) * .004 * runBlend * (pistol ? 0 : 1);
+    assembly.root.rotation.z += Math.sin(bob * .5) * .004 * runBlend * (pistol ? 0 : 1) * carryWeight;
     if (parts.reloadRound) parts.reloadRound.visible = false;
     if (parts.freshMagazine) parts.freshMagazine.visible = false;
     if (pistol && gait.blend > 0) {
@@ -656,6 +663,11 @@ export function createViewmodelManager(): ViewmodelManager {
       const mass = t < .035 ? sniperEase(t / .035) : 1 - sniperEase((t - .035) / .305);
       assembly.root.position.z += mass * .035; assembly.root.rotation.x += mass * .065;
     }
+    if(w.id==='minigun'){
+      minigunCarry.update(dt, moving ? lateralSpeed : 0, moving ? forwardSpeed ?? horizontalSpeed : 0, aiming, !!ws?.reloading || venting);
+      assembly.root.position.add(minigunCarry.position);
+      assembly.root.rotation.x += minigunCarry.rotation.x; assembly.root.rotation.y += minigunCarry.rotation.y; assembly.root.rotation.z += minigunCarry.rotation.z;
+    }
     assembly.update(dt, charge, spin,w.id==='laser'?ws:undefined);
     assembly.plasmaRecoil?.apply(assembly.root,aiming?PLASMA_RECOIL.adsScale:1);
     spin = 0;
@@ -709,7 +721,7 @@ export function createViewmodelManager(): ViewmodelManager {
       models.forEach((model) => model.effects.reset());
       recoil = recoilRotation = slideTimer = boltTimer = equip = walkBlend = runBlend = time = bob = 0;
       charge = spin = radioTimer = 0; venting = radioHold = false;
-      poseInitialized = false; previousId = ''; resetPistolMotion();
+      poseInitialized = false; previousId = ''; minigunCarry.reset();resetPistolMotion();
     },
   };
 }

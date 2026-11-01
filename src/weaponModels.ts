@@ -1214,7 +1214,8 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       ring('Cluster clamp ring', 0.075, 0.01, 0, 0, z, dark, rotor);
     if (options.firstPerson) {
       // Limited handheld control kit; actor/studio spades retain their original geometry.
-      grip(.04);
+      const control = group('mainControlGrip', 0, -.045, 0);
+      grip(.04, control);
       const cradle = group('supportCradle', -.08, -.085, -.14);
       tube('Stationary underslung support grip', .027, .14, 0, 0, 0, polymer, cradle).rotation.y = Math.PI / 2;
       box('Cradle mounting bridge', .16, .018, .045, .02, .06, 0, steel, cradle);

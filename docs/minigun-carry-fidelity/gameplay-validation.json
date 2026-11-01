@@ -1,0 +1,1208 @@
+{
+  "before": {
+    "rendering": "Actual App first-person Training Field renderer, real keyboard/mouse and native RAF mechanics; rendering suspended between explicit screenshots for software WebGL. No native-performance claim.",
+    "samples": [
+      {
+        "name": "idle",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          0,
+          1.5212454214035844,
+          -45
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aiming": false,
+        "sprinting": false,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.16,
+          -0.19936896872280926,
+          -0.48
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "left": [
+          -0.15,
+          -0.12,
+          -0.14
+        ],
+        "right": [
+          0.038,
+          -0.1,
+          0.095
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 318,
+          "textures": 27
+        }
+      },
+      {
+        "name": "ads",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          0,
+          1.5212454214035844,
+          -45
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aiming": true,
+        "sprinting": false,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.062499698653448246,
+          -0.14993672778511627,
+          -0.48
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "left": [
+          -0.15,
+          -0.12,
+          -0.14
+        ],
+        "right": [
+          0.038,
+          -0.1,
+          0.095
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 318,
+          "textures": 27
+        }
+      },
+      {
+        "name": "sprint-enter",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          0,
+          1.5212454214035844,
+          -45
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aiming": false,
+        "sprinting": true,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.062499698653448246,
+          -0.14993672778511627,
+          -0.48
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "left": [
+          -0.15,
+          -0.12,
+          -0.14
+        ],
+        "right": [
+          0.038,
+          -0.1,
+          0.095
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 318,
+          "textures": 27
+        }
+      },
+      {
+        "name": "sprint",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          0,
+          1.3175597748535048,
+          -46.38860799999744
+        ],
+        "velocity": [
+          0,
+          0,
+          -6.88
+        ],
+        "aiming": false,
+        "sprinting": true,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          -0.018140338617008603,
+          -0.2864651060974497,
+          -0.5353861709437083
+        ],
+        "rotation": [
+          -0.04351489284081938,
+          0.13588546311060182,
+          -0.05216307496092991,
+          0.9883929424206194
+        ],
+        "left": [
+          -0.15,
+          -0.12,
+          -0.14
+        ],
+        "right": [
+          0.038,
+          -0.1,
+          0.095
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 318,
+          "textures": 27
+        }
+      },
+      {
+        "name": "sprint-recovered",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          0,
+          1.3175597748535048,
+          -46.38860799999744
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aiming": false,
+        "sprinting": false,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.1573647272805658,
+          -0.19916323753033396,
+          -0.4808305475811785
+        ],
+        "rotation": [
+          -0.000652994686699903,
+          0.0020462205701927915,
+          -0.000812790166690489,
+          0.9999973629722542
+        ],
+        "left": [
+          -0.15,
+          -0.12,
+          -0.14
+        ],
+        "right": [
+          0.038,
+          -0.1,
+          0.095
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 318,
+          "textures": 27
+        }
+      }
+    ],
+    "errors": [],
+    "sourceRoot": "/workspace/work/w04-baseline",
+    "sourceBase": "11dc4c0e86b1d73912f5b58a44030983b2e21b40",
+    "captureMode": "pose-only",
+    "map": "Training Field"
+  },
+  "after": {
+    "rendering": "Actual App first-person Training Field renderer, real keyboard/mouse and native RAF mechanics; rendering suspended between explicit screenshots for software WebGL. No native-performance claim.",
+    "samples": [
+      {
+        "name": "idle",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          0,
+          1.5212454214035844,
+          -45
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aiming": false,
+        "sprinting": false,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.16,
+          -0.2546085310192999,
+          -0.53
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "left": [
+          -0.10300000000000001,
+          -0.13699999999999996,
+          -0.12500000000000056
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 319,
+          "textures": 27
+        }
+      },
+      {
+        "name": "ads",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          0,
+          1.5212454214035844,
+          -45
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aiming": true,
+        "sprinting": false,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.05996275162563938,
+          -0.19236284314719707,
+          -0.53
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "left": [
+          -0.10300000000000001,
+          -0.13699999999999996,
+          -0.12500000000000056
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 319,
+          "textures": 27
+        }
+      },
+      {
+        "name": "moving-forward",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          0,
+          1.361503328821001,
+          -46.089503999993795
+        ],
+        "velocity": [
+          0,
+          0,
+          -4.16
+        ],
+        "aiming": false,
+        "sprinting": false,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.15078278988783572,
+          -0.24620933751196977,
+          -0.52486910290148
+        ],
+        "rotation": [
+          -0.0029601286184839917,
+          0,
+          0,
+          0.9999956188096836
+        ],
+        "left": [
+          -0.10300000000000001,
+          -0.13699999999999998,
+          -0.12500000000000056
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 319,
+          "textures": 27
+        }
+      },
+      {
+        "name": "direction-change",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          -0.33696000000000004,
+          1.3386842622642017,
+          -46.089503999993795
+        ],
+        "velocity": [
+          -4.16,
+          0,
+          -2.547265342226495e-16
+        ],
+        "aiming": false,
+        "sprinting": false,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.15922743543070542,
+          -0.2513810640577734,
+          -0.5269876694917562
+        ],
+        "rotation": [
+          -0.0017362934647678961,
+          -0.0008933740109616704,
+          -0.0017790134116460192,
+          0.9999965111334949
+        ],
+        "left": [
+          -0.10299999999999995,
+          -0.13699999999999996,
+          -0.12500000000000056
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 319,
+          "textures": 27
+        }
+      },
+      {
+        "name": "stopped",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          -0.33696000000000004,
+          1.3386842622642017,
+          -46.089503999993795
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aiming": false,
+        "sprinting": false,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.16001204136861485,
+          -0.2541418464637916,
+          -0.5299867016239019
+        ],
+        "rotation": [
+          -7.671771679566215e-06,
+          -1.357174856597221e-05,
+          -2.714297652315312e-05,
+          0.9999999995101051
+        ],
+        "left": [
+          -0.10299999999999997,
+          -0.13699999999999996,
+          -0.12500000000000763
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 319,
+          "textures": 27
+        }
+      },
+      {
+        "name": "sprint-enter",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          -0.33696000000000004,
+          1.2800595188014483,
+          -46.48876799999892
+        ],
+        "velocity": [
+          0,
+          0,
+          -4.16
+        ],
+        "aiming": false,
+        "sprinting": true,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.08840986433701505,
+          -0.27865496296448994,
+          -0.5445045796852334
+        ],
+        "rotation": [
+          -0.019245661628199556,
+          0.05810747493449669,
+          -0.02172107288717567,
+          0.997888431067251
+        ],
+        "left": [
+          -0.10300000000000006,
+          -0.1369999999999995,
+          -0.12500000000000056
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 319,
+          "textures": 27
+        }
+      },
+      {
+        "name": "sprint",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          -0.33696000000000004,
+          0.9717380909766595,
+          -48.58302399999379
+        ],
+        "velocity": [
+          0,
+          0,
+          -4.16
+        ],
+        "aiming": false,
+        "sprinting": true,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.02875780265110887,
+          -0.3003781521664856,
+          -0.5539037464112718
+        ],
+        "rotation": [
+          -0.03586654098084834,
+          0.10441785771286394,
+          -0.039343984520435395,
+          0.9931075234388173
+        ],
+        "left": [
+          -0.10299999999999651,
+          -0.13699999999999998,
+          -0.12500000000000056
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 319,
+          "textures": 27
+        }
+      },
+      {
+        "name": "sprint-recovered",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          -0.33696000000000004,
+          0.9717380909766595,
+          -48.58302399999379
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aiming": false,
+        "sprinting": false,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.15777488071123785,
+          -0.2558976890723025,
+          -0.5304544592717599
+        ],
+        "rotation": [
+          -0.000578559390280511,
+          0.0017692858736338836,
+          -0.0006703339643435517,
+          0.9999980427725373
+        ],
+        "left": [
+          -0.10300000000000001,
+          -0.13699999999999987,
+          -0.12499999999999346
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 319,
+          "textures": 27
+        }
+      },
+      {
+        "name": "motor-warmup",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          -0.33696000000000004,
+          0.9717380909766595,
+          -48.58302399999379
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aiming": false,
+        "sprinting": false,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0.042,
+        "spin": 2.3520000000000003,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.15911704083806402,
+          -0.2555335947574306,
+          -0.5301852314054066
+        ],
+        "rotation": [
+          -0.00022818734186594707,
+          0.0007050982056675685,
+          -0.0002666556373944547,
+          0.9999996898308661
+        ],
+        "left": [
+          -0.10299999999999997,
+          -0.13700000000000018,
+          -0.12500000000000053
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 0.09878400000000002,
+        "memory": {
+          "geometries": 319,
+          "textures": 27
+        }
+      },
+      {
+        "name": "firing",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          -0.33696000000000004,
+          0.9717380909766595,
+          -48.58302399999379
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aiming": false,
+        "sprinting": false,
+        "shots": 3,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 3.75,
+        "warmup": 0.5,
+        "spin": 28,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.15999789397313302,
+          -0.2558264394547198,
+          -0.5300004555213014
+        ],
+        "rotation": [
+          -5.375394492864449e-07,
+          1.6842812203894386e-06,
+          -6.323419639400566e-07,
+          0.9999999999982372
+        ],
+        "left": [
+          -0.10300000000000001,
+          -0.13699999999999984,
+          -0.12500000000000766
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 11.723372079978,
+        "memory": {
+          "geometries": 319,
+          "textures": 27
+        }
+      },
+      {
+        "name": "overheat",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          -0.33696000000000004,
+          0.9717380909766595,
+          -48.58302399999379
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aiming": false,
+        "sprinting": false,
+        "shots": 62,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 100,
+        "warmup": 0.5,
+        "spin": 28,
+        "overheated": true,
+        "reloading": true,
+        "ventTimer": 2,
+        "root": [
+          0.15999999999999998,
+          -0.2544337858398567,
+          -0.5300000000000001
+        ],
+        "rotation": [
+          -6.84293485642391e-33,
+          2.148377473853145e-32,
+          0.000506841946892515,
+          0.9999998715556122
+        ],
+        "left": [
+          -0.10300000000000001,
+          -0.13699999999999996,
+          -0.12500000000000056
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 150.76909255997046,
+        "memory": {
+          "geometries": 319,
+          "textures": 27
+        }
+      },
+      {
+        "name": "cooled",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          -0.33696000000000004,
+          0.9717380909766595,
+          -48.58302399999379
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aiming": false,
+        "sprinting": false,
+        "shots": 62,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "ventTimer": 0,
+        "root": [
+          0.15999999999999998,
+          -0.255705685567815,
+          -0.5300000000000001
+        ],
+        "rotation": [
+          -1.261211055739275e-42,
+          3.9527132620957347e-42,
+          -1.4866583184785706e-42,
+          1
+        ],
+        "left": [
+          -0.10300000000000001,
+          -0.13699999999999996,
+          -0.12500000000000056
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 176.23397310997154,
+        "memory": {
+          "geometries": 320,
+          "textures": 27
+        }
+      },
+      {
+        "name": "re-equipped",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          -0.33696000000000004,
+          0.9717380909766595,
+          -48.58302399999379
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aiming": false,
+        "sprinting": false,
+        "shots": 62,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "ventTimer": 0,
+        "root": [
+          0.15999999999999998,
+          -0.2558392378612695,
+          -0.5300000000000001
+        ],
+        "rotation": [
+          -1.706863554496221e-43,
+          5.349415688788415e-43,
+          -2.0119732462439445e-43,
+          1
+        ],
+        "left": [
+          -0.10300000000000001,
+          -0.13699999999999996,
+          -0.12500000000000056
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 176.23397310997154,
+        "memory": {
+          "geometries": 320,
+          "textures": 27
+        }
+      }
+    ],
+    "errors": [],
+    "sourceRoot": "/workspace/Gun-Arena-V2",
+    "sourceBase": "11dc4c0e86b1d73912f5b58a44030983b2e21b40",
+    "captureMode": "full gameplay/input",
+    "map": "Training Field"
+  },
+  "area51": {
+    "map": "Area 51",
+    "rendering": "Actual App first-person gameplay renderer, real keyboard/mouse and native RAF mechanics; rendering suspended between explicit screenshots for software WebGL. No native-performance claim.",
+    "samples": [
+      {
+        "name": "idle",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          -8,
+          1.65,
+          -7
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aiming": false,
+        "sprinting": false,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.16,
+          -0.254485489468203,
+          -0.53
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "left": [
+          -0.10300000000000006,
+          -0.13699999999999996,
+          -0.12499999999999968
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 467,
+          "textures": 52
+        }
+      },
+      {
+        "name": "ads",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          -8,
+          1.65,
+          -7
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aiming": true,
+        "sprinting": false,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.0590590962493397,
+          -0.19170772851603785,
+          -0.53
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "left": [
+          -0.10300000000000006,
+          -0.13699999999999996,
+          -0.12499999999999968
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 467,
+          "textures": 52
+        }
+      },
+      {
+        "name": "sprint-enter",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          -8,
+          1.65,
+          -7.672864000005125
+        ],
+        "velocity": [
+          0,
+          0,
+          -6.88
+        ],
+        "aiming": false,
+        "sprinting": true,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.005015526627757986,
+          -0.27194003023742475,
+          -0.5502594210764099
+        ],
+        "rotation": [
+          -0.03212297956339984,
+          0.09195909020227774,
+          -0.03541435886164641,
+          0.9946142282812755
+        ],
+        "left": [
+          -0.10300000000000095,
+          -0.13699999999999996,
+          -0.12500000000000056
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 467,
+          "textures": 52
+        }
+      },
+      {
+        "name": "sprint",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          -8,
+          1.65,
+          -10.581040000000005
+        ],
+        "velocity": [
+          0,
+          0,
+          -6.88
+        ],
+        "aiming": false,
+        "sprinting": true,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          -0.022993545871677932,
+          -0.3210589888981275,
+          -0.5608443513923013
+        ],
+        "rotation": [
+          -0.05168394362364698,
+          0.14610500051096353,
+          -0.05512426249923399,
+          0.9863789406111196
+        ],
+        "left": [
+          -0.10299999999999918,
+          -0.13699999999999996,
+          -0.12500000000000233
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 467,
+          "textures": 52
+        }
+      },
+      {
+        "name": "sprint-recovered",
+        "pitch": 0,
+        "yaw": 0,
+        "position": [
+          -8,
+          1.65,
+          -10.581040000000005
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aiming": false,
+        "sprinting": false,
+        "shots": 0,
+        "ammo": 999,
+        "reserve": 999,
+        "heat": 0,
+        "warmup": 0,
+        "spin": 0,
+        "overheated": false,
+        "reloading": false,
+        "root": [
+          0.15672863648955382,
+          -0.2555680345221809,
+          -0.530649264734021
+        ],
+        "rotation": [
+          -0.0008559927950499201,
+          0.0025896627564323677,
+          -0.0009716265740607226,
+          0.9999958084236868
+        ],
+        "left": [
+          -0.10300000000000097,
+          -0.13700000000000018,
+          -0.12499999999999879
+        ],
+        "right": [
+          0.038,
+          -0.15,
+          0.075
+        ],
+        "rotor": 0,
+        "memory": {
+          "geometries": 467,
+          "textures": 52
+        }
+      }
+    ],
+    "errors": [],
+    "sourceRoot": "/workspace/Gun-Arena-V2",
+    "sourceBase": "11dc4c0e86b1d73912f5b58a44030983b2e21b40",
+    "captureMode": "pose-only"
+  }
+}
