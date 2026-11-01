@@ -542,6 +542,7 @@ export function createViewmodelManager(): ViewmodelManager {
     targetPosition.fromArray(aiming ? grip.aim : sprinting && !pistol ? grip.sprint : grip.hip);
     if (aiming) targetEuler.set(...grip.aimRotation);
     else if (sprinting && !pistol) targetEuler.set(...grip.sprintRotation);
+    else if (grip.hipRotation) targetEuler.set(...grip.hipRotation);
     else targetEuler.set(0, 0, 0);
     targetRotation.setFromEuler(targetEuler);
     if (!poseInitialized) { viewPosition.copy(targetPosition); viewRotation.copy(targetRotation); poseInitialized = true; }
@@ -589,7 +590,7 @@ export function createViewmodelManager(): ViewmodelManager {
       const p = THREE.MathUtils.smoothstep(sequence.elapsed / phase.duration, 0, 1);
       const progress = 1 - (ws.reloadT ?? 0) / (ws.totalReloadT || 1);
       const lift = w.id === 'shotgun' ? phase.phase === 'open' ? p : phase.phase === 'close' ? 1 - p : 1 : Math.min(1, progress * 7, (1 - progress) * 7);
-      reloadRotation.setFromEuler(w.id === 'shotgun' ? reloadEuler.set(-.06, .08, -.52) : w.id === 'sniper' ? reloadEuler.set(-.08, .22, -.40) : reloadEuler.set(.14, -.18, -.38));
+      reloadRotation.setFromEuler(w.id === 'minigun' ? reloadEuler.set(-.025, .045, -.08) : w.id === 'shotgun' ? reloadEuler.set(-.06, .08, -.52) : w.id === 'sniper' ? reloadEuler.set(-.08, .22, -.40) : reloadEuler.set(.14, -.18, -.38));
       assembly.root.quaternion.slerp(reloadRotation, lift);
       reloadPosition.copy(assembly.root.position); reloadPosition.x += w.id === 'shotgun' ? .07 : -.02; reloadPosition.y += w.id === 'shotgun' ? .06 : .05; reloadPosition.z += w.id === 'shotgun' ? -.025 : .025;
       assembly.root.position.lerp(reloadPosition, lift);

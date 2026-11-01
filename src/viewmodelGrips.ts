@@ -21,6 +21,7 @@ export interface ViewmodelGrip {
   /** Maximum anatomical cuff-to-elbow length, independent of weapon reach. */
   sleeveLength: number;
   hip: Triple;
+  hipRotation?: Triple;
   aim: Triple;
   aimRotation: Triple;
   sprint: Triple;
@@ -92,9 +93,15 @@ export const VIEWMODEL_GRIPS: Readonly<Record<WeaponModelId, ViewmodelGrip>> = {
   railgun: grip(primary(), under(-.25,-.090), { sleeveLength:.28, hip: [.15, -.235, -.42], aim: [0, -.157, -.42], sprint: [-.045, -.285, -.49], sprintRotation: [-.12, .56, -.12] }),
   rocket: grip(primary(.155), vertical(-.165, -.038, -.105), { hip: [.18, -.235, -.43], aim: [0, -.145, -.43], sprint: [-.025, -.29, -.49], sprintRotation: [-.08, .34, -.10], reloadReach: [-.04, -.045, .40], elbows: { right: [.36, -.56, -.24], left: [.02, -.60, -.22] } }),
   grenade_launcher: grip(primary(.175), vertical(-.165, -.039, -.10), { hip: [.16, -.225, -.39], aim: [0, -.105, -.39], sprint: [-.04, -.285, -.46], sprintRotation: [-.10, .40, -.10] }),
-  minigun: grip(primary(.075, .038, -.15), { ...under(-.125, -.137, -.103), followPart: 'supportCradle', partOffset: [-.023, -.052, .015] }, {
-    hip: [.16, -.255, -.53], aim: [.055, -.19, -.53], sprint: [-.025, -.32, -.57], sprintRotation: [-.08, .30, -.10],
-    elbows: { right: [.40, -.58, -.27], left: [-.08, -.55, -.32] },
+  minigun: grip(primary(.075, .038, -.15), {
+    position: [-.133118, -.13286, -.125], rotation: [1.6043094885, .0582213549, -2.0934999556],
+    curl: 1, fingerAngles: [.05, .209, 1.397], thumbAngles: [.474, .802, .904],
+    followPart: 'supportCradle', partOffset: [-.053118, -.04786, .015],
+  }, {
+    // Show the underside load path and both wrists instead of hiding them
+    // behind a close receiver. Grip geometry and the accepted barrel remain fixed.
+    hip: [.22, -.15, -.64], hipRotation: [0, .20, -.035], aim: [.075, -.14, -.64], sprint: [-.025, -.32, -.57], sprintRotation: [-.08, .30, -.10],
+    elbows: { right: [.40, -.58, -.27], left: [-.16, -.56, -.34] },
     reloadReach: [-.23, -.16, -.18],
   }),
 };
