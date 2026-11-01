@@ -1,0 +1,110 @@
+[
+  {
+    "command": "npm run lint",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run build",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:batch1",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:batch2",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:weapons",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:scenes",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:tactical",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:area51",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:bosses",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:runtime",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:audio",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:performance",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:preparation",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:controls",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:viewmodel",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:br",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:sniper",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:shotgun",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:pistol",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:pistol:sprint",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:smg",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:lmg",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:lmg:audio-browser",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:railgun",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:plasma",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:plasma:polish",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:plasma:tactile",
+    "exitCode": 0
+  }
+]

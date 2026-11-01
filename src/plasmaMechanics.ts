@@ -3,13 +3,14 @@ import type {WeaponSlotState} from './types';
 
 /** Metres in weapon space; every reload contact runs on the gameplay clock. */
 export const PLASMA=Object.freeze({
- capacity:60,reserve:180,interval:.125,speed:200,range:130,heatPerShot:2.5,cooling:16,vent:2.25,reload:2.70,
+ capacity:60,reserve:180,interval:.125,speed:200,range:130,heatPerShot:2.5,cooling:16,vent:2.25,forcedVent:2.90,reload:3.20,
  cylinder:[-.008,.024,-.066] as const, cylinderRadius:.028,cylinderHalfLength:.103,
  upperHinge:[-.053,.080,-.066] as const,lowerHinge:[-.053,-.045,-.066] as const,doorAngle:86*Math.PI/180,
  freshStart:[-.24,-.22,-.066] as const,freshAlign:[-.16,.024,-.066] as const,freshContact:[-.046,.024,-.066] as const,
  carry:[.125,-.222,-.416] as const,rotation:[.025,.08,-.18] as const,
- ejectTime:.64,alignTime:1.3496,partialTime:1.54,seatTime:2.01,ejectionLifetime:.66,
- swap:[['present',.42],['open',.22],['eject',.22],['insert',.68],['slap',.47],['close',.35],['recover',.34]] as const,
+ ejectTime:.69,alignTime:1.4512,partialTime:1.65,seatTime:2.23,handRetraction:.105,ejectionLifetime:.66,
+ swap:[['present',.44],['open',.25],['eject',.25],['insert',.71],['retract',.42],['slap',.16],['lock',.27],['close',.35],['recover',.35]] as const,
+ forcedThermal:[['present',.24],['unlock',.20],['open',.28],['vent',.78],['react',.90],['close',.18],['recover',.32]] as const,
  thermal:[['present',.24],['unlock',.20],['open',.28],['vent',.78],['react',.37],['close',.18],['recover',.20]] as const,
 });
 export interface PlasmaState {
@@ -22,7 +23,8 @@ export const createPlasmaState=(installed=true):PlasmaState=>({upperDoor:0,lower
 export type PlasmaEvent='chamber_release'|'doors_open'|'cylinder_eject'|'cylinder_align'|'cylinder_partial'|'cylinder_seat'|'doors_close'|'ready'|'cooling_pulse'|'thermal_release'|'thermal_open'|'heat_react'|'thermal_close';
 export type PlasmaListener=(event:PlasmaEvent,speed:number,late:number)=>void;
 export const plasmaEase=(p:number)=>{p=THREE.MathUtils.clamp(p,0,1);return p*p*(3-2*p);};
-export function plasmaSeating(p:number){const t=THREE.MathUtils.clamp((p-.72)/.28,0,1);return 1-Math.pow(1-t,3);}
+// Palm crosses the wind-back gap first; only physical contact drives the last 25%.
+export function plasmaSeating(p:number){const t=THREE.MathUtils.clamp((p-.62)/.38,0,1);return 1-Math.pow(1-t,3);}
 export function plasmaDamageFalloff(distance:number){return distance<=60?1:Math.max(.40,1-((distance-60)/60)*.60);}
 export function sealedReserve(charges:number){return Math.max(0,Math.floor((Number.isFinite(charges)?charges:0)/60)*60);}
 /** A pickup is a sealed cartridge: reconcile arbitrary legacy charge grants once. */
@@ -37,7 +39,7 @@ export function beginPlasmaAction(s:WeaponSlotState,multiplier=1,force?:'swap'|'
  if(mode==='swap'){s.reserve=reserve;s.ammo=ammo;}
  const physical=s.plasma??=createPlasmaState();physical.ejectionAge=-1;
  const speed=Math.max(.1,Number.isFinite(multiplier)?multiplier:1);
- const phases=(mode==='swap'?PLASMA.swap:PLASMA.thermal).map(([phase,duration])=>({phase,duration:duration*speed}));
+ const phases=(mode==='swap'?PLASMA.swap:s.overheated?PLASMA.forcedThermal:PLASMA.thermal).map(([phase,duration])=>({phase,duration:duration*speed}));
  s.reloadSequence={kind:mode==='swap'?'plasmaSwap':'plasmaVent',phases,index:0,elapsed:0,empty:s.ammo===0,shellsRemaining:0,inserted:0,plasmaHadCylinder:physical.cartridgeInstalled,plasmaStartHeat:heat,plasmaForcedVent:!!s.overheated,plasmaSpeed:speed};
  s.reloading=true;s.totalReloadT=phases.reduce((n,p)=>n+p.duration,0);s.reloadT=s.totalReloadT;s.plasmaCooldown=PLASMA.interval;s.isTacticalReload=s.ammo>0;return true;
 }
@@ -76,7 +78,8 @@ export function advancePlasmaAction(s:WeaponSlotState,delta:number,onContact?:Pl
    if(event)onContact?.(event,q.plasmaSpeed!,remaining);
   }else if(stage.phase==='unlock')onContact?.('thermal_release',q.plasmaSpeed!,remaining);
   else if(stage.phase==='open'){onContact?.('thermal_open',q.plasmaSpeed!,remaining);onContact?.('cooling_pulse',q.plasmaSpeed!,remaining);}
-  else if(stage.phase==='vent')onContact?.('heat_react',q.plasmaSpeed!,remaining);
+  // Safely silent hook for a future approved discomfort asset: forced recovery only.
+  else if(stage.phase==='vent'&&q.plasmaForcedVent)onContact?.('heat_react',q.plasmaSpeed!,remaining);
   else if(stage.phase==='close')onContact?.('thermal_close',q.plasmaSpeed!,remaining);
   else if(stage.phase==='recover')onContact?.('ready',q.plasmaSpeed!,remaining);
   q.index++;q.elapsed=0;

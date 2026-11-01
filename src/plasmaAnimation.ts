@@ -8,7 +8,8 @@ export function plasmaFreshPose(phase:string,p:number,out:THREE.Vector3){
  if(phase==='insert'){
   if(p<.72)out.fromArray(PLASMA.freshStart).lerp(newAlign,plasmaEase(p/.72));
   else out.fromArray(PLASMA.freshAlign).lerp(newContact,plasmaEase((p-.72)/.28));
- }else if(phase==='slap')out.fromArray(PLASMA.freshContact).lerp(seated,plasmaSeating(p));
+ }else if(phase==='retract')out.fromArray(PLASMA.freshContact);
+ else if(phase==='slap')out.fromArray(PLASMA.freshContact).lerp(seated,plasmaSeating(p));
  else out.copy(seated);
  return out;
 }
@@ -46,7 +47,7 @@ export function createPlasmaAnimator(assembly:WeaponAssembly,firstPerson=true){
    assembly.root.position.add(pivotBefore.sub(pivotAfter));
    // Seating pressure is held, then released as a damped receiver response.
    if(swap&&stage.phase==='slap')assembly.root.rotation.z-=.012*plasmaSeating(p);
-   if(swap&&stage.phase==='close'){
+   if(swap&&stage.phase==='lock'){
     const t=q.elapsed/(q.plasmaSpeed??1),mass=Math.exp(-t*19)*Math.cos(t*48);
     assembly.root.rotation.z-=.012*mass;assembly.root.rotation.x+=.020*Math.exp(-t*22)*Math.sin(t*55);
    }
@@ -55,7 +56,7 @@ export function createPlasmaAnimator(assembly:WeaponAssembly,firstPerson=true){
     assembly.root.rotation.x+=.018*pressure;assembly.root.rotation.z-=.009*pressure;
    }
   }
-  if(swap&&(stage.phase==='insert'||stage.phase==='slap')){
+  if(swap&&(stage.phase==='insert'||stage.phase==='retract'||stage.phase==='slap')){
    a.gasCylinder.visible=false;a.freshGasCylinder.visible=true;plasmaFreshPose(stage.phase,p,a.freshGasCylinder.position);
   }
  };
@@ -88,8 +89,8 @@ export function createPlasmaHandAnimator(){
   plasmaFreshPose('insert',0,carryHand);carryHand.add(palmOffset);
   seatHand.fromArray(PLASMA.cylinder).add(palmOffset);
   if(q.kind==='plasmaVent'){
-   const intensity=q.plasmaForcedVent?1:.50+.25*(q.plasmaStartHeat??0)/100;
-   ventHand.set(-.190,-.005,-.170);reactHand.set(-.255,-.065,-.120);
+   const forced=!!q.plasmaForcedVent;
+   ventHand.set(-.190,-.005,-.170);reactHand.set(forced?-.285:-.190,forced?-.090:-.005,forced?-.100:-.170);
    if(phase==='present'){
     if(p<.5)out.lerpVectors(support,outerFront,plasmaEase(p*2));
     else out.lerpVectors(outerFront,thermalTarget,plasmaEase((p-.5)*2));
@@ -99,17 +100,23 @@ export function createPlasmaHandAnimator(){
    else if(phase==='vent'){
     point.copy(thermalTarget).lerp(ventHand,.55);out.lerpVectors(point,ventHand,plasmaEase(p/.20));
    }else if(phase==='react'){
-    out.lerpVectors(ventHand,reactHand,plasmaEase(p/.30));
-    const shake=Math.sin(Math.PI*p)*Math.sin(p*Math.PI*5)*intensity;
-    out.x-=.012*shake;out.y+=.014*shake;
-    qout.multiply(reactionQ.setFromEuler(euler.set(.12*shake,0,.18*shake)));
+    // .24 s withdrawal, then two broad, decaying waves over .66 s.
+    // Manual venting holds the clear glove quietly; it has no heat reaction.
+    out.lerpVectors(ventHand,reactHand,forced?plasmaEase(p/(.24/.90)):1);
+    const wave=forced?THREE.MathUtils.clamp((p-.24/.90)/(1-.24/.90),0,1):0;
+    const shake=Math.sin(wave*Math.PI*4)*Math.sin(Math.PI*wave)*(1-.45*wave);
+    out.y+=.028*shake;out.z+=.018*shake;
+    qout.multiply(reactionQ.setFromEuler(euler.set(.30*shake,.10*shake,.40*shake)));
    }else if(phase==='close')out.copy(reactHand);
    else if(phase==='recover'){
     if(p<.5)out.lerpVectors(reactHand,outerFront,plasmaEase(p*2));
     else out.lerpVectors(outerFront,support,plasmaEase((p-.5)*2));
     qout.slerpQuaternions(contactRotation,supportQ,plasmaEase(p));
    }
-   return phase==='present'||phase==='unlock'?1:phase==='recover'?.65+.35*plasmaEase(p):.65;
+   if(phase==='present'||phase==='unlock')return 1;
+   if(phase==='recover'){const relaxed=forced?.25:.65;return relaxed+(1-relaxed)*plasmaEase(p);}
+   if(forced&&(phase==='react'||phase==='close'))return .65-.40*(phase==='close'?1:plasmaEase(p/(.24/.90)));
+   return .65;
   }
   if(phase==='present'){
    // Clear the closed receiver laterally before sweeping back to the thumb control.
@@ -125,12 +132,14 @@ export function createPlasmaHandAnimator(){
    else out.lerpVectors(point,clear,plasmaEase((p-.20)/.80));
   }
   else if(phase==='eject')out.lerpVectors(clear,carryHand,plasmaEase(p));
-  else if(phase==='insert'||phase==='slap'){
+  else if(phase==='insert'||phase==='retract'||phase==='slap'){
    part(a,'freshGasCylinder',[-.052,-.016,.025],out);
-   // A small palm rebrace communicates resistance; it returns to contact before
-   // the cylinder moves through its final quarter, never driving from a gap.
-   if(phase==='slap'&&p<.72)out.x-=.018*Math.sin(Math.PI*plasmaEase(p/.72));
+   // Retract 105 mm along the actual transverse seating axis, outside the bay.
+   // Close that gap before driving the cartridge: palm and vessel never separate.
+   if(phase==='retract')out.x-=PLASMA.handRetraction*plasmaEase(p);
+   if(phase==='slap'&&p<.62)out.x-=PLASMA.handRetraction*(1-(p/.62)**2);
   }
+  else if(phase==='lock')out.copy(seatHand);
   else if(phase==='close'){
    // Withdraw outside the door sweep before returning under the fore-end.
    point.copy(seatHand);point.x-=.12;
@@ -138,7 +147,7 @@ export function createPlasmaHandAnimator(){
    if(p>.24)out.lerp(outerFront,plasmaEase((p-.24)/.76));
   }else if(phase==='recover'){out.lerpVectors(outerFront,support,plasmaEase(p));qout.slerpQuaternions(contactRotation,supportQ,plasmaEase(p));}
   // Keep thumb-release FK exact and flatten only on the distinct seating beat.
-  return phase==='eject'?1-.80*plasmaEase(p):phase==='insert'?.20:phase==='slap'?.20-.12*plasmaEase(p/.72):phase==='close'?.08+.92*plasmaEase(p):1;
+  return phase==='eject'?1-.80*plasmaEase(p):phase==='insert'?.20:phase==='retract'?.20-.12*plasmaEase(p):phase==='slap'||phase==='lock'?.08:phase==='close'?.08+.92*plasmaEase(p):1;
  };
 }
 const palmOffset=new THREE.Vector3(-.052,-.016,.025);

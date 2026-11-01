@@ -1,3 +1,4 @@
+import {plasmaAimPitch} from './plasmaRecoil';
 import {PLASMA,advancePlasmaFire,advancePlasmaCooling,beginPlasmaAction,addPlasmaSupply} from './plasmaMechanics';
 import {createPlasmaProjectilePool} from './plasmaProjectiles';
 import {canChargeRailgun,railgunBreechReady,markRailgunFired} from './railgunMechanics';
@@ -2527,13 +2528,17 @@ export default function App() {
 
     function firePlasmaShot():boolean {
       const w=currentSlot(),ws=currentSlotState();if(w.id!=='laser'||!canPlayerFire(player))return false;
-      const camera=getFireCamera(),spread=player.aiming?(w.adsSpread??.003):(w.spread??.008);
-      plasmaNdc.set((Math.random()-.5)*spread*2,(Math.random()-.5)*spread*2);plasmaAim.setFromCamera(plasmaNdc,camera);plasmaAim.far=PLASMA.range;
+      const aimCamera=getFireCamera(),spread=player.aiming?(w.adsSpread??.003):(w.spread??.008);
+      plasmaNdc.set((Math.random()-.5)*spread*2,(Math.random()-.5)*spread*2);plasmaAim.setFromCamera(plasmaNdc,aimCamera);plasmaAim.far=PLASMA.range;
       const hit=plasmaAim.intersectObjects(world.hittableObjects,false).find(h=>h.object.userData.type!=='pickup');
-      plasmaTarget.copy(hit?.point??plasmaAim.ray.at(PLASMA.range,plasmaTarget));camera.getWorldPosition(plasmaEye);
+      plasmaTarget.copy(hit?.point??plasmaAim.ray.at(PLASMA.range,plasmaTarget));aimCamera.getWorldPosition(plasmaEye);
       if(thirdPerson&&thirdPersonActor?.weaponAssembly)thirdPersonActor.weaponAssembly.muzzle.getWorldPosition(plasmaOrigin);else vmManager.getMuzzlePosition(plasmaOrigin);
       if(!plasmaPool.spawn(plasmaOrigin,plasmaTarget,player.team,'player',w.damage??12,w.headshotMult??1.7,plasmaEye,getCombatContext()))return false;
-      player.shotsFired++;player.continuousShots++;recoilKick+=.009;recoilPitch+=.006;triggerPlayerFlash();
+      // The acquired bolt keeps the pre-shot target; the next shot sees the new aim.
+      // Mutate player pitch (mouse input owns the same value), never decaying recoilPitch.
+      player.pitch=plasmaAimPitch(player.pitch,player.aiming);
+      camera.rotation.x=player.pitch+recoilPitch;camera.updateMatrixWorld(true);
+      player.shotsFired++;player.continuousShots++;recoilKick+=.009;triggerPlayerFlash();
       playAutomaticWeaponFire('laser',player.continuousShots);return true;
     }
 

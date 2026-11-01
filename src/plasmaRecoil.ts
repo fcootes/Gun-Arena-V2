@@ -1,24 +1,29 @@
 import * as THREE from 'three';
-/** Presentation only: no camera, aim, spread, projectile or gameplay state. */
-export const PLASMA_RECOIL=Object.freeze({frequency:42,damping:.72,rearwardVelocity:2.35,pitchVelocity:4.2,lateralVelocity:.16,rollVelocity:.54,adsScale:.62});
+/** Plasma only. Physical compression and permanent, mouse-compensable aim are separate. */
+export const PLASMA_RECOIL=Object.freeze({frequency:50,damping:1,rearwardVelocity:4.6,pitchVelocity:.65,lateralVelocity:.045,rollVelocity:.12,adsScale:.62,aimPitch:.0045,adsAimScale:.65});
+/** Radians, applied once AFTER successful projectile acquisition to the player's pitch.
+ * The launched bolt owns its pre-recoil target. No automatic pitch recovery. */
+export function plasmaAimPitch(pitch:number,aiming:boolean){
+ return THREE.MathUtils.clamp(pitch+PLASMA_RECOIL.aimPitch*(aiming?PLASMA_RECOIL.adsAimScale:1),-Math.PI/2+.02,Math.PI/2-.02);
+}
 export function createPlasmaRecoil(){
  const position=new THREE.Vector3(),rotation=new THREE.Vector3(),linearVelocity=new THREE.Vector3(),angularVelocity=new THREE.Vector3();
- const omega=PLASMA_RECOIL.frequency,a=omega*PLASMA_RECOIL.damping,b=omega*Math.sqrt(1-PLASMA_RECOIL.damping**2);
+ const omega=PLASMA_RECOIL.frequency;
  const pivot=new THREE.Vector3(.038,-.10,.100),before=new THREE.Vector3(),after=new THREE.Vector3(),offset=new THREE.Vector3(),q=new THREE.Quaternion(),euler=new THREE.Euler();
  let serial=0;
  function reset(){position.set(0,0,0);rotation.set(0,0,0);linearVelocity.set(0,0,0);angularVelocity.set(0,0,0);serial=0;}
- function impulse(){const side=(serial++%2)*2-1;linearVelocity.z=Math.min(5,linearVelocity.z+PLASMA_RECOIL.rearwardVelocity);linearVelocity.x+=side*PLASMA_RECOIL.lateralVelocity;angularVelocity.x=Math.min(9,angularVelocity.x+PLASMA_RECOIL.pitchVelocity);angularVelocity.y+=side*.18;angularVelocity.z+=side*PLASMA_RECOIL.rollVelocity;}
- /** Exact underdamped solution, stable across 30/60/144 Hz and stalls. */
+ function impulse(){const side=(serial++%2)*2-1;linearVelocity.z=Math.min(6,linearVelocity.z+PLASMA_RECOIL.rearwardVelocity);linearVelocity.x+=side*PLASMA_RECOIL.lateralVelocity;angularVelocity.x=Math.min(1,angularVelocity.x+PLASMA_RECOIL.pitchVelocity);angularVelocity.z+=side*PLASMA_RECOIL.rollVelocity;}
+ /** Exact critically damped solution: no overshoot, periodic rocking or dt substeps. */
  function advance(dt:number){
   if(!Number.isFinite(dt)||dt<=0)return;
-  const decay=Math.exp(-a*dt),c=Math.cos(b*dt),s=Math.sin(b*dt);
-  integrate(position,linearVelocity,decay,c,s);integrate(rotation,angularVelocity,decay,c,s);
+  const decay=Math.exp(-omega*dt);
+  integrate(position,linearVelocity,decay,dt);integrate(rotation,angularVelocity,decay,dt);
  }
- function integrate(x:THREE.Vector3,v:THREE.Vector3,decay:number,c:number,s:number){
-  for(let i=0;i<3;i++){const initial=x.getComponent(i),velocity=v.getComponent(i),k=(velocity+a*initial)/b;
-   x.setComponent(i,decay*(initial*c+k*s));v.setComponent(i,decay*(velocity*c-(a*velocity+omega*omega*initial)/b*s));}
+ function integrate(x:THREE.Vector3,v:THREE.Vector3,decay:number,dt:number){
+  for(let i=0;i<3;i++){const initial=x.getComponent(i),velocity=v.getComponent(i),k=velocity+omega*initial;
+   x.setComponent(i,decay*(initial+k*dt));v.setComponent(i,decay*(velocity-omega*k*dt));}
  }
- /** Caller restores its base pose before each application; grip owns angular pivot. */
+ /** Caller restores its base pose; both articulated hands inherit this grip pivot. */
  function apply(root:THREE.Object3D,scale=1){
   before.copy(pivot).applyQuaternion(root.quaternion).add(root.position);
   q.setFromEuler(euler.set(rotation.x*scale,rotation.y*scale,rotation.z*scale));root.quaternion.multiply(q);
