@@ -1,0 +1,74 @@
+[
+  {
+    "command": "lint",
+    "exit": 0
+  },
+  {
+    "command": "build",
+    "exit": 0
+  },
+  {
+    "command": "test:minigun",
+    "exit": 0
+  },
+  {
+    "command": "test:viewmodel",
+    "exit": 0
+  },
+  {
+    "command": "test:weapons",
+    "exit": 0
+  },
+  {
+    "command": "test:audio",
+    "exit": 0
+  },
+  {
+    "command": "test:runtime",
+    "exit": 0
+  },
+  {
+    "command": "test:controls",
+    "exit": 0
+  },
+  {
+    "command": "test:scenes",
+    "exit": 0
+  },
+  {
+    "command": "test:tactical",
+    "exit": 0
+  },
+  {
+    "command": "test:area51",
+    "exit": 0
+  },
+  {
+    "command": "test:bosses",
+    "exit": 0
+  },
+  {
+    "command": "test:batch1",
+    "exit": 0
+  },
+  {
+    "command": "test:batch2",
+    "exit": 0
+  },
+  {
+    "command": "test:performance",
+    "exit": 0
+  },
+  {
+    "command": "test:plasma:tactile",
+    "exit": 0
+  },
+  {
+    "command": "test:railgun",
+    "exit": 0
+  },
+  {
+    "command": "test:pistol:sprint",
+    "exit": 0
+  }
+]

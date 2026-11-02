@@ -1,6 +1,6 @@
 # W04 — Minigun first-person carry fidelity
 
-**Current heavy-weapon revision:** [Low, wide upper-support carry, heat reaction, footage and verification](heavy-upper-support/README.md). Continues PR #29 from `d0c7d68`. The earlier underslung iteration and notes below are historical; the upper-support report supersedes their pose/hand tuning.
+**Current definitive top-handle revision:** [Physical forward top handle, separate rear control, acceptance screenshots and checks](forward-top-handle/README.md). Continues PR #29 from `f02fe03`. Earlier upper-casing/underslung reports below are historical; the forward-top-handle report supersedes their geometry and pose.
 
 Base: latest inspected main `11dc4c0e86b1d73912f5b58a44030983b2e21b40`, including accepted W03. No existing W04 branch/PR was found; this work uses `feat/w04-minigun-carry-fidelity`. The Engineer's separate [tripod-gun issue #28](https://github.com/fcootes/Gun-Arena-V2/issues/28) remains deferred.
 

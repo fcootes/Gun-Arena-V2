@@ -168,6 +168,12 @@ export function createFirstPersonHands() {
       const changed = !initialized || selected !== id; selected = id;
       const config = VIEWMODEL_GRIPS[id];
       setAttachment(right, config.right); setAttachment(left, config.left);
+      const rightTracked = config.right.followPart ? assembly.parts[config.right.followPart] : undefined;
+      if (rightTracked && config.right.partOffset) {
+        rightTracked.updateWorldMatrix(true, false); assembly.root.updateWorldMatrix(true, false);
+        inverse.copy(assembly.root.matrixWorld).invert(); matrix.multiplyMatrices(inverse, rightTracked.matrixWorld);
+        right.target.fromArray(config.right.partOffset).applyMatrix4(matrix);
+      }
       const tracked = config.left.followPart ? assembly.parts[config.left.followPart] : undefined;
       if (tracked && config.left.partOffset) {
         tracked.updateWorldMatrix(true, false); assembly.root.updateWorldMatrix(true, false);
@@ -496,7 +502,8 @@ export function createFirstPersonHands() {
             const runningAngle = (digit.thumb ? runningThumbAngles : runningFingerAngles)[segment];
             angle += (runningAngle - angle) * pistolSprintBlend;
           }
-          digit.joints[segment].rotation.set(-angle * (hand.curl + (aiming && id!=='minigun' ? .025 : 0)), 0, segment === 0 ? digit.spread : 0);
+          const digitCurl=id==='minigun'&&side==='left'&&digit.thumb?1:hand.curl;
+          digit.joints[segment].rotation.set(-angle * (digitCurl + (aiming && id!=='minigun' ? .025 : 0)), 0, segment === 0 ? digit.spread : 0);
           if(id==='minigun'&&side==='left'&&digit.thumb&&segment===0){
             digit.joints[segment].rotation.z += attachment.thumbOpposition ?? 0;
             digit.joints[segment].rotation.y = -.25;

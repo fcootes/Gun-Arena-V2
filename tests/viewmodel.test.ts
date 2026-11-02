@@ -25,7 +25,7 @@ for (const id of WEAPON_MODEL_IDS) {
   for (const side of ['right', 'left'] as const) {
     assert.ok([...config[side].position, ...config[side].rotation].every(Number.isFinite));
     const upperCarry=id==='minigun'&&side==='left';
-    assert.ok((upperCarry ? config[side].position[1]>.10&&config[side].position[1]<.15 : config[side].position[1]<.02) && Math.abs(config[side].position[0])<.2);
+    assert.ok((upperCarry ? config[side].position[1]>.15&&config[side].position[1]<.23 : config[side].position[1]<.02) && Math.abs(config[side].position[0])<.2);
     const attachment = new THREE.Quaternion().setFromEuler(new THREE.Euler(...config[side].rotation));
     const normal = new THREE.Vector3(0, 0, -1).applyQuaternion(attachment);
     assert.ok(upperCarry ? normal.y<-.90 : side === 'right' ? normal.x < -.99 : normal.x > .99 || normal.y > .90, `${id}: palms face the actual grip, underside or upper carry support`);
@@ -36,7 +36,8 @@ for (const id of WEAPON_MODEL_IDS) {
   disposeWeaponObject(assembly.root);
 }
 const handheld = createWeaponAssembly('minigun', { firstPerson: true });
-assert.ok(handheld.parts.supportCradle, 'Handheld minigun has a stationary physical support surface');
+assert.equal(handheld.parts.supportCradle,undefined, 'No obsolete underslung support remains');
+assert.ok(handheld.parts.upperSupportGrip.children.some(o=>o instanceof THREE.Mesh),'Handheld minigun has a physical forward top handle');
 const studioMinigun = createWeaponAssembly('minigun');
 assert.equal(studioMinigun.parts.supportCradle, undefined, 'Actor/studio minigun keeps its spades');
 disposeWeaponObject(studioMinigun.root);
@@ -122,7 +123,7 @@ for (const id of WEAPON_MODEL_IDS) {
       assert.ok(sleeve.scale.y <= VIEWMODEL_GRIPS[id].sleeveLength + .012001, `${id}: anatomical forearm never stretches to a remote elbow`);
       if(id==='minigun') {
         const upper=weapon(vm,id).getObjectByName(`minigun${side}UpperArm`)!;
-        assert.ok(upper.visible&&Math.abs(upper.scale.y-.34)<1e-7,'Minigun has connected anatomical upper sleeves');
+        assert.ok(upper.visible&&Math.abs(upper.scale.y-.36)<1e-7,'Minigun has connected anatomical upper sleeves');
         const joint=new THREE.Vector3(0,.5,0).applyMatrix4(upper.matrixWorld);
         assert.ok(joint.distanceTo(sleeveEnd)<.007,'Minigun elbow has no chopped sleeve end');
         assert.ok(new THREE.Vector3(0,-.5,0).applyMatrix4(upper.matrixWorld).project(acceptanceCamera).y<-1,'Minigun shoulder exits below viewport');

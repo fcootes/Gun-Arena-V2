@@ -1,0 +1,10 @@
+
+> gun-arena-v2@0.0.0 test:runtime
+> node --import tsx tests/runtime.test.ts
+
+PASS: explicit Area 51 registration/default, retired-key normalization, Pacific Rim and Training preservation
+PASS: actual SMG/LMG/BR/plasma reload handlers select dedicated audio once without generic doubling
+PASS: actual incoming-damage immunity, exact 99,999 body damage, all firearm dispatches and normal damage restoration
+PASS: replay/lobby handlers are idempotent and request a fresh lobby engine
+PASS: replay cleanup releases grenades, sparks, ragdolls, tracers, explosions, toxic puddles and distortion rings
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

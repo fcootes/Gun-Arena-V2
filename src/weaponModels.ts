@@ -1213,17 +1213,21 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     for (const z of [-0.09, -0.32, -0.52])
       ring('Cluster clamp ring', 0.075, 0.01, 0, 0, z, dark, rotor);
     if (options.firstPerson) {
-      // Limited handheld control kit; actor/studio spades retain their original geometry.
-      const control = group('mainControlGrip', 0, -.045, 0);
+      // Separate rear control and physical forward top carry handle. All of the
+      // new chassis belongs to the fixed receiver, never the spinning rotor.
+      const control = group('mainControlGrip', 0, -.045, .14);
       grip(.04, control);
-      const cradle = group('supportCradle', -.08, -.085, -.14);
-      tube('Stationary underslung support grip', .027, .14, 0, 0, 0, polymer, cradle).rotation.y = Math.PI / 2;
-      box('Cradle mounting bridge', .16, .018, .045, .02, .06, 0, steel, cradle);
-      for (const side of [-1, 1])
-        box('Cradle motor bracket', .018, .065, .045, side * .065, .027, 0, steel, cradle);
-      // Attachment to the existing upper Carry bracket below; no gun geometry
-      // is moved or added. The assembly owns these first-person arm resources.
-      group('upperSupportGrip', 0, .075, .04);
+      box('Rear control mounting yoke', .062, .038, .085, 0, -.022, .012, steel, control);
+      const carry = group('upperSupportGrip', 0, .145, -.24);
+      tube('Forward top handle rubber grip', .021, .19, 0, 0, 0, polymer, carry).rotation.set(0, 0, Math.PI / 2);
+      for (const side of [-1, 1]) {
+        tube('Top handle end collar', .025, .014, side * .084, 0, 0, edge, carry).rotation.set(0, 0, Math.PI / 2);
+        box('Top handle upright', .022, .09, .045, side * .103, -.0365, 0, steel, carry);
+        box('Fixed upper chassis rail', .022, .024, .32, side * .103, -.085, .14, steel, carry);
+        for (const z of [0, .265])
+          tube('Carry chassis fastener', .007, .024, side * .103, -.082, z, edge, carry).rotation.set(0, 0, Math.PI / 2);
+      }
+      box('Receiver carry mounting bridge', .23, .026, .065, 0, -.068, .275, steel, carry);
       const upperSleeveGeometry = new THREE.CylinderGeometry(.058, .068, 1, 12, 1);
       for (const side of ['left', 'right']) {
         const arm = group(`minigun${side}UpperArm`); root.add(arm);arm.visible=false;
@@ -1261,7 +1265,7 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       const v = belt.getPoint(i / 14);
       box('Chute articulation', 0.056, 0.009, 0.037, v.x, v.y, v.z, steel);
     }
-    box('Carry bracket', 0.029, 0.065, 0.13, 0, 0.075, 0.04, steel);
+    if (!options.firstPerson) box('Carry bracket', 0.029, 0.065, 0.13, 0, 0.075, 0.04, steel);
     box('Top mechanical sight', 0.056, 0.03, 0.04, 0, 0.117, -0.04, dark);
     muzzle.position.set(0, 0, -0.64);
   } else if (id === 'railgun') {
