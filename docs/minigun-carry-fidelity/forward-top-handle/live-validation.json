@@ -1,0 +1,127 @@
+{
+  "clock": "Native browser RAF/performance.now, no forced delta",
+  "rendering": "Routine rendering suspended for software WebGL; actual render at screenshots. No native performance claim.",
+  "checks": [
+    "Warmup precedes fire",
+    "LMB sustained fire and spin-down",
+    "Automatic overheat and original thermal completion",
+    "999/999 supply retained",
+    "Pause freezes hand"
+  ],
+  "hot": {
+    "pitch": 0,
+    "yaw": 0,
+    "position": [
+      -8,
+      1.65,
+      -15.288000000000025
+    ],
+    "velocity": [
+      0,
+      0,
+      0
+    ],
+    "aiming": false,
+    "sprinting": false,
+    "shots": 165,
+    "ammo": 999,
+    "reserve": 999,
+    "heat": 100,
+    "warmup": 0.5,
+    "spin": 28,
+    "overheated": true,
+    "reloading": true,
+    "remaining": 2.2,
+    "phase": "vent",
+    "root": [
+      0.23,
+      -0.1903294124832928,
+      -0.7071849999998463
+    ],
+    "rotation": [
+      -0.019342492028188676,
+      0.10943482728289793,
+      -0.01959362346914998,
+      0.9936125887382118
+    ],
+    "left": [
+      0.0012889999999999998,
+      0.193419,
+      -0.193096000000002
+    ],
+    "leftRotation": [
+      -0.762264230802696,
+      -0.08474903682500451,
+      -0.10196851422921285,
+      0.6335402633628703
+    ],
+    "right": [
+      0.037507,
+      -0.14863299999999968,
+      0.25281300000000057
+    ],
+    "rotor": 294.2721932933307,
+    "memory": {
+      "geometries": 475,
+      "textures": 52
+    }
+  },
+  "cool": {
+    "pitch": 0,
+    "yaw": 0,
+    "position": [
+      -8,
+      1.65,
+      -15.288000000000025
+    ],
+    "velocity": [
+      0,
+      0,
+      0
+    ],
+    "aiming": false,
+    "sprinting": false,
+    "shots": 165,
+    "ammo": 999,
+    "reserve": 999,
+    "heat": 0,
+    "warmup": 0,
+    "spin": 0,
+    "overheated": false,
+    "reloading": false,
+    "remaining": 0,
+    "root": [
+      0.23,
+      -0.18952779549929047,
+      -0.71
+    ],
+    "rotation": [
+      -0.01876396797388644,
+      0.1095355053221247,
+      -0.01434309740863657,
+      0.9937022502422082
+    ],
+    "left": [
+      0.0012890000000017761,
+      0.193419,
+      -0.19309599999999844
+    ],
+    "leftRotation": [
+      -0.762264230802696,
+      -0.08474903682500451,
+      -0.10196851422921285,
+      0.6335402633628703
+    ],
+    "right": [
+      0.03750699999999999,
+      -0.1486329999999999,
+      0.25281300000000057
+    ],
+    "rotor": 320.1582769933309,
+    "memory": {
+      "geometries": 472,
+      "textures": 52
+    }
+  },
+  "errors": []
+}

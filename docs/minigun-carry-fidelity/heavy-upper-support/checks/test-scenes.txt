@@ -1,0 +1,7 @@
+
+> gun-arena-v2@0.0.0 test:scenes
+> node --import tsx tests/scenes.test.ts
+
+PASS: all twelve inspect, lobby, bot/third-person and animated FPS directions; swaps never double-flip
+PASS: twenty-four reactive mode scenes, all four extraction variants, selection semantics and unique SVG resources
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

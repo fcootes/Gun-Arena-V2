@@ -1,0 +1,8 @@
+
+> gun-arena-v2@0.0.0 test:railgun
+> node --import tsx tests/railgun.test.ts && node --import tsx tests/railgunRebuild.test.ts
+
+PASS: 2.8 s authoritative reload, class modifiers, one slug/carrier and six cues, interruptions/lock guard, real cavity/scope clearance, rig contact and peripheral connected arms, 30/60/144 Hz, cached resources and compact pooled discharge
+PASS: every boundary has continuous wrist/orientation/elbow; third-person shares physical state; actual App retains early release, 1.2 s charge, one discharge, piercing, full-range damage, recoil and muzzle origin
+PASS: forward rigid scope/upper, fixed 32-degree hinge, ejection and seating continuity, closure clearance/order, interrupted cradle recovery, exact ADS return and owned resource disposal
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

@@ -3478,7 +3478,9 @@ export default function App() {
           player.drinkTimer,
           player.alive,
           true,
-          Math.hypot(player.vel.x, player.vel.z)
+          Math.hypot(player.vel.x, player.vel.z),
+          curW.id === 'minigun' ? player.vel.x * Math.cos(player.yaw) - player.vel.z * Math.sin(player.yaw) : 0,
+          curW.id === 'minigun' ? -player.vel.x * Math.sin(player.yaw) - player.vel.z * Math.cos(player.yaw) : 0
         );
 
         

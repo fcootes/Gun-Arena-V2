@@ -1,0 +1,17 @@
+
+> gun-arena-v2@0.0.0 test:minigun
+> node --import tsx tests/minigunCarry.test.ts
+
+PASS: physical forward TOP handle, separate REAR control, no underside support, real palm/finger contact, connected arms, continuous top-handle heat return, movement/ADS/sprint contact and clearances, original gameplay clocks and allocation/disposal behavior {
+  minMotor: 0.015623204348297795,
+  minBarrel: 0.032285947335554455,
+  minBelt: 0.0059089515452880464,
+  minSupport: 0.0012329205399384813,
+  minRear: 0.0004830686817028744,
+  minHandSeparation: 0.4209090000000001,
+  minCameraSeparation: 0.4022220228968143,
+  minElbowWidth: 0.5884315703025969,
+  maxHandStep: 0.001533097521057296,
+  maxHandAngle: 0.0017752459765969719
+}
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

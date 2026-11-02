@@ -24,10 +24,11 @@ for (const id of WEAPON_MODEL_IDS) {
   const config = VIEWMODEL_GRIPS[id];
   for (const side of ['right', 'left'] as const) {
     assert.ok([...config[side].position, ...config[side].rotation].every(Number.isFinite));
-    assert.ok(config[side].position[1] < .02 && Math.abs(config[side].position[0]) < .2);
+    const upperCarry=id==='minigun'&&side==='left';
+    assert.ok((upperCarry ? config[side].position[1]>.15&&config[side].position[1]<.23 : config[side].position[1]<.02) && Math.abs(config[side].position[0])<.2);
     const attachment = new THREE.Quaternion().setFromEuler(new THREE.Euler(...config[side].rotation));
     const normal = new THREE.Vector3(0, 0, -1).applyQuaternion(attachment);
-    assert.ok(side === 'right' ? normal.x < -.99 : normal.x > .99 || normal.y > .90, `${id}: palms face the grip or underside`);
+    assert.ok(upperCarry ? normal.y<-.90 : side === 'right' ? normal.x < -.99 : normal.x > .99 || normal.y > .90, `${id}: palms face the actual grip, underside or upper carry support`);
   }
   const assembly = createWeaponAssembly(id);
   assert.ok(config.right.position[2] > assembly.muzzle.position.z, `${id}: trigger hand stays behind muzzle`);
@@ -35,7 +36,8 @@ for (const id of WEAPON_MODEL_IDS) {
   disposeWeaponObject(assembly.root);
 }
 const handheld = createWeaponAssembly('minigun', { firstPerson: true });
-assert.ok(handheld.parts.supportCradle, 'Handheld minigun has a stationary physical support surface');
+assert.equal(handheld.parts.supportCradle,undefined, 'No obsolete underslung support remains');
+assert.ok(handheld.parts.upperSupportGrip.children.some(o=>o instanceof THREE.Mesh),'Handheld minigun has a physical forward top handle');
 const studioMinigun = createWeaponAssembly('minigun');
 assert.equal(studioMinigun.parts.supportCradle, undefined, 'Actor/studio minigun keeps its spades');
 disposeWeaponObject(studioMinigun.root);
@@ -114,12 +116,18 @@ for (const id of WEAPON_MODEL_IDS) {
     const serialized = JSON.stringify(state); step(vm, id, 1 / 60, state);
     assert.equal(JSON.stringify(state), serialized, 'Presentation never changes reload/ammo/audio state');
     assert.ok(right.position.distanceTo(anchoredRight) < 1e-8, `${id}: firing hand stays attached during reload`);
-    if(id==='lmg'||id==='railgun')weapon(vm,id).updateMatrixWorld(true);
+    if(id==='lmg'||id==='railgun'||id==='minigun')weapon(vm,id).updateMatrixWorld(true);
     for (const side of ['right', 'left'] as const) {
       const sleeve = pair.getObjectByName(`${side}Forearm`)!;
       sleeveEnd.set(0, -.5, 0).applyMatrix4(sleeve.matrixWorld);
       assert.ok(sleeve.scale.y <= VIEWMODEL_GRIPS[id].sleeveLength + .012001, `${id}: anatomical forearm never stretches to a remote elbow`);
-      if((id==='lmg'||id==='railgun')&&side==='left'&&state.reloading) {
+      if(id==='minigun') {
+        const upper=weapon(vm,id).getObjectByName(`minigun${side}UpperArm`)!;
+        assert.ok(upper.visible&&Math.abs(upper.scale.y-.36)<1e-7,'Minigun has connected anatomical upper sleeves');
+        const joint=new THREE.Vector3(0,.5,0).applyMatrix4(upper.matrixWorld);
+        assert.ok(joint.distanceTo(sleeveEnd)<.007,'Minigun elbow has no chopped sleeve end');
+        assert.ok(new THREE.Vector3(0,-.5,0).applyMatrix4(upper.matrixWorld).project(acceptanceCamera).y<-1,'Minigun shoulder exits below viewport');
+      } else if((id==='lmg'||id==='railgun')&&side==='left'&&state.reloading) {
         const upper=weapon(vm,id).getObjectByName(id==='railgun'?'railgunLeftUpperArm':'leftUpperArm')!;
         assert.ok(upper.visible&&Math.abs(upper.scale.y-.32)<1e-7,'LMG raised contact has an anatomical upper arm');
         const joint=new THREE.Vector3(0,.5,0).applyMatrix4(upper.matrixWorld);
@@ -177,7 +185,7 @@ function assertNear(id: string) {
         // The LMG's connected upper sleeve may fold toward the body during
         // offscreen box pickup. Require any near-plane crossing to clear even
         // the near-plane bottom by 2.5 cm; visible glove/weapon vertices stay safe.
-        const offscreenUpper=(id==='lmg'||id==='railgun')&&(object.name==='LMG upper sleeve'||object.name==='Railgun upper sleeve'||object.name==='leftForearm')&&vertex.y<-.05*Math.tan(THREE.MathUtils.degToRad(74/2))-.025;
+        const offscreenUpper=(id==='lmg'||id==='railgun'||id==='minigun')&&(object.name==='LMG upper sleeve'||object.name==='Railgun upper sleeve'||object.name.startsWith('Minigun ')||object.name==='leftForearm')&&vertex.y<-.05*Math.tan(THREE.MathUtils.degToRad(74/2))-.025;
         assert.ok(vertex.z < -.05 || offscreenUpper, `${id}/${object.parent?.name}/${object.name}: visible weapon/hand must stay beyond near plane (${vertex.toArray()})`);
       }
     }
