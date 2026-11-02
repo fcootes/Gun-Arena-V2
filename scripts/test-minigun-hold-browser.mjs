@@ -20,7 +20,7 @@ const server=await createServer({root:process.env.MINIGUN_ROOT,logLevel:'error',
   equip(){clearGameplayInput();stopWeaponAudio();cancelWeaponReload(currentSlotState());const w=WEAPONS.find(w=>w.id==='minigun');playerLoadout[0]=w;playerLoadout[1]=WEAPONS[0];playerWeaponState[0]={ammo:w.mag,reserve:w.reserve,heat:0};playerWeaponState[1]={ammo:30,reserve:90};switchSlot(0);player.classReloadMultiplier=1;player.health=player.maxHealth=100000;player.aiming=false;player.yaw=0;player.pitch=0;vmManager.resetEffects();renderer.setPixelRatio(1);renderer.setSize(960,540,false);renderer.render=()=>{};this.hold=true;window.__minigunTime=performance.now();},
   step(dt=1/120){this.forcedDelta=dt;this.stepping=true;window.__minigunTime+=dt*1000;animate();this.stepping=false;this.forcedDelta=undefined;return this.stats();},
   stats(){const root=vmManager.root.getObjectByName('Weapon_minigun'),left=root?.getObjectByName('leftHand'),right=root?.getObjectByName('rightHand');return{time:window.__minigunTime,pitch:player.pitch,yaw:player.yaw,position:player.pos.toArray(),velocity:player.vel.toArray(),aiming:player.aiming,sprinting:player.sprinting,shots:player.shotsFired,ammo:this.ws.ammo,reserve:this.ws.reserve,heat:this.ws.heat,warmup:this.ws.spinWarmup,spin:this.ws.spinSpeed,overheated:!!this.ws.overheated,reloading:!!this.ws.reloading,remaining:this.ws.reloadT,phase:this.ws.reloadSequence?.phases[this.ws.reloadSequence.index].phase,root:root?.position.toArray(),rotation:root?.quaternion.toArray(),left:left?.position.toArray(),leftRotation:left?.quaternion.toArray(),right:right?.position.toArray(),rotor:root?.getObjectByName('rotor')?.rotation.z,memory:{...renderer.info.memory}};},
-  capture(){minigunNativeRender(scene,camera);return{image:renderer.domElement.toDataURL('image/png').split(',')[1],state:this.stats()};},
+  capture(){if(this.suppressSmoke)for(const particle of smokePool)particle.mesh.visible=false;minigunNativeRender(scene,camera);if(this.suppressSmoke)for(const particle of smokePool)particle.mesh.visible=true;return{image:renderer.domElement.toDataURL('image/png').split(',')[1],state:this.stats()};},
   live(){this.hold=false;window.__minigunTime=undefined;},
   kill(){applyDamageToPlayer(999999,true,true,null);}
  };
@@ -43,7 +43,19 @@ try{
  const samples=[];
  const save=async name=>{const r=await page.evaluate(()=>window.__minigun.capture());writeFileSync(resolve(output,name+'.png'),Buffer.from(r.image,'base64'));samples.push({name,...r.state});console.log('Captured '+name);return r.state;};
  await save('idle');
- if(process.env.MINIGUN_POSE_ONLY==='1'){
+ if(process.env.MINIGUN_DIAGNOSTIC==='1'){
+  await page.evaluate(()=>{window.__minigun.ws.heat=100;window.__minigun.suppressSmoke=true;});await page.keyboard.press('KeyR');
+  const frames=resolve(output,'frames');mkdirSync(frames,{recursive:true});const states=[];
+  for(let frame=0;frame<84;frame++){
+   const r=await page.evaluate(()=>{for(let step=0;step<4;step++)window.__minigun.step();return window.__minigun.capture();});
+   writeFileSync(resolve(frames,String(frame).padStart(4,'0')+'.png'),Buffer.from(r.image,'base64'));states.push(r.state);
+   if(frame%30===0)console.log('Rendered diagnostic '+frame+'/84');
+  }
+  assert.ok(states.some(s=>s.reloading));assert.ok(!states.at(-1).reloading);assert.equal(states.at(-1).heat,0);assert.equal(states.at(-1).ammo,999);
+  execFileSync('ffmpeg',['-y','-loglevel','error','-framerate','30','-i',resolve(frames,'%04d.png'),'-vf',"drawtext=text='DIAGNOSTIC - cooling smoke hidden for hand visibility':fontcolor=white:fontsize=18:box=1:boxcolor=black@0.75:x=12:y=12",'-c:v','libx264','-pix_fmt','yuv420p','-crf','18','-movflags','+faststart',resolve(output,'heat-hand-diagnostic.mp4')]);
+  for(const [name,frame]of [['unhook',9],['withdrawn',25],['return',49],['regripped',67]])execFileSync('cp',[resolve(frames,String(frame).padStart(4,'0')+'.png'),resolve(output,'diagnostic-'+name+'.png')]);
+  writeFileSync(resolve(output,'diagnostic-provenance.json'),JSON.stringify({description:'Actual production App/manual R cooling and first-person renderer, existing Area 51. Test-only smoke visibility suppression at rendering, restored immediately; no production smoke change. Silent offline 120 Hz simulation exported at 30 FPS. Video caption explicitly identifies diagnostic view.',states},null,2));
+ }else if(process.env.MINIGUN_POSE_ONLY==='1'){
   await page.mouse.down({button:'right'});await page.evaluate(()=>{for(let i=0;i<90;i++)window.__minigun.step();});await save('ads');await page.mouse.up({button:'right'});
  }else{
   if(process.env.MINIGUN_LIVE_ONLY!=='1'){

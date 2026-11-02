@@ -1,0 +1,9 @@
+
+> gun-arena-v2@0.0.0 test:weapons
+> node --import tsx tests/weapons.test.ts
+
+PASS: twelve distinct detailed assemblies, moving parts, batched draws, bounded muzzle pools and complete GPU teardown
+PASS: all twelve models propagate through inspection/lobby, first-person and actor equipment without changing hitboxes
+PASS: launcher cadence/ammo, player and AI projectile paths, thin-target sweep, ally protection, attribution, reload and reset disposal
+PASS: isolated twelve-card armory, grouped real performance values, tactical scores and equipped/locked badges
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

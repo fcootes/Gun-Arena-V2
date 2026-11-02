@@ -14,7 +14,7 @@ import { SHOTGUN, shotgunEase, shotgunShellPose } from './shotgunMechanics';
 import { VIEWMODEL_GRIPS, arChamberReach, arChamberRelease, type HandAttachment } from './viewmodelGrips';
 import { sniperEase, sniperHandReach } from './sniperMechanics';
 import { brEase } from './battleRifleMechanics';
-import { createMinigunHandAnimator } from './minigunHands';
+import { createMinigunHandAnimator, createMinigunArmSolver } from './minigunHands';
 
 interface Digit { joints: THREE.Object3D[]; lengths: number[]; radius: number; thumb: boolean; index: boolean; spread: number; }
 interface Hand {
@@ -63,6 +63,7 @@ export function createFirstPersonHands() {
   const lmgShoulder=new THREE.Vector3(), lmgAxis=new THREE.Vector3(), lmgBend=new THREE.Vector3(), lmgElbow=new THREE.Vector3();
   const plasmaHand=createPlasmaHandAnimator();
   const minigunHand = createMinigunHandAnimator();
+  const minigunArm = createMinigunArmSolver(), minigunShoulder = new THREE.Vector3(), minigunElbow = new THREE.Vector3();
   const railgunHand=createRailgunHandAnimator(),railgunArm=createRailgunArmSolver(),railgunShoulder=new THREE.Vector3(),railgunElbow=new THREE.Vector3();
   const lmgHand = createLmgHandAnimator(), lmgSupportRotation = new THREE.Quaternion();
   const supportGrip = new THREE.Vector3(), shotgunPickup = new THREE.Vector3(-.078, -.170, -.03536);
@@ -418,8 +419,8 @@ export function createFirstPersonHands() {
         // The camera-space cuff supplies a floor for the elbow drop and bend.
         attachmentPosition.copy(end).applyMatrix4(assembly.root.matrix);
         elbow.fromArray(config.elbows[side]);
-        // The heavy underslung cradle needs an outboard elbow so the supinated
-        // wrist continues into the forearm rather than hinging across its end.
+        // The heavy upper support needs outboard elbows, independent of the
+        // narrow rifle cuff clamp; its full arm solve follows below.
         if(id!=='minigun')elbow.x = THREE.MathUtils.clamp(elbow.x, attachmentPosition.x - .12, attachmentPosition.x + .12);
         elbow.y = Math.min(elbow.y, attachmentPosition.y - .30);
         elbow.z = Math.min(-.14, Math.max(elbow.z, attachmentPosition.z + .22));
@@ -458,6 +459,15 @@ export function createFirstPersonHands() {
           direction.subVectors(railgunElbow,railgunShoulder);upperArm.scale.set(1,direction.length(),1);direction.transformDirection(inverse);upperArm.quaternion.setFromUnitVectors(up,direction);
           (upperArm.children[0] as THREE.Mesh).material=sleeveMaterial;
         }
+        if(id==='minigun'){
+          minigunArm(side,attachmentPosition,minigunShoulder,minigunElbow);elbow.copy(minigunElbow);
+          const upperArm=assembly.parts[`minigun${side}UpperArm`];
+          upperArm.visible=true;
+          upperArm.position.copy(minigunShoulder).add(minigunElbow).multiplyScalar(.5).applyMatrix4(inverse);
+          direction.subVectors(minigunElbow,minigunShoulder);upperArm.scale.set(1,direction.length(),1);
+          direction.transformDirection(inverse);upperArm.quaternion.setFromUnitVectors(up,direction);
+          (upperArm.children[0] as THREE.Mesh).material=sleeveMaterial;
+        }
         elbow.applyMatrix4(inverse);
         // A distant body target determines direction, never cylinder length.
         // Keep a bounded forearm while its broad end tucks down toward the torso.
@@ -486,7 +496,11 @@ export function createFirstPersonHands() {
             const runningAngle = (digit.thumb ? runningThumbAngles : runningFingerAngles)[segment];
             angle += (runningAngle - angle) * pistolSprintBlend;
           }
-          digit.joints[segment].rotation.set(-angle * (hand.curl + (aiming ? .025 : 0)), 0, segment === 0 ? digit.spread : 0);
+          digit.joints[segment].rotation.set(-angle * (hand.curl + (aiming && id!=='minigun' ? .025 : 0)), 0, segment === 0 ? digit.spread : 0);
+          if(id==='minigun'&&side==='left'&&digit.thumb&&segment===0){
+            digit.joints[segment].rotation.z += attachment.thumbOpposition ?? 0;
+            digit.joints[segment].rotation.y = -.25;
+          }
           if (side === 'left' && pistolSprintBlend > 0 && digit.thumb && segment === 0) {
             digit.joints[segment].rotation.y = -.35 * pistolSprintBlend;
             digit.joints[segment].rotation.z += .30 * pistolSprintBlend;

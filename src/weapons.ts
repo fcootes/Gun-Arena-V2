@@ -590,9 +590,9 @@ export function createViewmodelManager(): ViewmodelManager {
       const p = THREE.MathUtils.smoothstep(sequence.elapsed / phase.duration, 0, 1);
       const progress = 1 - (ws.reloadT ?? 0) / (ws.totalReloadT || 1);
       const lift = w.id === 'shotgun' ? phase.phase === 'open' ? p : phase.phase === 'close' ? 1 - p : 1 : Math.min(1, progress * 7, (1 - progress) * 7);
-      reloadRotation.setFromEuler(w.id === 'minigun' ? reloadEuler.set(-.025, .045, -.08) : w.id === 'shotgun' ? reloadEuler.set(-.06, .08, -.52) : w.id === 'sniper' ? reloadEuler.set(-.08, .22, -.40) : reloadEuler.set(.14, -.18, -.38));
+      reloadRotation.setFromEuler(w.id === 'minigun' ? reloadEuler.set(-.065, .27, -.08) : w.id === 'shotgun' ? reloadEuler.set(-.06, .08, -.52) : w.id === 'sniper' ? reloadEuler.set(-.08, .22, -.40) : reloadEuler.set(.14, -.18, -.38));
       assembly.root.quaternion.slerp(reloadRotation, lift);
-      reloadPosition.copy(assembly.root.position); reloadPosition.x += w.id === 'shotgun' ? .07 : -.02; reloadPosition.y += w.id === 'shotgun' ? .06 : .05; reloadPosition.z += w.id === 'shotgun' ? -.025 : .025;
+      reloadPosition.copy(assembly.root.position); reloadPosition.x += w.id === 'minigun' ? .006 : w.id === 'shotgun' ? .07 : -.02; reloadPosition.y += w.id === 'minigun' ? -.012 : w.id === 'shotgun' ? .06 : .05; reloadPosition.z += w.id === 'minigun' ? .012 : w.id === 'shotgun' ? -.025 : .025;
       assembly.root.position.lerp(reloadPosition, lift);
       const removed = phase.phase === 'eject' ? p : phase.phase === 'insert' ? 1 - p : 0;
       if (parts.magazine && sequence.kind !== 'shell') {

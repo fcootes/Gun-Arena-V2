@@ -1,6 +1,6 @@
 # W04 — Minigun first-person carry fidelity
 
-**Final holding correction:** [Current report, continuous first-person video and verification](final-hold/README.md). Continues PR #29 from `cdc17f0`. The initial-iteration notes below are historical; final-hold values supersede its pose/hand tuning.
+**Current heavy-weapon revision:** [Low, wide upper-support carry, heat reaction, footage and verification](heavy-upper-support/README.md). Continues PR #29 from `d0c7d68`. The earlier underslung iteration and notes below are historical; the upper-support report supersedes their pose/hand tuning.
 
 Base: latest inspected main `11dc4c0e86b1d73912f5b58a44030983b2e21b40`, including accepted W03. No existing W04 branch/PR was found; this work uses `feat/w04-minigun-carry-fidelity`. The Engineer's separate [tripod-gun issue #28](https://github.com/fcootes/Gun-Arena-V2/issues/28) remains deferred.
 

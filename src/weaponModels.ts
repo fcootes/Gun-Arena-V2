@@ -1221,6 +1221,15 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       box('Cradle mounting bridge', .16, .018, .045, .02, .06, 0, steel, cradle);
       for (const side of [-1, 1])
         box('Cradle motor bracket', .018, .065, .045, side * .065, .027, 0, steel, cradle);
+      // Attachment to the existing upper Carry bracket below; no gun geometry
+      // is moved or added. The assembly owns these first-person arm resources.
+      group('upperSupportGrip', 0, .075, .04);
+      const upperSleeveGeometry = new THREE.CylinderGeometry(.058, .068, 1, 12, 1);
+      for (const side of ['left', 'right']) {
+        const arm = group(`minigun${side}UpperArm`); root.add(arm);arm.visible=false;
+        const sleeve = mesh(`Minigun ${side} upper sleeve`, upperSleeveGeometry, polymer, 0, 0, 0, arm);
+        sleeve.castShadow = sleeve.receiveShadow = false;
+      }
     } else {
       box('Spade grip crossbar', 0.22, 0.025, 0.027, 0, 0.017, 0.24, steel);
       for (const side of [-1, 1])

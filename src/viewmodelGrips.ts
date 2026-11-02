@@ -94,14 +94,15 @@ export const VIEWMODEL_GRIPS: Readonly<Record<WeaponModelId, ViewmodelGrip>> = {
   rocket: grip(primary(.155), vertical(-.165, -.038, -.105), { hip: [.18, -.235, -.43], aim: [0, -.145, -.43], sprint: [-.025, -.29, -.49], sprintRotation: [-.08, .34, -.10], reloadReach: [-.04, -.045, .40], elbows: { right: [.36, -.56, -.24], left: [.02, -.60, -.22] } }),
   grenade_launcher: grip(primary(.175), vertical(-.165, -.039, -.10), { hip: [.16, -.225, -.39], aim: [0, -.105, -.39], sprint: [-.04, -.285, -.46], sprintRotation: [-.10, .40, -.10] }),
   minigun: grip(primary(.075, .038, -.15), {
-    position: [-.133118, -.13286, -.125], rotation: [1.6043094885, .0582213549, -2.0934999556],
-    curl: 1, fingerAngles: [.05, .209, 1.397], thumbAngles: [.474, .802, .904],
-    followPart: 'supportCradle', partOffset: [-.053118, -.04786, .015],
+    position: [-.045481, .130934, .065746], rotation: [-1.5573575805, .0510741547, -1.8282085407],
+    curl: 1, fingerAngles: [.35, 1.417, 1.202], thumbAngles: [.235, .537, .212], thumbOpposition: -.135,
+    followPart: 'upperSupportGrip', partOffset: [-.045481, .055934, .025746],
   }, {
-    // Show the underside load path and both wrists instead of hiding them
-    // behind a close receiver. Grip geometry and the accepted barrel remain fixed.
-    hip: [.22, -.15, -.64], hipRotation: [0, .20, -.035], aim: [.075, -.14, -.64], sprint: [-.025, -.32, -.57], sprintRotation: [-.08, .30, -.10],
-    elbows: { right: [.40, -.58, -.27], left: [-.16, -.56, -.34] },
+    // Low rotary-weapon carry: the upper hand bears the load, with the rear
+    // control arm below/outside it. ADS retains that separation and low mass.
+    hip: [.29, -.25, -.71], hipRotation: [-.045, .32, -.065], aim: [.20, -.225, -.73], aimRotation: [-.025, .16, -.04],
+    sprint: [-.025, -.32, -.57], sprintRotation: [-.08, .30, -.10],
+    elbows: { right: [.47, -.59, -.28], left: [-.24, -.48, -.31] },
     reloadReach: [-.23, -.16, -.18],
   }),
 };

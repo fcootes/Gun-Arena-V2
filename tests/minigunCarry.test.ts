@@ -9,7 +9,7 @@ import type {WeaponSlotState} from '../src/types';
 import {createMinigunHandAnimator,minigunVentProgress} from '../src/minigunHands';
 const near=(a:number,b:number,e=1e-7)=>assert.ok(Math.abs(a-b)<e,`${a} != ${b}`),def=WEAPONS.find(w=>w.id==='minigun')!;
 assert.deepEqual([def.damage,def.fireRate,def.mag,def.reserve,def.reloadTime],[16,.045,999,999,2]);
-assert.equal(VIEWMODEL_GRIPS.minigun.left.followPart,'supportCradle');
+assert.equal(VIEWMODEL_GRIPS.minigun.left.followPart,'upperSupportGrip');
 const bare=createWeaponAssembly('minigun'),fp=createWeaponAssembly('minigun',{firstPerson:true});assert.equal(bare.parts.supportCradle,undefined);assert.ok(fp.parts.supportCradle&&fp.parts.mainControlGrip);assert.ok(bare.root.getObjectByName('FirstPersonHands')===undefined);
 const spin=fp.parts.rotor.rotation.z;for(let i=0;i<120;i++)fp.update(1/120,0,28/120);near(fp.parts.rotor.rotation.z-spin,28);near(fp.parts.supportCradle.rotation.z,0);
 for(const a of [bare,fp])disposeWeaponObject(a.root);
@@ -20,32 +20,39 @@ const normal=createMinigunCarry(),ads=createMinigunCarry();for(let n=0;n<120;n++
 const vm=createViewmodelManager(),point=new THREE.Vector3(),inverse=new THREE.Matrix4(),matrix=new THREE.Matrix4(),instance=new THREE.Matrix4(),contact=new THREE.Vector3(),actual=new THREE.Vector3();
 let state:WeaponSlotState={ammo:999,reserve:999,heat:0};
 const update=(dt:number,aim=false,sprint=false,moving=false,lateral=0,forward=0,playing=true)=>vm.update(dt,def,state,aim,sprint,true,moving,false,false,0,true,playing,Math.hypot(lateral,forward),lateral,forward);
-update(0);const root=vm.root.getObjectByName('Weapon_minigun')!,left=root.getObjectByName('leftHand')!,right=root.getObjectByName('rightHand')!,cradle=root.getObjectByName('supportCradle')!,rotor=root.getObjectByName('rotor')!;
+update(0);const root=vm.root.getObjectByName('Weapon_minigun')!,left=root.getObjectByName('leftHand')!,right=root.getObjectByName('rightHand')!,support=root.getObjectByName('upperSupportGrip')!,rotor=root.getObjectByName('rotor')!;
 const chute=new THREE.CatmullRomCurve3([new THREE.Vector3(-.065,0,.07),new THREE.Vector3(-.16,-.04,.11),new THREE.Vector3(-.18,-.16,.26)]),belt=Array.from({length:81},(_,i)=>chute.getPoint(i/80));
-let minMotor=Infinity,minBarrel=Infinity,minBelt=Infinity,minCradle=Infinity;
+let minMotor=Infinity,minBarrel=Infinity,minBelt=Infinity,minSupport=Infinity,minElbowWidth=Infinity;
 function checkGrip(aim:boolean){
  root.updateMatrixWorld(true);inverse.copy(root.matrixWorld).invert();
- if(!state.reloading){contact.fromArray(VIEWMODEL_GRIPS.minigun.left.partOffset!).applyMatrix4(cradle.matrixWorld);left.getWorldPosition(actual);near(actual.distanceTo(contact),0);}
+ if(!state.reloading){contact.fromArray(VIEWMODEL_GRIPS.minigun.left.partOffset!).applyMatrix4(support.matrixWorld);left.getWorldPosition(actual);near(actual.distanceTo(contact),0);}
  near(right.position.distanceTo(new THREE.Vector3(...VIEWMODEL_GRIPS.minigun.right.position)),0);
- // Measure the actual rendered palm surface and phalanges against the fixed
- // cylinder, rather than assuming a hand-local point remains the contact patch.
+ // The existing Carry bracket is a .029 x .065 x .130 m rounded box at
+ // (0,.075,.04). Its enclosing box is a conservative nonpenetration envelope.
  let palmContact=Infinity,fingerContact=Infinity;
  for(const side of ['left','right']){
   const check=(mesh:THREE.Mesh,transform:THREE.Matrix4)=>{for(let n=0;n<mesh.geometry.attributes.position.count;n++){
    point.fromBufferAttribute(mesh.geometry.attributes.position,n).applyMatrix4(transform);
-   if(side==='left'&&mesh.name!=='leftForearm'&&Math.abs(point.z-cradle.position.z)<.07){
-    const gap=Math.hypot(point.x-cradle.position.x,point.y-cradle.position.y)-.027;
-    minCradle=Math.min(minCradle,gap);assert.ok(gap>=-.00001,'Actual palm/fingers never penetrate the cradle, including release and regrip');
+   if(side==='left'&&(mesh.name==='leftGlovePalm'||mesh.name==='GlovePhalanges')){
+    const dx=Math.abs(point.x)-.0145,dy=Math.abs(point.y-.075)-.0325,dz=Math.abs(point.z-.04)-.065;
+    const gap=Math.hypot(Math.max(0,dx),Math.max(0,dy),Math.max(0,dz))+Math.min(0,Math.max(dx,dy,dz));
+    minSupport=Math.min(minSupport,gap);assert.ok(gap>=-.00001,'Actual palm/fingers never penetrate the upper support, including unhook and return');
     if(mesh.name==='leftGlovePalm')palmContact=Math.min(palmContact,gap);else fingerContact=Math.min(fingerContact,gap);
    }
    if(point.z>-.035&&point.z<.2295){const clearance=Math.hypot(point.x,point.y)-.08;minMotor=Math.min(minMotor,clearance);assert.ok(clearance>=0,`${side} glove clears motor (${point.toArray()})`);}
    if(point.z>-.615&&point.z<-.035){const x=point.x*Math.cos(rotor.rotation.z)+point.y*Math.sin(rotor.rotation.z),y=-point.x*Math.sin(rotor.rotation.z)+point.y*Math.cos(rotor.rotation.z);for(let i=0;i<6;i++){const a=i*Math.PI/3,clearance=Math.hypot(x-Math.cos(a)*.057,y-Math.sin(a)*.057)-.014;minBarrel=Math.min(minBarrel,clearance);assert.ok(clearance>=0,`${side} glove clears rotating barrels`);}}
-   if(point.z>0){let clearance=Infinity;for(const b of belt)clearance=Math.min(clearance,point.distanceTo(b)-.025);minBelt=Math.min(minBelt,clearance);assert.ok(clearance>=0,`${side} glove clears ammunition chute`);}
+   if(point.z>0){let clearance=Infinity;for(const b of belt)clearance=Math.min(clearance,point.distanceTo(b)-.025);minBelt=Math.min(minBelt,clearance);assert.ok(clearance>=0,`${side}/${mesh.name} clears ammunition chute: ${point.toArray()}, ${clearance}`);}
   }};
   const palm=root.getObjectByName(side+'GlovePalm') as THREE.Mesh,fingers=root.getObjectByName('GlovePhalanges') as THREE.InstancedMesh;check(palm,matrix.multiplyMatrices(inverse,palm.matrixWorld));for(let i=side==='left'?15:0;i<(side==='left'?30:15);i++){fingers.getMatrixAt(i,instance);check(fingers,matrix.multiplyMatrices(inverse,fingers.matrixWorld).multiply(instance));}
   const sleeve=root.getObjectByName(side+'Forearm') as THREE.Mesh;assert.ok(sleeve.scale.y<=VIEWMODEL_GRIPS.minigun.sleeveLength+.012001);check(sleeve,matrix.multiplyMatrices(inverse,sleeve.matrixWorld));
+  const upper=root.getObjectByName(`minigun${side}UpperArm`)!;assert.ok(upper.visible);near(upper.scale.y,.34);
+  const elbow=new THREE.Vector3(0,.5,0).applyMatrix4(upper.matrixWorld),foreElbow=new THREE.Vector3(0,-.5,0).applyMatrix4(sleeve.matrixWorld);
+  assert.ok(elbow.distanceTo(foreElbow)<.00601,'Visible elbow connects upper and lower sleeves without floating');
+  check(upper.children[0] as THREE.Mesh,matrix.multiplyMatrices(inverse,upper.children[0].matrixWorld));
  }
- if(!state.reloading){assert.ok(palmContact<.001,'Load-bearing palm contacts the underside within 1 mm');assert.ok(fingerContact<.001,'A real finger surface curls to the far edge within 1 mm');}
+ if(!state.reloading){assert.ok(palmContact<.001,'Load-bearing palm contacts the upper carry bracket within 1 mm');assert.ok(fingerContact<.001,'Real fingers hook the actual upper bracket within 1 mm');}
+ const le=new THREE.Vector3(0,.5,0).applyMatrix4(root.getObjectByName('minigunleftUpperArm')!.matrixWorld).applyMatrix4(inverse),re=new THREE.Vector3(0,.5,0).applyMatrix4(root.getObjectByName('minigunrightUpperArm')!.matrixWorld).applyMatrix4(inverse);
+ minElbowWidth=Math.min(minElbowWidth,le.distanceTo(re));assert.ok(le.distanceTo(re)>.28,'Heavy weapon keeps a broad two-arm support base');
 }
 for(let n=0;n<240;n++){
  const aim=n>=60&&n<100,sprint=n>=120&&n<180,moving=n>=20&&n<200,lateral=n<100?3:-3,forward=sprint?6:3;
@@ -69,10 +76,10 @@ for(const multiplier of [.65,1,1.4]){
   while(sequence.index<sequence.phases.length-1&&elapsed>sequence.phases[sequence.index].duration){elapsed-=sequence.phases[sequence.index].duration;sequence.index++;}
   sequence.elapsed=elapsed;near(minigunVentProgress(s),progress);position.set(0,0,0);rotation.identity();const before=JSON.stringify(s),curl=animate(s,position,rotation);assert.equal(JSON.stringify(s),before);
   if(progress===0||progress===1){near(position.length(),0);near(rotation.angleTo(new THREE.Quaternion()),0);near(curl,1);}
-  if(progress===.44){assert.ok(position.x<-.07&&position.y<-.07&&position.z>.035,'Restrained heat reaction stays below/outboard of the hot motor');}
+  if(progress===.44){assert.ok(position.x<-.10&&position.y>.05&&position.z>.024,'Restrained heat reaction stays above/outboard of the hot motor');}
  }
 }
 vm.resetEffects();state={ammo:999};update(0);const g0=new THREE.BufferGeometry(),m0=new THREE.MeshBasicMaterial(),o0=new THREE.Object3D();
 for(let n=0;n<200;n++){vm.setMinigunSpin(.1,false);update(1/120,n%2===0,false,true,3,-3);}
 const g1=new THREE.BufferGeometry(),m1=new THREE.MeshBasicMaterial(),o1=new THREE.Object3D();assert.equal(g1.id,g0.id+1);assert.equal(Reflect.get(m1,'id'),Reflect.get(m0,'id')+1);assert.equal(o1.id,o0.id+1);for(const r of [g0,g1,m0,m1])r.dispose();vm.dispose();
-console.log('PASS: actual palm/finger cradle contact and nonpenetration, continuous thermal withdrawal/regrip, full firing/movement/ADS/sprint contact, motor/barrel/chute clearances, exact 30/60/144 Hz carry response, bounded inertia, pause/switch/reset, original rotor/thermal/reload semantics and no per-frame GPU objects', {minMotor,minBarrel,minBelt,minCradle,maxHandStep,maxHandAngle});
+console.log('PASS: actual upper-bracket palm/finger contact and nonpenetration, connected wide two-bone arms, continuous unhook/withdrawal/regrip, full firing/movement/ADS/sprint contact, motor/barrel/chute clearances, exact 30/60/144 Hz carry response, bounded inertia, pause/switch/reset, original rotor/thermal/reload semantics and no per-frame GPU objects', {minMotor,minBarrel,minBelt,minSupport,minElbowWidth,maxHandStep,maxHandAngle});

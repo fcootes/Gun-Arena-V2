@@ -1,0 +1,11 @@
+
+> gun-arena-v2@0.0.0 test:tactical
+> node --import tsx tests/tactical.test.ts
+
+PASS: tactical/empty phase selection, ammo conservation, resumed chambering, exact shell counts, interruption and energy vents
+PASS: all twelve procedural reload paths keep finite transforms and AR has a dedicated optic
+PASS: graph routes around blocked corners and allied walls stay traversable on both world implementations
+PASS: plasma AI shares the eight-Hz cadence, consumes charges and delegates damage to travelling projectiles
+PASS: revive priority, healing, suppression/ammo packs, reachable high ground, assault grenades and automatic engineer turret cleanup
+PASS: accessible centered post-death dialog exposes exactly two match actions
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

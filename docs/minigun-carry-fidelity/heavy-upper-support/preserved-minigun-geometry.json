@@ -1,0 +1,30 @@
+{
+  "baselineRoot": "/workspace/scratch/4a180345b246/w04-heavy-baseline",
+  "exclusion": "Only two new first-person upper-sleeve clothing meshes",
+  "results": [
+    {
+      "firstPerson": false,
+      "before": {
+        "sha256": "f2d44ef759e2dafde716dadc5b40b75189e8555f68c46d412a34bf2de93642c6",
+        "draws": 7
+      },
+      "after": {
+        "sha256": "f2d44ef759e2dafde716dadc5b40b75189e8555f68c46d412a34bf2de93642c6",
+        "draws": 7
+      },
+      "passed": true
+    },
+    {
+      "firstPerson": true,
+      "before": {
+        "sha256": "3090b94da09e6af97aca359da163ed80214f04e2dbc0aaa371a2c0c3bcfe6a42",
+        "draws": 11
+      },
+      "after": {
+        "sha256": "3090b94da09e6af97aca359da163ed80214f04e2dbc0aaa371a2c0c3bcfe6a42",
+        "draws": 11
+      },
+      "passed": true
+    }
+  ]
+}
