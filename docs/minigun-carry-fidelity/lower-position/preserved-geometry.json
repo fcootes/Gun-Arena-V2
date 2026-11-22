@@ -1,0 +1,31 @@
+{
+  "baselineRoot": "/workspace/work/w04-position-baseline",
+  "exclusion": "Only two new first-person upper-sleeve clothing meshes",
+  "results": [
+    {
+      "firstPerson": false,
+      "before": {
+        "sha256": "23ab433097da049971c6c72f73e7be736331f9ab2dfc2b71a3fe311d9b6e2d9e",
+        "draws": 7
+      },
+      "after": {
+        "sha256": "23ab433097da049971c6c72f73e7be736331f9ab2dfc2b71a3fe311d9b6e2d9e",
+        "draws": 7
+      },
+      "passed": true
+    },
+    {
+      "firstPerson": true,
+      "before": {
+        "sha256": "8772931adab9d98305ce285cf9a2f4323923ce68f48dab076679e635b30104f8",
+        "draws": 12
+      },
+      "after": {
+        "sha256": "8772931adab9d98305ce285cf9a2f4323923ce68f48dab076679e635b30104f8",
+        "draws": 12
+      },
+      "passed": true
+    }
+  ],
+  "sharedCore": []
+}

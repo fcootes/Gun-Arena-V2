@@ -1,0 +1,21 @@
+{
+  "baseline": "901d2ab11eda7f8d89bea633a9ab436d0b1ec769",
+  "states": [
+    "idle",
+    "walking",
+    "sprint-entry",
+    "sprint-held",
+    "movement-recovered",
+    "ads",
+    "firing",
+    "heat-reaction",
+    "heat-recovered",
+    "re-equipped"
+  ],
+  "cameraPositionRotationFovProjectionResolutionIdentical": true,
+  "gripProfileIdentical": true,
+  "allRootYDifferences": -0.03,
+  "localHandTransformsIdentical": true,
+  "gameplaySamplesIdentical": true,
+  "browserErrors": []
+}

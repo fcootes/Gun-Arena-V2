@@ -1,0 +1,15 @@
+{
+  "baseline": "901d2ab11eda7f8d89bea633a9ab436d0b1ec769",
+  "onlyChangedRuntimeSource": "src/weapons.ts",
+  "identicalSourceSha256": {
+    "src/viewmodelGrips.ts": "d114bfef0e1f033532196c585c4633ce7d2b5c338da893a00461f42500e629c0",
+    "src/viewmodelHands.ts": "0936136de371bfdd027ff05a0a88ff248965845f83edb66f1fb234cff1051360",
+    "src/minigunHands.ts": "c75c0b30c915c26a32c20b71007ed8f621a4e3d4e962b5cf96647af5f02edd1e",
+    "src/weaponModels.ts": "d8e8b91a66a204322b552f65d52ebabf2b746a689ce053435d19a9e462861f51",
+    "src/App.tsx": "78d9508da3a91545b07eecdf70f001bf6c5b7ee81c4a12d2cef400c38c263fec",
+    "src/types.ts": "2f50e32a4aebc0b8f3667aeeba37c064617c7e1333d304f34b62b31b7486f80a",
+    "src/botBuilder.ts": "6e1aec1b3f89136d641c0c5fcdc2bc605f88682c5a0337f0819aa827ccbc2362",
+    "src/world.ts": "2807ef08a831f05da2446696ff5591344337dff96619327cf4f16901ac5b28ee",
+    "tests/minigunCarry.test.ts": "2a065fa9a7f2f6984f50f83642a17391631305dd98fb7b1a2c87233409a26f8b"
+  }
+}

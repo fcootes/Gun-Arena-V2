@@ -1,0 +1,30 @@
+[
+  {
+    "command": "npm run lint",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run build",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:minigun",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:viewmodel",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:weapons",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:runtime",
+    "exitCode": 0
+  },
+  {
+    "command": "npm run test:performance",
+    "exitCode": 0
+  }
+]
