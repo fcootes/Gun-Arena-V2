@@ -1,0 +1,44 @@
+{
+  "baselineRoot": "/workspace/scratch/4a180345b246/w04-top-baseline",
+  "exclusion": "Authorized first-person handles/mounts and clothing: compare whole bare model, actual first-person rotor/muzzle, and unchanged shared motor/barrel/feed construction",
+  "results": [
+    {
+      "firstPerson": false,
+      "before": {
+        "sha256": "23ab433097da049971c6c72f73e7be736331f9ab2dfc2b71a3fe311d9b6e2d9e",
+        "draws": 7
+      },
+      "after": {
+        "sha256": "23ab433097da049971c6c72f73e7be736331f9ab2dfc2b71a3fe311d9b6e2d9e",
+        "draws": 7
+      },
+      "passed": true
+    },
+    {
+      "firstPerson": true,
+      "before": {
+        "sha256": "f7f25b46970d117a844c097af624003e8d361adb96692d0ee92a4ec8f9163eee",
+        "draws": 3
+      },
+      "after": {
+        "sha256": "f7f25b46970d117a844c097af624003e8d361adb96692d0ee92a4ec8f9163eee",
+        "draws": 3
+      },
+      "passed": true
+    }
+  ],
+  "sharedCore": [
+    {
+      "section": "rotaryCore",
+      "before": "b99838e28f8e7391829b057b7f01e4ebe0c71728dba96705a994a4d086881a8a",
+      "after": "b99838e28f8e7391829b057b7f01e4ebe0c71728dba96705a994a4d086881a8a",
+      "passed": true
+    },
+    {
+      "section": "feedChute",
+      "before": "6f79501ac803443c84f440ef05364155b816df715c351a68df5199f8caa45f08",
+      "after": "6f79501ac803443c84f440ef05364155b816df715c351a68df5199f8caa45f08",
+      "passed": true
+    }
+  ]
+}

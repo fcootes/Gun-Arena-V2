@@ -1,0 +1,20 @@
+
+> gun-arena-v2@0.0.0 test:audio
+> node --import tsx tests/weaponAudio.test.ts
+
+PASS: all 40 real PCM assets, source selection and sustained AR loop without restart
+PASS: tactical/empty selection, class reload duration, ammo preservation and chamber-only resume
+PASS: exact shell counts, seat-boundary timing, distinct tactical/empty finish and interruption
+PASS: pause/resume preserves cursor and speed; cancellation clears pending resume
+PASS: new reload/chamber profiles, LMG without HTML loop, exactly three/two/one BR reports
+PASS: minigun transitions, shortened warmup, fitted spin/vent, no duplicate hiss, pause and cancellation
+PASS: SMG taps, sustained loop without restarting/layering, and final reports
+PASS: eight discrete plasma reports, no beam/composite, class-scaled seat/hiss contacts, pause and cancellation
+PASS: one railgun charge, cursor preservation, early cancellation, slug transition and no synthetic doubling
+PASS: sniper report only on shot, one delayed manual bolt cue, bolt-free mag reloads and class-fitted clips
+PASS: BR discrete removal/insertion once, empty-only charging, class speed without whole-composite stretching
+PASS: interrupted BR empty reload resumes chamber-only without replaying magazine cues
+PASS: SMG approach delay, native-rate single composite, late-frame cursor, cancellation and embedded charging synchronization at three frame rates/class speeds
+PASS: LMG isolated box/charge/approved cover cues, one cue per contact, class rates, late skip and cleanup; M60 asset durations
+PASS: original WAV cover impact exactly once at 3.1656 s with class scaling; cancelled pre-lock reloads remain silent
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

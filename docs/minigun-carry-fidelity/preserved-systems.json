@@ -1,0 +1,80 @@
+{
+  "base": "11dc4c0e86b1d73912f5b58a44030983b2e21b40",
+  "checks": [
+    {
+      "file": "src/botBuilder.ts",
+      "sha256": "6e1aec1b3f89136d641c0c5fcdc2bc605f88682c5a0337f0819aa827ccbc2362",
+      "unchanged": true
+    },
+    {
+      "file": "src/gameLoop.ts",
+      "sha256": "5a4fde662d06008b96ec0cf045aa0f07309eaacb242c121062e192f2eb435419",
+      "unchanged": true
+    },
+    {
+      "file": "src/world.ts",
+      "sha256": "2807ef08a831f05da2446696ff5591344337dff96619327cf4f16901ac5b28ee",
+      "unchanged": true
+    },
+    {
+      "file": "src/weaponAudio.ts",
+      "sha256": "64f5d760482f2b2968067301a84d2b6235dfb20ec420d5771c0112b3351e5711",
+      "unchanged": true
+    },
+    {
+      "file": "src/weaponReload.ts",
+      "sha256": "4e37d8b9d32fabb1dc0370d595071207a6c0170ce24b6337913fbe59ac5146aa",
+      "unchanged": true
+    },
+    {
+      "file": "src/gameplayInput.ts",
+      "sha256": "5d5d8d0adc012bb7268c069bbdb7c83290f97dc8da1e4528362b6cce6ec62abd",
+      "unchanged": true
+    },
+    {
+      "file": "src/types.ts",
+      "sha256": "2f50e32a4aebc0b8f3667aeeba37c064617c7e1333d304f34b62b31b7486f80a",
+      "unchanged": true
+    },
+    {
+      "file": "src/classes.ts",
+      "sha256": "a10b3ec6923494af97b48dd84d6d06ec5531f52e19f41072d52f437e426b450c",
+      "unchanged": true
+    },
+    {
+      "file": "src/assets/audio/weapons/batch2/minigun_cooling_hiss.wav",
+      "sha256": "ec08be9a63fa8594268ec86d5f9342d784fc460984d9da7dd232dd27c74ed76a",
+      "unchanged": true
+    },
+    {
+      "file": "src/assets/audio/weapons/batch2/minigun_fire_auto_loop.wav",
+      "sha256": "3f0491aafdebcd94e353643e41f94307b121f11cd5543e24c19058ddf59c787e",
+      "unchanged": true
+    },
+    {
+      "file": "src/assets/audio/weapons/batch2/minigun_overheat.wav",
+      "sha256": "334af6bcf9b90d5457f82765f601b7868e3f8835cd46aad0c93105556c3292b2",
+      "unchanged": true
+    },
+    {
+      "file": "src/assets/audio/weapons/batch2/minigun_spin_down.wav",
+      "sha256": "5e66e987308b36a2b49713fd7d3838fbe877fe351c94d3dabcc9fcf4c16c9ff5",
+      "unchanged": true
+    },
+    {
+      "file": "src/assets/audio/weapons/batch2/minigun_warmup.wav",
+      "sha256": "640f562631451692954400d45648acf2672bf8848163367c35b8243397ad1ed4",
+      "unchanged": true
+    },
+    {
+      "appBlock": "firing",
+      "sha256": "430ec1d107ea08558ec2cc2064cc608d46d81ef8b3d0fbf7421cd4261143bb49",
+      "unchanged": true
+    },
+    {
+      "appBlock": "spin_heat_cooling",
+      "sha256": "d978a5911909ffc076111dad6a8269eefe15d28f45e923decf799a04da2681dd",
+      "unchanged": true
+    }
+  ]
+}

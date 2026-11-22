@@ -1,0 +1,6 @@
+
+> gun-arena-v2@0.0.0 test:bosses
+> node --import tsx tests/area51Bosses.test.ts
+
+PASS: boss scaling/club, drop-impact-roar, single-hit localized attacks, ranged charge, clear file entrances, Spartan aim/sprint/flanks and finite helicopter normals
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

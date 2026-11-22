@@ -9,7 +9,7 @@ async function sample(root) {
   const {createWeaponAssembly,disposeWeaponObject}=await import(pathToFileURL(resolve(root,'src/weaponModels.ts')));
   const {beginWeaponReload, advanceWeaponReload} = await import(pathToFileURL(resolve(root, 'src/weaponReload.ts')));
   const results = {};
-  for (const w of WEAPONS.filter(w => w.type === 'weapon' && (process.env.EXCLUDE_SHOTGUN !== '1' || w.id !== 'shotgun'))) {
+  for (const w of WEAPONS.filter(w => w.type === 'weapon' && (process.env.EXCLUDE_MINIGUN !== '1' || w.id !== 'minigun') && (process.env.EXCLUDE_SHOTGUN !== '1' || w.id !== 'shotgun'))) {
     const hash = createHash('sha256'), vm = createViewmodelManager(); vm.prepare([w.id]);
     function geometry(object) {
       object.traverse(o=>{
@@ -43,4 +43,4 @@ async function sample(root) {
 }
 const baseline = await sample(before), current = await sample(after);
 assert.deepEqual(current, baseline, 'Every other weapon keeps identical FP/actor geometry and materials, frame transforms, hand palettes and reload state');
-console.log(JSON.stringify({baselineRoot:before,includeSprint:process.env.COMPARE_SPRINT==='1',excludeShotgun:process.env.EXCLUDE_SHOTGUN==='1',before:baseline,after:current,passed:true},null,2));
+console.log(JSON.stringify({baselineRoot:before,includeSprint:process.env.COMPARE_SPRINT==='1',excludeShotgun:process.env.EXCLUDE_SHOTGUN==='1',excludeMinigun:process.env.EXCLUDE_MINIGUN==='1',before:baseline,after:current,passed:true},null,2));

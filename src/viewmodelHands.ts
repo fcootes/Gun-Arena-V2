@@ -14,6 +14,7 @@ import { SHOTGUN, shotgunEase, shotgunShellPose } from './shotgunMechanics';
 import { VIEWMODEL_GRIPS, arChamberReach, arChamberRelease, type HandAttachment } from './viewmodelGrips';
 import { sniperEase, sniperHandReach } from './sniperMechanics';
 import { brEase } from './battleRifleMechanics';
+import { createMinigunHandAnimator, createMinigunArmSolver } from './minigunHands';
 
 interface Digit { joints: THREE.Object3D[]; lengths: number[]; radius: number; thumb: boolean; index: boolean; spread: number; }
 interface Hand {
@@ -61,6 +62,8 @@ export function createFirstPersonHands() {
   const inverseWeaponRotation = new THREE.Quaternion();
   const lmgShoulder=new THREE.Vector3(), lmgAxis=new THREE.Vector3(), lmgBend=new THREE.Vector3(), lmgElbow=new THREE.Vector3();
   const plasmaHand=createPlasmaHandAnimator();
+  const minigunHand = createMinigunHandAnimator();
+  const minigunArm = createMinigunArmSolver(), minigunShoulder = new THREE.Vector3(), minigunElbow = new THREE.Vector3();
   const railgunHand=createRailgunHandAnimator(),railgunArm=createRailgunArmSolver(),railgunShoulder=new THREE.Vector3(),railgunElbow=new THREE.Vector3();
   const lmgHand = createLmgHandAnimator(), lmgSupportRotation = new THREE.Quaternion();
   const supportGrip = new THREE.Vector3(), shotgunPickup = new THREE.Vector3(-.078, -.170, -.03536);
@@ -165,6 +168,12 @@ export function createFirstPersonHands() {
       const changed = !initialized || selected !== id; selected = id;
       const config = VIEWMODEL_GRIPS[id];
       setAttachment(right, config.right); setAttachment(left, config.left);
+      const rightTracked = config.right.followPart ? assembly.parts[config.right.followPart] : undefined;
+      if (rightTracked && config.right.partOffset) {
+        rightTracked.updateWorldMatrix(true, false); assembly.root.updateWorldMatrix(true, false);
+        inverse.copy(assembly.root.matrixWorld).invert(); matrix.multiplyMatrices(inverse, rightTracked.matrixWorld);
+        right.target.fromArray(config.right.partOffset).applyMatrix4(matrix);
+      }
       const tracked = config.left.followPart ? assembly.parts[config.left.followPart] : undefined;
       if (tracked && config.left.partOffset) {
         tracked.updateWorldMatrix(true, false); assembly.root.updateWorldMatrix(true, false);
@@ -181,7 +190,7 @@ export function createFirstPersonHands() {
       const p = stage ? THREE.MathUtils.smoothstep(sequence!.elapsed / stage.duration, 0, 1) : 0;
       let curl = config.left.curl;
       let shellGrip = 0, shellPress = 0, brGrip = 0, pistolContact = 0;
-      if (stage && id !== 'br' && id !== 'pistol' && id !== 'smg' && id !== 'lmg' && id !== 'railgun' && id !== 'laser') {
+      if (stage && id !== 'minigun' && id !== 'br' && id !== 'pistol' && id !== 'smg' && id !== 'lmg' && id !== 'railgun' && id !== 'laser') {
         const part = stage.phase === 'chamber' ? assembly.parts.bolt ?? assembly.parts.slide ?? assembly.parts.pump :
           sequence!.kind === 'vent' ? assembly.parts.feedTray ?? assembly.parts.receiver :
           assembly.parts.magazine ?? assembly.parts.reloadRound ?? assembly.parts.vent ?? assembly.parts.receiver;
@@ -311,6 +320,7 @@ export function createFirstPersonHands() {
           if (state?.shotgunCycle?.kind === 'chamber') left.target.lerpVectors(left.phaseStart, supportGrip, shotgunEase(state.shotgunCycle.elapsed / (state.shotgunCycle.duration * SHOTGUN.recovery / SHOTGUN.cycle)));
         }
       }
+      if(id==='minigun')curl=minigunHand(state,left.target,left.orientation);
       if(id==='laser'){curl=plasmaHand(assembly,state,supportGrip,config.left.rotation,left.target,left.orientation);}
       if(id==='railgun'){railgunHand(assembly,state,supportGrip,config.left.rotation,left.target,left.orientation);curl=stage&&['insert','pickup','lowerCradle'].includes(stage.phase)?1.05:config.left.curl;}
       if (id === 'lmg') {
@@ -399,8 +409,8 @@ export function createFirstPersonHands() {
       right.wrist.position.copy(right.target); right.wrist.quaternion.copy(right.orientation);
       // AR control contact is authored against the current moving part, without
       // an exponential lag that would leave fingers behind the charging latch.
-      left.wrist.position.lerp(left.target, arChamber || id === 'laser' || id === 'railgun' || id === 'lmg' || id === 'smg' || id === 'shotgun' || id === 'sniper' || id === 'br' || (id === 'pistol' && (!!stage || pistolSprintBlend > 1e-5)) ? 1 : alpha);
-      left.wrist.quaternion.slerp(left.orientation, arChamber || id === 'laser' || id === 'railgun' || id === 'lmg' || id === 'smg' || id === 'shotgun' || id === 'sniper' || id === 'br' || (id === 'pistol' && (!!stage || pistolSprintBlend > 1e-5)) ? 1 : alpha);
+      left.wrist.position.lerp(left.target, arChamber || id === 'minigun' || id === 'laser' || id === 'railgun' || id === 'lmg' || id === 'smg' || id === 'shotgun' || id === 'sniper' || id === 'br' || (id === 'pistol' && (!!stage || pistolSprintBlend > 1e-5)) ? 1 : alpha);
+      left.wrist.quaternion.slerp(left.orientation, arChamber || id === 'minigun' || id === 'laser' || id === 'railgun' || id === 'lmg' || id === 'smg' || id === 'shotgun' || id === 'sniper' || id === 'br' || (id === 'pistol' && (!!stage || pistolSprintBlend > 1e-5)) ? 1 : alpha);
       // Solve the sleeve from its posed cuff toward a camera-local torso bend.
       // Receiver tilt must not rotate a cut-off sleeve end into the viewport.
       assembly.root.updateMatrix(); inverse.copy(assembly.root.matrix).invert();
@@ -408,14 +418,16 @@ export function createFirstPersonHands() {
       for (const [side, hand] of sides) {
         const attachment = config[side];
         const targetCurl = side === 'left' ? curl : attachment.curl;
-        if(id==='lmg'||id==='railgun'||id==='laser')hand.curl=targetCurl;
+        if(id==='minigun'||id==='lmg'||id==='railgun'||id==='laser')hand.curl=targetCurl;
         else hand.curl += (targetCurl - hand.curl) * alpha;
         end.set(0, -.047, 0).applyQuaternion(hand.wrist.quaternion).add(hand.wrist.position);
         // Bend toward a local torso target rather than reaching across the screen.
         // The camera-space cuff supplies a floor for the elbow drop and bend.
         attachmentPosition.copy(end).applyMatrix4(assembly.root.matrix);
         elbow.fromArray(config.elbows[side]);
-        elbow.x = THREE.MathUtils.clamp(elbow.x, attachmentPosition.x - .12, attachmentPosition.x + .12);
+        // The heavy upper support needs outboard elbows, independent of the
+        // narrow rifle cuff clamp; its full arm solve follows below.
+        if(id!=='minigun')elbow.x = THREE.MathUtils.clamp(elbow.x, attachmentPosition.x - .12, attachmentPosition.x + .12);
         elbow.y = Math.min(elbow.y, attachmentPosition.y - .30);
         elbow.z = Math.min(-.14, Math.max(elbow.z, attachmentPosition.z + .22));
         if (pistolSprintBlend > 0) elbow.lerp(sprint![side].elbow, pistolSprintBlend);
@@ -453,6 +465,15 @@ export function createFirstPersonHands() {
           direction.subVectors(railgunElbow,railgunShoulder);upperArm.scale.set(1,direction.length(),1);direction.transformDirection(inverse);upperArm.quaternion.setFromUnitVectors(up,direction);
           (upperArm.children[0] as THREE.Mesh).material=sleeveMaterial;
         }
+        if(id==='minigun'){
+          minigunArm(side,attachmentPosition,minigunShoulder,minigunElbow);elbow.copy(minigunElbow);
+          const upperArm=assembly.parts[`minigun${side}UpperArm`];
+          upperArm.visible=true;
+          upperArm.position.copy(minigunShoulder).add(minigunElbow).multiplyScalar(.5).applyMatrix4(inverse);
+          direction.subVectors(minigunElbow,minigunShoulder);upperArm.scale.set(1,direction.length(),1);
+          direction.transformDirection(inverse);upperArm.quaternion.setFromUnitVectors(up,direction);
+          (upperArm.children[0] as THREE.Mesh).material=sleeveMaterial;
+        }
         elbow.applyMatrix4(inverse);
         // A distant body target determines direction, never cylinder length.
         // Keep a bounded forearm while its broad end tucks down toward the torso.
@@ -481,7 +502,12 @@ export function createFirstPersonHands() {
             const runningAngle = (digit.thumb ? runningThumbAngles : runningFingerAngles)[segment];
             angle += (runningAngle - angle) * pistolSprintBlend;
           }
-          digit.joints[segment].rotation.set(-angle * (hand.curl + (aiming ? .025 : 0)), 0, segment === 0 ? digit.spread : 0);
+          const digitCurl=id==='minigun'&&side==='left'&&digit.thumb?1:hand.curl;
+          digit.joints[segment].rotation.set(-angle * (digitCurl + (aiming && id!=='minigun' ? .025 : 0)), 0, segment === 0 ? digit.spread : 0);
+          if(id==='minigun'&&side==='left'&&digit.thumb&&segment===0){
+            digit.joints[segment].rotation.z += attachment.thumbOpposition ?? 0;
+            digit.joints[segment].rotation.y = -.25;
+          }
           if (side === 'left' && pistolSprintBlend > 0 && digit.thumb && segment === 0) {
             digit.joints[segment].rotation.y = -.35 * pistolSprintBlend;
             digit.joints[segment].rotation.z += .30 * pistolSprintBlend;

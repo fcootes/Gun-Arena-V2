@@ -1,0 +1,13 @@
+{
+  "before": {
+    "actorInspection": "83067092fa6430f1c39c1d334c7a26635c2b1354d72580a1cfed7f2463594017",
+    "rotor": "f59a211f586228f3ab180ce869ffc7bafbbbace1086c9609b4579ad757ecddf1",
+    "cradle": "b6167879e5434d987c83b87f04ade7e1c67b297aca8270f757f948c0d044792c"
+  },
+  "after": {
+    "actorInspection": "83067092fa6430f1c39c1d334c7a26635c2b1354d72580a1cfed7f2463594017",
+    "rotor": "f59a211f586228f3ab180ce869ffc7bafbbbace1086c9609b4579ad757ecddf1",
+    "cradle": "b6167879e5434d987c83b87f04ade7e1c67b297aca8270f757f948c0d044792c"
+  },
+  "passed": true
+}

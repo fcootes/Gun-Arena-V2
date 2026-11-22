@@ -1,0 +1,11 @@
+
+> gun-arena-v2@0.0.0 test:controls
+> node --import tsx tests/controls.test.ts
+
+PASS: exclusive F/V and physical/auto-repeat guards
+PASS: RMB priority in both press orders; grounded sprint, opposite keys, crouch/jump and unchanged collision/class speed
+PASS: reload/ADS recovery, fire holds, multi-button release, grenade, E consumable latch, squad selection and slots/wheel
+PASS: pause/resume, death, restart, lobby, blur/hidden, real lock loss, rejected lock/drag fallback and locked/dead guards
+PASS: pause preserves shotgun action while lobby/restart cleanup cancels queued fire without silently chambering
+PASS: shotgun-only mouse reload-interrupt routing; other weapon input unchanged
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.

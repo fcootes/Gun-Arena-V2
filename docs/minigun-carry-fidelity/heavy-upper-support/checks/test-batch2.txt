@@ -1,0 +1,9 @@
+
+> gun-arena-v2@0.0.0 test:batch2
+> node --import tsx tests/batch2.test.ts
+
+PASS: five classes, editable four-member allocation, deployment presets and four mode posters
+PASS: all weapon meshes, resource-safe swaps, rounded operator head and map lighting
+PASS: legacy exponential fog restoration and reflection teardown on training map
+PASS: helicopter target selection, ally/dead guards, cadence, range, occlusion and phase gating
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
