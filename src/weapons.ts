@@ -674,9 +674,12 @@ export function createViewmodelManager(): ViewmodelManager {
     spin = 0;
     if (venting) assembly.root.rotation.z += Math.sin(time * 16) * 0.014;
     hands.update(w.id as WeaponModelId, dt, assembly, ws, aiming, gait);
-    // Lower the complete first-person assembly after its camera-space arm solve,
-    // preserving the existing glove/grip/sleeve relationships in every pose.
-    if (w.id === 'minigun') assembly.root.position.y -= .03;
+    // Move the complete first-person assembly after the camera-space arm solve
+    // so the gloves and sleeves follow the gun in every pose.
+    if (w.id === 'minigun') {
+      assembly.root.position.y -= .11;
+      assembly.root.position.z += .15;
+    }
   }
   return {
     root,
