@@ -91,7 +91,12 @@ export const VIEWMODEL_GRIPS: Readonly<Record<WeaponModelId, ViewmodelGrip>> = {
   }),
   laser: grip(primary(.100), under(-.27,-.085), { hip: [.17, -.24, -.42], aim: [0, -.137, -.42] }),
   railgun: grip(primary(), under(-.25,-.090), { sleeveLength:.28, hip: [.15, -.235, -.42], aim: [0, -.157, -.42], sprint: [-.045, -.285, -.49], sprintRotation: [-.12, .56, -.12] }),
-  rocket: grip(primary(.155), vertical(-.165, -.038, -.105), { hip: [.18, -.235, -.43], aim: [0, -.145, -.43], sprint: [-.025, -.29, -.49], sprintRotation: [-.08, .34, -.10], reloadReach: [-.04, -.045, .40], elbows: { right: [.36, -.56, -.24], left: [.02, -.60, -.22] } }),
+  rocket: grip({ ...primary(.082, .081, -.068), followPart: 'rocketControlGrip', partOffset: [.038, -.113, 0] },
+    { ...vertical(-.226, -.081, -.085), followPart: 'rocketSupportGrip', partOffset: [-.038, -.106, 0] }, {
+      hip: [.178, -.242, -.417], hipRotation: [-.14, .16, .12], aim: [-.026, -.117, -.438],
+      sprint: [-.025, -.313, -.447], sprintRotation: [-.09, .31, -.14],
+      elbows: { right: [.34, -.57, -.235], left: [-.22, -.57, -.22] }, sleeveLength: .28,
+    }),
   grenade_launcher: grip(primary(.175), vertical(-.165, -.039, -.10), { hip: [.16, -.225, -.39], aim: [0, -.105, -.39], sprint: [-.04, -.285, -.46], sprintRotation: [-.10, .40, -.10] }),
   minigun: grip({ ...primary(.252813, .037507, -.148633), rotation: [-Math.PI / 2 - .24, Math.PI / 2, 0],
     fingerAngles: [.2367, .1190, .5705], thumbAngles: [.9835, .6888, .1512],

@@ -1,3 +1,4 @@
+import { clearRocketParticles, rocketParticles, updateRocketParticles } from './rocketEffects';
 import {advancePlasmaFire,advancePlasmaCooling,beginPlasmaAction,addPlasmaSupply} from './plasmaMechanics';
 import { updateAbominationCombat, poseSpartan } from "./area51Bosses";
 import { WEAPONS } from './weapons';
@@ -1444,6 +1445,7 @@ export interface CombatPlayerProxy {
 }
 
 export interface CombatSystemsContext {
+  onRocketImpact?: (position: THREE.Vector3) => void;
   player: CombatPlayerProxy;
   bots: Bot[];
   world: WorldManager;
@@ -1927,7 +1929,7 @@ let projectileIdCounter = 1;
 
 interface ExplosionFx {
   mesh: THREE.Mesh;
-  light: THREE.PointLight;
+  light: THREE.PointLight | null;
   life: number;
   maxLife: number;
   scale: number;
@@ -1936,32 +1938,36 @@ interface ExplosionFx {
 const explosionFx: ExplosionFx[] = [];
 
 function buildRocketMesh(): THREE.Group {
-  const g = new THREE.Group();
-  const bodyMat = new THREE.MeshStandardMaterial({ color: 0x3a3d33, roughness: 0.6, metalness: 0.5 });
-  const warheadMat = new THREE.MeshStandardMaterial({ color: 0x6b2b1e, roughness: 0.5, metalness: 0.4 });
-
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.5, 10), bodyMat);
+  const group = new THREE.Group();
+  group.name = 'Rocket projectile';
+  const alloy = new THREE.MeshStandardMaterial({ color: 0x575f61, roughness: .49, metalness: .44 });
+  const collar = new THREE.MeshStandardMaterial({ color: 0x8b5331, roughness: .56, metalness: .40 });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(.049, .060, .48, 10), alloy);
   body.rotation.x = Math.PI / 2;
-  const warhead = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.26, 10), warheadMat);
-  warhead.rotation.x = Math.PI / 2;
-  warhead.position.z = 0.36;
-
+  const nose = new THREE.Mesh(new THREE.CylinderGeometry(.013, .049, .16, 10), collar);
+  nose.rotation.x = Math.PI / 2;
+  nose.position.z = .318;
+  const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(.051, .075, .07, 10), collar);
+  nozzle.rotation.x = Math.PI / 2;
+  nozzle.position.z = -.237;
+  const finGeometry = new THREE.BoxGeometry(.014, .133, .104);
   for (let i = 0; i < 4; i++) {
-    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.14, 0.12), bodyMat);
-    const a = (i / 4) * Math.PI * 2;
-    fin.position.set(Math.cos(a) * 0.07, Math.sin(a) * 0.07, -0.2);
+    const fin = new THREE.Mesh(finGeometry, alloy);
+    const a = i * Math.PI / 2;
+    fin.position.set(-Math.sin(a) * .049, Math.cos(a) * .049, -.169);
     fin.rotation.z = a;
-    g.add(fin);
+    group.add(fin);
   }
-
   const exhaust = new THREE.Mesh(
-    new THREE.SphereGeometry(0.11, 8, 8),
-    new THREE.MeshBasicMaterial({ color: 0xffaa33, transparent: true, opacity: 0.85 })
+    new THREE.ConeGeometry(.078, .45, 10, 1, true),
+    new THREE.MeshBasicMaterial({ color: 0xffa846, transparent: true, opacity: .82, depthWrite: false,
+      blending: THREE.AdditiveBlending, side: THREE.DoubleSide }),
   );
-  exhaust.position.z = -0.3;
-
-  g.add(body, warhead, exhaust);
-  return g;
+  exhaust.name = 'Rocket exhaust';
+  exhaust.rotation.x = -Math.PI / 2;
+  exhaust.position.z = -.46;
+  group.add(body, nose, nozzle, exhaust);
+  return group;
 }
 
 function buildGrenadeShellMesh(): THREE.Group {
@@ -2081,7 +2087,8 @@ export function detonateExplosion(
   ownerTeam: string,
   ownerIsPlayer: boolean,
   ctx: CombatSystemsContext,
-  attacker: 'player' | Bot | string = 'player'
+  attacker: 'player' | Bot | string = 'player',
+  rocketFlight?: THREE.Vector3,
 ): void {
   const minX = center.x - radius;
   const maxX = center.x + radius;
@@ -2149,6 +2156,24 @@ export function detonateExplosion(
   }
 
   /* --- VFX --- */
+  if (rocketFlight) {
+    // Lift the particle origin back from the collided surface so sparks start
+    // on the visible side of the hit. The impact and damage centre stay exact.
+    _v2.copy(rocketFlight).normalize();
+    _v3.copy(center).addScaledVector(_v2, -.16);
+    rocketParticles(ctx.scene).impact(_v3, rocketFlight);
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(radius * .12, .038, 5, 24),
+      new THREE.MeshBasicMaterial({ color: 0xffb372, transparent: true, opacity: .95,
+        depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }),
+    );
+    ring.name = 'Rocket impact pressure ring';
+    ring.position.copy(_v3);
+    ring.lookAt(_v3.sub(_v2));
+    ctx.scene.add(ring);
+    explosionFx.push({ mesh: ring, light: null, life: .21, maxLife: .21, scale: 1, growth: 14 });
+    ctx.onRocketImpact?.(center);
+  }
   const flash = new THREE.Mesh(
     new THREE.SphereGeometry(Math.max(0.7, radius * 0.22), 16, 14),
     new THREE.MeshBasicMaterial({ color: 0xffb24a, transparent: true, opacity: 0.95, depthWrite: false })
@@ -2220,24 +2245,13 @@ export function updateProjectiles(dt: number, ctx: CombatSystemsContext): void {
     }
     if(Number.isFinite(earliest)){detonate=true;impact.lerpVectors(p.prevPos,p.pos,earliest);}
 
-    /* --- Smoke trail --- */
     p.trailTimer -= dt;
-    if (p.kind === 'ROCKET' && p.trailTimer <= 0) {
-      p.trailTimer = 0.035;
-      const puff = new THREE.Mesh(
-        new THREE.SphereGeometry(0.11, 6, 6),
-        new THREE.MeshBasicMaterial({ color: 0x9aa0a6, transparent: true, opacity: 0.45, depthWrite: false })
-      );
-      puff.position.copy(p.pos);
-      ctx.scene.add(puff);
-      explosionFx.push({
-        mesh: puff,
-        light: null as unknown as THREE.PointLight,
-        life: 0.5,
-        maxLife: 0.5,
-        scale: 1,
-        growth: 1.6
-      });
+    if (p.kind === 'ROCKET' && !detonate && p.trailTimer <= 0) {
+      p.trailTimer = .025;
+      const exhaust = p.group.getObjectByName('Rocket exhaust')!;
+      exhaust.scale.y = .84 + .16 * Math.sin(p.life * 87);
+      _v1.copy(p.vel).normalize().multiplyScalar(-.28).add(p.pos);
+      rocketParticles(ctx.scene).trail(_v1, p.vel);
     }
 
     if (detonate || p.life <= 0) {
@@ -2249,7 +2263,8 @@ export function updateProjectiles(dt: number, ctx: CombatSystemsContext): void {
           p.ownerTeam,
           p.ownerIsPlayer,
           ctx,
-          p.ownerIsPlayer ? 'player' : p.ownerBotRef ?? ctx.bots.find((b) => b.id === p.ownerBotId) ?? p.ownerTeam
+          p.ownerIsPlayer ? 'player' : p.ownerBotRef ?? ctx.bots.find((b) => b.id === p.ownerBotId) ?? p.ownerTeam,
+          p.kind === 'ROCKET' ? p.vel : undefined,
         );
       }
       disposeBotVisuals(p.group);
@@ -2257,7 +2272,9 @@ export function updateProjectiles(dt: number, ctx: CombatSystemsContext): void {
     }
   }
 
-  /* --- Explosion / smoke VFX --- */
+  updateRocketParticles(ctx.scene, dt);
+
+  /* --- Explosion VFX --- */
   for (let i = explosionFx.length - 1; i >= 0; i--) {
     const fx = explosionFx[i];
     fx.life -= dt;
@@ -2345,7 +2362,7 @@ export function fireRailPenetrator(
   ctx.scene.add(tracer);
   explosionFx.push({
     mesh: tracer,
-    light: null as unknown as THREE.PointLight,
+    light: null,
     life: 0.18,
     maxLife: 0.18,
     scale: 1,
@@ -2982,6 +2999,7 @@ export function clearCombatSystems(scene: THREE.Scene, world: WorldManager): voi
     disposeBotVisuals(p.group);
   }
   activeProjectiles.length = 0;
+  clearRocketParticles(scene);
 
   for (const fx of explosionFx) {
     disposeBotVisuals(fx.mesh);

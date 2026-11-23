@@ -18,7 +18,7 @@ import { audioManager } from './campaignAudio';
 import { PostDeathMenu } from './PostDeathMenu';
 import { beginShotgunCycle, cancelShotgunCycle } from './shotgunMechanics';
 import { beginWeaponReload, advanceWeaponReload, cancelWeaponReload, interruptShellReload } from './weaponReload';
-import { prepareWeaponAudio, releaseWeaponAudio, playWeaponReloadAudio, playShotgunMechanicalEvent, playSniperBoltEvent, updateSniperReloadAudio, updateSmgReloadAudio, playBattleRifleMechanicalEvent, playLmgMechanicalEvent, playRailgunMechanicalEvent, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } from './weaponAudio';
+import { prepareWeaponAudio, releaseWeaponAudio, playWeaponReloadAudio, playShotgunMechanicalEvent, playSniperBoltEvent, updateSniperReloadAudio, updateSmgReloadAudio, playBattleRifleMechanicalEvent, playLmgMechanicalEvent, playRailgunMechanicalEvent, stopWeaponReloadAudio, updateRocketLockAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } from './weaponAudio';
 import './ModePosters.css';
 import { createWeaponAssembly, disposeWeaponObject } from './weaponModels';
 import { useEffect, useRef, useState } from 'react';
@@ -1314,6 +1314,7 @@ export default function App() {
     let sharedMutantContext: BioMutantAIContext | null = null;
     function getCombatContext(): CombatSystemsContext {
       if (!sharedCombatContext) sharedCombatContext = {
+          onRocketImpact: position => grenadeExplosionSound.play(getSpatialVolume(camera.position, position)),
           scene,camera,world,bots,damageBot,pushKillFeed,
           get squadDirective(){return squadDirectiveRef.current;},get focusTargetId(){return focusTargetIDRef.current;},
           player:{pos:player.pos,get shield(){return player.shield;},get yaw(){return player.yaw;},get pitch(){return player.pitch;},get health(){return player.health;},get maxHealth(){return player.maxHealth;},get alive(){return player.alive;},get team(){return player.team;},
@@ -2255,7 +2256,16 @@ export default function App() {
         const ws=currentSlotState(),direction=new THREE.Vector3();getFireCamera().getWorldDirection(direction);
         const result=firePlayerLauncher(scene,w,ws,player.pos,direction,player.team,performance.now()/1000);
         if(result==='reload')reloadWeapon();
-        if(result==='fired'){player.shotsFired++;vmManager.addRecoil(w.kick??.1,.10);recoilKick+=w.kick??.1;triggerPlayerFlash();AUDIO.shotgunShot.play(.8,true);}
+        if (result === 'fired') {
+          player.shotsFired++;
+          if (w.id === 'rocket') {
+            vmManager.addRecoil(.065, .105);
+            recoilPitch += .026;
+          } else vmManager.addRecoil(w.kick ?? .1, .10);
+          recoilKick += w.kick ?? .1;
+          triggerPlayerFlash();
+          AUDIO.shotgunShot.play(.8, true);
+        }
         return;
       }
 
@@ -3233,10 +3243,15 @@ export default function App() {
           const wasReloading = ws.reloading;
           // Inactive manual actions freeze at their actual handle position.
           if (w.id === 'sniper' && player.slotIndex !== i) return;
+          const rocketSequence = i === player.slotIndex && w.id === 'rocket' && wasReloading
+            ? ws.reloadSequence : undefined;
+          const close = rocketSequence?.phases.at(-1);
+          const beforeReload = ws.reloadT ?? 0;
           advanceWeaponReload(w, ws, dt, undefined, player.slotIndex === i && w.id === 'shotgun' ? playShotgunMechanicalEvent : undefined,
             w.id === 'sniper' ? playSniperBoltEvent : undefined, w.id === 'br' && player.slotIndex === i ? playBattleRifleMechanicalEvent : undefined,
             w.id === 'lmg' && player.slotIndex === i ? playLmgMechanicalEvent : undefined,
             w.id === 'railgun' && player.slotIndex === i ? playRailgunMechanicalEvent : undefined);
+          if (close?.phase === 'close') updateRocketLockAudio(beforeReload, ws.reloadT ?? 0, close.duration);
           if (w.id === 'sniper') updateSniperReloadAudio(ws);
           if (w.id === 'smg' && player.slotIndex === i) updateSmgReloadAudio(ws);
           if (player.slotIndex === i && w.id === 'laser') updatePlasmaReloadAudio(ws);

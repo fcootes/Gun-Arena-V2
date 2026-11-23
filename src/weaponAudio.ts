@@ -1,3 +1,4 @@
+import { ROCKET_HATCH_LOCK } from './rocketAnimation';
 import {PLASMA} from './plasmaMechanics';
 import type {RailgunListener} from './railgunMechanics';
 import { LmgFireAudio } from './lmgFireAudio';
@@ -36,6 +37,10 @@ const lmgFireAudio = new LmgFireAudio(SECOND_BATCH_AUDIO_URLS.lmgFire,
 /** Prime only recordings for the current loadout and spawned actors; later shots stay lazy. */
 export function prepareWeaponAudio(ids: readonly string[]): void {
   if (ids.includes('lmg')) void lmgFireAudio.prepare();
+  if (ids.includes('rocket')) {
+    AUDIO.lmgCoverClose.prepare();
+    AUDIO.shotgunShot.prepare();
+  }
   const wanted = new Set(ids.map(id => id === 'laser' ? 'plasma' : id));
   for (const key of Object.keys(weaponUrls)) {
     // The sustain file is decoded by LmgFireAudio; its legacy HTML loop
@@ -126,6 +131,15 @@ export const playLmgMechanicalEvent: LmgListener = (event,speed,late) => {
   const clip=track.duration||(event==='extract'?.215:event==='cover'?.3185:.330);
   if(offset<clip)track.play(1,true,1/speed,offset);
 };
+
+// The installed CC0 hatch cut is shared with the LMG. Cross the visual lock
+// marker on the existing reload clock, including when a frame spans a boundary.
+export function updateRocketLockAudio(before: number, after: number, closeDuration: number): void {
+  const remainingAtLock = closeDuration * (1 - ROCKET_HATCH_LOCK);
+  if (before <= remainingAtLock || after > remainingAtLock) return;
+  const late = Math.max(0, remainingAtLock - after);
+  if (late < (AUDIO.lmgCoverClose.duration || .3185)) AUDIO.lmgCoverClose.play(.82, true, 1, late);
+}
 
 export function playWeaponReloadAudio(weapon: WeaponDef, state: WeaponSlotState): boolean {
   if (!state.reloading || !state.reloadSequence) return false;

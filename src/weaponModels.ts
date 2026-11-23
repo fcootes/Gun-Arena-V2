@@ -1,3 +1,4 @@
+import { createRocketAnimator, ROCKET_MODULE_SEAT } from './rocketAnimation';
 import {createPlasmaRecoil,type PlasmaRecoil} from './plasmaRecoil';
 import {buildPlasmaModel} from './plasmaModel';
 import {createPlasmaAnimator} from './plasmaAnimation';
@@ -1272,41 +1273,77 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     const model=buildRailgunModel(body,parts,{steel,dark,polymer,rubber,edge,glow},!!options.firstPerson);
     muzzle.position.fromArray(model.muzzle);railgunUpdate=model.update;
   } else if (id === 'rocket') {
-    tube(
-      'Composite launch tube',
-      0.052,
-      options.firstPerson ? .65 : .89,
-      0,
-      0.025,
-      options.firstPerson ? -.14 : -.02,
-      polymer,
-      body,
-      0.041,
-    );
-    tube(
-      'Tapered launch throat',
-      0.044,
-      0.11,
-      0,
-      0.025,
-      -0.505,
-      steel,
-      body,
-      0.06,
-    );
-    if (!options.firstPerson) tube('Flared exhaust cone', 0.09, 0.15, 0, 0.025, 0.48, steel, body, 0.046);
-    for (let i = 0; i < 11; i++)
-      ring('Heat shield band', 0.055, 0.003, 0, 0.025, -0.2 + i * 0.042, dark);
-    grip(0.1);
-    grip(-0.22);
-    box('Scope mount', 0.075, 0.025, 0.07, -0.04, 0.071, -0.05, steel);
-    optic();
-    for (const z of options.firstPerson ? [] : [-0.42, 0.25]) {
-      box('Flip up sight stem', 0.012, 0.05, 0.018, 0, 0.092, z, steel);
-      ring('Flip up iron sight', 0.014, 0.003, 0, 0.13, z, dark);
+    steel.color.setHex(0x505b63); steel.metalness = .56; steel.roughness = .48;
+    dark.color.setHex(0x293138); dark.metalness = .47;
+    polymer.color.setHex(0x343a40);
+    edge.color.setHex(0x869199); edge.metalness = .52;
+    glow.color.setHex(0xf7ab56); glow.emissive.setHex(0xf48e30); glow.emissiveIntensity = .85;
+
+    // The revolved section has a visible bore instead of a solid end cap.
+    function collar(name: string, profile: [number, number][], finish: THREE.Material, x = 0, y = .046) {
+      const shape = profile.map(([radius, z]) => new THREE.Vector2(radius, z));
+      shape.push(shape[0]);
+      const geometry = new THREE.LatheGeometry(shape, 16);
+      geometry.rotateX(Math.PI / 2);
+      mesh(name, geometry, finish, x, y, 0);
     }
-    muzzle.position.set(0, 0.025, -0.57);
-    backblast.position.set(0, 0.025, 0.565);
+    collar('Reinforced launch tube', [[.044, -.578], [.063, -.578], [.068, -.554], [.056, -.473],
+      [.055, -.173], [.049, -.145], [.041, -.145], [.041, -.46]], steel);
+    collar('Recessed muzzle liner', [[.039, -.578], [.045, -.578], [.045, -.493], [.033, -.505]], dark);
+    collar('Front shock collar', [[.057, -.482], [.070, -.482], [.073, -.457], [.058, -.440]], edge);
+    collar('Rear shroud collar', [[.054, -.228], [.069, -.228], [.069, -.188], [.055, -.174]], dark);
+
+    // Open left exchange bay. Its roof, rails and rear bulkhead visibly join the tube housing.
+    box('Upper bridge and launch tube bedding', .158, .055, .34, .003, .042, .005, polymer);
+    box('Exchange bay back wall', .076, .074, .245, .034, -.012, .031, dark);
+    box('Lower exchange bay sill', .159, .023, .247, -.012, -.052, .032, steel);
+    for (const z of [-.074, .139])
+      box('Cassette guide rail', .085, .020, .022, -.055, -.024, z, edge);
+    box('Forward receiver bulkhead', .179, .113, .043, -.009, .012, -.110, steel);
+    box('Rear receiver bulkhead', .181, .118, .065, -.006, .012, .168, dark);
+    const rear = options.firstPerson ? .233 : .385;
+    const rearRadius = options.firstPerson ? .064 : .077;
+    collar('Faceted exhaust cone', [[.041, .173], [.056, .173], [.062, rear - .039],
+      [rearRadius, rear - .015], [rearRadius - .001, rear], [.049, rear], [.036, rear - .037]], steel);
+    collar('Exhaust break ring', [[.051, rear-.019], [rearRadius, rear-.019], [rearRadius + .002, rear-.006], [.051, rear-.006]], dark);
+    for (const x of [-1, 1]) {
+      for (const z of [-.411, -.353, -.295])
+        box('Bedded composite shroud rib', .022, .061, .048, x * .052, .039, z, polymer).rotation.x = -.23;
+      box('Longitudinal bed rail', .022, .020, .29, x * .053, .001, -.329, dark);
+    }
+    box('Forward support yoke', .093, .037, .088, -.018, -.023, -.227, steel);
+    const support = group('rocketSupportGrip', -.043, .021, -.226);
+    grip(0, support);
+    const control = group('rocketControlGrip', .043, .045, .082);
+    grip(0, control);
+    box('Rear control bridge', .072, .025, .090, .043, -.045, .082, steel);
+    box('Trigger guard bridge', .024, .013, .081, .043, -.077, .023, dark);
+
+    // The shallow sight remains below the actual centre ray in first person.
+    box('Optical bridge', .061, .021, .173, .026, .094, -.132, steel);
+    collar('Recessed sight housing', [[.015, -.250], [.026, -.250], [.028, -.232], [.022, -.084],
+      [.025, -.071], [.015, -.071], [.014, -.233]], dark, .026, .117);
+    ring('Sight lens retaining ring', .017, .003, .026, .117, -.073, edge);
+    box('Optical status window', .014, .004, .034, .045, .139, -.122, glow);
+    for (const z of [-.154, -.115, .127])
+      box('Bridge reinforcing shoulder', .164, .011, .019, .003, .074, z, dark);
+
+    const hatch = group('rocketHatch', -.102, .063, .029);
+    tube('Access housing hinge', .009, .220, 0, 0, 0, edge, hatch);
+    box('Hinged access housing', .014, .105, .207, 0, -.053, 0, polymer, hatch);
+    box('Raised hatch pull', .012, .025, .060, -.010, -.074, .046, steel, hatch);
+    box('Hatch lower reinforcement', .006, .019, .191, -.006, -.092, 0, dark, hatch);
+    for (let i = 0; i < 4; i++)
+      box('Inset amber hazard slash', .002, .018, .008, -.008, -.049, -.071 + i * .014, glow, hatch).rotation.x = -.42;
+
+    const round = group('reloadRound', ...ROCKET_MODULE_SEAT);
+    box('Armoured exchange cassette', .083, .059, .171, 0, 0, 0, dark, round);
+    for (const z of [-.072, .072]) box('Cassette locating ferrule', .089, .055, .022, 0, 0, z, edge, round);
+    box('Cassette grip plate', .008, .042, .079, -.044, 0, 0, rubber, round);
+    box('Cassette status strip', .003, .005, .074, -.049, .021, 0, glow, round);
+    round.visible = false;
+    muzzle.position.set(0, .046, -.582);
+    backblast.position.set(0, .046, rear + .005);
   } else {
     box('Launcher receiver', 0.076, 0.075, 0.2, 0, 0.027, 0.085, steel);
     stock();
@@ -1387,10 +1424,6 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
     tube('Shotgun shell hull', .0115, .049, 0, 0, -.003, hull, round);
     tube('Shell brass base', .012, .009, 0, 0, .024, brass, round);
     ring('Shell rim', .012, .0013, 0, 0, .029, brass, round);
-    round.visible = false;
-  } else if (id === 'rocket') {
-    const round = group('reloadRound', 0, -.07, -.55);
-    tube('Tube-loaded rocket', .036, .25, 0, 0, 0, dark, round).rotation.x = 0;
     round.visible = false;
   }
   // Bake static components by material within each moving assembly. Rails/fasteners
@@ -1498,6 +1531,7 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       railgunUpdate?.(charge,time);
       if(state)railgunParts?.(state);
       if(plasmaParts)plasmaParts(state);
+      rocketParts?.(state);
       if(plasmaVisual){
         const q=state?.reloadSequence,stage=q?.phases[q.index],thermal=q?.kind==='plasmaVent',p=stage?q!.elapsed/stage.duration:0;
         const elapsed=q?((state?.totalReloadT??0)-(state?.reloadT??0))/(q.plasmaSpeed??1):0;
@@ -1506,6 +1540,7 @@ export function createWeaponAssembly(id: string, options: { firstPerson?: boolea
       }
     },
   };
+  const rocketParts = id === 'rocket' ? createRocketAnimator(assembly, !!options.firstPerson) : undefined;
   const plasmaParts=id==='laser'?createPlasmaAnimator(assembly,false):undefined;
   const railgunParts=id==='railgun'?createRailgunAnimator(assembly,false):undefined;
   return assembly;
