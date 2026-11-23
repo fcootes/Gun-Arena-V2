@@ -585,7 +585,7 @@ export function createViewmodelManager(): ViewmodelManager {
     else if (selected.smgAnimation) selected.smgAnimation(ws, Math.sin((boltTimer / .07) * Math.PI));
     else if (selected.pistolAnimation) selected.pistolAnimation(ws, Math.sin((slideTimer / .12) * Math.PI));
     else if (ws?.reloading && sequence && selected.brReload) selected.brReload(sequence);
-    else if (ws?.reloading && sequence) {
+    else if (ws?.reloading && sequence && w.id !== 'rocket') {
       const phase = sequence.phases[sequence.index];
       const p = THREE.MathUtils.smoothstep(sequence.elapsed / phase.duration, 0, 1);
       const progress = 1 - (ws.reloadT ?? 0) / (ws.totalReloadT || 1);
@@ -629,11 +629,6 @@ export function createViewmodelManager(): ViewmodelManager {
         parts.reloadRound.visible = t >= .10 && !sequence.shellSeated;
         // A short receiver response to firm seating, not a camera kick.
         assembly.root.position.y += .004 * Math.sin(Math.PI * Math.max(0, Math.min(1, (t - .68) / .13)));
-      } else if (parts.reloadRound && phase.phase === 'insert') {
-        const base = pose.get(parts.reloadRound)!;
-        reloadPosition.copy(base.position); reloadPosition.x -= .15; reloadPosition.y -= .12; reloadPosition.z += w.id === 'rocket' ? -.2 : .08;
-        parts.reloadRound.position.lerpVectors(reloadPosition, base.position, p);
-        parts.reloadRound.visible = p < .92;
       }
     } else {
       if (parts.slide) parts.slide.position.z += Math.sin((slideTimer / .12) * Math.PI) * .045;
@@ -669,7 +664,7 @@ export function createViewmodelManager(): ViewmodelManager {
       assembly.root.position.add(minigunCarry.position);
       assembly.root.rotation.x += minigunCarry.rotation.x; assembly.root.rotation.y += minigunCarry.rotation.y; assembly.root.rotation.z += minigunCarry.rotation.z;
     }
-    assembly.update(dt, charge, spin,w.id==='laser'?ws:undefined);
+    assembly.update(dt, charge, spin,w.id === 'laser' || w.id === 'rocket' ? ws : undefined);
     assembly.plasmaRecoil?.apply(assembly.root,aiming?PLASMA_RECOIL.adsScale:1);
     spin = 0;
     if (venting) assembly.root.rotation.z += Math.sin(time * 16) * 0.014;

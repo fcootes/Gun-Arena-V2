@@ -1,3 +1,6 @@
+import { beginWeaponReload, advanceWeaponReload } from './weaponReload';
+import { WEAPONS } from './weapons';
+import { createFirstPersonHands } from './viewmodelHands';
 import {beginPlasmaAction,advancePlasmaAction,advancePlasmaFire,advancePlasmaCooling} from './plasmaMechanics';
 import {beginRailgunReload,advanceRailgunReload,markRailgunFired} from './railgunMechanics';
 import type {WeaponSlotState} from './types';
@@ -97,14 +100,38 @@ export function WeaponStudio({ weaponId }: { weaponId: string }) {
     };
     const railReady:WeaponSlotState={ammo:1};
     let fireTime = 0,railPreviewCharging=false,railReload:WeaponSlotState|undefined;
-    reloadPreviewRef.current=()=>{if(weaponIdRef.current!=='railgun')return;fireTime=0;railPreviewCharging=false;effects.reset();railReload={ammo:0,reserve:1};markRailgunFired(railReload);beginRailgunReload(railReload);};
+    const launcher = WEAPONS.find(def => def.id === 'rocket')!;
+    let launcherReload: WeaponSlotState | undefined;
+    let launcherHands: ReturnType<typeof createFirstPersonHands> | undefined;
+    reloadPreviewRef.current = () => {
+      fireTime = 0;
+      railPreviewCharging = false;
+      effects.reset();
+      if (weaponIdRef.current === 'rocket') {
+        const assembly = weapon.userData.weaponAssembly;
+        if (!launcherHands) {
+          launcherHands = createFirstPersonHands();
+          assembly.root.add(launcherHands.root);
+        }
+        launcherHands.root.visible = true;
+        launcherHands.reset();
+        launcherReload = { ammo: 0, reserve: 1 };
+        beginWeaponReload(launcher, launcherReload);
+      } else if (weaponIdRef.current === 'railgun') {
+        railReload = { ammo: 0, reserve: 1 };
+        markRailgunFired(railReload);
+        beginRailgunReload(railReload);
+      }
+    };
     firePreviewRef.current = () => {
-      railReload=undefined;
+      railReload = undefined;
+      launcherReload = undefined;
+      if (launcherHands) launcherHands.root.visible = false;
       if(weaponIdRef.current==='laser'){plasmaPausedRef.current=false;setPlasmaPaused(false);plasmaFiring=1;return;}
       if(weaponIdRef.current==='railgun'){effects.reset();fireTime=1.24;railPreviewCharging=true;}
       else{effects.trigger();fireTime=.4;}
     };
-    weapon.rotation.y = weaponIdRef.current==='laser'?-Math.PI/2:Math.PI/2;
+    weapon.rotation.y = ['laser', 'rocket'].includes(weaponIdRef.current) ? -Math.PI / 2 : Math.PI / 2;
     const modelBounds = new THREE.Box3(),
       modelSize = new THREE.Vector3(),
       modelCenter = new THREE.Vector3();
@@ -133,7 +160,8 @@ export function WeaponStudio({ weaponId }: { weaponId: string }) {
       currentWeaponId = id;
       weapon.position.set(0, 0, 0);
       buildWeaponMesh(weapon, id);
-      weapon.rotation.y=id==='laser'?-Math.PI/2:Math.PI/2;
+      weapon.rotation.y = ['laser', 'rocket'].includes(id) ? -Math.PI / 2 : Math.PI / 2;
+      launcherReload = launcherHands = undefined;
       effects = createWeaponMuzzleEffect(weapon.userData.weaponAssembly);
       fireTime = 0;railPreviewCharging=false;railReload=undefined;plasmaFiring=0;plasmaState={ammo:60,reserve:180,heat:0};
       centerModel();
@@ -177,12 +205,19 @@ export function WeaponStudio({ weaponId }: { weaponId: string }) {
       if(currentWeaponId==='laser'&&!plasmaPausedRef.current){advancePlasmaCooling(plasmaState,dt);if(plasmaState.overheated&&!plasmaState.reloading)beginPlasmaAction(plasmaState,1,'vent');advancePlasmaAction(plasmaState,dt);advancePlasmaFire(plasmaState,dt,plasmaFiring>0,()=>{effects.trigger();return true;});plasmaFiring=Math.max(0,plasmaFiring-dt);}
       if(currentWeaponId==='laser'&&plasmaState.reloadSequence?.kind==='plasmaSwap'&&!plasmaPausedRef.current&&plasmaTimelineRef.current)plasmaTimelineRef.current.value=String(3.2-(plasmaState.reloadT??0));
       if(railReload)advanceRailgunReload(railReload,dt);
-      weapon.userData.weaponAssembly.update(
+      if (launcherReload) advanceWeaponReload(launcher, launcherReload, dt);
+      const assembly = weapon.userData.weaponAssembly;
+      assembly.update(
         dt,
         currentWeaponId === 'railgun' && railPreviewCharging ? Math.min(1,(1.24-fireTime)/1.2) : 0,
         currentWeaponId === 'minigun' && fireTime > 0 ? dt * 40 : 0,
-        currentWeaponId==='railgun'?(railReload??railReady):currentWeaponId==='laser'?plasmaState:undefined,
+        currentWeaponId==='railgun'?(railReload??railReady):currentWeaponId==='laser'?plasmaState:launcherReload,
       );
+      if (launcherReload && launcherHands) {
+        launcherHands.update('rocket', dt, assembly, launcherReload, false);
+        launcherHands.root.visible = !!launcherReload.reloading;
+        if (!launcherReload.reloading) launcherReload = undefined;
+      }
       controls.update();
       renderer.render(scene, camera);
     };
@@ -194,8 +229,8 @@ export function WeaponStudio({ weaponId }: { weaponId: string }) {
       controls.dispose();
       setWeaponRef.current = () => {};
       plasmaPreviewRef.current=()=>{};plasmaPoseRef.current=()=>{};
-      firePreviewRef.current = () => {
-      railReload=undefined;};
+      firePreviewRef.current = () => {};
+      reloadPreviewRef.current = () => {};
       disposeBotVisuals(scene);
       environment.dispose();
       renderer.dispose();
@@ -221,7 +256,7 @@ export function WeaponStudio({ weaponId }: { weaponId: string }) {
         <button type="button" onClick={()=>{plasmaPausedRef.current=!plasmaPausedRef.current;setPlasmaPaused(plasmaPausedRef.current);}} className="border border-white/25 px-2 py-1">{plasmaPaused?'RESUME':'PAUSE'}</button>
         <input ref={plasmaTimelineRef} type="range" min="0" max="3.2" step="0.001" defaultValue="0" aria-label="Cartridge reload pose, seconds" onChange={event=>plasmaPoseRef.current(Number(event.currentTarget.value))} className="w-28 accent-cyan-300" />
       </div>}
-      {weaponId==='railgun' && <button type="button" onClick={()=>reloadPreviewRef.current()}
+      {(weaponId === 'railgun' || weaponId === 'rocket') && <button type="button" onClick={()=>reloadPreviewRef.current()}
         className="absolute top-3 left-3 px-3 py-2 text-[9px] tracking-widest text-slate-100 border border-white/25 bg-black/60">
         TEST RELOAD
       </button>}

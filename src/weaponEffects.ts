@@ -115,13 +115,13 @@ export const MUZZLE_PROFILES: Record<WeaponModelId, MuzzleProfile> = {
   },
   railgun: {life:.04,width:.05,length:.04,light:.9,radius:.7,smoke:3,sparks:3,star:0,energy:true,rear:false},
   rocket: {
-    life: 0.22,
-    width: 0.5,
-    length: 0.48,
-    light: 12,
-    radius: 10,
-    smoke: 24,
-    sparks: 10,
+    life: 0.112,
+    width: 0.45,
+    length: 0.59,
+    light: 10,
+    radius: 8,
+    smoke: 18,
+    sparks: 12,
     star: 5,
     energy: false,
     rear: true,
@@ -199,6 +199,15 @@ export function createWeaponMuzzleEffect(
   );
   cone.rotation.x = -Math.PI / 2;
   pivot.add(cone);
+  const exhaust = id === 'rocket' ? new THREE.Mesh(cone.geometry, coneMaterial) : undefined;
+  if (exhaust) {
+    exhaust.name = 'Launcher rear impulse';
+    exhaust.position.copy(rear);
+    exhaust.position.z += .12;
+    exhaust.rotation.x = Math.PI / 2;
+    exhaust.visible = false;
+    root.add(exhaust);
+  }
   const light = new THREE.PointLight(
     p.energy ? 0x55baff : 0xffb064,
     0,
@@ -314,6 +323,7 @@ export function createWeaponMuzzleEffect(
     alphas.fill(0);
     geometry.attributes.alpha.needsUpdate = true;
     pivot.visible = false;
+    if (exhaust) exhaust.visible = false;
     light.intensity = 0;
   }
   reset();
@@ -344,6 +354,10 @@ export function createWeaponMuzzleEffect(
       cone.scale.set(p.width * 0.2 * k, p.length, p.width * 0.2 * k);
       cone.position.z = -p.length * 0.5;
       coneMaterial.opacity = k * 0.65;
+      if (exhaust) {
+        exhaust.visible = k > 0;
+        exhaust.scale.set(.16 * k, .27, .16 * k);
+      }
       light.intensity = p.light * k;
       pivot.visible = k > 0;
       shock.visible = id === 'railgun' && k > 0;

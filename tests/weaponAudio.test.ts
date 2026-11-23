@@ -43,7 +43,7 @@ class MockAudio {
 }
 (globalThis as any).Audio = MockAudio;
 const { AUDIO, LMG_MECHANICAL_AUDIO_URLS, FIRST_BATCH_AUDIO_URLS, SECOND_BATCH_AUDIO_URLS, THIRD_BATCH_AUDIO_URLS } = await import('../src/audio');
-const { playWeaponReloadAudio, playLmgMechanicalEvent, updateSmgReloadAudio, playShotgunMechanicalEvent, playBattleRifleMechanicalEvent, playSniperBoltEvent, updateSniperReloadAudio, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio } = await import('../src/weaponAudio');
+const { playWeaponReloadAudio, playLmgMechanicalEvent, updateSmgReloadAudio, playShotgunMechanicalEvent, playBattleRifleMechanicalEvent, playSniperBoltEvent, updateSniperReloadAudio, stopWeaponReloadAudio, stopWeaponAudio, pauseWeaponAudio, resumeWeaponAudio, playLmgFire, playBattleRifleFire, updateMinigunWeaponAudio, releaseMinigunAudio, playMinigunCoolingAudio, playAutomaticWeaponFire, updatePlasmaReloadAudio, updateRailgunWeaponAudio, updateRocketLockAudio } = await import('../src/weaponAudio');
 for (const track of Object.values(AUDIO)) track.prepare();
 const latest = (track: typeof AUDIO.arSingle) => track.pool[(track.index + track.poolSize - 1) % track.poolSize] as unknown as MockAudio;
 const plays = (track: typeof AUDIO.arSingle) => track.pool.reduce((n, audio) => n + (audio as unknown as MockAudio).plays, 0);
@@ -376,3 +376,23 @@ for(const speed of [1,.75,.9]) {
  advanceWeaponReload(weapon('lmg'),cancelled,100,undefined,undefined,undefined,undefined,playLmgMechanicalEvent);assert.equal(plays(AUDIO.lmgCoverClose),initial+1,'Cancellation before closure adds no impact');
 }
 console.log('PASS: original WAV cover impact exactly once at 3.1656 s with class scaling; cancelled pre-lock reloads remain silent');
+
+const launcherClose = AUDIO.lmgCoverClose;
+for (const speed of [1, .65, 1.4]) {
+  launcherClose.stop();
+  const closeDuration = .792 * speed;
+  const marker = .35 * closeDuration;
+  const count = plays(launcherClose);
+  updateRocketLockAudio(marker + .10, marker + .01, closeDuration);
+  assert.equal(plays(launcherClose), count, 'No cue while the hatch is still moving');
+  updateRocketLockAudio(marker + .01, marker - .01, closeDuration);
+  assert.equal(plays(launcherClose), count + 1);
+  assert.ok(Math.abs(latest(launcherClose).currentTime - .01) < 1e-8);
+  updateRocketLockAudio(marker - .01, marker - .05, closeDuration);
+  assert.equal(plays(launcherClose), count + 1, 'Hatch lock plays only on the first crossing');
+  pauseWeaponAudio();
+  assert.ok(latest(launcherClose).paused);
+  stopWeaponAudio();
+  assert.equal(latest(launcherClose).currentTime, 0);
+}
+console.log('PASS: Rocket Launcher lock uses the approved hatch cut once on the class-scaled closure clock');

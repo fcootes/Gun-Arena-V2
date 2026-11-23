@@ -79,7 +79,7 @@ const semanticFeatures: Record<string, string[]> = {
   laser: ['Sculpted continuous emitter', 'cartridge pressure vessel', 'cooling shutter'],
   minigun: ['Rotary barrel', 'Flexible ammunition', 'spade'],
   railgun: ['conductive rail', 'Hydraulic', 'Capacitor'],
-  rocket: ['launch tube', 'exhaust cone', 'Flip up'],
+  rocket: ['launch tube', 'exhaust cone', 'Hinged access housing', 'Armoured exchange cassette'],
   grenade_launcher: ['Revolver cylinder', '40mm chamber', 'Leaf sight'],
 };
 const fingerprints = new Set<string>();
@@ -271,7 +271,9 @@ const hostile = {
   zType: 'walker',
 } as unknown as Bot;
 const friendly = { ...hostile, id: 8, team: 'blue' } as Bot;
+let rocketImpacts = 0;
 const ctx: CombatSystemsContext = {
+  onRocketImpact: () => { rocketImpacts++; },
   scene,
   world,
   camera: new THREE.PerspectiveCamera(),
@@ -325,8 +327,22 @@ for (const id of ['rocket', 'grenade_launcher']) {
     ),
     'blocked',
   );
+  state.reloading = true;
+  assert.equal(firePlayerLauncher(scene, weapon, state, from, new THREE.Vector3(1, 0, 0), player.team, 20), 'blocked');
+  state.reloading = false;
+  const shot = activeProjectiles[0];
+  if (id === 'rocket') {
+    assert.equal(shot.vel.length(), 30);
+    assert.equal(shot.gravity, 0);
+    updateProjectiles(.025, ctx);
+    assert.equal(activeProjectiles.length, 1);
+    assert.ok(scene.getObjectByName('Rocket exhaust and impact particles')?.visible);
+  }
   updateProjectiles(0.1, ctx);
   assert.equal(activeProjectiles.length, 0);
+  assert.equal(rocketImpacts, 1, 'Only the rocket triggers the rocket-specific impact presentation');
+  assert.equal(damage.filter(d => d.target === hostile).length, 1, 'A swept impact applies splash once');
+  if (id === 'rocket') assert.ok(scene.getObjectByName('Rocket impact pressure ring'));
   assert.ok(damage.some((d) => d.target === hostile));
   assert.ok(!damage.some((d) => d.target === friendly));
   assert.equal(
@@ -343,6 +359,8 @@ for (const id of ['rocket', 'grenade_launcher']) {
   );
   assert.ok(damage.every((d) => d.attacker === 'player'));
   clearCombatSystems(scene, world);
+  assert.equal(scene.getObjectByName('Rocket exhaust and impact particles'), undefined);
+  assert.equal(scene.getObjectByName('Rocket impact pressure ring'), undefined);
   damage.length = 0;
 }
 const bot = {
